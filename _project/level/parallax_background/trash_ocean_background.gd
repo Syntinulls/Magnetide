@@ -1,19 +1,21 @@
-extends ParallaxBackground
+extends Node2D
 class_name TrashOceanBackground
 
 @export_group("Layer Settings")
-## Number of parallax layers (farther layers appear smaller and slower).
-@export var layer_count: int = 4
-## Base number of sprites per layer (multiplied for farther layers).
-@export var sprites_per_layer: int = 150
+## Total number of background sprites.
+@export var sprite_count: int = 400
 
 @export_group("Positioning")
 ## The Y position of the horizon line (top of the trash ocean).
 @export var horizon_y: float = 200.0
 ## The Y position of the bottom of the visible trash ocean (extends below screen).
 @export var ocean_bottom_y: float = 700.0
-## Extra horizontal padding beyond viewport for parallax movement.
+## Extra horizontal padding beyond viewport.
 @export var ocean_padding: float = 200.0
+## X position where objects are recycled (left of screen).
+@export var despawn_x: float = -150.0
+## Minimum speed ratio for objects at the horizon (0.0-1.0).
+@export var min_speed_ratio: float = 0.1
 
 @export_group("Appearance")
 ## Minimum brown tint hue shift.
@@ -30,58 +32,88 @@ class_name TrashOceanBackground
 @export var brown_val_max: float = 0.5
 
 var _icon_texture: Texture2D
-var _buoyancy_shader: Shader
+var _screen_width: float = 0.0
+var _level_speed: float = 150.0
+var _sprites: Array[Sprite2D] = []
+var _sprite_speeds: Array[float] = []
 
 
 func _ready() -> void:
 	_icon_texture = preload("res://icon.svg")
-	_buoyancy_shader = preload("res://_project/level/parallax_background/buoyancy.gdshader")
-	_generate_layers()
+
+	var level := get_parent()
+	if level and "level_speed" in level:
+		_level_speed = level.level_speed
+
+	_generate_sprites()
 
 
-func _generate_layers() -> void:
+func _generate_sprites() -> void:
 	var viewport_size := get_viewport().get_visible_rect().size
-	var screen_width := viewport_size.x
+	_screen_width = viewport_size.x
 
-	for i in range(layer_count):
-		var depth_ratio := float(i) / float(layer_count)
-		var parallax_layer := ParallaxLayer.new()
-		parallax_layer.motion_scale = Vector2(1.0 - depth_ratio * 0.8, 0.0)
-		add_child(parallax_layer)
+	for _i in range(sprite_count):
+		var sprite := Sprite2D.new()
+		sprite.texture = _icon_texture
 
-		var container := Node2D.new()
-		parallax_layer.add_child(container)
+		var x := randf_range(-ocean_padding, _screen_width + ocean_padding)
+		var t := randf()
+		var y_ratio := t * t
+		var y := lerpf(horizon_y, ocean_bottom_y, y_ratio)
+		sprite.position = Vector2(x, y)
 
-		var sprite_count := int(sprites_per_layer * (1.0 + depth_ratio * 1.5))
+		var base_scale := lerpf(0.15, 0.8, y_ratio)
+		var s := base_scale * randf_range(0.8, 1.2)
+		sprite.scale = Vector2(s, s)
 
-		for _j in range(sprite_count):
-			var sprite := Sprite2D.new()
-			sprite.texture = _icon_texture
+		sprite.rotation = randf_range(0.0, TAU)
 
-			var x := randf_range(-ocean_padding, screen_width + ocean_padding)
-			var t := randf()
-			var y_ratio := t * t
-			var y := lerpf(horizon_y, ocean_bottom_y, y_ratio)
-			sprite.position = Vector2(x, y)
-			var base_scale := lerpf(0.15, 0.8, y_ratio)
-			var s := base_scale * randf_range(0.8, 1.2)
-			sprite.scale = Vector2(s, s)
+		var color_depth := 1.0 - y_ratio
+		sprite.modulate = _random_brown_color(color_depth)
 
-			sprite.rotation = randf_range(0.0, TAU)
+		sprite.z_index = -10 + int(y_ratio * 10)
 
-			var color_depth := 1.0 - y_ratio
-			sprite.modulate = _random_brown_color(color_depth)
+		var speed_ratio := lerpf(min_speed_ratio, 1.0, y_ratio * y_ratio)
+		var speed := _level_speed * speed_ratio
+		_sprite_speeds.append(speed)
 
-			sprite.z_index = -layer_count + i
+		_sprites.append(sprite)
+		add_child(sprite)
 
-			var mat := ShaderMaterial.new()
-			mat.shader = _buoyancy_shader
-			mat.set_shader_parameter("amplitude", randf_range(1.0, 3.0) * (1.0 - depth_ratio * 0.5))
-			mat.set_shader_parameter("frequency", randf_range(1.0, 2.0))
-			mat.set_shader_parameter("phase_offset", randf() * TAU)
-			sprite.material = mat
 
-			container.add_child(sprite)
+func _process(delta: float) -> void:
+	for i in range(_sprites.size()):
+		var sprite := _sprites[i]
+		var speed := _sprite_speeds[i]
+		sprite.position.x -= speed * delta
+
+		if sprite.position.x < despawn_x:
+			_recycle_sprite(i)
+
+
+func _recycle_sprite(index: int) -> void:
+	var sprite := _sprites[index]
+
+	sprite.position.x = _screen_width + ocean_padding + randf_range(0.0, 100.0)
+
+	var t := randf()
+	var y_ratio := t * t
+	var y := lerpf(horizon_y, ocean_bottom_y, y_ratio)
+	sprite.position.y = y
+
+	var base_scale := lerpf(0.15, 0.8, y_ratio)
+	var s := base_scale * randf_range(0.8, 1.2)
+	sprite.scale = Vector2(s, s)
+
+	sprite.rotation = randf_range(0.0, TAU)
+
+	var color_depth := 1.0 - y_ratio
+	sprite.modulate = _random_brown_color(color_depth)
+
+	sprite.z_index = -10 + int(y_ratio * 10)
+
+	var speed_ratio := lerpf(min_speed_ratio, 1.0, y_ratio * y_ratio)
+	_sprite_speeds[index] = _level_speed * speed_ratio
 
 
 func _random_brown_color(depth_ratio: float) -> Color:

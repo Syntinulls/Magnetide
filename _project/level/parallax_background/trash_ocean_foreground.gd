@@ -18,8 +18,6 @@ class_name TrashOceanForeground
 @export var max_spacing: float = 50.0
 
 @export_group("Scrolling")
-## Speed at which foreground objects scroll left (pixels per second).
-@export var scroll_speed: float = 20.0
 ## X position where objects are recycled (left of screen).
 @export var despawn_x: float = -150.0
 
@@ -42,15 +40,19 @@ class_name TrashOceanForeground
 @export var brown_val_max: float = 0.35
 
 var _icon_texture: Texture2D
-var _buoyancy_shader: Shader
 var _container: Node2D
 var _screen_width: float = 0.0
+var _level_speed: float = 150.0
 
 
 func _ready() -> void:
 	layer = 10
 	_icon_texture = preload("res://icon.svg")
-	_buoyancy_shader = preload("res://_project/level/parallax_background/buoyancy.gdshader")
+
+	var level := get_parent()
+	if level and "level_speed" in level:
+		_level_speed = level.level_speed
+
 	_generate_foreground()
 
 
@@ -87,19 +89,12 @@ func _create_sprite(x_pos: float) -> Sprite2D:
 
 	sprite.z_index = 100
 
-	var mat := ShaderMaterial.new()
-	mat.shader = _buoyancy_shader
-	mat.set_shader_parameter("amplitude", randf_range(2.0, 4.0))
-	mat.set_shader_parameter("frequency", randf_range(1.0, 1.8))
-	mat.set_shader_parameter("phase_offset", randf() * TAU)
-	sprite.material = mat
-
 	return sprite
 
 
 func _process(delta: float) -> void:
 	for sprite in _container.get_children():
-		sprite.position.x -= scroll_speed * delta
+		sprite.position.x -= _level_speed * delta
 
 		if sprite.position.x < despawn_x:
 			_recycle_sprite(sprite)
@@ -126,10 +121,6 @@ func _recycle_sprite(sprite: Sprite2D) -> void:
 	sprite.rotation = randf_range(-0.3, 0.3)
 
 	sprite.modulate = _random_brown_color()
-
-	var mat := sprite.material as ShaderMaterial
-	if mat:
-		mat.set_shader_parameter("phase_offset", randf() * TAU)
 
 
 func _random_brown_color() -> Color:

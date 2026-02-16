@@ -15,11 +15,6 @@ var direction: Vector2 = Vector2.LEFT
 var rarity: Rarity = Rarity.COMMON
 var is_active: bool = false
 
-var _bob_amplitude: float = 3.0
-var _bob_frequency: float = 2.0
-var _bob_offset: float = 0.0
-var _base_y: float = 0.0
-
 
 func _ready() -> void:
 	deactivate()
@@ -31,11 +26,6 @@ func activate(new_rarity: Rarity, spawn_position: Vector2, new_speed: float, new
 	speed = new_speed
 	scale = Vector2(new_scale, new_scale)
 	rotation = new_rotation
-
-	_bob_offset = randf() * TAU
-	_bob_amplitude = randf_range(8.0, 15.0)
-	_bob_frequency = randf_range(1.2, 2.0)
-	_base_y = position.y
 
 	var sprite := $Sprite2D as Sprite2D
 	if sprite:
@@ -56,8 +46,4 @@ func _process(delta: float) -> void:
 	if not is_active:
 		return
 
-	position.x += direction.x * speed * delta
-	_base_y += direction.y * speed * delta
-	var bob_raw := sin(Time.get_ticks_msec() * 0.001 * _bob_frequency + _bob_offset)
-	var bob := (bob_raw * 0.5 + 0.5) * _bob_amplitude
-	position.y = _base_y + bob
+	position += direction * speed * delta

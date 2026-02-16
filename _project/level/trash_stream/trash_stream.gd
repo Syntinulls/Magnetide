@@ -32,8 +32,6 @@ class_name TrashStream
 @export var weight_legendary: float = 2.0
 
 @export_group("Trash Properties")
-## Speed of all trash objects in pixels per second (uniform so they never converge).
-@export var trash_speed: float = 100.0
 ## Minimum uniform scale applied to trash objects.
 @export var trash_scale_min: float = 0.7
 ## Maximum uniform scale applied to trash objects.
@@ -50,10 +48,15 @@ class_name TrashStream
 var _trash_object_scene: PackedScene
 var _spawn_timer: Timer
 var _object_pool: Array[TrashObject] = []
+var _level_speed: float = 150.0
 
 
 func _ready() -> void:
 	_trash_object_scene = preload("res://_project/level/trash_stream/trash_object.tscn")
+
+	var level := get_parent()
+	if level and level.has_method("get") and "level_speed" in level:
+		_level_speed = level.level_speed
 
 	_init_object_pool()
 
@@ -134,4 +137,4 @@ func _spawn_trash() -> void:
 	var s := randf_range(trash_scale_min, trash_scale_max)
 	var rot := randf_range(0.0, TAU)
 
-	instance.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), trash_speed, s, rot)
+	instance.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), _level_speed, s, rot)
