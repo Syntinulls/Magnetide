@@ -1,0 +1,16 @@
+[gd_scene format=3 uid="uid://bb15h5n3ajm1u"]
+
+[ext_resource type="Script" uid="uid://r5gdu025jw7n" path="res://_project/level/level.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://bxms6wtkrevjc" path="res://_project/level/parallax_background/trash_ocean_background.tscn" id="2_parallax"]
+[ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/trash_stream/trash_stream.tscn" id="3_trash_stream"]
+[ext_resource type="PackedScene" path="res://_project/level/parallax_background/trash_ocean_foreground.tscn" id="4_foreground"]
+
+[node name="Level" type="Node2D" unique_id=843647019]
+script = ExtResource("1_script")
+
+[node name="TrashOceanBackground" parent="." unique_id=538346253 instance=ExtResource("2_parallax")]
+
+[node name="TrashStream" parent="." unique_id=2088533275 instance=ExtResource("3_trash_stream")]
+
+[node name="TrashOceanForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
+surface_offset = 60.0

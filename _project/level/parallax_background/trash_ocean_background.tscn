@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtrashocean001"]
+
+[ext_resource type="Script" path="res://_project/level/parallax_background/trash_ocean_background.gd" id="1_script"]
+
+[node name="TrashOceanBackground" type="ParallaxBackground"]
+script = ExtResource("1_script")

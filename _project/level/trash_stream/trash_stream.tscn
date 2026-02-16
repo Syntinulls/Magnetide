@@ -1,0 +1,6 @@
+[gd_scene load_steps=2 format=3 uid="uid://dtrashstream01"]
+
+[ext_resource type="Script" path="res://_project/level/trash_stream/trash_stream.gd" id="1_script"]
+
+[node name="TrashStream" type="Node2D"]
+script = ExtResource("1_script")
