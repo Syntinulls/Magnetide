@@ -10,20 +10,20 @@ const RARITY_COLORS: Dictionary = {
 	Rarity.LEGENDARY: Color(1.0, 0.85, 0.0),  # Yellow/Gold
 }
 
-var speed: float = 100.0
 var direction: Vector2 = Vector2.LEFT
 var rarity: Rarity = Rarity.COMMON
 var is_active: bool = false
+var _level: Node = null
 
 
 func _ready() -> void:
 	deactivate()
 
 
-func activate(new_rarity: Rarity, spawn_position: Vector2, new_speed: float, new_scale: float, new_rotation: float) -> void:
+func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, new_scale: float, new_rotation: float) -> void:
 	rarity = new_rarity
 	position = spawn_position
-	speed = new_speed
+	_level = level
 	scale = Vector2(new_scale, new_scale)
 	rotation = new_rotation
 
@@ -46,4 +46,14 @@ func _process(delta: float) -> void:
 	if not is_active:
 		return
 
-	position += direction * speed * delta
+	var level_speed := _get_level_speed()
+	if level_speed <= 0.0:
+		return
+
+	position += direction * level_speed * delta
+
+
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0

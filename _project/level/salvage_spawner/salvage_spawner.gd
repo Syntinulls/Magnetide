@@ -38,18 +38,16 @@ class_name SalvageSpawner
 var _salvage_pile_scene: PackedScene
 var _spawn_timer: Timer
 var _current_pile: SalvagePile = null
-var _level_speed: float = 150.0
+var _level: Node = null
 var _surface_y: float = 500.0
 
 
 func _ready() -> void:
 	_salvage_pile_scene = preload("res://_project/level/salvage_spawner/salvage_pile.tscn")
 
-	var level := get_parent()
-	if level and "level_speed" in level:
-		_level_speed = level.level_speed
-	if level and "surface_y" in level:
-		_surface_y = level.surface_y
+	_level = get_parent()
+	if _level and "surface_y" in _level:
+		_surface_y = _level.surface_y
 
 	_spawn_timer = Timer.new()
 	_spawn_timer.one_shot = true
@@ -59,7 +57,22 @@ func _ready() -> void:
 	_start_spawn_timer()
 
 
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0
+
+
 func _process(_delta: float) -> void:
+	var level_speed := _get_level_speed()
+
+	if level_speed <= 0.0:
+		if not _spawn_timer.paused:
+			_spawn_timer.paused = true
+	else:
+		if _spawn_timer.paused:
+			_spawn_timer.paused = false
+
 	if _current_pile and _current_pile.is_active:
 		if _current_pile.global_position.x < despawn_x:
 			_on_pile_removed()
@@ -115,4 +128,4 @@ func _spawn_salvage() -> void:
 	var s := randf_range(salvage_scale_min, salvage_scale_max)
 	var rot := randf_range(0.0, TAU)
 
-	_current_pile.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), _level_speed, s, rot)
+	_current_pile.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), _level, s, rot)

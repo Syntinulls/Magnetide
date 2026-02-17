@@ -40,7 +40,7 @@ class_name TrashOceanForeground
 var _icon_texture: Texture2D
 var _container: Node2D
 var _screen_width: float = 0.0
-var _level_speed: float = 150.0
+var _level: Node = null
 var _surface_y: float = 500.0
 
 
@@ -48,13 +48,17 @@ func _ready() -> void:
 	layer = 10
 	_icon_texture = preload("res://icon.svg")
 
-	var level := get_parent()
-	if level and "level_speed" in level:
-		_level_speed = level.level_speed
-	if level and "surface_y" in level:
-		_surface_y = level.surface_y
+	_level = get_parent()
+	if _level and "surface_y" in _level:
+		_surface_y = _level.surface_y
 
 	_generate_foreground()
+
+
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0
 
 
 func _generate_foreground() -> void:
@@ -96,8 +100,12 @@ func _create_sprite(x_pos: float) -> Sprite2D:
 
 
 func _process(delta: float) -> void:
+	var level_speed := _get_level_speed()
+	if level_speed <= 0.0:
+		return
+
 	for sprite in _container.get_children():
-		sprite.position.x -= _level_speed * delta
+		sprite.position.x -= level_speed * delta
 
 		if sprite.position.x < despawn_x:
 			_recycle_sprite(sprite)

@@ -5,9 +5,9 @@
 [ext_resource type="Script" uid="uid://cnyv0lr40ivep" path="res://_project/level/parallax_background/background_band.gd" id="3_ip1iq"]
 [ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage_spawner/salvage_spawner.tscn" id="3_salvage_spawner"]
 [ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/parallax_background/trash_ocean_foreground.tscn" id="4_foreground"]
-[ext_resource type="Resource" path="res://_project/level/parallax_background/bands/band_horizon.tres" id="4_rr5ri"]
-[ext_resource type="Resource" path="res://_project/level/parallax_background/bands/band_mid.tres" id="5_5p64y"]
-[ext_resource type="Resource" path="res://_project/level/parallax_background/bands/band_near.tres" id="6_rdxwa"]
+[ext_resource type="Resource" uid="uid://0jkvmj2jho07" path="res://_project/level/parallax_background/bands/band_horizon.tres" id="4_rr5ri"]
+[ext_resource type="Resource" uid="uid://d8twidhbjmb1" path="res://_project/level/parallax_background/bands/band_mid.tres" id="5_5p64y"]
+[ext_resource type="Resource" uid="uid://b7pbrakfi6f0j" path="res://_project/level/parallax_background/bands/band_near.tres" id="6_rdxwa"]
 
 [node name="Level" type="Node2D" unique_id=843647019]
 script = ExtResource("1_script")

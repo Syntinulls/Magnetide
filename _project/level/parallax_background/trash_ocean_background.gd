@@ -13,20 +13,24 @@ class_name TrashOceanBackground
 
 var _icon_texture: Texture2D
 var _screen_width: float = 0.0
-var _level_speed: float = 150.0
+var _level: Node = null
 var _band_sprites: Array[Array] = []
-var _band_speeds: Array[Array] = []
+var _band_speed_ratios: Array[Array] = []
 
 
 func _ready() -> void:
 	y_sort_enabled = true
 	_icon_texture = preload("res://icon.svg")
 
-	var level := get_parent()
-	if level and "level_speed" in level:
-		_level_speed = level.level_speed
+	_level = get_parent()
 
 	_generate_bands()
+
+
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0
 
 
 func _generate_bands() -> void:
@@ -40,13 +44,13 @@ func _generate_bands() -> void:
 
 		for _i in range(band.sprite_count):
 			var sprite := _create_band_sprite(band)
-			var speed := _calculate_speed(band, sprite.position.y)
+			var speed_ratio := _calculate_speed_ratio(band, sprite.position.y)
 			sprites.append(sprite)
-			speeds.append(speed)
+			speeds.append(speed_ratio)
 			add_child(sprite)
 
 		_band_sprites.append(sprites)
-		_band_speeds.append(speeds)
+		_band_speed_ratios.append(speeds)
 
 
 func _create_band_sprite(band: BackgroundBand) -> Sprite2D:
@@ -65,15 +69,19 @@ func _create_band_sprite(band: BackgroundBand) -> Sprite2D:
 
 
 func _process(delta: float) -> void:
+	var level_speed := _get_level_speed()
+	if level_speed <= 0.0:
+		return
+
 	for band_index in range(_band_sprites.size()):
 		var sprites: Array = _band_sprites[band_index]
-		var speeds: Array = _band_speeds[band_index]
+		var speed_ratios: Array = _band_speed_ratios[band_index]
 		var band := bands[band_index]
 
 		for i in range(sprites.size()):
 			var sprite: Sprite2D = sprites[i]
-			var speed: float = speeds[i]
-			sprite.position.x -= speed * delta
+			var speed_ratio: float = speed_ratios[i]
+			sprite.position.x -= level_speed * speed_ratio * delta
 
 			if sprite.position.x < despawn_x:
 				_recycle_band_sprite(band, sprite, band_index, i)
@@ -88,7 +96,7 @@ func _recycle_band_sprite(band: BackgroundBand, sprite: Sprite2D, band_index: in
 	sprite.position.x = rightmost + randf_range(band.max_spacing * 0.5, band.max_spacing)
 
 	_apply_y_based_properties(band, sprite, y)
-	_band_speeds[band_index][sprite_index] = _calculate_speed(band, y)
+	_band_speed_ratios[band_index][sprite_index] = _calculate_speed_ratio(band, y)
 
 	sprite.rotation = randf_range(0.0, TAU)
 
@@ -103,11 +111,10 @@ func _get_rightmost_x_near_y(band_index: int, target_y: float, tolerance: float)
 	return rightmost
 
 
-func _calculate_speed(band: BackgroundBand, y: float) -> float:
+func _calculate_speed_ratio(band: BackgroundBand, y: float) -> float:
 	var y_ratio := (y - band.y_min) / (band.y_max - band.y_min)
 	y_ratio = clampf(y_ratio, 0.0, 1.0)
-	var speed_ratio := lerpf(band.speed_ratio_min, band.speed_ratio_max, y_ratio)
-	return _level_speed * speed_ratio
+	return lerpf(band.speed_ratio_min, band.speed_ratio_max, y_ratio)
 
 
 func _apply_y_based_properties(band: BackgroundBand, sprite: Sprite2D, y: float) -> void:
