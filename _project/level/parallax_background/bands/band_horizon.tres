@@ -1,0 +1,21 @@
+[gd_resource type="Resource" script_class="BackgroundBand" load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://_project/level/parallax_background/background_band.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+y_min = 200.0
+y_max = 320.0
+scale_min = 0.08
+scale_max = 0.18
+alpha = 0.3
+brown_hue_min = 0.05
+brown_hue_max = 0.12
+brown_sat_min = 0.2
+brown_sat_max = 0.4
+brown_val_min = 0.3
+brown_val_max = 0.5
+speed_ratio_min = 0.05
+speed_ratio_max = 0.15
+sprite_count = 300
+max_spacing = 10.0

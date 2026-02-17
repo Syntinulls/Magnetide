@@ -6,16 +6,14 @@ class_name TrashOceanForeground
 @export var sprite_count: int = 60
 
 @export_group("Positioning")
-## The Y position of the ocean surface (foreground starts below this).
-@export var surface_y: float = 540.0
 ## Offset below surface_y where foreground sprites begin.
-@export var surface_offset: float = 20.0
+@export var surface_offset: float = 60.0
 ## The Y position where the foreground band ends (bottom, extends off screen).
-@export var foreground_y_max: float = 720.0
+@export var foreground_y_max: float = 620.0
 ## Extra horizontal padding beyond viewport.
 @export var padding: float = 100.0
 ## Maximum horizontal spacing between foreground sprites.
-@export var max_spacing: float = 50.0
+@export var max_spacing: float = 50
 
 @export_group("Scrolling")
 ## X position where objects are recycled (left of screen).
@@ -43,6 +41,7 @@ var _icon_texture: Texture2D
 var _container: Node2D
 var _screen_width: float = 0.0
 var _level_speed: float = 150.0
+var _surface_y: float = 500.0
 
 
 func _ready() -> void:
@@ -52,6 +51,8 @@ func _ready() -> void:
 	var level := get_parent()
 	if level and "level_speed" in level:
 		_level_speed = level.level_speed
+	if level and "surface_y" in level:
+		_surface_y = level.surface_y
 
 	_generate_foreground()
 
@@ -76,12 +77,14 @@ func _create_sprite(x_pos: float) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.texture = _icon_texture
 
-	var foreground_y_min := surface_y + surface_offset
-	var y := randf_range(foreground_y_min, foreground_y_max)
-	sprite.position = Vector2(x_pos, y)
-
 	var s := randf_range(scale_min, scale_max)
 	sprite.scale = Vector2(s, s)
+
+	var foreground_y_min := _surface_y + surface_offset
+	var scale_ratio := (s - scale_min) / (scale_max - scale_min)
+	var base_y := lerpf(foreground_y_min, foreground_y_max, scale_ratio)
+	var y := base_y + randf_range(-5.0, 5.0)
+	sprite.position = Vector2(x_pos, y)
 
 	sprite.rotation = randf_range(-0.3, 0.3)
 
@@ -112,11 +115,13 @@ func _recycle_sprite(sprite: Sprite2D) -> void:
 	var rightmost := _get_rightmost_x()
 	sprite.position.x = rightmost + randf_range(max_spacing * 0.5, max_spacing)
 
-	var foreground_y_min := surface_y + surface_offset
-	sprite.position.y = randf_range(foreground_y_min, foreground_y_max)
-
 	var s := randf_range(scale_min, scale_max)
 	sprite.scale = Vector2(s, s)
+
+	var foreground_y_min := _surface_y + surface_offset
+	var scale_ratio := (s - scale_min) / (scale_max - scale_min)
+	var base_y := lerpf(foreground_y_min, foreground_y_max, scale_ratio)
+	sprite.position.y = base_y + randf_range(-5.0, 5.0)
 
 	sprite.rotation = randf_range(-0.3, 0.3)
 

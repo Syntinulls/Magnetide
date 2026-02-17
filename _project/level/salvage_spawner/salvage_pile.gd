@@ -1,5 +1,5 @@
 extends Node2D
-class_name TrashObject
+class_name SalvagePile
 
 enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
 
