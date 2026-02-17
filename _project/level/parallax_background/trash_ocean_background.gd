@@ -6,14 +6,14 @@ class_name TrashOceanBackground
 @export var bands: Array[BackgroundBand] = []
 
 @export_group("Positioning")
-## Extra horizontal padding beyond viewport.
-@export var ocean_padding: float = 200.0
-## X position where objects are recycled (left of screen).
-@export var despawn_x: float = -150.0
+## Extra horizontal padding beyond viewport as ratio of screen width.
+@export var padding_ratio: float = 0.1
+## X position ratio where objects are recycled (left of screen, can be negative).
+@export var despawn_x_ratio: float = -0.08
 
 var _icon_texture: Texture2D
-var _screen_width: float = 0.0
 var _level: Node = null
+var _viewport_anchor: ViewportAnchor = null
 var _band_sprites: Array[Array] = []
 var _band_speed_ratios: Array[Array] = []
 
@@ -23,7 +23,23 @@ func _ready() -> void:
 	_icon_texture = preload("res://icon.svg")
 
 	_level = get_parent()
+	if _level and "viewport_anchor" in _level:
+		_viewport_anchor = _level.viewport_anchor
+		_viewport_anchor.viewport_changed.connect(_on_viewport_changed)
 
+	_generate_bands()
+
+
+func _on_viewport_changed(_size: Vector2) -> void:
+	_regenerate_bands()
+
+
+func _regenerate_bands() -> void:
+	for sprites_array in _band_sprites:
+		for sprite in sprites_array:
+			sprite.queue_free()
+	_band_sprites.clear()
+	_band_speed_ratios.clear()
 	_generate_bands()
 
 
@@ -33,10 +49,29 @@ func _get_level_speed() -> float:
 	return 0.0
 
 
-func _generate_bands() -> void:
-	var viewport_size := get_viewport().get_visible_rect().size
-	_screen_width = viewport_size.x
+func _get_screen_width() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.x
+	return get_viewport().get_visible_rect().size.x
 
+
+func _get_padding() -> float:
+	return _get_screen_width() * padding_ratio
+
+
+func _get_despawn_x() -> float:
+	return _get_screen_width() * despawn_x_ratio
+
+
+func _get_band_y_min(band: BackgroundBand) -> float:
+	return band.y_min * get_viewport().get_visible_rect().size.y
+
+
+func _get_band_y_max(band: BackgroundBand) -> float:
+	return band.y_max * get_viewport().get_visible_rect().size.y
+
+
+func _generate_bands() -> void:
 	for band_index in range(bands.size()):
 		var band := bands[band_index]
 		var sprites: Array[Sprite2D] = []
@@ -57,8 +92,13 @@ func _create_band_sprite(band: BackgroundBand) -> Sprite2D:
 	var sprite := Sprite2D.new()
 	sprite.texture = _icon_texture
 
-	var x := randf_range(-ocean_padding, _screen_width + ocean_padding)
-	var y := randf_range(band.y_min, band.y_max)
+	var screen_width := _get_screen_width()
+	var padding := _get_padding()
+	var y_min := _get_band_y_min(band)
+	var y_max := _get_band_y_max(band)
+
+	var x := randf_range(-padding, screen_width + padding)
+	var y := randf_range(y_min, y_max)
 	sprite.position = Vector2(x, y)
 
 	_apply_y_based_properties(band, sprite, y)
@@ -72,6 +112,8 @@ func _process(delta: float) -> void:
 	var level_speed := _get_level_speed()
 	if level_speed <= 0.0:
 		return
+
+	var despawn_x := _get_despawn_x()
 
 	for band_index in range(_band_sprites.size()):
 		var sprites: Array = _band_sprites[band_index]
@@ -88,10 +130,12 @@ func _process(delta: float) -> void:
 
 
 func _recycle_band_sprite(band: BackgroundBand, sprite: Sprite2D, band_index: int, sprite_index: int) -> void:
-	var y := randf_range(band.y_min, band.y_max)
+	var y_min := _get_band_y_min(band)
+	var y_max := _get_band_y_max(band)
+	var y := randf_range(y_min, y_max)
 	sprite.position.y = y
 
-	var y_tolerance := (band.y_max - band.y_min) * 0.1
+	var y_tolerance := (y_max - y_min) * 0.1
 	var rightmost := _get_rightmost_x_near_y(band_index, y, y_tolerance)
 	sprite.position.x = rightmost + randf_range(band.max_spacing * 0.5, band.max_spacing)
 
@@ -102,7 +146,7 @@ func _recycle_band_sprite(band: BackgroundBand, sprite: Sprite2D, band_index: in
 
 
 func _get_rightmost_x_near_y(band_index: int, target_y: float, tolerance: float) -> float:
-	var rightmost := _screen_width + ocean_padding
+	var rightmost: float = _get_screen_width() + _get_padding()
 	var sprites: Array = _band_sprites[band_index]
 	for sprite in sprites:
 		if absf(sprite.position.y - target_y) <= tolerance:
@@ -112,13 +156,17 @@ func _get_rightmost_x_near_y(band_index: int, target_y: float, tolerance: float)
 
 
 func _calculate_speed_ratio(band: BackgroundBand, y: float) -> float:
-	var y_ratio := (y - band.y_min) / (band.y_max - band.y_min)
+	var y_min := _get_band_y_min(band)
+	var y_max := _get_band_y_max(band)
+	var y_ratio := (y - y_min) / (y_max - y_min)
 	y_ratio = clampf(y_ratio, 0.0, 1.0)
 	return lerpf(band.speed_ratio_min, band.speed_ratio_max, y_ratio)
 
 
 func _apply_y_based_properties(band: BackgroundBand, sprite: Sprite2D, y: float) -> void:
-	var y_ratio := (y - band.y_min) / (band.y_max - band.y_min)
+	var y_min := _get_band_y_min(band)
+	var y_max := _get_band_y_max(band)
+	var y_ratio := (y - y_min) / (y_max - y_min)
 	y_ratio = clampf(y_ratio, 0.0, 1.0)
 
 	var jitter := randf_range(-0.1, 0.1)

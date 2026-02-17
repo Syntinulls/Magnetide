@@ -8,10 +8,13 @@
 [ext_resource type="Resource" uid="uid://0jkvmj2jho07" path="res://_project/level/parallax_background/bands/band_horizon.tres" id="4_rr5ri"]
 [ext_resource type="Resource" uid="uid://d8twidhbjmb1" path="res://_project/level/parallax_background/bands/band_mid.tres" id="5_5p64y"]
 [ext_resource type="Resource" uid="uid://b7pbrakfi6f0j" path="res://_project/level/parallax_background/bands/band_near.tres" id="6_rdxwa"]
+[ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
+[ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
 
 [node name="Level" type="Node2D" unique_id=843647019]
 script = ExtResource("1_script")
 level_speed = 2000.0
+surface_y_ratio = 0.99
 
 [node name="TrashOceanBackground" parent="." unique_id=538346253 instance=ExtResource("2_parallax")]
 bands = Array[ExtResource("3_ip1iq")]([ExtResource("4_rr5ri"), ExtResource("5_5p64y"), ExtResource("6_rdxwa")])
@@ -19,3 +22,14 @@ bands = Array[ExtResource("3_ip1iq")]([ExtResource("4_rr5ri"), ExtResource("5_5p
 [node name="SalvageSpawner" parent="." unique_id=2088533275 instance=ExtResource("3_salvage_spawner")]
 
 [node name="TrashOceanForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
+foreground_y_min_ratio = 0.99
+foreground_y_max_ratio = 0.9
+
+[node name="Ship" parent="." unique_id=1033807799 instance=ExtResource("9_rr5ri")]
+position = Vector2(0, 94.5)
+
+[node name="Player" parent="Ship" unique_id=155842924 instance=ExtResource("10_5p64y")]
+position = Vector2(2, -70)
+
+[node name="Camera2D" type="Camera2D" parent="." unique_id=1705480197]
+anchor_mode = 0

@@ -4,8 +4,8 @@
 
 [resource]
 script = ExtResource("1_script")
-y_min = 320.0
-y_max = 420.0
+y_min = 0.6
+y_max = 0.8
 scale_min = 0.18
 scale_max = 0.35
 alpha = 0.6

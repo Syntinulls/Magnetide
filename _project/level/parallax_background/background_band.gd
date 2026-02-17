@@ -2,10 +2,10 @@ extends Resource
 class_name BackgroundBand
 
 @export_group("Coverage")
-## The Y position where this band starts (top of band).
-@export var y_min: float = 200.0
-## The Y position where this band ends (bottom of band).
-@export var y_max: float = 400.0
+## The Y position ratio where this band starts (0.0 = top, 1.0 = bottom).
+@export var y_min: float = 0.185
+## The Y position ratio where this band ends (0.0 = top, 1.0 = bottom).
+@export var y_max: float = 0.37
 
 @export_group("Scale")
 ## Minimum scale for sprites in this band.

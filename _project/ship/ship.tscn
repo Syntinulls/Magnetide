@@ -1,0 +1,46 @@
+[gd_scene format=3 uid="uid://dship00001"]
+
+[ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="1_back"]
+[ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
+size = Vector2(20, 347.93)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_right"]
+size = Vector2(22, 345.93)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_back"]
+size = Vector2(870, 20)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_front"]
+size = Vector2(865, 20)
+
+[node name="Ship" type="Node2D" unique_id=1033807799]
+
+[node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("1_back")
+
+[node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("2_fore")
+
+[node name="Boundaries" type="StaticBody2D" parent="." unique_id=762309736]
+position = Vector2(0, -78.035)
+scale = Vector2(0.5, 0.5)
+
+[node name="LeftWall" type="CollisionShape2D" parent="Boundaries" unique_id=335042251]
+position = Vector2(-440, -73.965)
+shape = SubResource("RectangleShape2D_left")
+
+[node name="RightWall" type="CollisionShape2D" parent="Boundaries" unique_id=859780882]
+position = Vector2(440, -72.965)
+shape = SubResource("RectangleShape2D_right")
+
+[node name="Ceiling" type="CollisionShape2D" parent="Boundaries" unique_id=1784236965]
+position = Vector2(0, -239.93)
+shape = SubResource("RectangleShape2D_back")
+
+[node name="Floor" type="CollisionShape2D" parent="Boundaries" unique_id=453568164]
+position = Vector2(-4, 90)
+shape = SubResource("RectangleShape2D_front")

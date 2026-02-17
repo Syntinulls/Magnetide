@@ -6,18 +6,18 @@ class_name TrashOceanForeground
 @export var sprite_count: int = 60
 
 @export_group("Positioning")
-## Offset below surface_y where foreground sprites begin.
-@export var surface_offset: float = 60.0
-## The Y position where the foreground band ends (bottom, extends off screen).
-@export var foreground_y_max: float = 620.0
-## Extra horizontal padding beyond viewport.
-@export var padding: float = 100.0
+## The Y position ratio where the foreground band starts (top of foreground).
+@export var foreground_y_min_ratio: float = 0.52
+## The Y position ratio where the foreground band ends (bottom).
+@export var foreground_y_max_ratio: float = 0.62
+## Extra horizontal padding as ratio of viewport width.
+@export var padding_ratio: float = 0.052
 ## Maximum horizontal spacing between foreground sprites.
 @export var max_spacing: float = 50
 
 @export_group("Scrolling")
-## X position where objects are recycled (left of screen).
-@export var despawn_x: float = -150.0
+## X position ratio where objects are recycled (left of screen).
+@export var despawn_x_ratio: float = -0.078
 
 @export_group("Appearance")
 ## Minimum scale for foreground trash.
@@ -39,9 +39,8 @@ class_name TrashOceanForeground
 
 var _icon_texture: Texture2D
 var _container: Node2D
-var _screen_width: float = 0.0
 var _level: Node = null
-var _surface_y: float = 500.0
+var _viewport_anchor: ViewportAnchor = null
 
 
 func _ready() -> void:
@@ -49,9 +48,21 @@ func _ready() -> void:
 	_icon_texture = preload("res://icon.svg")
 
 	_level = get_parent()
-	if _level and "surface_y" in _level:
-		_surface_y = _level.surface_y
+	if _level and "viewport_anchor" in _level:
+		_viewport_anchor = _level.viewport_anchor
+		_viewport_anchor.viewport_changed.connect(_on_viewport_changed)
 
+	_generate_foreground()
+
+
+func _on_viewport_changed(_size: Vector2) -> void:
+	_regenerate_foreground()
+
+
+func _regenerate_foreground() -> void:
+	if _container:
+		_container.queue_free()
+		_container = null
 	_generate_foreground()
 
 
@@ -61,14 +72,48 @@ func _get_level_speed() -> float:
 	return 0.0
 
 
+func _get_screen_width() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.x
+	return get_viewport().get_visible_rect().size.x
+
+
+func _get_screen_height() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.y
+	return get_viewport().get_visible_rect().size.y
+
+
+func _get_padding() -> float:
+	return _get_screen_width() * padding_ratio
+
+
+func _get_despawn_x() -> float:
+	return _get_screen_width() * despawn_x_ratio
+
+
+func _get_surface_y() -> float:
+	if _level and "surface_y" in _level:
+		return _level.surface_y
+	return _get_screen_height() * 0.463
+
+
+func _get_foreground_y_min() -> float:
+	return _get_screen_height() * foreground_y_min_ratio
+
+
+func _get_foreground_y_max() -> float:
+	return _get_screen_height() * foreground_y_max_ratio
+
+
 func _generate_foreground() -> void:
-	var viewport_size := get_viewport().get_visible_rect().size
-	_screen_width = viewport_size.x
+	var screen_width := _get_screen_width()
+	var padding := _get_padding()
 
 	_container = Node2D.new()
 	add_child(_container)
 
-	var total_width := _screen_width + padding * 2.0
+	var total_width := screen_width + padding * 2.0
 	var spacing := total_width / float(sprite_count)
 
 	for i in range(sprite_count):
@@ -84,7 +129,8 @@ func _create_sprite(x_pos: float) -> Sprite2D:
 	var s := randf_range(scale_min, scale_max)
 	sprite.scale = Vector2(s, s)
 
-	var foreground_y_min := _surface_y + surface_offset
+	var foreground_y_min := _get_foreground_y_min()
+	var foreground_y_max := _get_foreground_y_max()
 	var scale_ratio := (s - scale_min) / (scale_max - scale_min)
 	var base_y := lerpf(foreground_y_min, foreground_y_max, scale_ratio)
 	var y := base_y + randf_range(-5.0, 5.0)
@@ -103,6 +149,8 @@ func _process(delta: float) -> void:
 	var level_speed := _get_level_speed()
 	if level_speed <= 0.0:
 		return
+
+	var despawn_x := _get_despawn_x()
 
 	for sprite in _container.get_children():
 		sprite.position.x -= level_speed * delta
@@ -126,7 +174,8 @@ func _recycle_sprite(sprite: Sprite2D) -> void:
 	var s := randf_range(scale_min, scale_max)
 	sprite.scale = Vector2(s, s)
 
-	var foreground_y_min := _surface_y + surface_offset
+	var foreground_y_min := _get_foreground_y_min()
+	var foreground_y_max := _get_foreground_y_max()
 	var scale_ratio := (s - scale_min) / (scale_max - scale_min)
 	var base_y := lerpf(foreground_y_min, foreground_y_max, scale_ratio)
 	sprite.position.y = base_y + randf_range(-5.0, 5.0)
