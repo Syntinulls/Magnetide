@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
 [ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
+[ext_resource type="Texture2D" uid="uid://b8rsmplore4d8" path="res://_project/player/guy.png" id="2_5c4qo"]
 [ext_resource type="Script" uid="uid://b1dkmgbfujbh4" path="res://_project/player/player.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
@@ -11,7 +12,7 @@ script = ExtResource("2_script")
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=148419492]
 scale = Vector2(0.5, 0.5)
-texture = ExtResource("1_icon")
+texture = ExtResource("2_5c4qo")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=372960679]
 shape = SubResource("RectangleShape2D_player")

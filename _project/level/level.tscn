@@ -1,29 +1,67 @@
 [gd_scene format=3 uid="uid://bb15h5n3ajm1u"]
 
 [ext_resource type="Script" uid="uid://r5gdu025jw7n" path="res://_project/level/level.gd" id="1_script"]
-[ext_resource type="PackedScene" uid="uid://bxms6wtkrevjc" path="res://_project/level/parallax_background/trash_ocean_background.tscn" id="2_parallax"]
-[ext_resource type="Script" uid="uid://cnyv0lr40ivep" path="res://_project/level/parallax_background/background_band.gd" id="3_ip1iq"]
+[ext_resource type="PackedScene" uid="uid://bxms6wtkrevjc" path="res://_project/level/decoration/parallax_background.tscn" id="2_parallax"]
+[ext_resource type="Texture2D" uid="uid://b4nfymaexsp2i" path="res://_project/level/decoration/sprites/trash_ground_1.png" id="3_ip1iq"]
 [ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage_spawner/salvage_spawner.tscn" id="3_salvage_spawner"]
-[ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/parallax_background/trash_ocean_foreground.tscn" id="4_foreground"]
-[ext_resource type="Resource" uid="uid://0jkvmj2jho07" path="res://_project/level/parallax_background/bands/band_horizon.tres" id="4_rr5ri"]
-[ext_resource type="Resource" uid="uid://d8twidhbjmb1" path="res://_project/level/parallax_background/bands/band_mid.tres" id="5_5p64y"]
-[ext_resource type="Resource" uid="uid://b7pbrakfi6f0j" path="res://_project/level/parallax_background/bands/band_near.tres" id="6_rdxwa"]
+[ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/decoration/parallax_foreground.tscn" id="4_foreground"]
+[ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
+
+[sub_resource type="Gradient" id="Gradient_bg"]
+colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_bg"]
+gradient = SubResource("Gradient_bg")
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
 
 [node name="Level" type="Node2D" unique_id=843647019]
 script = ExtResource("1_script")
 level_speed = 2000.0
 surface_y_ratio = 0.99
+haze_falloff = 3.0
 
-[node name="TrashOceanBackground" parent="." unique_id=538346253 instance=ExtResource("2_parallax")]
-bands = Array[ExtResource("3_ip1iq")]([ExtResource("4_rr5ri"), ExtResource("5_5p64y"), ExtResource("6_rdxwa")])
+[node name="GradientBackground" type="TextureRect" parent="." unique_id=730537582]
+z_index = -1000
+anchors_preset = -1
+anchor_right = 1.0
+anchor_bottom = 0.5
+offset_right = 1920.0
+offset_bottom = 540.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = SubResource("GradientTexture2D_bg")
+
+[node name="ParallaxViewportContainer" type="SubViewportContainer" parent="." unique_id=113078436]
+z_index = -100
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+stretch = true
+
+[node name="ParallaxViewport" type="SubViewport" parent="ParallaxViewportContainer" unique_id=123456789]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(2, 2)
+render_target_update_mode = 4
+
+[node name="ParallaxBackground" parent="ParallaxViewportContainer/ParallaxViewport" unique_id=538346253 instance=ExtResource("2_parallax")]
+background_texture = ExtResource("3_ip1iq")
+bottom_width_ratio = 3.0
+
+[node name="TrashSkyline" parent="ParallaxViewportContainer/ParallaxViewport" unique_id=1138561827 instance=ExtResource("7_skyline")]
+speed_ratio = 0.05
 
 [node name="SalvageSpawner" parent="." unique_id=2088533275 instance=ExtResource("3_salvage_spawner")]
 
-[node name="TrashOceanForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
-foreground_y_min_ratio = 0.99
-foreground_y_max_ratio = 0.9
+[node name="ParallaxForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
+ground_y_ratio = 0.9
 
 [node name="Ship" parent="." unique_id=1033807799 instance=ExtResource("9_rr5ri")]
 position = Vector2(0, 94.5)

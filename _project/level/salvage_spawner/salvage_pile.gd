@@ -10,6 +10,7 @@ const RARITY_COLORS: Dictionary = {
 	Rarity.LEGENDARY: Color(1.0, 0.85, 0.0),  # Yellow/Gold
 }
 
+var _pile_textures: Array[Texture2D] = []
 var direction: Vector2 = Vector2.LEFT
 var rarity: Rarity = Rarity.COMMON
 var is_active: bool = false
@@ -17,18 +18,24 @@ var _level: Node = null
 
 
 func _ready() -> void:
+	_pile_textures = [
+		preload("res://_project/level/salvage_spawner/sprites/trash_pile_1.png"),
+		preload("res://_project/level/salvage_spawner/sprites/trash_pile_2.png"),
+		preload("res://_project/level/salvage_spawner/sprites/trash_pile_3.png"),
+	]
 	deactivate()
 
 
-func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, new_scale: float, new_rotation: float) -> void:
+func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, new_scale: float, _new_rotation: float) -> void:
 	rarity = new_rarity
 	position = spawn_position
 	_level = level
 	scale = Vector2(new_scale, new_scale)
-	rotation = new_rotation
+	rotation = deg_to_rad(randf_range(-10.0, 10.0))  # Shallow random rotation
 
 	var sprite := $Sprite2D as Sprite2D
 	if sprite:
+		sprite.texture = _pile_textures[randi() % _pile_textures.size()]
 		sprite.modulate = RARITY_COLORS.get(rarity, Color.WHITE)
 
 	is_active = true

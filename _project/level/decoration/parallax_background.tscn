@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://bxms6wtkrevjc"]
+
+[ext_resource type="Script" uid="uid://ctms8l8dlkl78" path="res://_project/level/decoration/parallax_background.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cnyv0lr40ivep" path="res://_project/level/decoration/background_band.gd" id="2_1k7a1"]
+[ext_resource type="Resource" uid="uid://0jkvmj2jho07" path="res://_project/level/decoration/bands/band_horizon.tres" id="3_4t7gx"]
+[ext_resource type="Resource" uid="uid://d8twidhbjmb1" path="res://_project/level/decoration/bands/band_mid.tres" id="4_55wfr"]
+[ext_resource type="Resource" uid="uid://b7pbrakfi6f0j" path="res://_project/level/decoration/bands/band_near.tres" id="5_natt6"]
+
+[node name="ParallaxBackground" type="Node2D" unique_id=417727428]
+script = ExtResource("1_script")
+bands = Array[ExtResource("2_1k7a1")]([ExtResource("3_4t7gx"), ExtResource("4_55wfr"), ExtResource("5_natt6")])

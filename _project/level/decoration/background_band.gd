@@ -41,7 +41,6 @@ class_name BackgroundBand
 ## Maximum horizontal spacing between sprites when recycling.
 @export var max_spacing: float = 50.0
 
-
 func random_color() -> Color:
 	var h := randf_range(brown_hue_min, brown_hue_max)
 	var s := randf_range(brown_sat_min, brown_sat_max)

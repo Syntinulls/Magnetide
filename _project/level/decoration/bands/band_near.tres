@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="BackgroundBand" format=3 uid="uid://b7pbrakfi6f0j"]
 
-[ext_resource type="Script" uid="uid://cnyv0lr40ivep" path="res://_project/level/parallax_background/background_band.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://cnyv0lr40ivep" path="res://_project/level/decoration/background_band.gd" id="1_script"]
 
 [resource]
 script = ExtResource("1_script")

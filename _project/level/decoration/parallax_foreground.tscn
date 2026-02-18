@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bxms6n6xvqvjc"]
+
+[ext_resource type="Script" path="res://_project/level/decoration/parallax_foreground.gd" id="1_script"]
+
+[node name="ParallaxForeground" type="CanvasLayer"]
+script = ExtResource("1_script")
