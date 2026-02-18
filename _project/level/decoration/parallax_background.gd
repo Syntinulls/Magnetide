@@ -201,7 +201,8 @@ func _process(delta: float) -> void:
 	var horizon_y := horizon_y_ratio * screen_height
 	var bg_height := screen_height - horizon_y
 	
-	for band_index in range(_band_sprites.size()):
+	var band_count := mini(_band_sprites.size(), bands.size())
+	for band_index in range(band_count):
 		var sprites: Array = _band_sprites[band_index]
 		var band := bands[band_index]
 

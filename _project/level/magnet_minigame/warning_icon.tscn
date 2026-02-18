@@ -1,0 +1,9 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
+[ext_resource type="Script" path="res://_project/level/magnet_minigame/warning_icon.gd" id="2_script"]
+
+[node name="WarningIcon" type="Sprite2D"]
+texture = ExtResource("1_icon")
+scale = Vector2(0.5, 0.5)
+script = ExtResource("2_script")

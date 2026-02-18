@@ -6,10 +6,11 @@ class_name SalvageSpawner
 @export var spawn_x_ratio: float = 1.1
 ## The horizontal position ratio where salvage piles are despawned (left side of screen).
 @export var despawn_x_ratio: float = -0.052
-## Maximum random Y offset from surface_y to give slight variation.
-@export var y_jitter: float = 10.0
 
 @export_group("Spawning")
+## When true the spawner uses its own timer to create piles automatically.
+## Set to false when spawning is driven externally (e.g. by MagnetMinigame).
+@export var auto_spawn: bool = true
 ## Minimum time between spawns in seconds.
 @export var spawn_interval_min: float = 20.0
 ## Maximum time between spawns in seconds.
@@ -26,14 +27,10 @@ class_name SalvageSpawner
 @export var weight_legendary: float = 2.0
 
 @export_group("Salvage Properties")
-## Minimum uniform scale applied to salvage piles.
-@export var salvage_scale_min: float = 0.7
-## Maximum uniform scale applied to salvage piles.
-@export var salvage_scale_max: float = 1.1
-## Minimum rotation speed in radians per second applied to salvage piles.
-@export var salvage_rotation_speed_min: float = -1.5
-## Maximum rotation speed in radians per second applied to salvage piles.
-@export var salvage_rotation_speed_max: float = 1.5
+## Minimum height of salvage pile as ratio of viewport height.
+@export var pile_height_ratio_min: float = 0.125
+## Maximum height of salvage pile as ratio of viewport height.
+@export var pile_height_ratio_max: float = 0.15
 
 var _salvage_pile_scene: PackedScene
 var _spawn_timer: Timer
@@ -54,7 +51,8 @@ func _ready() -> void:
 	_spawn_timer.timeout.connect(_on_spawn_timer_timeout)
 	add_child(_spawn_timer)
 
-	_start_spawn_timer()
+	if auto_spawn:
+		_start_spawn_timer()
 
 
 func _get_level_speed() -> float:
@@ -67,6 +65,12 @@ func _get_screen_width() -> float:
 	if _viewport_anchor:
 		return _viewport_anchor.size.x
 	return get_viewport().get_visible_rect().size.x
+
+
+func _get_screen_height() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.y
+	return get_viewport().get_visible_rect().size.y
 
 
 func _get_spawn_x() -> float:
@@ -112,7 +116,8 @@ func _on_pile_removed() -> void:
 		_current_pile.deactivate()
 		_current_pile.queue_free()
 		_current_pile = null
-	_start_spawn_timer()
+	if auto_spawn:
+		_start_spawn_timer()
 
 
 func on_pile_acquired() -> void:
@@ -144,8 +149,29 @@ func _spawn_salvage() -> void:
 	_current_pile = _salvage_pile_scene.instantiate() as SalvagePile
 	add_child(_current_pile)
 
-	var spawn_y := _get_surface_y() + randf_range(-y_jitter, y_jitter)
-	var s := randf_range(salvage_scale_min, salvage_scale_max)
+	var spawn_y := _get_screen_height()  # Bottom of screen
+	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
 
-	_current_pile.activate(_pick_rarity(), Vector2(_get_spawn_x(), spawn_y), _level, s, rot)
+	_current_pile.activate(_pick_rarity(), Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
+
+
+## Spawn a salvage pile on demand (used by MagnetMinigame).
+## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
+## default off-screen location.  Returns the new SalvagePile instance.
+func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
+	if _current_pile and _current_pile.is_active:
+		_current_pile.deactivate()
+		_current_pile.queue_free()
+		_current_pile = null
+
+	_current_pile = _salvage_pile_scene.instantiate() as SalvagePile
+	add_child(_current_pile)
+
+	var spawn_x := custom_spawn_x if custom_spawn_x >= 0.0 else _get_spawn_x()
+	var spawn_y := _get_screen_height()  # Bottom of screen
+	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
+	var rot := randf_range(0.0, TAU)
+
+	_current_pile.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), _level, target_height, rot)
+	return _current_pile

@@ -26,20 +26,36 @@ func _ready() -> void:
 	deactivate()
 
 
-func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, new_scale: float, _new_rotation: float) -> void:
+func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, target_height: float, _new_rotation: float) -> void:
 	rarity = new_rarity
 	position = spawn_position
 	_level = level
-	scale = Vector2(new_scale, new_scale)
-	rotation = deg_to_rad(randf_range(-10.0, 10.0))  # Shallow random rotation
+	rotation = deg_to_rad(randf_range(-3.0, 3.0))  # Subtle random rotation
 
 	var sprite := $Sprite2D as Sprite2D
-	if sprite:
-		sprite.texture = _pile_textures[randi() % _pile_textures.size()]
-		sprite.modulate = RARITY_COLORS.get(rarity, Color.WHITE)
+	if sprite and _pile_textures.size() > 0:
+		var tex_idx := randi() % _pile_textures.size()
+		sprite.texture = _pile_textures[tex_idx]
+		
+		# Apply rarity color via shader tint_color parameter
+		var tint: Color = RARITY_COLORS.get(rarity, Color.WHITE)
+		if sprite.material:
+			var shader_mat := sprite.material as ShaderMaterial
+			if shader_mat:
+				shader_mat.set_shader_parameter("tint_color", tint)
+		
+		# Calculate uniform scale to achieve target height
+		var tex_size := sprite.texture.get_size()
+		if tex_size.y > 0:
+			var uniform_scale := target_height / tex_size.y
+			scale = Vector2(uniform_scale, uniform_scale)
+		
+		# Offset sprite so it's anchored at bottom center (extends upward from parent position)
+		sprite.offset = Vector2(0.0, -tex_size.y / 2.0)
 
 	is_active = true
 	visible = true
+	z_index = 5
 	set_process(true)
 
 

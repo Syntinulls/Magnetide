@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
+[ext_resource type="Script" path="res://_project/ship/magnet_lever.gd" id="2_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]
+size = Vector2(64, 64)
+
+[node name="MagnetLever" type="Area2D"]
+script = ExtResource("2_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="."]
+scale = Vector2(0.4, 0.4)
+texture = ExtResource("1_icon")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_lever")
