@@ -21,6 +21,8 @@ class_name LevelParallaxBackground
 ## Scroll speed ratio for the background (relative to level speed).
 @export var background_speed_ratio: float = 0.3
 
+const REFERENCE_HEIGHT: float = 1440.0  # Scale values are tuned for 1440p
+
 var _trash_textures: Array[Texture2D] = []
 var _level: Node = null
 var _viewport_anchor: ViewportAnchor = null
@@ -135,15 +137,23 @@ func _generate_bands() -> void:
 		bg.size = Vector2(screen_width, bg_height)
 		bg.position = Vector2(0, horizon_y)
 		
-		# Tile the texture
+		# Use TILE stretch mode - texture tiles based on size ratio
 		bg.stretch_mode = TextureRect.STRETCH_TILE
 		
 		# Apply perspective shader
 		var shader_material := ShaderMaterial.new()
 		shader_material.shader = _perspective_shader
 		shader_material.set_shader_parameter("scroll_offset", 0.0)
-		shader_material.set_shader_parameter("top_width_ratio", 1.0)
 		shader_material.set_shader_parameter("bottom_width_ratio", bottom_width_ratio)
+		# Calculate how many times texture tiles in each direction
+		var tex_size := background_texture.get_size()
+		var scale_factor := screen_height / REFERENCE_HEIGHT
+		var effective_tex_width := tex_size.x * scale_factor
+		var effective_tex_height := tex_size.y * scale_factor
+		var x_tiles := screen_width / effective_tex_width
+		var y_tiles := bg_height / effective_tex_height
+		shader_material.set_shader_parameter("x_tiles", x_tiles)
+		shader_material.set_shader_parameter("y_tiles", y_tiles)
 		bg.material = shader_material
 		
 		_perspective_background = bg
@@ -252,7 +262,10 @@ func _recycle_band_sprite(band: BackgroundBand, sprite: Sprite2D, band_index: in
 
 	var y_tolerance := (y_max - y_min) * 0.1
 	var rightmost := _get_rightmost_x_near_y(band_index, y, y_tolerance)
-	sprite.position.x = rightmost + randf_range(band.max_spacing * 0.5, band.max_spacing)
+	# Scale spacing relative to viewport width for resolution independence
+	var spacing_scale := _get_screen_width() / (REFERENCE_HEIGHT * 16.0 / 9.0)
+	var scaled_spacing := band.max_spacing * spacing_scale
+	sprite.position.x = rightmost + randf_range(scaled_spacing * 0.5, scaled_spacing)
 
 	_apply_y_based_properties(band, sprite, y)
 
@@ -278,7 +291,9 @@ func _apply_y_based_properties(band: BackgroundBand, sprite: Sprite2D, y: float)
 	var jitter := randf_range(-0.1, 0.1)
 	var adjusted_ratio := clampf(y_ratio + jitter, 0.0, 1.0)
 
-	var s := lerpf(band.scale_min, band.scale_max, adjusted_ratio)
+	# Scale relative to viewport height for resolution independence
+	var scale_factor := _get_screen_size().y / REFERENCE_HEIGHT
+	var s := lerpf(band.scale_min, band.scale_max, adjusted_ratio) * scale_factor
 	sprite.scale = Vector2(s, s)
 
 	var a := band.alpha * lerpf(0.7, 1.0, adjusted_ratio)

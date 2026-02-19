@@ -6,13 +6,11 @@
 script = ExtResource("1_script")
 y_min = 0.6
 y_max = 0.8
-scale_min = 0.18
-scale_max = 0.35
+scale_min = 0.36
+scale_max = 0.7
 alpha = 0.6
 brown_sat_max = 0.5
 brown_val_min = 0.25
 brown_val_max = 0.4
-speed_ratio_min = 0.15
-speed_ratio_max = 0.4
 sprite_count = 250
 max_spacing = 15.0

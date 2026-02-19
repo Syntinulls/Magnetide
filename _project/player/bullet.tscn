@@ -4,15 +4,15 @@
 [ext_resource type="Script" uid="uid://dmi2yiw4y2h6b" path="res://_project/player/bullet.gd" id="2_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_bullet"]
-size = Vector2(16, 6)
+size = Vector2(32, 12)
 
 [node name="Bullet" type="Area2D" unique_id=126119541]
 script = ExtResource("2_script")
-speed = 900.0
+speed = 1800.0
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1967103534]
 modulate = Color(1, 0.95, 0, 1)
-scale = Vector2(0.125, 0.046875)
+scale = Vector2(0.25, 0.09375)
 texture = ExtResource("1_icon")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1929668827]

@@ -5,10 +5,9 @@
 [ext_resource type="Script" uid="uid://djf0uwoikdhxk" path="res://_project/ship/magnet_lever.gd" id="3_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]
-size = Vector2(100, 42)
+size = Vector2(200, 84)
 
 [node name="MagnetLever" type="Area2D" unique_id=732799241]
-scale = Vector2(0.5, 0.5)
 script = ExtResource("3_script")
 
 [node name="HandlePivot" type="Node2D" parent="." unique_id=1265792638]
@@ -24,5 +23,6 @@ texture = ExtResource("1_base")
 offset = Vector2(0, -16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1306363612]
-position = Vector2(0, -21)
+visible = false
+position = Vector2(0, -42)
 shape = SubResource("RectangleShape2D_lever")

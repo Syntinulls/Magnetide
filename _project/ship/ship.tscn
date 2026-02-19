@@ -5,46 +5,44 @@
 [ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet_lever.tscn" id="3_lever"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
-size = Vector2(20, 347.93)
+size = Vector2(40, 497)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_right"]
-size = Vector2(22, 345.93)
+size = Vector2(44, 497)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_back"]
-size = Vector2(870, 20)
+size = Vector2(760, 40)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_front"]
-size = Vector2(865, 20)
+size = Vector2(760, 40)
 
 [node name="Ship" type="Node2D" unique_id=1033807799]
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
-scale = Vector2(0.5, 0.5)
 texture = ExtResource("1_back")
 
 [node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
-scale = Vector2(0.5, 0.5)
 texture = ExtResource("2_fore")
 
 [node name="Boundaries" type="StaticBody2D" parent="." unique_id=762309736]
-position = Vector2(0, -78.035)
-scale = Vector2(0.5, 0.5)
+visible = false
+position = Vector2(0, -237)
 
 [node name="LeftWall" type="CollisionShape2D" parent="Boundaries" unique_id=335042251]
-position = Vector2(-440, -73.965)
+position = Vector2(-400, -48.5)
 shape = SubResource("RectangleShape2D_left")
 
 [node name="RightWall" type="CollisionShape2D" parent="Boundaries" unique_id=859780882]
-position = Vector2(440, -72.965)
+position = Vector2(402, -48.5)
 shape = SubResource("RectangleShape2D_right")
 
 [node name="Ceiling" type="CollisionShape2D" parent="Boundaries" unique_id=1784236965]
-position = Vector2(0, -239.93)
+position = Vector2(0, -277)
 shape = SubResource("RectangleShape2D_back")
 
 [node name="Floor" type="CollisionShape2D" parent="Boundaries" unique_id=453568164]
-position = Vector2(-4, 90)
+position = Vector2(0, 180)
 shape = SubResource("RectangleShape2D_front")
 
 [node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
-position = Vector2(0, -38)
+position = Vector2(0, -77)

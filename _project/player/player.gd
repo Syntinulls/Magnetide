@@ -1,8 +1,8 @@
 extends CharacterBody2D
 
-@export var speed: float = 200.0
-@export var jump_velocity: float = -300.0
-@export var gravity: float = 800.0
+@export var speed: float = 400.0
+@export var jump_velocity: float = -600.0
+@export var gravity: float = 1600.0
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 

@@ -8,8 +8,8 @@ class_name LevelSkyline
 @export var speed_ratio: float = 0.1
 
 @export_group("Sprites")
-## Maximum height of skyline sprites in pixels (for the front layer).
-@export var max_height: float = 150.0
+## Maximum height of skyline sprites as ratio of viewport height (for the front layer).
+@export var max_height_ratio: float = 0.21
 
 @export_group("Layers")
 ## Number of skyline layers to render.
@@ -18,8 +18,8 @@ class_name LevelSkyline
 @export var layer_scale_falloff: float = 0.7
 ## Darkness multiplier for each subsequent layer (0.0 = black, 1.0 = no change).
 @export var layer_tint_falloff: float = 0.6
-## Maximum random horizontal offset for layer starting positions.
-@export var layer_offset_range: float = 300.0
+## Maximum random horizontal offset for layer starting positions as ratio of viewport width.
+@export var layer_offset_range_ratio: float = 0.23
 
 var _skyline_textures: Array[Texture2D] = []
 var _layer_sprites: Array[Array] = []  # Array of sprite arrays, one per layer
@@ -99,6 +99,7 @@ func _generate_skyline() -> void:
 		var layer_z := -50 - layer_index  # First layer (index 0) has highest z_index, renders on top
 		
 		# Random offset for this layer
+		var layer_offset_range := layer_offset_range_ratio * screen_width
 		var layer_offset := randf_range(-layer_offset_range, layer_offset_range)
 		_layer_offsets.insert(0, layer_offset)  # Insert at front to match layer order
 		
@@ -115,6 +116,7 @@ func _generate_skyline() -> void:
 
 func _get_layer_scale(layer_index: int) -> float:
 	# First layer (index 0) is full scale, subsequent layers are progressively smaller
+	var max_height := max_height_ratio * _get_screen_size().y
 	return max_height * pow(layer_scale_falloff, layer_index)
 
 

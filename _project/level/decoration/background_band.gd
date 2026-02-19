@@ -29,12 +29,6 @@ class_name BackgroundBand
 ## Maximum value/brightness for brown tints.
 @export var brown_val_max: float = 0.5
 
-@export_group("Speed")
-## Minimum speed multiplier at top of band (y_min).
-@export var speed_ratio_min: float = 0.3
-## Maximum speed multiplier at bottom of band (y_max).
-@export var speed_ratio_max: float = 0.5
-
 @export_group("Pool")
 ## Number of sprites in this band's object pool.
 @export var sprite_count: int = 100

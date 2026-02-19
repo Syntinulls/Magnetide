@@ -8,7 +8,7 @@
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
-[ext_resource type="PackedScene" path="res://_project/level/magnet_minigame/magnet_minigame.tscn" id="11_minigame"]
+[ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/level/magnet_minigame/magnet_minigame.tscn" id="11_minigame"]
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
@@ -20,20 +20,22 @@ fill_to = Vector2(0.5, 1)
 
 [node name="Level" type="Node2D" unique_id=843647019]
 script = ExtResource("1_script")
-level_speed = 2000.0
+level_speed = 4000.0
 surface_y_ratio = 0.9
 haze_falloff = 3.0
 ship_y_ratio = 0.5
 
-[node name="GradientBackground" type="TextureRect" parent="." unique_id=730537582]
-z_index = -1000
+[node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=143395628]
+layer = -1000
+
+[node name="GradientBackground" type="TextureRect" parent="CanvasLayer" unique_id=730537582]
 anchors_preset = -1
 anchor_right = 1.0
 anchor_bottom = 0.5
-offset_right = 1920.0
-offset_bottom = 540.0
+offset_bottom = 64.0
 grow_horizontal = 2
-grow_vertical = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
 texture = SubResource("GradientTexture2D_bg")
 
 [node name="ParallaxViewportContainer" type="SubViewportContainer" parent="." unique_id=113078436]
@@ -74,7 +76,7 @@ ground_y_ratio = 0.9
 position = Vector2(0, 94.5)
 
 [node name="Player" parent="Ship" unique_id=155842924 instance=ExtResource("10_5p64y")]
-position = Vector2(2, -70)
+position = Vector2(4, -140)
 
 [node name="MagnetMinigame" parent="." unique_id=110391114 instance=ExtResource("11_minigame")]
 cooldown_min = 8.0
