@@ -6,6 +6,8 @@ signal lever_flipped()
 var _is_available: bool = false
 var _player_in_range: bool = false
 
+@onready var _handle_pivot: Node2D = $HandlePivot
+
 
 func _ready() -> void:
 	body_entered.connect(_on_body_entered)
@@ -24,7 +26,9 @@ func _process(_delta: float) -> void:
 
 func set_available(available: bool) -> void:
 	_is_available = available
-	visible = available
+	# Base is always visible, only toggle handle visibility
+	if _handle_pivot:
+		_handle_pivot.visible = available
 
 
 func _on_body_entered(body: Node2D) -> void:

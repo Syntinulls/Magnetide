@@ -1,12 +1,16 @@
 extends Sprite2D
 class_name WarningIcon
 
-enum Phase { OFF, GREEN, YELLOW, RED }
+enum Phase { OFF, YELLOW, ORANGE, RED }
 
-const YELLOW_BLINK_RATE: float = 3.0
+const ORANGE_BLINK_RATE: float = 3.0
 const RED_BLINK_RATE: float = 8.0
 
-var current_phase: Phase = Phase.GREEN
+const ALERT_YELLOW: Texture2D = preload("res://_project/ui/sprites/alert_y.png")
+const ALERT_ORANGE: Texture2D = preload("res://_project/ui/sprites/alert_o.png")
+const ALERT_RED: Texture2D = preload("res://_project/ui/sprites/alert_r.png")
+
+var current_phase: Phase = Phase.YELLOW
 var _blink_timer: float = 0.0
 var _blink_visible: bool = true
 
@@ -16,10 +20,10 @@ func _ready() -> void:
 
 
 func _process(delta: float) -> void:
-	if current_phase == Phase.OFF or current_phase == Phase.GREEN:
+	if current_phase == Phase.OFF or current_phase == Phase.YELLOW:
 		return
 
-	var rate := YELLOW_BLINK_RATE if current_phase == Phase.YELLOW else RED_BLINK_RATE
+	var rate := ORANGE_BLINK_RATE if current_phase == Phase.ORANGE else RED_BLINK_RATE
 	_blink_timer += delta
 	var blink_interval := 1.0 / rate
 	if _blink_timer >= blink_interval:
@@ -38,12 +42,12 @@ func set_phase(phase: Phase) -> void:
 	match phase:
 		Phase.OFF:
 			visible = false
-		Phase.GREEN:
-			visible = true
-			modulate = Color.GREEN
 		Phase.YELLOW:
 			visible = true
-			modulate = Color.YELLOW
+			texture = ALERT_YELLOW
+		Phase.ORANGE:
+			visible = true
+			texture = ALERT_ORANGE
 		Phase.RED:
 			visible = true
-			modulate = Color.RED
+			texture = ALERT_RED

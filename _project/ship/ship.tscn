@@ -2,7 +2,7 @@
 
 [ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="1_back"]
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
-[ext_resource type="PackedScene" path="res://_project/ship/magnet_lever.tscn" id="3_lever"]
+[ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet_lever.tscn" id="3_lever"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
 size = Vector2(20, 347.93)
@@ -46,5 +46,5 @@ shape = SubResource("RectangleShape2D_back")
 position = Vector2(-4, 90)
 shape = SubResource("RectangleShape2D_front")
 
-[node name="MagnetLever" parent="." instance=ExtResource("3_lever")]
-position = Vector2(0, -70)
+[node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
+position = Vector2(0, -38)

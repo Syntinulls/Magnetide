@@ -14,10 +14,10 @@ enum State { COOLDOWN, WARNING, DECELERATING, PARKED, ACCELERATING }
 @export var warning_duration_min: float = 8.0
 ## Maximum warning window duration in seconds.
 @export var warning_duration_max: float = 10.0
-## Fraction of warning window that shows green (0.0–1.0).
-@export var green_phase_ratio: float = 0.4
-## Fraction of warning window that shows yellow blink (0.0–1.0).
-@export var yellow_phase_ratio: float = 0.3
+## Fraction of warning window that shows yellow (0.0–1.0).
+@export var yellow_phase_ratio: float = 0.4
+## Fraction of warning window that shows orange blink (0.0–1.0).
+@export var orange_phase_ratio: float = 0.3
 
 @export_group("Ship Control")
 ## X position where the salvage pile spawns as a ratio of viewport width (e.g., 2.0 = 2 screens to the right).
@@ -107,7 +107,7 @@ func _start_warning() -> void:
 	_state = State.WARNING
 	_warning_duration = randf_range(warning_duration_min, warning_duration_max)
 	_warning_elapsed = 0.0
-	_warning_icon.set_phase(WarningIcon.Phase.GREEN)
+	_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
 	if _magnet_lever:
 		_magnet_lever.set_available(true)
 
@@ -171,13 +171,13 @@ func _process_warning(delta: float) -> void:
 		return
 
 	var ratio := _warning_elapsed / _warning_duration
-	var green_end := green_phase_ratio
-	var yellow_end := green_phase_ratio + yellow_phase_ratio
+	var yellow_end := yellow_phase_ratio
+	var orange_end := yellow_phase_ratio + orange_phase_ratio
 
-	if ratio < green_end:
-		_warning_icon.set_phase(WarningIcon.Phase.GREEN)
-	elif ratio < yellow_end:
+	if ratio < yellow_end:
 		_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
+	elif ratio < orange_end:
+		_warning_icon.set_phase(WarningIcon.Phase.ORANGE)
 	else:
 		_warning_icon.set_phase(WarningIcon.Phase.RED)
 

@@ -1,17 +1,28 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://d3mmmb0dgd71p"]
 
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
-[ext_resource type="Script" path="res://_project/ship/magnet_lever.gd" id="2_script"]
+[ext_resource type="Texture2D" uid="uid://c8g86e5exbal" path="res://_project/objects/sprites/lever_base.png" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://bc1u81scciy3r" path="res://_project/objects/sprites/lever_handle.png" id="2_handle"]
+[ext_resource type="Script" uid="uid://djf0uwoikdhxk" path="res://_project/ship/magnet_lever.gd" id="3_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]
-size = Vector2(64, 64)
+size = Vector2(100, 42)
 
-[node name="MagnetLever" type="Area2D"]
-script = ExtResource("2_script")
+[node name="MagnetLever" type="Area2D" unique_id=732799241]
+scale = Vector2(0.5, 0.5)
+script = ExtResource("3_script")
 
-[node name="Sprite2D" type="Sprite2D" parent="."]
-scale = Vector2(0.4, 0.4)
-texture = ExtResource("1_icon")
+[node name="HandlePivot" type="Node2D" parent="." unique_id=1265792638]
+position = Vector2(0, -5)
+rotation = 0.785398
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+[node name="Handle" type="Sprite2D" parent="HandlePivot" unique_id=990325710]
+texture = ExtResource("2_handle")
+offset = Vector2(0, -41)
+
+[node name="Base" type="Sprite2D" parent="." unique_id=670853145]
+texture = ExtResource("1_base")
+offset = Vector2(0, -16)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1306363612]
+position = Vector2(0, -21)
 shape = SubResource("RectangleShape2D_lever")
