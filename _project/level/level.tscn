@@ -23,6 +23,7 @@ script = ExtResource("1_script")
 level_speed = 2000.0
 surface_y_ratio = 0.9
 haze_falloff = 3.0
+ship_y_ratio = 0.5
 
 [node name="GradientBackground" type="TextureRect" parent="." unique_id=730537582]
 z_index = -1000
