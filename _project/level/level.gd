@@ -24,8 +24,8 @@ var viewport_anchor: ViewportAnchor
 var _fog_overlay: TextureRect = null
 var _fog_shader: Shader = null
 
-@onready var _parallax_viewport: SubViewport = $ParallaxViewportContainer/ParallaxViewport
-@onready var _parallax_container: SubViewportContainer = $ParallaxViewportContainer
+@onready var _parallax_viewport: SubViewport = $ParallaxCanvasLayer/ParallaxViewportContainer/ParallaxViewport
+@onready var _parallax_container: SubViewportContainer = $ParallaxCanvasLayer/ParallaxViewportContainer
 
 var surface_y: float:
 	get:
@@ -34,6 +34,8 @@ var surface_y: float:
 		return 500.0
 
 @onready var ship: Node2D = $Ship
+@onready var ui_root: Control = $UICanvas/UIRoot
+@onready var camera: Camera2D = $Camera2D
 
 
 func _enter_tree() -> void:
@@ -116,3 +118,7 @@ func _update_positions() -> void:
 	
 	if ship:
 		ship.position = viewport_anchor.get_position(ship_x_ratio, ship_y_ratio)
+	
+	# Position camera at screen center (for DRAG_CENTER anchor mode)
+	if camera:
+		camera.position = viewport_anchor.size * 0.5

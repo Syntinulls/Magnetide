@@ -160,6 +160,13 @@ func _spawn_salvage() -> void:
 ## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
 ## default off-screen location.  Returns the new SalvagePile instance.
 func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
+	return spawn_on_demand_with_rarity(custom_spawn_x, _pick_rarity())
+
+
+## Spawn a salvage pile on demand with a specific rarity.
+## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
+## default off-screen location.  Returns the new SalvagePile instance.
+func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rarity) -> SalvagePile:
 	if _current_pile and _current_pile.is_active:
 		_current_pile.deactivate()
 		_current_pile.queue_free()
@@ -173,5 +180,5 @@ func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
 
-	_current_pile.activate(_pick_rarity(), Vector2(spawn_x, spawn_y), _level, target_height, rot)
+	_current_pile.activate(rarity, Vector2(spawn_x, spawn_y), _level, target_height, rot)
 	return _current_pile

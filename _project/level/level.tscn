@@ -27,6 +27,7 @@ ship_y_ratio = 0.5
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=143395628]
 layer = -1000
+follow_viewport_enabled = true
 
 [node name="GradientBackground" type="TextureRect" parent="CanvasLayer" unique_id=730537582]
 anchors_preset = -1
@@ -38,8 +39,11 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 texture = SubResource("GradientTexture2D_bg")
 
-[node name="ParallaxViewportContainer" type="SubViewportContainer" parent="." unique_id=113078436]
-z_index = -100
+[node name="ParallaxCanvasLayer" type="CanvasLayer" parent="." unique_id=113078435]
+layer = -100
+follow_viewport_enabled = true
+
+[node name="ParallaxViewportContainer" type="SubViewportContainer" parent="ParallaxCanvasLayer" unique_id=113078436]
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
@@ -49,17 +53,17 @@ size_flags_horizontal = 3
 size_flags_vertical = 3
 stretch = true
 
-[node name="ParallaxViewport" type="SubViewport" parent="ParallaxViewportContainer" unique_id=123456789]
+[node name="ParallaxViewport" type="SubViewport" parent="ParallaxCanvasLayer/ParallaxViewportContainer" unique_id=123456789]
 transparent_bg = true
 handle_input_locally = false
-size = Vector2i(2, 2)
+size = Vector2i(2560, 1440)
 render_target_update_mode = 4
 
-[node name="ParallaxBackground" parent="ParallaxViewportContainer/ParallaxViewport" unique_id=538346253 instance=ExtResource("2_parallax")]
+[node name="ParallaxBackground" parent="ParallaxCanvasLayer/ParallaxViewportContainer/ParallaxViewport" unique_id=538346253 instance=ExtResource("2_parallax")]
 background_texture = ExtResource("3_ip1iq")
 bottom_width_ratio = 3.0
 
-[node name="TrashSkyline" parent="ParallaxViewportContainer/ParallaxViewport" unique_id=1138561827 instance=ExtResource("7_skyline")]
+[node name="TrashSkyline" parent="ParallaxCanvasLayer/ParallaxViewportContainer/ParallaxViewport" unique_id=1138561827 instance=ExtResource("7_skyline")]
 speed_ratio = 0.05
 
 [node name="SalvageSpawner" parent="." unique_id=2088533275 instance=ExtResource("3_salvage_spawner")]
@@ -70,6 +74,7 @@ pile_height_ratio_min = 0.18
 pile_height_ratio_max = 0.2
 
 [node name="ParallaxForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
+follow_viewport_enabled = true
 ground_y_ratio = 0.9
 
 [node name="Ship" parent="." unique_id=1033807799 instance=ExtResource("9_rr5ri")]
@@ -82,6 +87,20 @@ position = Vector2(4, -140)
 cooldown_min = 8.0
 cooldown_max = 10.0
 pile_spawn_x_ratio = 5.0
+timescale_slowdown_time = 1.0
+timescale_speedup_time = 1.0
+zoom_tween_time = 1.0
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1705480197]
-anchor_mode = 0
+
+[node name="UICanvas" type="CanvasLayer" parent="." unique_id=2001001001]
+layer = 10
+
+[node name="UIRoot" type="Control" parent="UICanvas" unique_id=2001001002]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

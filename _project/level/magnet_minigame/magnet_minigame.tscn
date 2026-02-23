@@ -3,12 +3,22 @@
 [ext_resource type="Script" uid="uid://bb4skj1j2xvxn" path="res://_project/level/magnet_minigame/magnet_minigame.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://_project/level/magnet_minigame/warning_icon.tscn" id="2_warning_icon"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="3_j1fl6"]
+[ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/level/magnet_minigame/activation_minigame.gd" id="4_activation"]
 
 [node name="MagnetMinigame" type="Node2D" unique_id=1609762701]
 script = ExtResource("1_script")
+vignette_intensity = 0.8
 
 [node name="CooldownTimer" type="Timer" parent="." unique_id=402845569]
 one_shot = true
 
 [node name="WarningIcon" parent="." unique_id=1635851840 instance=ExtResource("2_warning_icon")]
 texture = ExtResource("3_j1fl6")
+
+[node name="ActivationMinigame" type="Control" parent="." unique_id=1175685071]
+layout_mode = 3
+anchors_preset = 0
+script = ExtResource("4_activation")
+cog_max_speed_ratio = 1.0
+green_threshold_ratio = 0.04
+yellow_threshold_ratio = 0.06
