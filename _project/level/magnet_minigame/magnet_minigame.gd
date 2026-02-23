@@ -38,8 +38,8 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, PARKED, ACCELERATING }
 @export var timescale_speedup_time: float = 0.3
 ## X offset from lever position for player during activation (negative = left of lever).
 @export var player_lever_offset_x: float = -80.0
-## Y offset above lever for activation minigame UI.
-@export var activation_ui_offset_y: float = -200.0
+## Y position of activation minigame UI as ratio of screen height (0 = top, 1 = bottom).
+@export var activation_ui_y_ratio: float = 0.25
 ## Camera zoom level during activation minigame (higher = more zoomed in).
 @export var activation_zoom: float = 1.5
 ## Time to zoom in/out.
@@ -222,9 +222,9 @@ func _start_activation_minigame() -> void:
 func _position_activation_ui() -> void:
 	if not _activation_minigame or not _viewport_anchor:
 		return
-	# Position the minigame UI at center-top area of screen (screen-relative)
+	# Position the minigame UI at center of screen horizontally, configurable Y ratio
 	var screen_size := _viewport_anchor.size
-	_activation_minigame.position = Vector2(screen_size.x * 0.5, screen_size.y * 0.35)
+	_activation_minigame.position = Vector2(screen_size.x * 0.5, screen_size.y * activation_ui_y_ratio)
 
 
 func _on_activation_completed(success: bool) -> void:

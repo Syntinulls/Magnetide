@@ -44,9 +44,9 @@ func _ready() -> void:
 	if _level and "viewport_anchor" in _level:
 		_viewport_anchor = _level.viewport_anchor
 		_viewport_anchor.viewport_changed.connect(_on_viewport_changed)
-
-	# Defer generation to ensure viewport size is correct
-	call_deferred("_generate_bands")
+	
+	# Always defer initial generation - _regenerate_bands clears first so it's safe
+	call_deferred("_regenerate_bands")
 
 
 func _find_level_node() -> Node:
@@ -60,6 +60,7 @@ func _find_level_node() -> Node:
 
 
 func _on_viewport_changed(_size: Vector2) -> void:
+	# Always regenerate on viewport change - _regenerate_bands clears existing nodes first
 	_regenerate_bands()
 
 
