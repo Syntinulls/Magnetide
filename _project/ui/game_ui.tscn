@@ -1,0 +1,40 @@
+[gd_scene format=3 uid="uid://4p6nir6m115b"]
+
+[ext_resource type="PackedScene" path="res://_project/ship/magnet/departure_timer_ui.tscn" id="1_timer"]
+[ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
+[ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
+[ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
+
+[node name="GameUI" type="Control" unique_id=1333566747]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="DepartureTimerUI" parent="." unique_id=1764653111 instance=ExtResource("1_timer")]
+anchors_preset = 0
+
+[node name="WarningIconAnchor" type="Control" parent="." unique_id=255438115]
+layout_mode = 1
+anchor_left = 0.95
+anchor_top = 0.5
+anchor_right = 0.95
+anchor_bottom = 0.5
+mouse_filter = 2
+
+[node name="WarningIcon" parent="WarningIconAnchor" unique_id=746767526 instance=ExtResource("2_warning")]
+texture = ExtResource("4_alert")
+
+[node name="ActivationMinigame" type="Control" parent="." unique_id=747004123]
+anchors_preset = 0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_activation")
+marker_appear_delay = 0.2
+cog_max_speed_ratio = 0.8
+cog_accel_time = 4.0
+green_threshold_ratio = 0.05
+yellow_threshold_ratio = 0.8

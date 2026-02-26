@@ -8,7 +8,8 @@
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
-[ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/level/magnet_minigame/magnet_minigame.tscn" id="11_minigame"]
+[ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
+[ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
@@ -23,7 +24,7 @@ script = ExtResource("1_script")
 level_speed = 4000.0
 surface_y_ratio = 0.9
 haze_falloff = 3.0
-ship_y_ratio = 0.5
+ship_y_ratio = 0.45
 
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=143395628]
 layer = -1000
@@ -87,6 +88,7 @@ position = Vector2(4, -140)
 cooldown_min = 8.0
 cooldown_max = 10.0
 pile_spawn_x_ratio = 5.0
+magnet_lower_distance = 0.0
 timescale_slowdown_time = 1.0
 timescale_speedup_time = 1.0
 zoom_tween_time = 1.0
@@ -104,3 +106,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="GameUI" parent="UICanvas/UIRoot" unique_id=1979352710 instance=ExtResource("12_game_ui")]
+layout_mode = 1

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="LootTable" format=3 uid="uid://dxu3f5ycaeaii"]
+
+[ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_tpjsi"]
+[ext_resource type="Resource" path="res://_project/items/wires.tres" id="2_wires"]
+[ext_resource type="Resource" path="res://_project/items/battery.tres" id="3_battery"]
+[ext_resource type="Resource" path="res://_project/items/motor.tres" id="4_motor"]
+
+[resource]
+script = ExtResource("1_script")
+items = Array[ExtResource("1_tpjsi")]([ExtResource("2_wires"), ExtResource("3_battery"), ExtResource("4_motor")])

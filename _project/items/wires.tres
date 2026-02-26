@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://wires001"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://b1gtnenr3lybx" path="res://_project/items/sprites/salvage_item_wires.png" id="2_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+item_name = "Copper Wires"
+value = 20
+chance = 20.0
+sprite = ExtResource("2_sprite")
+area = Vector2(80, 80)
+hitbox_size = Vector2(60, 60)

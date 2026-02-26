@@ -2,7 +2,8 @@
 
 [ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="1_back"]
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
-[ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet_lever.tscn" id="3_lever"]
+[ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet/magnet_lever.tscn" id="3_lever"]
+[ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="4_magnet"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
 size = Vector2(40, 497)
@@ -46,3 +47,11 @@ shape = SubResource("RectangleShape2D_front")
 
 [node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
 position = Vector2(0, -77)
+
+[node name="ActivationMinigameAnchor" type="Marker2D" parent="." unique_id=143007536]
+position = Vector2(0, -350)
+
+[node name="Magnet" parent="." unique_id=143007537 instance=ExtResource("4_magnet")]
+position = Vector2(0, 160)
+lower_distance = 0.0
+lower_raise_time = 0.0

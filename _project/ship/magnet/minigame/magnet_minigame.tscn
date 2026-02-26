@@ -1,0 +1,11 @@
+[gd_scene format=3 uid="uid://b515agjrpm56a"]
+
+[ext_resource type="Script" uid="uid://bb4skj1j2xvxn" path="res://_project/ship/magnet/minigame/magnet_minigame.gd" id="1_script"]
+
+[node name="MagnetMinigame" type="Node2D" unique_id=1609762701]
+script = ExtResource("1_script")
+activation_zoom = 2.0
+vignette_intensity = 0.8
+
+[node name="CooldownTimer" type="Timer" parent="." unique_id=402845569]
+one_shot = true

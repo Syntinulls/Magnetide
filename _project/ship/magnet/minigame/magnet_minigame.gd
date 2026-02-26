@@ -1,7 +1,7 @@
 extends Node2D
 class_name MagnetMinigame
 
-enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, PARKED, ACCELERATING }
+enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACCELERATING }
 
 @export_group("Cooldown")
 ## Minimum time between magnet windows in seconds.
@@ -24,10 +24,18 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, PARKED, ACCELERATING }
 @export var pile_spawn_x_ratio: float = 2.0
 ## Deceleration rate in pixels per second squared. Higher = faster stop.
 @export var decel_rate: float = 400.0
-## Time in seconds the ship stays parked above the salvage pile.
-@export var park_duration: float = 5.0
 ## Time in seconds for the ship to accelerate back to normal speed.
 @export var accel_time: float = 2.0
+
+@export_group("Magnet Looting")
+## Duration of the departure timer in seconds (how long the player can loot).
+@export var departure_duration: float = 30.0
+## Force applied to pull salvage items toward the magnet.
+@export var magnet_pull_force: float = 800.0
+## Time between pulling new items from the pile.
+@export var magnet_pull_interval: float = 2.5
+## Distance the magnet lowers when activated.
+@export var magnet_lower_distance: float = 80.0
 
 @export_group("Activation Minigame")
 ## Target timescale during activation minigame (0.01 = almost paused).
@@ -38,20 +46,12 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, PARKED, ACCELERATING }
 @export var timescale_speedup_time: float = 0.3
 ## X offset from lever position for player during activation (negative = left of lever).
 @export var player_lever_offset_x: float = -80.0
-## Y position of activation minigame UI as ratio of screen height (0 = top, 1 = bottom).
-@export var activation_ui_y_ratio: float = 0.25
 ## Camera zoom level during activation minigame (higher = more zoomed in).
 @export var activation_zoom: float = 1.5
 ## Time to zoom in/out.
 @export var zoom_tween_time: float = 0.5
 ## Vignette/darkening intensity during activation (0-1).
 @export var vignette_intensity: float = 0.6
-
-@export_group("Warning Icon Placement")
-## X position of the warning icon as a ratio of viewport width.
-@export var icon_x_ratio: float = 0.95
-## Y position of the warning icon as a ratio of viewport height.
-@export var icon_y_ratio: float = 0.5
 
 var _state: State = State.COOLDOWN
 var _base_level_speed: float = 0.0
@@ -60,7 +60,8 @@ var _warning_elapsed: float = 0.0
 var _decel_elapsed: float = 0.0
 var _current_decel_time: float = 0.0
 var _accel_elapsed: float = 0.0
-var _park_elapsed: float = 0.0
+var _drop_elapsed: float = 0.0
+const DROP_DURATION: float = 1.0  # Time to wait for items to fall
 var _current_pile: SalvagePile = null
 var _timescale_transition_elapsed: float = 0.0
 var _restoring_timescale: bool = false
@@ -83,6 +84,10 @@ var _viewport_anchor: ViewportAnchor = null
 var _activation_minigame: Node = null  # ActivationMinigame
 var _player: Node2D = null  # Player
 var _ui_root: Control = null
+var _ship: Node2D = null
+var _magnet: Magnet = null
+var _departure_timer_ui: DepartureTimerUI = null
+var _loot_table: LootTable = null
 
 @onready var _cooldown_timer: Timer = $CooldownTimer
 
@@ -98,25 +103,27 @@ func _ready() -> void:
 
 	_salvage_spawner = _level.get_node_or_null("SalvageSpawner") as SalvageSpawner
 
-	_warning_icon = $WarningIcon as WarningIcon
-	_activation_minigame = get_node_or_null("ActivationMinigame")
-	if _activation_minigame:
-		_activation_minigame.minigame_completed.connect(_on_activation_completed)
-		_activation_minigame.marker_hit_success.connect(_on_marker_hit_success)
-	
-	# Reparent UI elements to the UI canvas for proper screen-relative positioning
-	_reparent_ui_elements()
+	# Defer UI lookup to ensure GameUI nodes are ready
+	call_deferred("_setup_ui_references")
 
-	var ship := _level.get_node_or_null("Ship")
-	if ship:
-		_player = ship.get_node_or_null("Player")
-		_magnet_lever = ship.get_node_or_null("MagnetLever") as MagnetLever
+	_ship = _level.get_node_or_null("Ship")
+	if _ship:
+		_player = _ship.get_node_or_null("Player")
+		_magnet_lever = _ship.get_node_or_null("MagnetLever") as MagnetLever
 		if _magnet_lever:
 			_magnet_lever.lever_flipped.connect(_on_lever_flipped)
+			_magnet_lever.lever_flipped_back.connect(_on_lever_flipped_back)
 
-	if _viewport_anchor:
-		_viewport_anchor.viewport_changed.connect(_on_viewport_changed)
-		call_deferred("_update_icon_position")
+	# Get Magnet from ship scene
+	if _ship:
+		_magnet = _ship.get_node_or_null("Magnet") as Magnet
+		if _magnet:
+			_magnet.pull_force = magnet_pull_force
+			_magnet.pull_interval = magnet_pull_interval
+			_magnet.lower_distance = magnet_lower_distance
+
+	# Load master loot table with all items
+	_loot_table = preload("res://_project/items/loot_tables/loot_table.tres")
 
 	_cooldown_timer.one_shot = true
 	_cooldown_timer.timeout.connect(_on_cooldown_finished)
@@ -130,24 +137,43 @@ func _ready() -> void:
 	# Create vignette overlay
 	_setup_vignette_overlay()
 
+
+func _setup_ui_references() -> void:
+	# Get ui_root here since @onready vars aren't ready during _ready()
+	if _level and "ui_root" in _level:
+		_ui_root = _level.ui_root
+	
+	# Find UI elements from the GameUI scene in ui_root
+	if _ui_root:
+		var game_ui := _ui_root.get_node_or_null("GameUI")
+		if game_ui:
+			_warning_icon = game_ui.get_node_or_null("WarningIconAnchor/WarningIcon") as WarningIcon
+			_activation_minigame = game_ui.get_node_or_null("ActivationMinigame")
+			_departure_timer_ui = game_ui.get_node_or_null("DepartureTimerUI") as DepartureTimerUI
+	
+	if _activation_minigame:
+		_activation_minigame.minigame_completed.connect(_on_activation_completed)
+		_activation_minigame.marker_hit_success.connect(_on_marker_hit_success)
+		# Pass the world-space anchor marker for camera tracking (marker is in ship)
+		if _ship:
+			var anchor := _ship.get_node_or_null("ActivationMinigameAnchor") as Marker2D
+			if anchor:
+				_activation_minigame.set_anchor_marker(anchor)
+	
+	if _departure_timer_ui:
+		_departure_timer_ui.timer_expired.connect(_on_departure_timer_expired)
+	
+	# Start cooldown now that UI references are set up
 	_start_cooldown()
-
-
-func _on_viewport_changed(_size: Vector2) -> void:
-	_update_icon_position()
-
-
-func _update_icon_position() -> void:
-	if _viewport_anchor and _warning_icon:
-		_warning_icon.position = _viewport_anchor.get_position(icon_x_ratio, icon_y_ratio)
 
 
 func _start_cooldown() -> void:
 	_state = State.COOLDOWN
-	_warning_icon.set_phase(WarningIcon.Phase.OFF)
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.OFF)
 	if _magnet_lever:
 		_magnet_lever.set_available(false)
-		_magnet_lever.set_handle_visible(false)
+		# Lever stays visible at all times
 	var interval := randf_range(cooldown_min, cooldown_max)
 	_cooldown_timer.start(interval)
 
@@ -160,27 +186,28 @@ func _start_warning() -> void:
 	_state = State.WARNING
 	_warning_duration = randf_range(warning_duration_min, warning_duration_max)
 	_warning_elapsed = 0.0
-	_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
 	if _magnet_lever:
 		_magnet_lever.set_available(true)
-		_magnet_lever.set_handle_visible(true)
 
 
 func _on_lever_flipped() -> void:
 	if _state != State.WARNING:
 		return
-	_warning_icon.set_phase(WarningIcon.Phase.OFF)
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.OFF)
 	if _magnet_lever:
 		_magnet_lever.set_available(false)
-		# Keep lever visible - minigame will show it
 	_start_activation_minigame()
 
 
 func _on_warning_expired() -> void:
-	_warning_icon.set_phase(WarningIcon.Phase.OFF)
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.OFF)
 	if _magnet_lever:
 		_magnet_lever.set_available(false)
-		_magnet_lever.set_handle_visible(false)
+		# Lever stays visible at all times
 
 	if _salvage_spawner:
 		_salvage_spawner.spawn_on_demand()
@@ -205,26 +232,16 @@ func _start_activation_minigame() -> void:
 	# Position player at lever spot
 	_position_player_at_lever()
 	
-	# Reset lever to start position and make it visible
+	# Reset lever to start position
 	if _magnet_lever:
 		_magnet_lever.reset_rotation()
-		_magnet_lever.set_handle_visible(true)
 	
 	# Start the activation minigame UI
 	if _activation_minigame:
 		_activation_minigame.start_minigame(_pending_rarity)
-		_position_activation_ui()
 	
 	# Start camera zoom and vignette effects
 	_start_activation_effects()
-
-
-func _position_activation_ui() -> void:
-	if not _activation_minigame or not _viewport_anchor:
-		return
-	# Position the minigame UI at center of screen horizontally, configurable Y ratio
-	var screen_size := _viewport_anchor.size
-	_activation_minigame.position = Vector2(screen_size.x * 0.5, screen_size.y * activation_ui_y_ratio)
 
 
 func _on_activation_completed(success: bool) -> void:
@@ -247,16 +264,15 @@ func _on_activation_completed(success: bool) -> void:
 	if _salvage_spawner:
 		_current_pile = _salvage_spawner.spawn_on_demand_with_rarity(spawn_x, _pending_rarity)
 	
-	# Hide lever and reset rotation after minigame
-	if _magnet_lever:
-		_magnet_lever.set_handle_visible(false)
-		_magnet_lever.reset_rotation()
-	
 	if success:
-		# Player won - decelerate to stop over pile
+		# Player won - set lever to flipped state for looting abort
+		if _magnet_lever:
+			_magnet_lever.set_flipped(true)
 		_start_deceleration()
 	else:
-		# Player lost - pile scrolls past, go to cooldown
+		# Player lost - pile scrolls past, reset lever and go to cooldown
+		if _magnet_lever:
+			_magnet_lever.reset_rotation()
 		_start_cooldown()
 
 
@@ -282,8 +298,10 @@ func _process(delta: float) -> void:
 			_process_activation(delta)
 		State.DECELERATING:
 			_process_deceleration(delta)
-		State.PARKED:
-			_process_parked(delta)
+		State.LOOTING:
+			pass  # Magnet and departure timer handle themselves
+		State.DROPPING:
+			_process_dropping(delta)
 		State.ACCELERATING:
 			_process_acceleration(delta)
 
@@ -309,12 +327,13 @@ func _process_warning(delta: float) -> void:
 	var yellow_end := yellow_phase_ratio
 	var orange_end := yellow_phase_ratio + orange_phase_ratio
 
-	if ratio < yellow_end:
-		_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
-	elif ratio < orange_end:
-		_warning_icon.set_phase(WarningIcon.Phase.ORANGE)
-	else:
-		_warning_icon.set_phase(WarningIcon.Phase.RED)
+	if _warning_icon:
+		if ratio < yellow_end:
+			_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
+		elif ratio < orange_end:
+			_warning_icon.set_phase(WarningIcon.Phase.ORANGE)
+		else:
+			_warning_icon.set_phase(WarningIcon.Phase.RED)
 
 
 func _process_deceleration(delta: float) -> void:
@@ -326,13 +345,65 @@ func _process_deceleration(delta: float) -> void:
 	if t >= 1.0:
 		_set_level_speed(0.0)
 		_align_pile_to_ship()
-		_state = State.PARKED
-		_park_elapsed = 0.0
+		_start_looting()
 
 
-func _process_parked(delta: float) -> void:
-	_park_elapsed += delta
-	if _park_elapsed >= park_duration:
+func _start_looting() -> void:
+	_state = State.LOOTING
+
+	# Activate magnet to lower and start pulling items
+	if _magnet and _current_pile and _loot_table:
+		_magnet.activate(_loot_table, _current_pile, 0)
+
+	# Start departure timer
+	if _departure_timer_ui:
+		_departure_timer_ui.start(departure_duration)
+
+	# Make lever available so player can flip it back to abort
+	if _magnet_lever:
+		_magnet_lever.set_available(true)
+
+
+func _end_looting() -> void:
+	if _state != State.LOOTING:
+		return
+
+	# Stop departure timer
+	if _departure_timer_ui:
+		_departure_timer_ui.stop()
+
+	# Deactivate magnet - items will fall
+	if _magnet:
+		_magnet.deactivate()
+
+	# Flip lever back to starting position
+	if _magnet_lever:
+		_magnet_lever.set_available(false)
+		_magnet_lever.flip_back_with_tween()
+
+	# Wait for items to drop before accelerating
+	_state = State.DROPPING
+	_drop_elapsed = 0.0
+
+
+func _on_lever_flipped_back() -> void:
+	if _state != State.LOOTING:
+		return
+	# Player manually aborted looting
+	_end_looting()
+
+
+func _on_departure_timer_expired() -> void:
+	if _state != State.LOOTING:
+		return
+	# Timer ran out - auto-end looting
+	_end_looting()
+
+
+func _process_dropping(delta: float) -> void:
+	_drop_elapsed += delta
+	if _drop_elapsed >= DROP_DURATION:
+		# Items have had time to fall, now accelerate
 		_state = State.ACCELERATING
 		_accel_elapsed = 0.0
 
@@ -356,15 +427,13 @@ func _set_level_speed(speed: float) -> void:
 func _align_pile_to_ship() -> void:
 	if not _current_pile or not _current_pile.is_active:
 		return
-	var ship := _level.get_node_or_null("Ship")
-	if ship:
-		_current_pile.global_position.x = ship.global_position.x
+	if _ship:
+		_current_pile.global_position.x = _ship.global_position.x
 
 
 func _get_ship_x() -> float:
-	var ship := _level.get_node_or_null("Ship")
-	if ship:
-		return ship.global_position.x
+	if _ship:
+		return _ship.global_position.x
 	if _viewport_anchor:
 		return _viewport_anchor.get_center_x()
 	return 960.0
@@ -413,19 +482,6 @@ func _set_player_input_enabled(enabled: bool) -> void:
 		_player.input_enabled = enabled
 
 
-func _reparent_ui_elements() -> void:
-	if not _ui_root:
-		return
-	
-	# Reparent warning icon to UI canvas
-	if _warning_icon:
-		_warning_icon.reparent(_ui_root)
-	
-	# Reparent activation minigame to UI canvas
-	if _activation_minigame:
-		_activation_minigame.reparent(_ui_root)
-
-
 func _setup_vignette_overlay() -> void:
 	# Create a BackBufferCopy to capture the screen for the shader
 	var canvas_layer := CanvasLayer.new()
@@ -439,7 +495,7 @@ func _setup_vignette_overlay() -> void:
 	_vignette_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	
 	# Load and apply the vignette + grayscale shader
-	var shader := preload("res://_project/level/magnet_minigame/vignette_grayscale.gdshader")
+	var shader := preload("res://_project/ship/magnet/minigame/vignette_grayscale.gdshader")
 	var shader_material := ShaderMaterial.new()
 	shader_material.shader = shader
 	shader_material.set_shader_parameter("vignette_intensity", 0.0)

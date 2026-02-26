@@ -65,6 +65,11 @@ var _yellow_allowance_container: Node2D
 # Yellow tracking
 var _yellows_used: int = 0
 
+# Camera tracking
+var _anchor_marker: Marker2D = null
+var _camera: Camera2D = null
+var _base_scale: Vector2 = Vector2.ONE
+
 # Textures
 var _bar_texture: Texture2D
 var _cog_texture: Texture2D
@@ -77,12 +82,12 @@ var _icon_yellow_filled: Texture2D
 
 
 func _ready() -> void:
-	_bar_texture = preload("res://_project/level/magnet_minigame/sprites/magnetgame_bar.png")
-	_cog_texture = preload("res://_project/level/magnet_minigame/sprites/magnetgame_cog.png")
-	_marker_texture = preload("res://_project/level/magnet_minigame/sprites/magnetgame_marker_animation.png")
-	_icon_neutral = preload("res://_project/level/magnet_minigame/sprites/magnetgame_icon_neutral.png")
-	_icon_success = preload("res://_project/level/magnet_minigame/sprites/magnetgame_icon_success.png")
-	_icon_failure = preload("res://_project/level/magnet_minigame/sprites/magnetgame_icon_failure.png")
+	_bar_texture = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_bar.png")
+	_cog_texture = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_cog.png")
+	_marker_texture = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_marker_animation.png")
+	_icon_neutral = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_neutral.png")
+	_icon_success = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_success.png")
+	_icon_failure = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_failure.png")
 	# Use neutral icon for yellow allowance (modulated to show state)
 	_icon_yellow_empty = _icon_neutral
 	_icon_yellow_filled = _icon_neutral
@@ -220,6 +225,9 @@ func _generate_marker_positions() -> void:
 
 
 func _process(delta: float) -> void:
+	# Update position and scale based on camera
+	_update_camera_tracking()
+	
 	# Compensate marker animation speed for timescale
 	_update_marker_animation_speed()
 	
@@ -230,6 +238,28 @@ func _process(delta: float) -> void:
 			_process_playing(delta)
 		State.SHOWING_RESULT:
 			_process_showing_result(delta)
+
+
+## Set the world-space anchor marker for camera tracking.
+func set_anchor_marker(marker: Marker2D) -> void:
+	_anchor_marker = marker
+
+
+func _update_camera_tracking() -> void:
+	# Get camera if not cached
+	if not _camera:
+		_camera = get_viewport().get_camera_2d()
+	
+	if not _anchor_marker or not _camera:
+		return
+	
+	# Get the marker's screen position using canvas transform
+	var screen_pos := _anchor_marker.get_global_transform_with_canvas().origin
+	position = screen_pos
+	
+	# Scale with camera zoom (zoom > 1 means zoomed in, so UI should be larger)
+	var zoom := _camera.zoom
+	scale = _base_scale * zoom
 
 
 func _update_marker_animation_speed() -> void:
@@ -263,7 +293,7 @@ func _place_marker(index: int) -> void:
 	# Create animated marker sprite (12 frames, 1 row, 12fps)
 	var marker := AnimatedSprite2D.new()
 	var frames := SpriteFrames.new()
-	frames.add_animation("default")
+	# SpriteFrames already has "default" animation, just configure it
 	frames.set_animation_speed("default", 12.0)
 	frames.set_animation_loop("default", true)
 	

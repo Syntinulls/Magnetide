@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://by1lcje8004y5"
-path="res://.godot/imported/magnetgame_bar.png-52e4846946ee09cd7b92355a43e5545a.ctex"
+uid="uid://b1gtnenr3lybx"
+path="res://.godot/imported/salvage_item_wires.png-1a604952d9aecb583c109d2b05441ca3.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/magnetgame_bar.png"
-dest_files=["res://.godot/imported/magnetgame_bar.png-52e4846946ee09cd7b92355a43e5545a.ctex"]
+source_file="res://_project/items/sprites/salvage_item_wires.png"
+dest_files=["res://.godot/imported/salvage_item_wires.png-1a604952d9aecb583c109d2b05441ca3.ctex"]
 
 [params]
 

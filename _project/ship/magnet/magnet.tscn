@@ -1,0 +1,83 @@
+[gd_scene format=3 uid="uid://magnet00001"]
+
+[ext_resource type="Script" uid="uid://5kgnhphl5jei" path="res://_project/ship/magnet/magnet.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cdvmasewgya5d" path="res://_project/ship/magnet/sprites/magnet_effect_animation.png" id="2_effect_sprite"]
+
+[sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_cone"]
+points = PackedVector2Array(-50, 0, 50, 0, 70, 300, -70, 300)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(100, 20)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame0"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(0, 0, 1072, 560)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame1"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(1072, 0, 1072, 560)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame2"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(2144, 0, 1072, 560)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame3"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(3216, 0, 1072, 560)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame4"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(4288, 0, 1072, 560)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_frame5"]
+atlas = ExtResource("2_effect_sprite")
+region = Rect2(5360, 0, 1072, 560)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_effect"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_frame5")
+}],
+"loop": true,
+"name": &"default",
+"speed": 12.0
+}]
+
+[node name="Magnet" type="Node2D" unique_id=1946411833]
+script = ExtResource("1_script")
+
+[node name="Area2D" type="Area2D" parent="." unique_id=1424949377]
+collision_layer = 0
+collision_mask = 2
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=590321452]
+shape = SubResource("ConvexPolygonShape2D_cone")
+
+[node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=2074830324]
+collision_layer = 4
+collision_mask = 0
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=178050141]
+position = Vector2(0, 10)
+shape = SubResource("RectangleShape2D_body")
+
+[node name="EffectAnimation" type="AnimatedSprite2D" parent="." unique_id=1393945074]
+visible = false
+sprite_frames = SubResource("SpriteFrames_effect")
+offset = Vector2(0, 280)
