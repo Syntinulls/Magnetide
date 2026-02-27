@@ -8,13 +8,32 @@ class_name Player
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 
 var input_enabled: bool = true
+var facing_right: bool = false
 
-@onready var gun: Sprite2D = $Gun
-@onready var muzzle: Marker2D = $Gun/Muzzle
+@onready var body_sprite: Sprite2D = $BodySprite
+@onready var arm_sprite: Sprite2D = $ArmSprite
+@onready var muzzle: Marker2D = $ArmSprite/Gun/Muzzle
+
+
+func _ready() -> void:
+	_apply_facing(facing_right)
+
+
+func _apply_facing(new_facing_right: bool) -> void:
+	facing_right = new_facing_right
+	scale.x = -1.0 if facing_right else 1.0
+
 
 func _physics_process(delta: float) -> void:
 	if input_enabled:
-		gun.look_at(get_global_mouse_position())
+		var mouse_pos := get_global_mouse_position()
+		var new_facing := mouse_pos.x > global_position.x
+		if new_facing != facing_right:
+			_apply_facing(new_facing)
+		
+		var to_mouse := mouse_pos - arm_sprite.global_position
+		var angle := to_mouse.angle() - PI
+		arm_sprite.rotation = clampf(angle, -PI / 2, PI / 2)
 		
 		if Input.is_action_just_pressed("shoot"):
 			shoot()
