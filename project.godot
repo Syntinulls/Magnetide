@@ -81,6 +81,10 @@ interact={
 ]
 }
 
+[autoload]
+
+Magnetide="*res://_project/autoloads/magnetide.gd"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"

@@ -4,6 +4,7 @@
 [ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
+[ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
 
 [node name="GameUI" type="Control" unique_id=1333566747]
 layout_mode = 3
@@ -27,6 +28,19 @@ mouse_filter = 2
 
 [node name="WarningIcon" parent="WarningIconAnchor" unique_id=746767526 instance=ExtResource("2_warning")]
 texture = ExtResource("4_alert")
+
+[node name="ThreatUIAnchor" type="Control" parent="." unique_id=255438200]
+layout_mode = 1
+anchor_left = 0.05
+anchor_top = 0.5
+anchor_right = 0.05
+anchor_bottom = 0.5
+offset_left = -64.0
+offset_right = -64.0
+mouse_filter = 2
+
+[node name="ThreatUI" parent="ThreatUIAnchor" unique_id=1071300406 instance=ExtResource("5_threat_ui")]
+layout_mode = 0
 
 [node name="ActivationMinigame" type="Control" parent="." unique_id=747004123]
 anchors_preset = 0

@@ -15,6 +15,8 @@ signal all_items_released()
 @export var lower_distance: float = 80.0
 ## Time to lower/raise the magnet in seconds.
 @export var lower_raise_time: float = 0.8
+## Threat penalty per magnet activation. Affected by upgrades.
+@export var threat_penalty: float = 10.0
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []

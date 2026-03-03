@@ -79,5 +79,6 @@ shape = SubResource("RectangleShape2D_body")
 
 [node name="EffectAnimation" type="AnimatedSprite2D" parent="." unique_id=1393945074]
 visible = false
+position = Vector2(0, -42)
 sprite_frames = SubResource("SpriteFrames_effect")
 offset = Vector2(0, 280)

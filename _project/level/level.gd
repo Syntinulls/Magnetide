@@ -36,6 +36,7 @@ var surface_y: float:
 @onready var ship: Node2D = $Ship
 @onready var ui_root: Control = $UICanvas/UIRoot
 @onready var camera: Camera2D = $Camera2D
+@onready var threat: ThreatManager = $ThreatManager
 
 
 func _enter_tree() -> void:

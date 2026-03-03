@@ -1,0 +1,91 @@
+[gd_scene format=3 uid="uid://xvdq1n1dmdxy"]
+
+[ext_resource type="Script" uid="uid://chh6ywbwalyj4" path="res://_project/level/threat/threat_ui.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dpqyy3sy26kb3" path="res://_project/level/threat/sprites/threatbar_bar.png" id="2_bar"]
+[ext_resource type="Texture2D" uid="uid://5o2kblg12sgk" path="res://_project/level/threat/sprites/threatbar_progress.png" id="3_progress"]
+[ext_resource type="Texture2D" uid="uid://b8ovbqnvnhtoa" path="res://_project/level/threat/sprites/threatbar_ticker_color.png" id="4_ticker_color"]
+[ext_resource type="Texture2D" uid="uid://ctxbihpvmjiph" path="res://_project/level/threat/sprites/threatbar_ticker_shape.png" id="5_ticker_shape"]
+[ext_resource type="Texture2D" uid="uid://4k6dvdjxqj33" path="res://_project/level/threat/sprites/threat_0_color.png" id="6_icon0_color"]
+[ext_resource type="Texture2D" uid="uid://8vmx82mk2w8f" path="res://_project/level/threat/sprites/threat_0_shape.png" id="7_icon0_shape"]
+[ext_resource type="Texture2D" uid="uid://cq01ldr8m8m4n" path="res://_project/level/threat/sprites/threat_1_color.png" id="8_icon1_color"]
+[ext_resource type="Texture2D" uid="uid://d3d3jv7a5nd2p" path="res://_project/level/threat/sprites/threat_1_shape.png" id="9_icon1_shape"]
+[ext_resource type="Texture2D" uid="uid://bbph4x1ui4603" path="res://_project/level/threat/sprites/threat_2_color.png" id="10_icon2_color"]
+[ext_resource type="Texture2D" uid="uid://c3uswttrxs7fa" path="res://_project/level/threat/sprites/threat_2_shape.png" id="11_icon2_shape"]
+[ext_resource type="Texture2D" uid="uid://dggh12y7itvko" path="res://_project/level/threat/sprites/threat_3_color.png" id="12_icon3_color"]
+[ext_resource type="Texture2D" uid="uid://butkk7qnq3dat" path="res://_project/level/threat/sprites/threat_3_shape.png" id="13_icon3_shape"]
+[ext_resource type="Texture2D" uid="uid://qrlx0khjse6m" path="res://_project/level/threat/sprites/threat_4_color.png" id="14_icon4_color"]
+[ext_resource type="Texture2D" uid="uid://cxngi1wy7mpn5" path="res://_project/level/threat/sprites/threat_4_shape.png" id="15_icon4_shape"]
+
+[node name="ThreatUI" type="Control" unique_id=1080569451]
+layout_mode = 3
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Bar" type="TextureProgressBar" parent="." unique_id=1633022269]
+layout_mode = 0
+offset_left = -25.0
+offset_top = -250.0
+offset_right = 25.0
+offset_bottom = 250.0
+mouse_filter = 2
+fill_mode = 3
+texture_over = ExtResource("2_bar")
+texture_progress = ExtResource("3_progress")
+texture_progress_offset = Vector2(0, 5)
+
+[node name="Ticker" type="Node2D" parent="." unique_id=499452569]
+position = Vector2(32, 257.5)
+
+[node name="Color" type="Sprite2D" parent="Ticker" unique_id=2098825132]
+texture = ExtResource("4_ticker_color")
+
+[node name="Shape" type="Sprite2D" parent="Ticker" unique_id=530636234]
+texture = ExtResource("5_ticker_shape")
+
+[node name="Icons" type="Node2D" parent="." unique_id=868952430]
+
+[node name="Icon0" type="Node2D" parent="Icons" unique_id=1131199721]
+position = Vector2(88, 250)
+
+[node name="Color" type="Sprite2D" parent="Icons/Icon0" unique_id=1961168236]
+texture = ExtResource("6_icon0_color")
+
+[node name="Shape" type="Sprite2D" parent="Icons/Icon0" unique_id=398649204]
+texture = ExtResource("7_icon0_shape")
+
+[node name="Icon1" type="Node2D" parent="Icons" unique_id=685564509]
+position = Vector2(88, 125)
+
+[node name="Color" type="Sprite2D" parent="Icons/Icon1" unique_id=1510758125]
+texture = ExtResource("8_icon1_color")
+
+[node name="Shape" type="Sprite2D" parent="Icons/Icon1" unique_id=297932390]
+texture = ExtResource("9_icon1_shape")
+
+[node name="Icon2" type="Node2D" parent="Icons" unique_id=1670527385]
+position = Vector2(88, 0)
+
+[node name="Color" type="Sprite2D" parent="Icons/Icon2" unique_id=1907376357]
+texture = ExtResource("10_icon2_color")
+
+[node name="Shape" type="Sprite2D" parent="Icons/Icon2" unique_id=1105154129]
+texture = ExtResource("11_icon2_shape")
+
+[node name="Icon3" type="Node2D" parent="Icons" unique_id=1471745889]
+position = Vector2(88, -125)
+
+[node name="Color" type="Sprite2D" parent="Icons/Icon3" unique_id=2068336349]
+texture = ExtResource("12_icon3_color")
+
+[node name="Shape" type="Sprite2D" parent="Icons/Icon3" unique_id=512332997]
+texture = ExtResource("13_icon3_shape")
+
+[node name="Icon4" type="Node2D" parent="Icons" unique_id=710903086]
+position = Vector2(88, -250)
+
+[node name="Color" type="Sprite2D" parent="Icons/Icon4" unique_id=518409727]
+texture = ExtResource("14_icon4_color")
+
+[node name="Shape" type="Sprite2D" parent="Icons/Icon4" unique_id=599271107]
+texture = ExtResource("15_icon4_shape")

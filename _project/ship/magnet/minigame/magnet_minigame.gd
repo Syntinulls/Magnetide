@@ -355,6 +355,10 @@ func _start_looting() -> void:
 	if _magnet and _current_pile and _loot_table:
 		_magnet.activate(_loot_table, _current_pile, 0)
 
+	# Increase threat from magnet activation
+	if _magnet and Magnetide.level and Magnetide.level.threat:
+		Magnetide.level.threat.add_threat(_magnet.threat_penalty)
+
 	# Start departure timer
 	if _departure_timer_ui:
 		_departure_timer_ui.start(departure_duration)
