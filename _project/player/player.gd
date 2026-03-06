@@ -1,14 +1,21 @@
 extends CharacterBody2D
 class_name Player
 
+enum Weapon { GUN, MAGNET_GUN }
+
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
+const GunTexture: Texture2D = preload("res://_project/player/guy_gun.png")
+const MagnetGunTexture: Texture2D = preload("res://_project/player/guy_magnetgun.png")
+const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 
 var input_enabled: bool = true
 var facing_right: bool = false
+var current_weapon: Weapon = Weapon.GUN
+var magnet_effect: Sprite2D = null
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var arm_sprite: Sprite2D = $ArmSprite
@@ -28,6 +35,7 @@ const ARM_POSITION_X: float = 12.56
 const GUN_OFFSET_X: float = -15.125
 const GUN_ROTATION: float = -0.14660765
 const MUZZLE_POSITION_X: float = -55.915
+
 
 func _apply_facing(new_facing_right: bool) -> void:
 	facing_right = new_facing_right
@@ -69,8 +77,18 @@ func _physics_process(delta: float) -> void:
 			arm_rotation = -arm_rotation
 		arm_sprite.rotation = arm_rotation
 		
-		if Input.is_action_just_pressed("shoot"):
-			shoot()
+		if Input.is_action_just_pressed("swap_weapon"):
+			swap_weapon()
+		
+		match current_weapon:
+			Weapon.GUN:
+				if Input.is_action_just_pressed("shoot"):
+					shoot()
+			Weapon.MAGNET_GUN:
+				if Input.is_action_just_pressed("shoot"):
+					magnetize()
+				elif Input.is_action_just_released("shoot"):
+					stop_magnetize()
 		
 		if Input.is_action_just_pressed("move_jump") and is_on_floor():
 			velocity.y = jump_velocity
@@ -85,9 +103,34 @@ func _physics_process(delta: float) -> void:
 	
 	move_and_slide()
 
+func swap_weapon() -> void:
+	if current_weapon == Weapon.GUN:
+		current_weapon = Weapon.MAGNET_GUN
+		gun_sprite.texture = MagnetGunTexture
+	else:
+		current_weapon = Weapon.GUN
+		gun_sprite.texture = GunTexture
+		stop_magnetize()
+
+
 func shoot() -> void:
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()
 	bullet.rotation = bullet.direction.angle()
 	get_tree().current_scene.add_child(bullet)
+
+
+func magnetize() -> void:
+	if magnet_effect != null:
+		return
+	magnet_effect = Sprite2D.new()
+	magnet_effect.texture = MagnetEffectTexture
+	magnet_effect.scale = Vector2(0.5, 0.5)
+	muzzle.add_child(magnet_effect)
+
+
+func stop_magnetize() -> void:
+	if magnet_effect != null:
+		magnet_effect.queue_free()
+		magnet_effect = null
