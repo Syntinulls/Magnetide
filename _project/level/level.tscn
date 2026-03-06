@@ -9,8 +9,10 @@
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
+[ext_resource type="PackedScene" path="res://_project/enemies/enemy.tscn" id="12_0ditq"]
 [ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
-[ext_resource type="Script" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
+[ext_resource type="Resource" uid="uid://cn0vfgi3l8a37" path="res://_project/enemies/worm/worm_data.tres" id="13_12w7p"]
+[ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
@@ -111,5 +113,10 @@ mouse_filter = 2
 [node name="GameUI" parent="UICanvas/UIRoot" unique_id=1979352710 instance=ExtResource("12_game_ui")]
 layout_mode = 1
 
-[node name="ThreatManager" type="Node" parent="."]
+[node name="ThreatManager" type="Node" parent="." unique_id=1026313138]
 script = ExtResource("13_threat")
+
+[node name="Enemy" parent="." unique_id=45131909 instance=ExtResource("12_0ditq")]
+position = Vector2(1985, 365)
+motion_mode = 1
+data = ExtResource("13_12w7p")

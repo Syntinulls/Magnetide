@@ -6,9 +6,9 @@ enum Weapon { GUN, MAGNET_GUN }
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
+@export var weapon: WeaponData
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
-const GunTexture: Texture2D = preload("res://_project/player/guy_gun.png")
 const MagnetGunTexture: Texture2D = preload("res://_project/player/guy_magnetgun.png")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 
@@ -16,14 +16,17 @@ var input_enabled: bool = true
 var facing_right: bool = false
 var current_weapon: Weapon = Weapon.GUN
 var magnet_effect: Sprite2D = null
+var _fire_cooldown: float = 0.0
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var arm_sprite: Sprite2D = $ArmSprite
-@onready var gun_sprite: Sprite2D = $ArmSprite/Gun
-@onready var muzzle: Marker2D = $ArmSprite/Gun/Muzzle
+@onready var weapon_sprite: Sprite2D = $ArmSprite/Weapon
+@onready var muzzle: Marker2D = $ArmSprite/Weapon/Muzzle
 
 
 func _ready() -> void:
+	if weapon and weapon.weapon_sprite:
+		weapon_sprite.texture = weapon.weapon_sprite
 	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
@@ -32,26 +35,26 @@ func _ready() -> void:
 
 const ARM_OFFSET_X: float = -13.585
 const ARM_POSITION_X: float = 12.56
-const GUN_OFFSET_X: float = -15.125
-const GUN_ROTATION: float = -0.14660765
-const MUZZLE_POSITION_X: float = -55.915
 
 
 func _apply_facing(new_facing_right: bool) -> void:
 	facing_right = new_facing_right
 	body_sprite.flip_h = facing_right
 	arm_sprite.flip_h = facing_right
-	gun_sprite.flip_h = facing_right
+	weapon_sprite.flip_h = facing_right
 	# Negate x-offset and x-position when flipped to keep pivot point correct
 	var offset_mult := -1.0 if facing_right else 1.0
 	arm_sprite.offset.x = ARM_OFFSET_X * offset_mult
 	arm_sprite.position.x = ARM_POSITION_X * offset_mult
-	gun_sprite.offset.x = GUN_OFFSET_X * offset_mult
-	gun_sprite.rotation = GUN_ROTATION * offset_mult
-	muzzle.position.x = MUZZLE_POSITION_X * offset_mult
+	if weapon:
+		weapon_sprite.offset = Vector2(weapon.weapon_offset.x * offset_mult, weapon.weapon_offset.y)
+		weapon_sprite.rotation = weapon.weapon_rotation * offset_mult
+		muzzle.position = Vector2(weapon.muzzle_position.x * offset_mult, weapon.muzzle_position.y)
 
 
 func _physics_process(delta: float) -> void:
+	if _fire_cooldown > 0.0:
+		_fire_cooldown -= delta
 	if input_enabled:
 		var mouse_pos := get_global_mouse_position()
 		
@@ -82,7 +85,7 @@ func _physics_process(delta: float) -> void:
 		
 		match current_weapon:
 			Weapon.GUN:
-				if Input.is_action_just_pressed("shoot"):
+				if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
 					shoot()
 			Weapon.MAGNET_GUN:
 				if Input.is_action_just_pressed("shoot"):
@@ -106,18 +109,25 @@ func _physics_process(delta: float) -> void:
 func swap_weapon() -> void:
 	if current_weapon == Weapon.GUN:
 		current_weapon = Weapon.MAGNET_GUN
-		gun_sprite.texture = MagnetGunTexture
+		weapon_sprite.texture = MagnetGunTexture
 	else:
 		current_weapon = Weapon.GUN
-		gun_sprite.texture = GunTexture
+		if weapon and weapon.weapon_sprite:
+			weapon_sprite.texture = weapon.weapon_sprite
 		stop_magnetize()
 
 
 func shoot() -> void:
+	if not weapon:
+		return
+	_fire_cooldown = 1.0 / weapon.fire_rate
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()
-	bullet.rotation = bullet.direction.angle()
+	bullet.damage = weapon.damage
+	bullet.speed = weapon.bullet_speed
+	if weapon.bullet_sprite:
+		bullet.get_node("Sprite2D").texture = weapon.bullet_sprite
 	get_tree().current_scene.add_child(bullet)
 
 

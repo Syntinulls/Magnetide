@@ -1,15 +1,17 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
 [ext_resource type="Script" uid="uid://b1dkmgbfujbh4" path="res://_project/player/player.gd" id="2_script"]
+[ext_resource type="Resource" uid="uid://co3cc0u82ptt3" path="res://_project/player/weapons/rifle/rifle.tres" id="2_unxfp"]
 [ext_resource type="Texture2D" uid="uid://dn7ayr3n1snet" path="res://_project/player/guy_body.png" id="3_body"]
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/guy_arm.png" id="4_arm"]
-[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/guy_gun.png" id="5_gun"]
+[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/weapons/rifle/rifle.png" id="5_gun"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(52, 112)
 
-[node name="Player" type="CharacterBody2D" unique_id=1017700510]
+[node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
 script = ExtResource("2_script")
+weapon = ExtResource("2_unxfp")
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]
 texture = ExtResource("3_body")
@@ -23,12 +25,12 @@ position = Vector2(12.56, -8.88)
 texture = ExtResource("4_arm")
 offset = Vector2(-13.585, 8.13)
 
-[node name="Gun" type="Sprite2D" parent="ArmSprite" unique_id=1625981676]
+[node name="Weapon" type="Sprite2D" parent="ArmSprite" unique_id=1625981676]
 show_behind_parent = true
 position = Vector2(-2.485, 15.465)
 rotation = -0.14660765
 texture = ExtResource("5_gun")
 offset = Vector2(-15.125, 0.39)
 
-[node name="Muzzle" type="Marker2D" parent="ArmSprite/Gun" unique_id=1724757782]
+[node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
 position = Vector2(-55.915, -4.695)

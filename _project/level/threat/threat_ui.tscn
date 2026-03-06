@@ -49,6 +49,7 @@ texture = ExtResource("5_ticker_shape")
 position = Vector2(88, 250)
 
 [node name="Color" type="Sprite2D" parent="Icons/Icon0" unique_id=1961168236]
+modulate = Color(0.608, 1, 0.388, 1)
 texture = ExtResource("6_icon0_color")
 
 [node name="Shape" type="Sprite2D" parent="Icons/Icon0" unique_id=398649204]
@@ -58,6 +59,7 @@ texture = ExtResource("7_icon0_shape")
 position = Vector2(88, 125)
 
 [node name="Color" type="Sprite2D" parent="Icons/Icon1" unique_id=1510758125]
+modulate = Color(1, 0.933, 0.388, 1)
 texture = ExtResource("8_icon1_color")
 
 [node name="Shape" type="Sprite2D" parent="Icons/Icon1" unique_id=297932390]
@@ -67,6 +69,7 @@ texture = ExtResource("9_icon1_shape")
 position = Vector2(88, 0)
 
 [node name="Color" type="Sprite2D" parent="Icons/Icon2" unique_id=1907376357]
+modulate = Color(1, 0.729, 0.455, 1)
 texture = ExtResource("10_icon2_color")
 
 [node name="Shape" type="Sprite2D" parent="Icons/Icon2" unique_id=1105154129]
@@ -76,6 +79,7 @@ texture = ExtResource("11_icon2_shape")
 position = Vector2(88, -125)
 
 [node name="Color" type="Sprite2D" parent="Icons/Icon3" unique_id=2068336349]
+modulate = Color(1, 0.486, 0.486, 1)
 texture = ExtResource("12_icon3_color")
 
 [node name="Shape" type="Sprite2D" parent="Icons/Icon3" unique_id=512332997]
@@ -85,6 +89,7 @@ texture = ExtResource("13_icon3_shape")
 position = Vector2(88, -250)
 
 [node name="Color" type="Sprite2D" parent="Icons/Icon4" unique_id=518409727]
+modulate = Color(0.745, 0.486, 1, 1)
 texture = ExtResource("14_icon4_color")
 
 [node name="Shape" type="Sprite2D" parent="Icons/Icon4" unique_id=599271107]

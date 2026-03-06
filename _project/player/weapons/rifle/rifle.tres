@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://co3cc0u82ptt3"]
+
+[ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/player/weapons/rifle/bullet_1.png" id="1_pxyta"]
+[ext_resource type="Script" uid="uid://disu6sbcbpkf2" path="res://_project/player/weapon_data.gd" id="2_0ot25"]
+[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/weapons/rifle/rifle.png" id="3_vl06k"]
+
+[resource]
+script = ExtResource("2_0ot25")
+weapon_name = "Rifle"
+weapon_sprite = ExtResource("3_vl06k")
+bullet_sprite = ExtResource("1_pxyta")

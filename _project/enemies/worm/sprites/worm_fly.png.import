@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dw3tx5nn36drf"
-path="res://.godot/imported/guy_gun.png-e943e92d4f16303b4d2820bbf1a210a3.ctex"
+uid="uid://cigcfq2dv8fo2"
+path="res://.godot/imported/worm_fly.png-6e93b768ddeae01cb01ea93521a18f8e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_gun.png"
-dest_files=["res://.godot/imported/guy_gun.png-e943e92d4f16303b4d2820bbf1a210a3.ctex"]
+source_file="res://_project/enemies/worm/sprites/worm_fly.png"
+dest_files=["res://.godot/imported/worm_fly.png-6e93b768ddeae01cb01ea93521a18f8e.ctex"]
 
 [params]
 

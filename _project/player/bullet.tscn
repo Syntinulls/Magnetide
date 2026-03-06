@@ -7,12 +7,12 @@
 size = Vector2(32, 12)
 
 [node name="Bullet" type="Area2D" unique_id=126119541]
+collision_layer = 2
+collision_mask = 4
 script = ExtResource("2_script")
 speed = 1800.0
 
 [node name="Sprite2D" type="Sprite2D" parent="." unique_id=1967103534]
-modulate = Color(1, 0.95, 0, 1)
-scale = Vector2(0.25, 0.09375)
 texture = ExtResource("1_icon")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1929668827]
