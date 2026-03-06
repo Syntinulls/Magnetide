@@ -19,6 +19,7 @@ var magnet_effect: Sprite2D = null
 var _fire_cooldown: float = 0.0
 
 @onready var body_sprite: Sprite2D = $BodySprite
+@onready var legs_sprite: AnimatedSprite2D = $LegsSprite
 @onready var arm_sprite: Sprite2D = $ArmSprite
 @onready var weapon_sprite: Sprite2D = $ArmSprite/Weapon
 @onready var muzzle: Marker2D = $ArmSprite/Weapon/Muzzle
@@ -40,6 +41,7 @@ const ARM_POSITION_X: float = 12.56
 func _apply_facing(new_facing_right: bool) -> void:
 	facing_right = new_facing_right
 	body_sprite.flip_h = facing_right
+	legs_sprite.flip_h = facing_right
 	arm_sprite.flip_h = facing_right
 	weapon_sprite.flip_h = facing_right
 	# Negate x-offset and x-position when flipped to keep pivot point correct
@@ -105,6 +107,34 @@ func _physics_process(delta: float) -> void:
 		velocity.y += gravity * delta
 	
 	move_and_slide()
+	
+	_update_leg_animation()
+
+
+func _update_leg_animation() -> void:
+	var current_anim := legs_sprite.animation
+	
+	if not is_on_floor():
+		legs_sprite.speed_scale = 1.0
+		if velocity.y < 0.0:
+			if current_anim != "bend":
+				legs_sprite.play("bend")
+		else:
+			if current_anim != "bend":
+				legs_sprite.play("bend")
+		return
+	
+	var is_moving: bool = abs(velocity.x) > 0.1
+	if is_moving:
+		var moving_right: bool = velocity.x > 0.0
+		var walking_backwards: bool = moving_right != facing_right
+		if current_anim != "walk":
+			legs_sprite.play("walk")
+		legs_sprite.speed_scale = -1.0 if walking_backwards else 1.0
+	elif current_anim != "idle":
+		legs_sprite.play("idle")
+		legs_sprite.speed_scale = 1.0
+
 
 func swap_weapon() -> void:
 	if current_weapon == Weapon.GUN:

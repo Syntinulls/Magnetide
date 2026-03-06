@@ -1,20 +1,125 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
 [ext_resource type="Script" uid="uid://b1dkmgbfujbh4" path="res://_project/player/player.gd" id="2_script"]
-[ext_resource type="Resource" uid="uid://co3cc0u82ptt3" path="res://_project/player/weapons/rifle/rifle.tres" id="2_unxfp"]
-[ext_resource type="Texture2D" uid="uid://dn7ayr3n1snet" path="res://_project/player/guy_body.png" id="3_body"]
+[ext_resource type="Resource" uid="uid://co3cc0u82ptt3" path="res://_project/player/weapons/rifle/rifle.tres" id="2_weapon"]
+[ext_resource type="Texture2D" uid="uid://dx1rtfv6p7g1o" path="res://_project/player/guy_part_body.png" id="2_unxfp"]
+[ext_resource type="Texture2D" uid="uid://vq163jt8x6as" path="res://_project/player/guy_part_legs_bend.png" id="3_6i4jc"]
+[ext_resource type="Texture2D" uid="uid://dmw5ph0068wu5" path="res://_project/player/guy_part_legs_brace.png" id="3_dnlrs"]
+[ext_resource type="Texture2D" uid="uid://ba2hadpeipo0h" path="res://_project/player/guy_part_legs_idle.png" id="3_k6685"]
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/guy_arm.png" id="4_arm"]
-[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/weapons/rifle/rifle.png" id="5_gun"]
+[ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/guy_part_legs_walk.png" id="4_k6685"]
+[ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/guy_part_legs_stretch.png" id="5_6i4jc"]
+[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/guy_gun.png" id="5_gun"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j86yb"]
+atlas = ExtResource("3_6i4jc")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_a1ni1"]
+atlas = ExtResource("3_dnlrs")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qgbq5"]
+atlas = ExtResource("3_k6685")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_g7wmw"]
+atlas = ExtResource("5_6i4jc")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_dnlrs"]
+atlas = ExtResource("4_k6685")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6i4jc"]
+atlas = ExtResource("4_k6685")
+region = Rect2(53, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lvan4"]
+atlas = ExtResource("4_k6685")
+region = Rect2(106, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fbtnf"]
+atlas = ExtResource("4_k6685")
+region = Rect2(159, 0, 53, 114)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_5c2p4"]
+atlas = ExtResource("4_k6685")
+region = Rect2(0, 0, 53, 114)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dnlrs"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j86yb")
+}],
+"loop": true,
+"name": &"bend",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_a1ni1")
+}],
+"loop": true,
+"name": &"brace",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qgbq5")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_g7wmw")
+}],
+"loop": true,
+"name": &"stretch",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_dnlrs")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6i4jc")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lvan4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fbtnf")
+}],
+"loop": true,
+"name": &"walk",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_5c2p4")
+}],
+"loop": true,
+"name": &"walk_1",
+"speed": 5.0
+}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
 size = Vector2(52, 112)
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
 script = ExtResource("2_script")
-weapon = ExtResource("2_unxfp")
+weapon = ExtResource("2_weapon")
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]
-texture = ExtResource("3_body")
+texture = ExtResource("2_unxfp")
+
+[node name="LegsSprite" type="AnimatedSprite2D" parent="." unique_id=1596657367]
+sprite_frames = SubResource("SpriteFrames_dnlrs")
+animation = &"walk_1"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=372960679]
 visible = false
