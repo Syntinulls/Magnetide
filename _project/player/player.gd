@@ -12,11 +12,32 @@ const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetGunTexture: Texture2D = preload("res://_project/player/guy_magnetgun.png")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 
+## Distance from muzzle to the magnet gun hold point.
+@export var magnet_gun_hold_distance: float = 30.0
+## Time in seconds to hold right-click to repel an item.
+@export var repel_hold_time: float = 0.8
+## Impulse force applied when repelling an item.
+@export var repel_impulse_force: float = 600.0
+
+## Magnet gun pull config (weaker than main magnet - about 1/1.5x)
+var pull_base_speed: float = 133.0  # 200 / 1.5
+var pull_max_speed: float = 1000.0  # 1500 / 1.5
+var pull_ramp_time: float = 0.6
+
 var input_enabled: bool = true
 var facing_right: bool = false
 var current_weapon: Weapon = Weapon.GUN
 var magnet_effect: Sprite2D = null
 var _fire_cooldown: float = 0.0
+
+# Magnet gun state
+var _held_item: SalvageItem = null
+var _hovered_item: SalvageItem = null
+var _repel_hold_elapsed: float = 0.0
+var _is_repel_holding: bool = false
+var _repel_bar: ColorRect = null
+var _repel_bar_bg: ColorRect = null
+var _repel_bar_container: Control = null
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var legs_sprite: AnimatedSprite2D = $LegsSprite
@@ -32,6 +53,7 @@ func _ready() -> void:
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
+	_create_repel_bar()
 
 
 const ARM_OFFSET_X: float = -13.585
@@ -63,7 +85,11 @@ func _physics_process(delta: float) -> void:
 		# Facing is purely based on mouse X vs player X
 		var mouse_is_right := mouse_pos.x > global_position.x
 		if mouse_is_right != facing_right:
+			var was_holding := _held_item and is_instance_valid(_held_item)
 			_apply_facing(mouse_is_right)
+			# Flip held item position when player flips
+			if was_holding and _held_item:
+				_held_item.flip_relative_to_anchor(global_position)
 		
 		# Calculate vertical angle from arm to mouse
 		# Use arm's global position for accurate angle calculation
@@ -90,10 +116,7 @@ func _physics_process(delta: float) -> void:
 				if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
 					shoot()
 			Weapon.MAGNET_GUN:
-				if Input.is_action_just_pressed("shoot"):
-					magnetize()
-				elif Input.is_action_just_released("shoot"):
-					stop_magnetize()
+				_process_magnet_gun(delta)
 		
 		if Input.is_action_just_pressed("move_jump") and is_on_floor():
 			velocity.y = jump_velocity
@@ -145,6 +168,7 @@ func swap_weapon() -> void:
 		if weapon and weapon.weapon_sprite:
 			weapon_sprite.texture = weapon.weapon_sprite
 		stop_magnetize()
+		_clear_magnet_gun_state()
 
 
 func shoot() -> void:
@@ -174,3 +198,244 @@ func stop_magnetize() -> void:
 	if magnet_effect != null:
 		magnet_effect.queue_free()
 		magnet_effect = null
+
+
+# =============================================================================
+# Magnet Gun Logic
+# =============================================================================
+
+func _get_magnet_gun_hold_point() -> Vector2:
+	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
+	return muzzle.global_position + gun_dir * magnet_gun_hold_distance
+
+
+func _process_magnet_gun(delta: float) -> void:
+	if _held_item and is_instance_valid(_held_item):
+		# Update held item position to follow gun
+		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
+		
+		# Only allow repel/place once item has reached the anchor point
+		if _held_item.has_reached_anchor:
+			# Right-click hold to repel
+			if Input.is_action_pressed("shoot_alt"):
+				_is_repel_holding = true
+				_repel_hold_elapsed += delta
+				_update_repel_bar()
+				if _repel_hold_elapsed >= repel_hold_time:
+					_repel_held_item()
+			else:
+				if _is_repel_holding:
+					# Released too early - reset
+					_is_repel_holding = false
+					_repel_hold_elapsed = 0.0
+					_update_repel_bar()
+			
+			# Left-click to place in storage
+			if Input.is_action_just_pressed("shoot"):
+				var mouse_pos := get_global_mouse_position()
+				var ship_node := _get_ship()
+				if ship_node and ship_node.is_point_in_storage_area(mouse_pos):
+					_place_item_in_storage(mouse_pos)
+	else:
+		# No item held - hover detection and grab
+		_process_magnet_gun_hover()
+		
+		if Input.is_action_just_pressed("shoot"):
+			if _hovered_item and is_instance_valid(_hovered_item):
+				_grab_item_from_magnet(_hovered_item)
+
+
+func _process_magnet_gun_hover() -> void:
+	var mouse_pos := get_global_mouse_position()
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsPointQueryParameters2D.new()
+	query.position = mouse_pos
+	query.collision_mask = 2  # Salvage items layer
+	query.collide_with_bodies = true
+	var results := space_state.intersect_point(query, 8)
+	
+	var best_item: SalvageItem = null
+	var best_dist := INF
+	for result in results:
+		var body: Object = result["collider"]
+		if body is SalvageItem:
+			var item := body as SalvageItem
+			if item.can_be_grabbed:
+				var dist := mouse_pos.distance_to(item.global_position)
+				if dist < best_dist:
+					best_dist = dist
+					best_item = item
+	
+	# Update outline
+	if _hovered_item != best_item:
+		if _hovered_item and is_instance_valid(_hovered_item):
+			_hovered_item.set_outlined(false)
+		_hovered_item = best_item
+		if _hovered_item:
+			_hovered_item.set_outlined(true)
+
+
+func _grab_item_from_magnet(item: SalvageItem) -> void:
+	if _held_item != null:
+		return  # Already holding an item
+	
+	# Get contact chain before grabbing (items that need to re-settle)
+	var dependents := item.get_contact_chain()
+	
+	# Remove from magnet tracking
+	var magnet := Magnetide.magnet
+	if magnet:
+		magnet.remove_item(item)
+	
+	# Grab the item
+	item.set_outlined(false)
+	item.grab_for_magnet_gun(self)
+	item.update_gun_hold_position(_get_magnet_gun_hold_point())
+	_held_item = item
+	_hovered_item = null
+	
+	# Unfreeze dependent items so they can re-settle
+	for dep in dependents:
+		if is_instance_valid(dep) and dep != item and dep.is_attached_to_magnet:
+			_unfreeze_item_for_resettle(dep)
+
+
+func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
+	# Fully undo the freeze so the item goes through the normal
+	# magnet-pull → settle → freeze cycle again on its own.
+	item._is_attached_to_magnet = false
+	item._is_in_magnet_field = false
+	item._settle_timer = 0.0
+	
+	# Unfreeze and restore dynamic physics
+	item.freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	item.freeze = false
+	item.gravity_scale = 0.0
+	item.linear_velocity = Vector2.ZERO
+	item.angular_velocity = 0.0
+	
+	# Reparent to scene root (out of Magnet) so physics runs normally
+	var magnet := Magnetide.magnet
+	var scene_root := get_tree().current_scene
+	if scene_root and item.get_parent() != scene_root:
+		var pos := item.global_position
+		item.reparent(scene_root)
+		item.global_position = pos
+	
+	# Re-start the magnet pull so the item flies back and re-attaches
+	if magnet:
+		item.start_magnet_pull(magnet)
+
+
+func _repel_held_item() -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		return
+	
+	# Calculate repel direction (away from gun, toward where gun is pointing)
+	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
+	var impulse := gun_dir * repel_impulse_force
+	
+	_held_item.repel_from_gun(impulse)
+	_held_item = null
+	_is_repel_holding = false
+	_repel_hold_elapsed = 0.0
+	_update_repel_bar()
+
+
+func _place_item_in_storage(mouse_pos: Vector2) -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		return
+	
+	var ship_node := _get_ship()
+	if not ship_node:
+		return
+	
+	_held_item.place_in_storage(mouse_pos)
+	ship_node.add_to_storage(_held_item)
+	_held_item = null
+	_is_repel_holding = false
+	_repel_hold_elapsed = 0.0
+	_update_repel_bar()
+
+
+func _clear_magnet_gun_state() -> void:
+	# Clear hover
+	if _hovered_item and is_instance_valid(_hovered_item):
+		_hovered_item.set_outlined(false)
+	_hovered_item = null
+	
+	# Force-release held item
+	if _held_item and is_instance_valid(_held_item):
+		_held_item.force_release_from_gun()
+	_held_item = null
+	
+	_is_repel_holding = false
+	_repel_hold_elapsed = 0.0
+	_update_repel_bar()
+
+
+func _get_ship() -> Node2D:
+	var parent := get_parent()
+	if parent and parent.has_method("is_point_in_storage_area"):
+		return parent as Node2D
+	return null
+
+
+# =============================================================================
+# Repel Progress Bar
+# =============================================================================
+
+const REPEL_BAR_WIDTH: float = 40.0
+const REPEL_BAR_HEIGHT: float = 6.0
+const REPEL_BAR_OFFSET_Y: float = -70.0
+
+func _create_repel_bar() -> void:
+	# Defer to ensure GameUI is ready
+	call_deferred("_setup_repel_bar")
+
+
+func _setup_repel_bar() -> void:
+	var game_ui := Magnetide.game_ui
+	if not game_ui:
+		push_warning("Player: GameUI not found, repel bar will not be created")
+		return
+	
+	_repel_bar_container = Control.new()
+	_repel_bar_container.name = "RepelBarContainer"
+	_repel_bar_container.visible = false
+	_repel_bar_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	game_ui.add_child(_repel_bar_container)
+	
+	# Background
+	_repel_bar_bg = ColorRect.new()
+	_repel_bar_bg.size = Vector2(REPEL_BAR_WIDTH, REPEL_BAR_HEIGHT)
+	_repel_bar_bg.position = Vector2(-REPEL_BAR_WIDTH * 0.5, 0)
+	_repel_bar_bg.color = Color(0.15, 0.15, 0.15, 0.8)
+	_repel_bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_repel_bar_container.add_child(_repel_bar_bg)
+	
+	# Fill bar
+	_repel_bar = ColorRect.new()
+	_repel_bar.size = Vector2(0, REPEL_BAR_HEIGHT)
+	_repel_bar.position = Vector2(-REPEL_BAR_WIDTH * 0.5, 0)
+	_repel_bar.color = Color(1.0, 0.3, 0.2, 0.9)
+	_repel_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_repel_bar_container.add_child(_repel_bar)
+
+
+func _update_repel_bar() -> void:
+	if not _repel_bar_container:
+		return
+	_repel_bar_container.visible = _is_repel_holding
+	if _is_repel_holding:
+		# Position bar above player's head in screen space
+		var screen_pos := get_viewport().get_canvas_transform() * (global_position + Vector2(0, REPEL_BAR_OFFSET_Y))
+		_repel_bar_container.position = screen_pos
+		if _repel_bar:
+			var fill := clampf(_repel_hold_elapsed / repel_hold_time, 0.0, 1.0)
+			_repel_bar.size.x = REPEL_BAR_WIDTH * fill
+
+
+## Called externally when looting ends to clean up held items
+func on_looting_ended() -> void:
+	_clear_magnet_gun_state()

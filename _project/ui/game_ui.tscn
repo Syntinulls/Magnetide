@@ -1,10 +1,17 @@
 [gd_scene format=3 uid="uid://4p6nir6m115b"]
 
-[ext_resource type="PackedScene" path="res://_project/ship/magnet/departure_timer_ui.tscn" id="1_timer"]
 [ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
+[ext_resource type="Script" uid="uid://ec0hkbrs4sq" path="res://_project/ui/departure_icon.gd" id="6_departure"]
+[ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/ship_status_ui.gd" id="7_ship_status"]
+[ext_resource type="Texture2D" uid="uid://c0mo2wu2y4q1n" path="res://_project/ui/sprites/alert_departure_y.png" id="8_departure_y"]
+[ext_resource type="FontFile" uid="uid://r6clo3nxywuh" path="res://_project/ui/fonts/Maneuver-Regular.otf" id="9_font_regular"]
+[ext_resource type="Texture2D" uid="uid://dwkrun3rqdmap" path="res://_project/ui/sprites/ui_ship_storage_bg.png" id="10_ship_bg"]
+[ext_resource type="Texture2D" uid="uid://cdc62yjilkyfo" path="res://_project/ui/sprites/ui_ship_icon_crate.png" id="11_crate"]
+[ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/ui/sprites/ui_ship_icon_magnet.png" id="12_magnet"]
+[ext_resource type="FontFile" uid="uid://di6vyfikhtwi8" path="res://_project/ui/fonts/Maneuver-Thin.otf" id="13_font_thin"]
 
 [node name="GameUI" type="Control" unique_id=1333566747]
 layout_mode = 3
@@ -15,8 +22,125 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="DepartureTimerUI" parent="." unique_id=1764653111 instance=ExtResource("1_timer")]
+[node name="ShipStatusUI" type="TextureRect" parent="." unique_id=1764653112]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -328.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 88.0
+grow_horizontal = 0
+mouse_filter = 2
+texture = ExtResource("10_ship_bg")
+script = ExtResource("7_ship_status")
+
+[node name="MarginContainer" type="MarginContainer" parent="ShipStatusUI" unique_id=1965247952]
+layout_mode = 0
+offset_right = 320.0
+offset_bottom = 80.0
+theme_override_constants/margin_top = 5
+
+[node name="VBoxContainer" type="VBoxContainer" parent="ShipStatusUI/MarginContainer" unique_id=1468112491]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="StorageRow" type="HBoxContainer" parent="ShipStatusUI/MarginContainer/VBoxContainer" unique_id=523522864]
+custom_minimum_size = Vector2(0, 33)
+layout_mode = 2
+mouse_filter = 2
+alignment = 2
+
+[node name="StorageLabel" type="Label" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=722082794]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("13_font_thin")
+theme_override_font_sizes/font_size = 24
+text = "0.0 / 100.0kg"
+horizontal_alignment = 2
+
+[node name="StorageIcon" type="TextureRect" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1554762277]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("11_crate")
+stretch_mode = 5
+
+[node name="Margin" type="Control" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1655888135]
+custom_minimum_size = Vector2(8, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="MagnetRow" type="HBoxContainer" parent="ShipStatusUI/MarginContainer/VBoxContainer" unique_id=1108105376]
+custom_minimum_size = Vector2(0, 33)
+layout_mode = 2
+mouse_filter = 2
+alignment = 2
+
+[node name="MagnetLabel" type="Label" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1737146126]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("13_font_thin")
+theme_override_font_sizes/font_size = 24
+text = "0.0 / 60.0kg"
+horizontal_alignment = 2
+
+[node name="MagnetIcon" type="TextureRect" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1987184274]
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("12_magnet")
+stretch_mode = 5
+
+[node name="Margin" type="Control" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=164199045]
+custom_minimum_size = Vector2(8, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="DepartureIconAnchor" type="Control" parent="." unique_id=1764653113]
+layout_mode = 1
+anchor_left = 0.95
+anchor_top = 0.3
+anchor_right = 0.95
+anchor_bottom = 0.3
+mouse_filter = 2
+
+[node name="DepartureIcon" type="Control" parent="DepartureIconAnchor" unique_id=1764653114]
 anchors_preset = 0
+offset_left = -64.0
+offset_right = 64.0
+offset_bottom = 120.0
+mouse_filter = 2
+script = ExtResource("6_departure")
+
+[node name="Icon" type="TextureRect" parent="DepartureIconAnchor/DepartureIcon" unique_id=1340580498]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -48.0
+offset_right = 48.0
+offset_bottom = 80.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("8_departure_y")
+stretch_mode = 5
+
+[node name="Label" type="Label" parent="DepartureIconAnchor/DepartureIcon" unique_id=211218991]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = -11.0
+offset_top = 140.0
+offset_right = 11.0
+offset_bottom = 168.00003
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_fonts/font = ExtResource("9_font_regular")
+theme_override_font_sizes/font_size = 24
+text = "Departure in 30.0s"
+horizontal_alignment = 1
 
 [node name="WarningIconAnchor" type="Control" parent="." unique_id=255438115]
 layout_mode = 1

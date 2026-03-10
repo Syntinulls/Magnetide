@@ -24,3 +24,10 @@ var magnet: Magnet:
 		if s:
 			return s.get_node_or_null("Magnet") as Magnet
 		return null
+
+var game_ui: Control:
+	get:
+		var lvl = level
+		if lvl and "ui_root" in lvl and lvl.ui_root:
+			return lvl.ui_root.get_node_or_null("GameUI") as Control
+		return null

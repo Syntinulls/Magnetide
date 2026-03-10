@@ -1,5 +1,6 @@
 [gd_scene format=3 uid="uid://dship00001"]
 
+[ext_resource type="Script" path="res://_project/ship/ship.gd" id="1_ship_script"]
 [ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="1_back"]
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
 [ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet/magnet_lever.tscn" id="3_lever"]
@@ -18,6 +19,7 @@ size = Vector2(760, 40)
 size = Vector2(760, 40)
 
 [node name="Ship" type="Node2D" unique_id=1033807799]
+script = ExtResource("1_ship_script")
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
 texture = ExtResource("1_back")

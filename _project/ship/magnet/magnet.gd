@@ -2,13 +2,18 @@ extends Node2D
 class_name Magnet
 
 signal item_attached(item: SalvageItem)
+signal item_removed(item: SalvageItem)
 signal overweight()
 signal all_items_released()
 
 ## Maximum carry weight before the magnet stops pulling new items.
 @export var max_carry_weight: float = 60.0
-## Force applied to pull items toward the magnet.
-@export var pull_force: float = 800.0
+## Base speed items are pulled toward the magnet.
+@export var pull_base_speed: float = 200.0
+## Max speed items are pulled toward the magnet.
+@export var pull_max_speed: float = 1500.0
+## Time for pull speed to ramp from base to max.
+@export var pull_ramp_time: float = 0.6
 ## Time between pulling new items from the pile in seconds.
 @export var pull_interval: float = 2.5
 ## Distance the magnet lowers from its starting position when activated.
@@ -199,11 +204,24 @@ func _spawn_item_from_pile() -> void:
 	item.z_index = -1  # Render behind salvage pile
 
 	# Start pulling toward magnet
-	item.start_magnet_pull(self, pull_force)
+	item.start_magnet_pull(self)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
 
 	if is_overweight:
 		overweight.emit()
+
+
+func remove_item(item: SalvageItem) -> void:
+	if item in _attached_items:
+		_attached_items.erase(item)
+		if item.item_data:
+			_current_weight -= item.item_data.weight
+			_current_weight = maxf(_current_weight, 0.0)
+		item_removed.emit(item)
+
+
+func get_attached_items() -> Array[SalvageItem]:
+	return _attached_items
 
 
 func _on_item_fell_off_screen(item: SalvageItem) -> void:

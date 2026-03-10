@@ -30,8 +30,12 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 @export_group("Magnet Looting")
 ## Duration of the departure timer in seconds (how long the player can loot).
 @export var departure_duration: float = 30.0
-## Force applied to pull salvage items toward the magnet.
-@export var magnet_pull_force: float = 800.0
+## Base speed items are pulled toward the magnet.
+@export var magnet_pull_base_speed: float = 200.0
+## Max speed items are pulled toward the magnet.
+@export var magnet_pull_max_speed: float = 1500.0
+## Time for pull speed to ramp from base to max.
+@export var magnet_pull_ramp_time: float = 0.6
 ## Time between pulling new items from the pile.
 @export var magnet_pull_interval: float = 2.5
 ## Distance the magnet lowers when activated.
@@ -86,7 +90,8 @@ var _player: Node2D = null  # Player
 var _ui_root: Control = null
 var _ship: Node2D = null
 var _magnet: Magnet = null
-var _departure_timer_ui: DepartureTimerUI = null
+var _departure_icon: DepartureIcon = null
+var _ship_status_ui: ShipStatusUI = null
 var _loot_table: LootTable = null
 
 @onready var _cooldown_timer: Timer = $CooldownTimer
@@ -118,9 +123,13 @@ func _ready() -> void:
 	if _ship:
 		_magnet = _ship.get_node_or_null("Magnet") as Magnet
 		if _magnet:
-			_magnet.pull_force = magnet_pull_force
+			_magnet.pull_base_speed = magnet_pull_base_speed
+			_magnet.pull_max_speed = magnet_pull_max_speed
+			_magnet.pull_ramp_time = magnet_pull_ramp_time
 			_magnet.pull_interval = magnet_pull_interval
 			_magnet.lower_distance = magnet_lower_distance
+			_magnet.item_attached.connect(_on_magnet_item_attached)
+			_magnet.item_removed.connect(_on_magnet_item_removed)
 
 	# Load master loot table with all items
 	_loot_table = preload("res://_project/items/loot_tables/loot_table.tres")
@@ -149,7 +158,8 @@ func _setup_ui_references() -> void:
 		if game_ui:
 			_warning_icon = game_ui.get_node_or_null("WarningIconAnchor/WarningIcon") as WarningIcon
 			_activation_minigame = game_ui.get_node_or_null("ActivationMinigame")
-			_departure_timer_ui = game_ui.get_node_or_null("DepartureTimerUI") as DepartureTimerUI
+			_departure_icon = game_ui.get_node_or_null("DepartureIconAnchor/DepartureIcon") as DepartureIcon
+			_ship_status_ui = game_ui.get_node_or_null("ShipStatusUI") as ShipStatusUI
 	
 	if _activation_minigame:
 		_activation_minigame.minigame_completed.connect(_on_activation_completed)
@@ -160,8 +170,12 @@ func _setup_ui_references() -> void:
 			if anchor:
 				_activation_minigame.set_anchor_marker(anchor)
 	
-	if _departure_timer_ui:
-		_departure_timer_ui.timer_expired.connect(_on_departure_timer_expired)
+	if _departure_icon:
+		_departure_icon.timer_expired.connect(_on_departure_timer_expired)
+	
+	# Initialize ship status UI with magnet max weight
+	if _ship_status_ui and _magnet:
+		_ship_status_ui.set_magnet_weight(0.0, _magnet.max_carry_weight)
 	
 	# Start cooldown now that UI references are set up
 	_start_cooldown()
@@ -360,8 +374,8 @@ func _start_looting() -> void:
 		Magnetide.level.threat.add_threat(_magnet.threat_penalty)
 
 	# Start departure timer
-	if _departure_timer_ui:
-		_departure_timer_ui.start(departure_duration)
+	if _departure_icon:
+		_departure_icon.start(departure_duration)
 
 	# Make lever available so player can flip it back to abort
 	if _magnet_lever:
@@ -372,13 +386,20 @@ func _end_looting() -> void:
 	if _state != State.LOOTING:
 		return
 
+	# Notify player to release any held items
+	if _player and _player.has_method("on_looting_ended"):
+		_player.on_looting_ended()
+
 	# Stop departure timer
-	if _departure_timer_ui:
-		_departure_timer_ui.stop()
+	if _departure_icon:
+		_departure_icon.stop()
 
 	# Deactivate magnet - items will fall
 	if _magnet:
 		_magnet.deactivate()
+	
+	# Reset magnet weight UI to 0
+	_update_magnet_weight_ui()
 
 	# Flip lever back to starting position
 	if _magnet_lever:
@@ -551,6 +572,19 @@ func _start_activation_effects() -> void:
 		_vignette_tween.set_parallel(true)
 		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/vignette_intensity", vignette_intensity, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/grayscale_intensity", vignette_intensity, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+
+
+func _on_magnet_item_attached(_item: SalvageItem) -> void:
+	_update_magnet_weight_ui()
+
+
+func _on_magnet_item_removed(_item: SalvageItem) -> void:
+	_update_magnet_weight_ui()
+
+
+func _update_magnet_weight_ui() -> void:
+	if _ship_status_ui and _magnet:
+		_ship_status_ui.set_magnet_weight(_magnet.current_weight, _magnet.max_carry_weight)
 
 
 func _end_activation_effects() -> void:
