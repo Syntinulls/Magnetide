@@ -27,6 +27,17 @@ window/size/window_width_override=1280
 window/size/window_height_override=720
 window/stretch/mode="canvas_items"
 
+[file_customization]
+
+folder_colors={
+"res://_project/enemies/": "red",
+"res://_project/items/": "gray",
+"res://_project/level/": "green",
+"res://_project/player/": "blue",
+"res://_project/ship/": "yellow",
+"res://_project/ui/": "purple"
+}
+
 [global_group]
 
 target_high=""

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cho1uasnivkps"
-path="res://.godot/imported/salvage_item_battery.png-e47df80cb5b9bf99459943736170f52c.ctex"
+uid="uid://7whh42wct6nr"
+path="res://.godot/imported/trash_small_half.png-b52d54b28cc20f1ec05858375bb7cfae.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_item_battery.png"
-dest_files=["res://.godot/imported/salvage_item_battery.png-e47df80cb5b9bf99459943736170f52c.ctex"]
+source_file="res://_project/level/decoration/sprites/trash_small_half.png"
+dest_files=["res://.godot/imported/trash_small_half.png-b52d54b28cc20f1ec05858375bb7cfae.ctex"]
 
 [params]
 
@@ -32,7 +32,7 @@ process/channel_remap/green=1
 process/channel_remap/blue=2
 process/channel_remap/alpha=3
 process/fix_alpha_border=true
-process/premult_alpha=true
+process/premult_alpha=false
 process/normal_map_invert_y=false
 process/hdr_as_srgb=false
 process/hdr_clamp_exposure=false

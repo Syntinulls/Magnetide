@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d3mmmb0dgd71p"]
 
-[ext_resource type="Texture2D" uid="uid://c8g86e5exbal" path="res://_project/objects/sprites/lever_base.png" id="1_base"]
-[ext_resource type="Texture2D" uid="uid://bc1u81scciy3r" path="res://_project/objects/sprites/lever_handle.png" id="2_handle"]
+[ext_resource type="Texture2D" uid="uid://c8g86e5exbal" path="res://_project/ship/sprites/lever_base.png" id="1_base"]
+[ext_resource type="Texture2D" uid="uid://bc1u81scciy3r" path="res://_project/ship/sprites/lever_handle.png" id="2_handle"]
 [ext_resource type="Script" uid="uid://djf0uwoikdhxk" path="res://_project/ship/magnet/magnet_lever.gd" id="3_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]

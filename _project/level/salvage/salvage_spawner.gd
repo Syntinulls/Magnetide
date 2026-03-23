@@ -16,15 +16,19 @@ class_name SalvageSpawner
 ## Maximum time between spawns in seconds.
 @export var spawn_interval_max: float = 30.0
 
-@export_group("Rarity Weights")
-## Spawn weight for Common rarity (green).
-@export var weight_common: float = 70.0
-## Spawn weight for Rare rarity (blue).
-@export var weight_rare: float = 20.0
-## Spawn weight for Epic rarity (purple).
-@export var weight_epic: float = 8.0
-## Spawn weight for Legendary rarity (yellow).
-@export var weight_legendary: float = 2.0
+@export_group("Rarities")
+@export_subgroup("Common")
+@export var common_data: SalvagePileData = null
+@export var common_weight: float = 70.0
+@export_subgroup("Rare")
+@export var rare_data: SalvagePileData = null
+@export var rare_weight: float = 20.0
+@export_subgroup("Epic")
+@export var epic_data: SalvagePileData = null
+@export var epic_weight: float = 8.0
+@export_subgroup("Legendary")
+@export var legendary_data: SalvagePileData = null
+@export var legendary_weight: float = 2.0
 
 @export_group("Salvage Properties")
 ## Minimum height of salvage pile as ratio of viewport height.
@@ -39,8 +43,21 @@ var _level: Node = null
 var _viewport_anchor: ViewportAnchor = null
 
 
+func _get_pile_data_for_rarity(rarity: SalvagePile.Rarity) -> SalvagePileData:
+	match rarity:
+		SalvagePile.Rarity.COMMON:
+			return common_data
+		SalvagePile.Rarity.RARE:
+			return rare_data
+		SalvagePile.Rarity.EPIC:
+			return epic_data
+		SalvagePile.Rarity.LEGENDARY:
+			return legendary_data
+	return common_data
+
+
 func _ready() -> void:
-	_salvage_pile_scene = preload("res://_project/level/salvage_spawner/salvage_pile.tscn")
+	_salvage_pile_scene = preload("res://_project/level/salvage/pile/salvage_pile.tscn")
 
 	_level = get_parent()
 	if _level and "viewport_anchor" in _level:
@@ -125,18 +142,18 @@ func on_pile_acquired() -> void:
 
 
 func _pick_rarity() -> SalvagePile.Rarity:
-	var total := weight_common + weight_rare + weight_epic + weight_legendary
+	var total := common_weight + rare_weight + epic_weight + legendary_weight
 	var roll := randf() * total
 
-	if roll < weight_common:
+	if roll < common_weight:
 		return SalvagePile.Rarity.COMMON
-	roll -= weight_common
+	roll -= common_weight
 
-	if roll < weight_rare:
+	if roll < rare_weight:
 		return SalvagePile.Rarity.RARE
-	roll -= weight_rare
+	roll -= rare_weight
 
-	if roll < weight_epic:
+	if roll < epic_weight:
 		return SalvagePile.Rarity.EPIC
 
 	return SalvagePile.Rarity.LEGENDARY
@@ -152,8 +169,10 @@ func _spawn_salvage() -> void:
 	var spawn_y := _get_screen_height()  # Bottom of screen
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
+	var rarity := _pick_rarity()
 
-	_current_pile.activate(_pick_rarity(), Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
+	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
+	_current_pile.activate(rarity, Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
 
 
 ## Spawn a salvage pile on demand (used by MagnetMinigame).
@@ -180,5 +199,6 @@ func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rari
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
 
+	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
 	_current_pile.activate(rarity, Vector2(spawn_x, spawn_y), _level, target_height, rot)
 	return _current_pile

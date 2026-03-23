@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://bxms62cxu0ijc"]
 
-[ext_resource type="Script" uid="uid://bdbax2yw4p8xt" path="res://_project/level/salvage_spawner/salvage_spawner.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://bdbax2yw4p8xt" path="res://_project/level/salvage/salvage_spawner.gd" id="1_script"]
 
 [node name="SalvageSpawner" type="Node2D" unique_id=5285205]
 script = ExtResource("1_script")

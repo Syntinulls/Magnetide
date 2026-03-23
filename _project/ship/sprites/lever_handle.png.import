@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://di8itus5efkm"
-path="res://.godot/imported/trash_pile_1.png-65cd3784196a476811cf2e0c333f7bc0.ctex"
+uid="uid://bc1u81scciy3r"
+path="res://.godot/imported/lever_handle.png-b8b6a62d6cfa023d01df9523fc7cc27a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/salvage_spawner/sprites/trash_pile_1.png"
-dest_files=["res://.godot/imported/trash_pile_1.png-65cd3784196a476811cf2e0c333f7bc0.ctex"]
+source_file="res://_project/ship/sprites/lever_handle.png"
+dest_files=["res://.godot/imported/lever_handle.png-b8b6a62d6cfa023d01df9523fc7cc27a.ctex"]
 
 [params]
 
@@ -23,7 +23,7 @@ compress/rdo_quality_loss=0.0
 compress/hdr_compression=1
 compress/normal_map=0
 compress/channel_pack=0
-mipmaps/generate=true
+mipmaps/generate=false
 mipmaps/limit=-1
 roughness/mode=0
 roughness/src_normal=""

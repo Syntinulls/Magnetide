@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://b5x2n8j4wq6mc"]
+
+[ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
+
+[resource]
+script = ExtResource("1_hloxr")
+rarity = 3
+metadata/_custom_type_script = "uid://elnbd45b0anw"

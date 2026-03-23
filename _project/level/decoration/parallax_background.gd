@@ -35,8 +35,8 @@ var _perspective_shader: Shader = null
 func _ready() -> void:
 	y_sort_enabled = true
 	_trash_textures = [
-		preload("res://_project/objects/sprites/trash_small_half.png"),
-		preload("res://_project/objects/sprites/trash_medium_half.png"),
+		preload("res://_project/level/decoration/sprites/trash_small_half.png"),
+		preload("res://_project/level/decoration/sprites/trash_medium_half.png"),
 	]
 	_perspective_shader = preload("res://_project/level/decoration/perspective_scroll.gdshader")
 

@@ -27,9 +27,10 @@ var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
 var _current_weight: float = 0.0
 var _pull_timer: float = 0.0
-var _loot_table: LootTable = null
+var _pile_data: SalvagePileData = null
 var _current_threat_level: int = 0
 var _pile_node: SalvagePile = null
+var _salvageable_pull_count: int = 0
 var _original_position: Vector2 = Vector2.ZERO
 var _is_lowering: bool = false
 var _is_raising: bool = false
@@ -62,8 +63,8 @@ func _ready() -> void:
 	_effect_animation = get_node_or_null("EffectAnimation") as AnimatedSprite2D
 
 
-func activate(loot_table: LootTable, pile: SalvagePile, threat_level: int = 0) -> void:
-	_loot_table = loot_table
+func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int = 0) -> void:
+	_pile_data = pile_data
 	_pile_node = pile
 	_current_threat_level = threat_level
 	_is_active = true
@@ -89,7 +90,7 @@ func activate(loot_table: LootTable, pile: SalvagePile, threat_level: int = 0) -
 
 func deactivate() -> void:
 	_is_active = false
-	_loot_table = null
+	_pile_data = null
 	_pile_node = null
 	_release_all_items()
 	
@@ -166,11 +167,26 @@ func _process_raising(delta: float) -> void:
 
 
 func _spawn_item_from_pile() -> void:
-	if not _loot_table or not _pile_node or not is_instance_valid(_pile_node):
+	if not _pile_data or not _pile_node or not is_instance_valid(_pile_node):
 		return
 
-	var pile_rarity: SalvagePile.Rarity = _pile_node.rarity if _pile_node else SalvagePile.Rarity.COMMON
-	var data := _loot_table.roll_item(pile_rarity, _current_threat_level)
+	# TODO: Use new roll system
+	# 1. Call _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
+	# 2. Check result["is_salvageable"] to update pity counter:
+	#    - If true: reset_pity_counter()
+	#    - If false: increment_pity_counter()
+	# 3. Use result["item"] as data
+	var result := _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
+	if not result or not result.has("item") or result["item"] == null:
+		return
+	
+	var is_salvageable: bool = result.get("is_salvageable", false)
+	if is_salvageable:
+		reset_pity_counter()
+	else:
+		increment_pity_counter()
+	
+	var data: SalvageItemData = result["item"]
 	if not data:
 		return
 
@@ -280,3 +296,18 @@ func _update_field_shape_for_pile(pile: SalvagePile) -> void:
 		Vector2(-bottom_half_width, field_height)   # Bottom left
 	])
 	_field_shape.shape = trapezoid
+
+
+## Reset the pity counter (called when a salvageable item is pulled).
+func reset_pity_counter() -> void:
+	_salvageable_pull_count = 0
+
+
+## Increment the pity counter (called when a non-salvageable item is pulled).
+func increment_pity_counter() -> void:
+	_salvageable_pull_count += 1
+
+
+## Get the current pity counter value.
+func get_pity_counter() -> int:
+	return _salvageable_pull_count

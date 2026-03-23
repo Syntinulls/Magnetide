@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dabidtyxjek1s"
-path="res://.godot/imported/trash_pile_3.png-fa75600c1d48ea5ae45f9ef1817f8e4e.ctex"
+uid="uid://bm57nnat63xdd"
+path="res://.godot/imported/salvage_part_motor.png-d4a5cc4e7d23672c66dadcbed4f02e1c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/salvage_spawner/sprites/trash_pile_3.png"
-dest_files=["res://.godot/imported/trash_pile_3.png-fa75600c1d48ea5ae45f9ef1817f8e4e.ctex"]
+source_file="res://_project/items/sprites/salvage_part_motor.png"
+dest_files=["res://.godot/imported/salvage_part_motor.png-d4a5cc4e7d23672c66dadcbed4f02e1c.ctex"]
 
 [params]
 

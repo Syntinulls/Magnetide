@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8g86e5exbal"
-path="res://.godot/imported/lever_base.png-d510f82850f181d76cd4f672b5048822.ctex"
+uid="uid://6b53527yfqfq"
+path="res://.godot/imported/salvage_part_wires.png-f3924c8aac237fd9e6a28cd1dfe45616.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/objects/sprites/lever_base.png"
-dest_files=["res://.godot/imported/lever_base.png-d510f82850f181d76cd4f672b5048822.ctex"]
+source_file="res://_project/items/sprites/salvage_part_wires.png"
+dest_files=["res://.godot/imported/salvage_part_wires.png-f3924c8aac237fd9e6a28cd1dfe45616.ctex"]
 
 [params]
 

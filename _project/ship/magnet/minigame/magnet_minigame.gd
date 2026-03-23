@@ -92,7 +92,6 @@ var _ship: Node2D = null
 var _magnet: Magnet = null
 var _departure_icon: DepartureIcon = null
 var _ship_status_ui: ShipStatusUI = null
-var _loot_table: LootTable = null
 
 @onready var _cooldown_timer: Timer = $CooldownTimer
 
@@ -130,9 +129,6 @@ func _ready() -> void:
 			_magnet.lower_distance = magnet_lower_distance
 			_magnet.item_attached.connect(_on_magnet_item_attached)
 			_magnet.item_removed.connect(_on_magnet_item_removed)
-
-	# Load master loot table with all items
-	_loot_table = preload("res://_project/items/loot_tables/loot_table.tres")
 
 	_cooldown_timer.one_shot = true
 	_cooldown_timer.timeout.connect(_on_cooldown_finished)
@@ -366,8 +362,8 @@ func _start_looting() -> void:
 	_state = State.LOOTING
 
 	# Activate magnet to lower and start pulling items
-	if _magnet and _current_pile and _loot_table:
-		_magnet.activate(_loot_table, _current_pile, 0)
+	if _magnet and _current_pile and _current_pile.pile_data:
+		_magnet.activate(_current_pile.pile_data, _current_pile, 0)
 
 	# Increase threat from magnet activation
 	if _magnet and Magnetide.level and Magnetide.level.threat:

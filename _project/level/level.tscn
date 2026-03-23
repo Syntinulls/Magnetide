@@ -3,10 +3,14 @@
 [ext_resource type="Script" uid="uid://r5gdu025jw7n" path="res://_project/level/level.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://bxms6wtkrevjc" path="res://_project/level/decoration/parallax_background.tscn" id="2_parallax"]
 [ext_resource type="Texture2D" uid="uid://b4nfymaexsp2i" path="res://_project/level/decoration/sprites/trash_ground_1.png" id="3_ip1iq"]
-[ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage_spawner/salvage_spawner.tscn" id="3_salvage_spawner"]
+[ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage/salvage_spawner.tscn" id="3_salvage_spawner"]
 [ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/decoration/parallax_foreground.tscn" id="4_foreground"]
+[ext_resource type="Resource" uid="uid://bcweuy5i0bfcm" path="res://_project/level/salvage/pile/rarities/common.tres" id="6_pho3n"]
+[ext_resource type="Resource" uid="uid://dqr8k2m5xvn1a" path="res://_project/level/salvage/pile/rarities/rare.tres" id="7_ig01q"]
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
+[ext_resource type="Resource" uid="uid://c3p7gak2lm8nb" path="res://_project/level/salvage/pile/rarities/epic.tres" id="8_v4meo"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
+[ext_resource type="Resource" uid="uid://b5x2n8j4wq6mc" path="res://_project/level/salvage/pile/rarities/legendary.tres" id="9_uj1ub"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
 [ext_resource type="PackedScene" path="res://_project/enemies/enemy.tscn" id="12_0ditq"]
@@ -74,6 +78,10 @@ speed_ratio = 0.05
 z_index = 1
 despawn_x_ratio = -0.2
 auto_spawn = false
+common_data = ExtResource("6_pho3n")
+rare_data = ExtResource("7_ig01q")
+epic_data = ExtResource("8_v4meo")
+legendary_data = ExtResource("9_uj1ub")
 pile_height_ratio_min = 0.18
 pile_height_ratio_max = 0.2
 

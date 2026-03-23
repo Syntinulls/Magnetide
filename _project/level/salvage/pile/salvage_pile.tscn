@@ -1,8 +1,8 @@
 [gd_scene format=3 uid="uid://bxms6wspu2pjc"]
 
 [ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
-[ext_resource type="Script" uid="uid://de2nrraqjtpel" path="res://_project/level/salvage_spawner/salvage_pile.gd" id="2_script"]
-[ext_resource type="Shader" uid="uid://dk3sk1t8t6qov" path="res://_project/level/salvage_spawner/salvage_pile.gdshader" id="3_shader"]
+[ext_resource type="Script" uid="uid://de2nrraqjtpel" path="res://_project/level/salvage/pile/salvage_pile.gd" id="2_script"]
+[ext_resource type="Shader" uid="uid://dk3sk1t8t6qov" path="res://_project/level/salvage/pile/salvage_pile.gdshader" id="3_shader"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_pile"]
 shader = ExtResource("3_shader")

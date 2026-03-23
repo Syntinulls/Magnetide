@@ -14,14 +14,15 @@ var _pile_textures: Array[Texture2D] = []
 var direction: Vector2 = Vector2.LEFT
 var rarity: Rarity = Rarity.COMMON
 var is_active: bool = false
+var pile_data: SalvagePileData = null
 var _level: Node = null
 
 
 func _ready() -> void:
 	_pile_textures = [
-		preload("res://_project/level/salvage_spawner/sprites/trash_pile_1.png"),
-		preload("res://_project/level/salvage_spawner/sprites/trash_pile_2.png"),
-		preload("res://_project/level/salvage_spawner/sprites/trash_pile_3.png"),
+		preload("res://_project/level/salvage/pile/sprites/trash_pile_1.png"),
+		preload("res://_project/level/salvage/pile/sprites/trash_pile_2.png"),
+		preload("res://_project/level/salvage/pile/sprites/trash_pile_3.png"),
 	]
 	deactivate()
 
