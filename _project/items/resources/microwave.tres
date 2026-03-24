@@ -11,5 +11,6 @@
 script = ExtResource("1_4l7pp")
 item_name = "Microwave"
 sprite = ExtResource("6_s5yed")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_4l7pp")]([ExtResource("2_nbm5j"), ExtResource("3_fuhes"), ExtResource("4_ft587"), ExtResource("5_rkajb")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -11,5 +11,6 @@
 script = ExtResource("1_sh01t")
 item_name = "Engine Block"
 sprite = ExtResource("6_kwyfm")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_sh01t")]([ExtResource("2_vyt7e"), ExtResource("3_coyih"), ExtResource("4_tue4q"), ExtResource("5_ojdu2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

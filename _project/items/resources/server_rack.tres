@@ -11,5 +11,6 @@
 script = ExtResource("1_12d7p")
 item_name = "Server Rack"
 sprite = ExtResource("6_tdnh2")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_12d7p")]([ExtResource("2_e0cvs"), ExtResource("3_8wys0"), ExtResource("4_vsdtt"), ExtResource("5_jora2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

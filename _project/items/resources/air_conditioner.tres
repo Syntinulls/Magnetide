@@ -11,5 +11,6 @@
 script = ExtResource("1_25sn2")
 item_name = "Air Conditioner"
 sprite = ExtResource("6_1ij3o")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_25sn2")]([ExtResource("2_bnmka"), ExtResource("3_wl67t"), ExtResource("4_fe8h1"), ExtResource("5_ryfei")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

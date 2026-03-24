@@ -11,6 +11,7 @@
 script = ExtResource("1_ut0o0")
 item_name = "Portable Reactor"
 sprite = ExtResource("6_7r2u0")
+area = Vector2(120, 120)
 is_component = true
 components = Array[ExtResource("1_ut0o0")]([ExtResource("2_dmtty"), ExtResource("3_yyequ"), ExtResource("4_y6cmx"), ExtResource("5_68jek")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

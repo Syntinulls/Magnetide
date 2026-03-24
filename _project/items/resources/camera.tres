@@ -9,5 +9,6 @@
 script = ExtResource("1_g5ona")
 item_name = "Camera"
 sprite = ExtResource("4_t3ag1")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_g5ona")]([ExtResource("2_65w3e"), ExtResource("3_xlbrl")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

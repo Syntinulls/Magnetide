@@ -10,5 +10,6 @@
 script = ExtResource("1_lwnlv")
 item_name = "Radio"
 sprite = ExtResource("5_xllml")
+area = Vector2(120, 120)
 components = Array[ExtResource("1_lwnlv")]([ExtResource("2_sqv1b"), ExtResource("3_bqj6m"), ExtResource("4_604ol")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"
