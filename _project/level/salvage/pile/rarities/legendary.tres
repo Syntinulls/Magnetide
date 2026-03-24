@@ -1,8 +1,57 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://b5x2n8j4wq6mc"]
 
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_2np1l"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="2_4r4n4"]
+[ext_resource type="Resource" uid="uid://dwgm51pknakej" path="res://_project/items/resources/processor.tres" id="3_hw3ye"]
+[ext_resource type="Resource" uid="uid://colc0m2br7qtm" path="res://_project/items/resources/induction_coil.tres" id="4_ygldo"]
+[ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="5_s6oke"]
+[ext_resource type="Resource" uid="uid://cx0dudxtk1y0n" path="res://_project/items/resources/power_core.tres" id="6_gp8yx"]
+[ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="7_2clhp"]
+[ext_resource type="Resource" uid="uid://d2af8pqbs56sk" path="res://_project/items/resources/rocket_thruster.tres" id="8_b4nm2"]
+[ext_resource type="Resource" uid="uid://bb82f5e821yul" path="res://_project/items/resources/portable_reactor.tres" id="9_iqhgj"]
+
+[sub_resource type="Resource" id="Resource_1egep"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("2_4r4n4")
+
+[sub_resource type="Resource" id="Resource_v0kqf"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("3_hw3ye")
+
+[sub_resource type="Resource" id="Resource_rbo0u"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("4_ygldo")
+
+[sub_resource type="Resource" id="Resource_u1qeb"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("5_s6oke")
+
+[sub_resource type="Resource" id="Resource_hitqk"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("6_gp8yx")
+
+[sub_resource type="Resource" id="Resource_wus0p"]
+script = ExtResource("7_2clhp")
+entries = Array[ExtResource("1_2np1l")]([SubResource("Resource_1egep"), SubResource("Resource_v0kqf"), SubResource("Resource_rbo0u"), SubResource("Resource_u1qeb"), SubResource("Resource_hitqk")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
+
+[sub_resource type="Resource" id="Resource_fmv2h"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("8_b4nm2")
+
+[sub_resource type="Resource" id="Resource_n8700"]
+script = ExtResource("1_2np1l")
+item_data = ExtResource("9_iqhgj")
+
+[sub_resource type="Resource" id="Resource_yd261"]
+script = ExtResource("7_2clhp")
+entries = Array[ExtResource("1_2np1l")]([SubResource("Resource_fmv2h"), SubResource("Resource_n8700")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]
 script = ExtResource("1_hloxr")
 rarity = 3
+salvageable_loot_table = SubResource("Resource_yd261")
+non_salvageable_loot_table = SubResource("Resource_wus0p")
 metadata/_custom_type_script = "uid://elnbd45b0anw"

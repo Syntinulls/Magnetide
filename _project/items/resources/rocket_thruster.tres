@@ -1,0 +1,17 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://d2af8pqbs56sk"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_nrg7l"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="2_o0464"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="3_t5t8x"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="4_w0ec0"]
+[ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="5_dbwr0"]
+[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="6_lx7kv"]
+[ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="7_td7ne"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="8_tosae"]
+
+[resource]
+script = ExtResource("1_nrg7l")
+item_name = "Rocket Thruster"
+sprite = ExtResource("8_tosae")
+components = Array[ExtResource("1_nrg7l")]([ExtResource("2_o0464"), ExtResource("3_t5t8x"), ExtResource("4_w0ec0"), ExtResource("5_dbwr0"), ExtResource("6_lx7kv"), ExtResource("7_td7ne")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

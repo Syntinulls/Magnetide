@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://b536k5ijx8aa8"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_w27kj"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="2_s6li1"]
+[ext_resource type="Resource" uid="uid://colc0m2br7qtm" path="res://_project/items/resources/induction_coil.tres" id="3_m6033"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_x3rr8"]
+
+[resource]
+script = ExtResource("1_w27kj")
+item_name = "Transformer"
+sprite = ExtResource("4_x3rr8")
+components = Array[ExtResource("1_w27kj")]([ExtResource("2_s6li1"), ExtResource("3_m6033")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

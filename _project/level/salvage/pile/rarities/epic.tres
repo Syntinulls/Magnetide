@@ -1,8 +1,92 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://c3p7gak2lm8nb"]
 
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_g4ue2"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
+[ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="2_bdkc8"]
+[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="3_y5qmb"]
+[ext_resource type="Resource" uid="uid://dsb0n6bwvbavo" path="res://_project/items/resources/piston.tres" id="4_fb0tn"]
+[ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="5_amony"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="6_g18rn"]
+[ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="7_xidhj"]
+[ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="8_73dk3"]
+[ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="9_qsc00"]
+[ext_resource type="Resource" uid="uid://rae48gakgn73" path="res://_project/items/resources/camera.tres" id="10_kynpi"]
+[ext_resource type="Resource" uid="uid://bttnr7vrdd8iv" path="res://_project/items/resources/engine_block.tres" id="11_h1x5e"]
+[ext_resource type="Resource" uid="uid://c7qk78j84w3wx" path="res://_project/items/resources/generator.tres" id="12_axxjw"]
+[ext_resource type="Resource" uid="uid://b7p22gr4ie6ud" path="res://_project/items/resources/microscope.tres" id="13_o4cq0"]
+[ext_resource type="Resource" uid="uid://wq1mcd7dr0cm" path="res://_project/items/resources/server_rack.tres" id="14_s15i5"]
+[ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/resources/transformer.tres" id="15_w8uai"]
+[ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/resources/xray_machine.tres" id="16_8re2k"]
+
+[sub_resource type="Resource" id="Resource_tvgnx"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("2_bdkc8")
+
+[sub_resource type="Resource" id="Resource_ftrmk"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("3_y5qmb")
+
+[sub_resource type="Resource" id="Resource_lio7y"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("4_fb0tn")
+
+[sub_resource type="Resource" id="Resource_aav0h"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("5_amony")
+
+[sub_resource type="Resource" id="Resource_v13e3"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("6_g18rn")
+
+[sub_resource type="Resource" id="Resource_4vehb"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("7_xidhj")
+
+[sub_resource type="Resource" id="Resource_1n4fd"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("8_73dk3")
+
+[sub_resource type="Resource" id="Resource_jkfkd"]
+script = ExtResource("9_qsc00")
+entries = Array[ExtResource("1_g4ue2")]([SubResource("Resource_tvgnx"), SubResource("Resource_ftrmk"), SubResource("Resource_lio7y"), SubResource("Resource_aav0h"), SubResource("Resource_v13e3"), SubResource("Resource_4vehb"), SubResource("Resource_1n4fd")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
+
+[sub_resource type="Resource" id="Resource_dhwpx"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("10_kynpi")
+
+[sub_resource type="Resource" id="Resource_nb7xn"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("11_h1x5e")
+
+[sub_resource type="Resource" id="Resource_278e0"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("12_axxjw")
+
+[sub_resource type="Resource" id="Resource_mawsq"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("13_o4cq0")
+
+[sub_resource type="Resource" id="Resource_76ned"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("14_s15i5")
+
+[sub_resource type="Resource" id="Resource_3f01l"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("15_w8uai")
+
+[sub_resource type="Resource" id="Resource_xbp1x"]
+script = ExtResource("1_g4ue2")
+item_data = ExtResource("16_8re2k")
+
+[sub_resource type="Resource" id="Resource_o77jj"]
+script = ExtResource("9_qsc00")
+entries = Array[ExtResource("1_g4ue2")]([SubResource("Resource_dhwpx"), SubResource("Resource_nb7xn"), SubResource("Resource_278e0"), SubResource("Resource_mawsq"), SubResource("Resource_76ned"), SubResource("Resource_3f01l"), SubResource("Resource_xbp1x")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]
 script = ExtResource("1_hloxr")
 rarity = 2
+salvageable_loot_table = SubResource("Resource_o77jj")
+non_salvageable_loot_table = SubResource("Resource_jkfkd")
 metadata/_custom_type_script = "uid://elnbd45b0anw"

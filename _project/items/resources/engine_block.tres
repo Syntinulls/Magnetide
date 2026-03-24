@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bttnr7vrdd8iv"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_sh01t"]
+[ext_resource type="Resource" uid="uid://dbwsf18itsq6q" path="res://_project/items/resources/gear.tres" id="2_vyt7e"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_coyih"]
+[ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="4_tue4q"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="5_ojdu2"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_kwyfm"]
+
+[resource]
+script = ExtResource("1_sh01t")
+item_name = "Engine Block"
+sprite = ExtResource("6_kwyfm")
+components = Array[ExtResource("1_sh01t")]([ExtResource("2_vyt7e"), ExtResource("3_coyih"), ExtResource("4_tue4q"), ExtResource("5_ojdu2")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

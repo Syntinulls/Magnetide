@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bg8g4p4wn2uuj"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_5t66u"]
+[ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/resources/cathode_ray_tube.tres" id="2_t7ldp"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_wfm31"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_plxh3"]
+
+[resource]
+script = ExtResource("1_5t66u")
+item_name = "Old Monitor"
+sprite = ExtResource("4_plxh3")
+components = Array[ExtResource("1_5t66u")]([ExtResource("2_t7ldp"), ExtResource("3_wfm31")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

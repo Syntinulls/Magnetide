@@ -1,35 +1,61 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://bcweuy5i0bfcm"]
 
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_0jeth"]
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_0jeth"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
-[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="2_txjl5"]
-[ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="3_kfcl3"]
+[ext_resource type="Resource" uid="uid://dbwsf18itsq6q" path="res://_project/items/resources/gear.tres" id="2_22cg2"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_jggux"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="4_3cs1p"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="4_jlnvb"]
 [ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="5_c2yb7"]
+[ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="5_fhog6"]
+[ext_resource type="Resource" uid="uid://kwbg58d0vfv0" path="res://_project/items/resources/mattress.tres" id="8_ak8rg"]
+[ext_resource type="Resource" uid="uid://ckmde17nv4mch" path="res://_project/items/resources/trashcan.tres" id="9_lfhtj"]
+[ext_resource type="Resource" uid="uid://bx4loo0ct74qp" path="res://_project/items/resources/tire.tres" id="10_j5re4"]
 
-[sub_resource type="Resource" id="Resource_22cg2"]
+[sub_resource type="Resource" id="Resource_n81fh"]
 script = ExtResource("1_0jeth")
-item_data = ExtResource("2_txjl5")
-metadata/_custom_type_script = "uid://df3upxsdcqmf8"
+item_data = ExtResource("2_22cg2")
 
-[sub_resource type="Resource" id="Resource_jggux"]
+[sub_resource type="Resource" id="Resource_83plt"]
 script = ExtResource("1_0jeth")
-item_data = ExtResource("3_kfcl3")
-chance = 2.0
-metadata/_custom_type_script = "uid://df3upxsdcqmf8"
+item_data = ExtResource("3_jggux")
 
-[sub_resource type="Resource" id="Resource_jlnvb"]
+[sub_resource type="Resource" id="Resource_4v2sw"]
+script = ExtResource("1_0jeth")
+item_data = ExtResource("4_jlnvb")
+
+[sub_resource type="Resource" id="Resource_va1ng"]
+script = ExtResource("1_0jeth")
+item_data = ExtResource("5_fhog6")
+
+[sub_resource type="Resource" id="Resource_qdqce"]
 script = ExtResource("1_0jeth")
 item_data = ExtResource("4_3cs1p")
-chance = 4.0
-metadata/_custom_type_script = "uid://df3upxsdcqmf8"
 
 [sub_resource type="Resource" id="Resource_fhog6"]
 script = ExtResource("5_c2yb7")
-entries = Array[ExtResource("1_0jeth")]([SubResource("Resource_22cg2"), SubResource("Resource_jggux"), SubResource("Resource_jlnvb")])
+entries = Array[ExtResource("1_0jeth")]([SubResource("Resource_n81fh"), SubResource("Resource_83plt"), SubResource("Resource_4v2sw"), SubResource("Resource_va1ng"), SubResource("Resource_qdqce")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
+
+[sub_resource type="Resource" id="Resource_wt4kb"]
+script = ExtResource("1_0jeth")
+item_data = ExtResource("8_ak8rg")
+
+[sub_resource type="Resource" id="Resource_6rsda"]
+script = ExtResource("1_0jeth")
+item_data = ExtResource("9_lfhtj")
+
+[sub_resource type="Resource" id="Resource_85ql5"]
+script = ExtResource("1_0jeth")
+item_data = ExtResource("10_j5re4")
+
+[sub_resource type="Resource" id="Resource_yptx6"]
+script = ExtResource("5_c2yb7")
+entries = Array[ExtResource("1_0jeth")]([SubResource("Resource_wt4kb"), SubResource("Resource_6rsda"), SubResource("Resource_85ql5")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]
 script = ExtResource("1_hloxr")
+salvageable_loot_table = SubResource("Resource_yptx6")
 non_salvageable_loot_table = SubResource("Resource_fhog6")
 metadata/_custom_type_script = "uid://elnbd45b0anw"

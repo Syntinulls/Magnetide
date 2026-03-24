@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://ckmde17nv4mch"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_g4fth"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="2_x2ho7"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_4q3rw"]
+
+[resource]
+script = ExtResource("1_g4fth")
+item_name = "Trashcan"
+sprite = ExtResource("3_4q3rw")
+components = Array[ExtResource("1_g4fth")]([ExtResource("2_x2ho7")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

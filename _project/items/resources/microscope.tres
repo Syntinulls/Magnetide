@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://b7p22gr4ie6ud"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_rdby6"]
+[ext_resource type="Resource" uid="uid://bfheki3dmj8e8" path="res://_project/items/resources/lens.tres" id="2_y3viw"]
+[ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="3_knbne"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_hcw46"]
+
+[resource]
+script = ExtResource("1_rdby6")
+item_name = "Microscope"
+sprite = ExtResource("4_hcw46")
+components = Array[ExtResource("1_rdby6")]([ExtResource("2_y3viw"), ExtResource("3_knbne")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

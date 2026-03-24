@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://ceer6vrg47ny5"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_lwnlv"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="2_sqv1b"]
+[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="3_bqj6m"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="4_604ol"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="5_xllml"]
+
+[resource]
+script = ExtResource("1_lwnlv")
+item_name = "Radio"
+sprite = ExtResource("5_xllml")
+components = Array[ExtResource("1_lwnlv")]([ExtResource("2_sqv1b"), ExtResource("3_bqj6m"), ExtResource("4_604ol")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

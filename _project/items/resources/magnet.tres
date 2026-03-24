@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bf48rmqcheua0"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_6nga2"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="2_jebvh"]
+
+[resource]
+script = ExtResource("1_6nga2")
+item_name = "Magnet"
+sprite = ExtResource("2_jebvh")
+is_component = true
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

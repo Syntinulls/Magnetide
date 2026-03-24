@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bb82f5e821yul"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_ut0o0"]
+[ext_resource type="Resource" uid="uid://cx0dudxtk1y0n" path="res://_project/items/resources/power_core.tres" id="2_dmtty"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_yyequ"]
+[ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="4_y6cmx"]
+[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="5_68jek"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_7r2u0"]
+
+[resource]
+script = ExtResource("1_ut0o0")
+item_name = "Portable Reactor"
+sprite = ExtResource("6_7r2u0")
+is_component = true
+components = Array[ExtResource("1_ut0o0")]([ExtResource("2_dmtty"), ExtResource("3_yyequ"), ExtResource("4_y6cmx"), ExtResource("5_68jek")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

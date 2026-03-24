@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://kwbg58d0vfv0"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_xadeq"]
+[ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="2_o2dxo"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_sqdwf"]
+
+[resource]
+script = ExtResource("1_xadeq")
+item_name = "Mattress"
+sprite = ExtResource("3_sqdwf")
+components = Array[ExtResource("1_xadeq")]([ExtResource("2_o2dxo")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

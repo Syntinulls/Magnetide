@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://cx0dudxtk1y0n"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_jctha"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="2_f50j5"]
+
+[resource]
+script = ExtResource("1_jctha")
+item_name = "Power Core"
+sprite = ExtResource("2_f50j5")
+is_component = true
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

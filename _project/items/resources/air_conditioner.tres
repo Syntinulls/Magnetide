@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://b4m4e377rt8fk"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_25sn2"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="2_bnmka"]
+[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="3_wl67t"]
+[ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="4_fe8h1"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="5_ryfei"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_1ij3o"]
+
+[resource]
+script = ExtResource("1_25sn2")
+item_name = "Air Conditioner"
+sprite = ExtResource("6_1ij3o")
+components = Array[ExtResource("1_25sn2")]([ExtResource("2_bnmka"), ExtResource("3_wl67t"), ExtResource("4_fe8h1"), ExtResource("5_ryfei")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"
