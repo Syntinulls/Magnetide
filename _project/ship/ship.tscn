@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dship00001"]
 
-[ext_resource type="Script" path="res://_project/ship/ship.gd" id="1_ship_script"]
 [ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="1_back"]
+[ext_resource type="Script" uid="uid://ypw32qt364g" path="res://_project/ship/ship.gd" id="1_ship_script"]
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
 [ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet/magnet_lever.tscn" id="3_lever"]
 [ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="4_magnet"]
@@ -20,6 +20,11 @@ size = Vector2(760, 40)
 
 [node name="Ship" type="Node2D" unique_id=1033807799]
 script = ExtResource("1_ship_script")
+
+[node name="Magnet" parent="." unique_id=143007537 instance=ExtResource("4_magnet")]
+position = Vector2(0, 136)
+lower_distance = 0.0
+lower_raise_time = 0.0
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
 texture = ExtResource("1_back")
@@ -52,8 +57,3 @@ position = Vector2(0, -77)
 
 [node name="ActivationMinigameAnchor" type="Marker2D" parent="." unique_id=143007536]
 position = Vector2(0, -350)
-
-[node name="Magnet" parent="." unique_id=143007537 instance=ExtResource("4_magnet")]
-position = Vector2(0, 160)
-lower_distance = 0.0
-lower_raise_time = 0.0

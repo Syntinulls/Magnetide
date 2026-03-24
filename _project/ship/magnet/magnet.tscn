@@ -2,6 +2,17 @@
 
 [ext_resource type="Script" uid="uid://5kgnhphl5jei" path="res://_project/ship/magnet/magnet.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cdvmasewgya5d" path="res://_project/ship/magnet/sprites/magnet_effect_animation.png" id="2_effect_sprite"]
+[ext_resource type="Shader" uid="uid://b5fe2fkb5a2dc" path="res://_project/shaders/nine_patch_sprite.gdshader" id="2_hmfyq"]
+[ext_resource type="Texture2D" uid="uid://c6mo1y4lj2to2" path="res://_project/ship/sprites/ship_magnet_stretch.png" id="3_cwwmf"]
+[ext_resource type="Script" uid="uid://dk71qlnibm401" path="res://_project/shaders/nine_patch_sprite.gd" id="4_2c23r"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_mljxl"]
+shader = ExtResource("2_hmfyq")
+shader_parameter/margin_left = 44.0
+shader_parameter/margin_right = 44.0
+shader_parameter/margin_top = 44.0
+shader_parameter/margin_bottom = 44.0
+shader_parameter/target_size = Vector2(132, 44)
 
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_cone"]
 points = PackedVector2Array(-50, 0, 50, 0, 70, 300, -70, 300)
@@ -61,6 +72,17 @@ animations = [{
 
 [node name="Magnet" type="Node2D" unique_id=1946411833]
 script = ExtResource("1_script")
+magnet_width = 264.0
+
+[node name="MagnetSprite" type="Sprite2D" parent="." unique_id=1103544616]
+material = SubResource("ShaderMaterial_mljxl")
+texture = ExtResource("3_cwwmf")
+script = ExtResource("4_2c23r")
+target_size = Vector2(132, 44)
+margin_left = 44.0
+margin_right = 44.0
+margin_top = 44.0
+margin_bottom = 44.0
 
 [node name="Area2D" type="Area2D" parent="." unique_id=1424949377]
 collision_layer = 0
@@ -74,11 +96,10 @@ collision_layer = 4
 collision_mask = 0
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=178050141]
-position = Vector2(0, 10)
 shape = SubResource("RectangleShape2D_body")
 
 [node name="EffectAnimation" type="AnimatedSprite2D" parent="." unique_id=1393945074]
 visible = false
 position = Vector2(0, -42)
 sprite_frames = SubResource("SpriteFrames_effect")
-offset = Vector2(0, 280)
+offset = Vector2(0, 308)

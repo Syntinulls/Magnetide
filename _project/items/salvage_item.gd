@@ -29,6 +29,7 @@ var _pull_elapsed: float = 0.0  # Time spent being pulled (for speed ramp)
 var _pull_base_speed: float = 200.0
 var _pull_max_speed: float = 1500.0
 var _pull_ramp_time: float = 0.6
+var _pull_direction: Vector2 = Vector2.UP  # Fixed pull direction based on trapezoid edge
 
 # Item-specific physics constants (independent of what's pulling)
 const ITEM_PULL_DAMPING: float = 0.85
@@ -131,11 +132,12 @@ func _create_placeholder_sprite() -> void:
 	_sprite.texture = tex
 
 
-func start_magnet_pull(magnet: Node2D) -> void:
+func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
 	_magnet_target = magnet
 	_is_attached_to_magnet = false
 	_is_falling = false
 	_pull_elapsed = 0.0  # Reset speed ramp
+	_pull_direction = direction.normalized()
 	
 	# Get pull config from the magnet
 	if magnet.has_method("get") or "pull_base_speed" in magnet:
@@ -229,7 +231,9 @@ func _physics_process(delta: float) -> void:
 	if _magnet_target:
 		var to_magnet := _magnet_target.global_position - global_position
 		var distance := to_magnet.length()
-		var direction := to_magnet.normalized()
+		
+		# Use fixed pull direction based on trapezoid edge angle
+		var direction := _pull_direction
 		
 		# Use position-based movement with speed ramp (same as magnet gun)
 		_pull_elapsed += delta

@@ -22,6 +22,11 @@ signal all_items_released()
 @export var lower_raise_time: float = 0.8
 ## Threat penalty per magnet activation. Affected by upgrades.
 @export var threat_penalty: float = 10.0
+## Width of the magnet pull area at the top (full width, not half).
+@export var magnet_width: float = 100.0:
+	set(value):
+		magnet_width = value
+		_update_magnet_visuals()
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
@@ -38,8 +43,12 @@ var _lower_elapsed: float = 0.0
 var _area: Area2D = null
 var _field_shape: CollisionShape2D = null
 var _effect_animation: AnimatedSprite2D = null
-const MAGNET_HALF_WIDTH: float = 50.0  # Half width of magnet collision strip
+var _magnet_sprite: NinePatchSprite = null
+var _body_shape: CollisionShape2D = null
+var _left_wall: StaticBody2D = null
+var _right_wall: StaticBody2D = null
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
+const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
 
 var current_weight: float:
 	get:
@@ -61,6 +70,11 @@ func _ready() -> void:
 		_area.body_entered.connect(_on_body_entered)
 		_field_shape = _area.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	_effect_animation = get_node_or_null("EffectAnimation") as AnimatedSprite2D
+	_magnet_sprite = get_node_or_null("MagnetSprite") as NinePatchSprite
+	var static_body := get_node_or_null("StaticBody2D") as StaticBody2D
+	if static_body:
+		_body_shape = static_body.get_node_or_null("CollisionShape2D") as CollisionShape2D
+	_update_magnet_visuals()
 
 
 func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int = 0) -> void:
@@ -219,8 +233,13 @@ func _spawn_item_from_pile() -> void:
 	item.global_position = Vector2(_pile_node.global_position.x + x_offset, screen_height)
 	item.z_index = -1  # Render behind salvage pile
 
-	# Start pulling toward magnet
-	item.start_magnet_pull(self)
+	# Pull direction: mostly up, with small bias toward center based on distance from center
+	# Items at the edge get more horizontal bias, items near center get almost none
+	var center_bias_strength := 0.15  # Max horizontal component at full distance
+	var normalized_offset := x_offset / x_range if x_range > 0.0 else 0.0  # -1 to 1
+	var horizontal_bias := -normalized_offset * center_bias_strength  # Negative to pull toward center
+	var pull_direction := Vector2(horizontal_bias, -1.0).normalized()
+	item.start_magnet_pull(self, pull_direction)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
 
 	if is_overweight:
@@ -288,14 +307,17 @@ func _update_field_shape_for_pile(pile: SalvagePile) -> void:
 	var field_height := screen_height - global_position.y
 	
 	# Create trapezoid: top = magnet width, bottom = pile spawn width
+	var top_left := Vector2(-magnet_width * 0.5, 0)
+	var top_right := Vector2(magnet_width * 0.5, 0)
+	var bottom_right := Vector2(bottom_half_width, field_height)
+	var bottom_left := Vector2(-bottom_half_width, field_height)
+	
 	var trapezoid := ConvexPolygonShape2D.new()
-	trapezoid.points = PackedVector2Array([
-		Vector2(-MAGNET_HALF_WIDTH, 0),  # Top left
-		Vector2(MAGNET_HALF_WIDTH, 0),   # Top right
-		Vector2(bottom_half_width, field_height),   # Bottom right
-		Vector2(-bottom_half_width, field_height)   # Bottom left
-	])
+	trapezoid.points = PackedVector2Array([top_left, top_right, bottom_right, bottom_left])
 	_field_shape.shape = trapezoid
+	
+	# Create edge collision walls to keep items within the pull area
+	_update_edge_walls(top_left, bottom_left, top_right, bottom_right)
 
 
 ## Reset the pity counter (called when a salvageable item is pulled).
@@ -311,3 +333,66 @@ func increment_pity_counter() -> void:
 ## Get the current pity counter value.
 func get_pity_counter() -> int:
 	return _salvageable_pull_count
+
+
+## Update magnet visuals (sprite size) and collision shape based on magnet_width.
+func _update_magnet_visuals() -> void:
+	if _magnet_sprite:
+		_magnet_sprite.target_size.x = magnet_width
+	if _body_shape and _body_shape.shape is RectangleShape2D:
+		var rect_shape := _body_shape.shape as RectangleShape2D
+		rect_shape.size = Vector2(magnet_width, 44.0)
+
+
+## Create or update edge collision walls along the trapezoid edges.
+func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vector2, bottom_right: Vector2) -> void:
+	# Create walls if they don't exist
+	if not _left_wall:
+		_left_wall = StaticBody2D.new()
+		_left_wall.collision_layer = 4  # Same as magnet body
+		_left_wall.collision_mask = 2  # Collide with salvage items
+		var new_left_shape := CollisionShape2D.new()
+		new_left_shape.shape = ConvexPolygonShape2D.new()
+		_left_wall.add_child(new_left_shape)
+		add_child(_left_wall)
+	
+	if not _right_wall:
+		_right_wall = StaticBody2D.new()
+		_right_wall.collision_layer = 4  # Same as magnet body
+		_right_wall.collision_mask = 2  # Collide with salvage items
+		var new_right_shape := CollisionShape2D.new()
+		new_right_shape.shape = ConvexPolygonShape2D.new()
+		_right_wall.add_child(new_right_shape)
+		add_child(_right_wall)
+	
+	# Calculate wall polygons (thin rectangles along each edge)
+	# Left wall: offset inward by wall thickness
+	var left_dir := (top_left - bottom_left).normalized()
+	var left_normal := Vector2(left_dir.y, -left_dir.x)  # Perpendicular, pointing inward (right)
+	
+	var left_poly := PackedVector2Array([
+		bottom_left,
+		top_left,
+		top_left + left_normal * WALL_THICKNESS,
+		bottom_left + left_normal * WALL_THICKNESS
+	])
+	
+	# Right wall: offset inward by wall thickness
+	var right_dir := (top_right - bottom_right).normalized()
+	var right_normal := Vector2(-right_dir.y, right_dir.x)  # Perpendicular, pointing inward (left)
+	
+	var right_poly := PackedVector2Array([
+		bottom_right,
+		top_right,
+		top_right + right_normal * WALL_THICKNESS,
+		bottom_right + right_normal * WALL_THICKNESS
+	])
+	
+	# Update shapes
+	var left_shape := _left_wall.get_child(0) as CollisionShape2D
+	if left_shape and left_shape.shape is ConvexPolygonShape2D:
+		(left_shape.shape as ConvexPolygonShape2D).points = left_poly
+	
+	var right_shape := _right_wall.get_child(0) as CollisionShape2D
+	if right_shape and right_shape.shape is ConvexPolygonShape2D:
+		(right_shape.shape as ConvexPolygonShape2D).points = right_poly

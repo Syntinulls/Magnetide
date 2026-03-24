@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bc1u81scciy3r"
-path="res://.godot/imported/lever_handle.png-b8b6a62d6cfa023d01df9523fc7cc27a.ctex"
+uid="uid://c5h0dyjjfth8u"
+path="res://.godot/imported/ship_magnet_1.png-6185740460c52fb4b77b84275d023f8a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/ship/sprites/lever_handle.png"
-dest_files=["res://.godot/imported/lever_handle.png-b8b6a62d6cfa023d01df9523fc7cc27a.ctex"]
+source_file="res://_project/ship/sprites/ship_magnet_1.png"
+dest_files=["res://.godot/imported/ship_magnet_1.png-6185740460c52fb4b77b84275d023f8a.ctex"]
 
 [params]
 

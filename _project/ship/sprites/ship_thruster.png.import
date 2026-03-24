@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://c8g86e5exbal"
-path="res://.godot/imported/lever_base.png-bcf5cfdda259e35b43ae217af0111ee8.ctex"
+uid="uid://wnbv58viosrx"
+path="res://.godot/imported/ship_thruster.png-f3ff291553f4d97f4a8f268a3b49fab4.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/ship/sprites/lever_base.png"
-dest_files=["res://.godot/imported/lever_base.png-bcf5cfdda259e35b43ae217af0111ee8.ctex"]
+source_file="res://_project/ship/sprites/ship_thruster.png"
+dest_files=["res://.godot/imported/ship_thruster.png-f3ff291553f4d97f4a8f268a3b49fab4.ctex"]
 
 [params]
 

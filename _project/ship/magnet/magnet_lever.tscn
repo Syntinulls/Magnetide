@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://d3mmmb0dgd71p"]
 
-[ext_resource type="Texture2D" uid="uid://c8g86e5exbal" path="res://_project/ship/sprites/lever_base.png" id="1_base"]
-[ext_resource type="Texture2D" uid="uid://bc1u81scciy3r" path="res://_project/ship/sprites/lever_handle.png" id="2_handle"]
+[ext_resource type="Texture2D" uid="uid://cw51sq1g6y54l" path="res://_project/ship/sprites/ship_lever_handle.png" id="2_f5520"]
+[ext_resource type="Texture2D" uid="uid://lfkw8jjs0vkx" path="res://_project/ship/sprites/ship_lever_base.png" id="3_nbw55"]
 [ext_resource type="Script" uid="uid://djf0uwoikdhxk" path="res://_project/ship/magnet/magnet_lever.gd" id="3_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]
@@ -15,11 +15,11 @@ position = Vector2(0, -5)
 rotation = 0.785398
 
 [node name="Handle" type="Sprite2D" parent="HandlePivot" unique_id=990325710]
-texture = ExtResource("2_handle")
+texture = ExtResource("2_f5520")
 offset = Vector2(0, -41)
 
 [node name="Base" type="Sprite2D" parent="." unique_id=670853145]
-texture = ExtResource("1_base")
+texture = ExtResource("3_nbw55")
 offset = Vector2(0, -16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1306363612]

@@ -68,12 +68,12 @@ func _create_storage_borders() -> void:
 	var half_w := storage_area_size.x * 0.5
 	var floor_y := storage_area_position.y
 
-	# Floor
+	# Floor (positioned at top edge of marker sprite)
 	var floor_shape := CollisionShape2D.new()
 	var floor_rect := RectangleShape2D.new()
 	floor_rect.size = Vector2(storage_area_size.x, STORAGE_BORDER_THICKNESS)
 	floor_shape.shape = floor_rect
-	floor_shape.position = Vector2(storage_area_position.x, floor_y + STORAGE_BORDER_THICKNESS * 0.5)
+	floor_shape.position = Vector2(storage_area_position.x, floor_y - storage_marker_height + STORAGE_BORDER_THICKNESS * 0.5)
 	_storage_borders.add_child(floor_shape)
 
 	# Left wall
