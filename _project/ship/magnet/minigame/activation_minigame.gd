@@ -30,9 +30,9 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 
 @export_group("Scoring")
 ## Distance threshold for green (perfect) hit as ratio of bar width.
-@export var green_threshold_ratio: float = 0.02
+@export var green_threshold_ratio: float = 0.03
 ## Distance threshold for yellow (good) hit as ratio of bar width.
-@export var yellow_threshold_ratio: float = 0.04
+@export var yellow_threshold_ratio: float = 0.05
 ## Number of yellow markers allowed per rarity (COMMON, RARE, EPIC, LEGENDARY).
 @export var allowed_yellows: Array[int] = [2, 1, 1, 0]
 ## Number of markers per rarity (COMMON, RARE, EPIC, LEGENDARY).
@@ -354,10 +354,13 @@ func _process_playing(delta: float) -> void:
 func _check_passed_markers() -> void:
 	# Check if cog has passed the current marker beyond the yellow threshold
 	# If so, auto-fail it to red since it's now impossible to hit
+	# Cog moves left (decreasing ratio), markers sorted right-to-left
+	# Yellow zone is from (marker_pos + yellow_threshold) to (marker_pos - yellow_threshold)
+	# When cog passes left of (marker_pos - yellow_threshold), it's impossible to hit
 	while _current_marker_index < _marker_positions.size():
 		var marker_pos := _marker_positions[_current_marker_index]
-		# Cog moves left (decreasing ratio), so if cog is left of marker minus threshold, it's passed
-		if _cog_position_ratio < marker_pos - yellow_threshold_ratio:
+		var left_edge := marker_pos - yellow_threshold_ratio
+		if _cog_position_ratio < left_edge:
 			_auto_fail_marker(_current_marker_index)
 			_current_marker_index += 1
 		else:
@@ -429,9 +432,9 @@ func _check_marker_hit() -> void:
 		marker_hit_success.emit(_current_marker_index, _marker_positions.size())
 		_use_yellow_allowance()
 	else:
-		result = 3  # Red (miss)
+		# Outside yellow zone - red (miss)
+		result = 3  # Red
 		color = Color.RED
-		# No signal emitted for misses - lever doesn't progress
 	
 	_marker_results[_current_marker_index] = result
 	
@@ -453,7 +456,7 @@ func _check_marker_hit() -> void:
 			elif result == 2:  # Yellow
 				icon.texture = _icon_success
 				icon.modulate = Color.YELLOW
-			else:  # Red (miss)
+			else:  # Red
 				icon.texture = _icon_failure
 				icon.modulate = Color.RED
 	

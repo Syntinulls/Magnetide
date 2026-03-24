@@ -436,6 +436,9 @@ func _update_repel_bar() -> void:
 			_repel_bar.size.x = REPEL_BAR_WIDTH * fill
 
 
-## Called externally when looting ends to clean up held items
+## Called externally when looting ends to clean up hover state (but keep held item)
 func on_looting_ended() -> void:
-	_clear_magnet_gun_state()
+	# Clear hover only - player keeps any item held by magnet gun
+	if _hovered_item and is_instance_valid(_hovered_item):
+		_hovered_item.set_outlined(false)
+	_hovered_item = null

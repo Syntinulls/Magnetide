@@ -91,7 +91,7 @@ func _ready() -> void:
 	_outline_material = ShaderMaterial.new()
 	_outline_material.shader = OUTLINE_SHADER
 	_outline_material.set_shader_parameter("outline_enabled", false)
-	_outline_material.set_shader_parameter("outline_width", 6.0)
+	_outline_material.set_shader_parameter("outline_width", 3.0)
 	_sprite.material = _outline_material
 	
 	_collision_shape = CollisionShape2D.new()
@@ -172,6 +172,10 @@ func attach_to_magnet() -> void:
 
 
 func release_from_magnet() -> void:
+	# Don't release if held by magnet gun - gun takes priority
+	if _is_held_by_gun:
+		return
+	
 	_is_attached_to_magnet = false
 	_is_in_magnet_field = false
 	_is_falling = true
