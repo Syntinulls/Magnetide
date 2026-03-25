@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_xadeq"]
 [ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="2_o2dxo"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_sqdwf"]
+[ext_resource type="Texture2D" uid="uid://8flyqhcukvrx" path="res://_project/items/sprites/salvage_mattress.png" id="3_o2dxo"]
 
 [resource]
 script = ExtResource("1_xadeq")
 item_name = "Mattress"
-sprite = ExtResource("3_sqdwf")
-area = Vector2(120, 120)
+sprite = ExtResource("3_o2dxo")
+area = Vector2(140, 140)
 components = Array[ExtResource("1_xadeq")]([ExtResource("2_o2dxo")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

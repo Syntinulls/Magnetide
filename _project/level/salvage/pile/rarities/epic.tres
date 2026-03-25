@@ -5,7 +5,7 @@
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="2_bdkc8"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="3_y5qmb"]
 [ext_resource type="Resource" uid="uid://dsb0n6bwvbavo" path="res://_project/items/resources/piston.tres" id="4_fb0tn"]
-[ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="5_amony"]
+[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="5_g4ue2"]
 [ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="6_g18rn"]
 [ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="7_xidhj"]
 [ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="8_73dk3"]
@@ -32,7 +32,7 @@ item_data = ExtResource("4_fb0tn")
 
 [sub_resource type="Resource" id="Resource_aav0h"]
 script = ExtResource("1_g4ue2")
-item_data = ExtResource("5_amony")
+item_data = ExtResource("5_g4ue2")
 
 [sub_resource type="Resource" id="Resource_v13e3"]
 script = ExtResource("1_g4ue2")

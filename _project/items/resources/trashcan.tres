@@ -8,6 +8,6 @@
 script = ExtResource("1_g4fth")
 item_name = "Trashcan"
 sprite = ExtResource("3_x2ho7")
-area = Vector2(100, 100)
+area = Vector2(120, 120)
 components = Array[ExtResource("1_g4fth")]([ExtResource("2_x2ho7")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"
