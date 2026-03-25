@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://c3i6j83w7ausi"]
+
+[ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/player/equipment/weapon_data.gd" id="1_kecvl"]
+[ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/player/equipment/rifle/bullet_1.png" id="1_pxyta"]
+[ext_resource type="Texture2D" uid="uid://brxpe4qiqvo" path="res://_project/ui/sprites/ui_player_itemslot_rifle.png" id="2_02vt3"]
+[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/equipment/rifle/rifle.png" id="3_vl06k"]
+
+[resource]
+script = ExtResource("1_kecvl")
+weapon_sprite = ExtResource("3_vl06k")
+bullet_sprite = ExtResource("1_pxyta")
+display_name = "Rifle"
+hotbar_icon = ExtResource("2_02vt3")
+metadata/_custom_type_script = "uid://dswvbat8qx1i4"

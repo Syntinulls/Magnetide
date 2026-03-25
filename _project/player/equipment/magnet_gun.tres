@@ -1,0 +1,19 @@
+[gd_resource type="Resource" script_class="MagnetToolData" format=3]
+
+[ext_resource type="Script" path="res://_project/player/equipment/magnet_tool_data.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://_project/player/sprites/guy_magnetgun.png" id="2_sprite"]
+
+[resource]
+script = ExtResource("1_script")
+display_name = "Magnet Gun"
+hotbar_icon = ExtResource("2_sprite")
+weapon_sprite = ExtResource("2_sprite")
+hold_distance = 30.0
+repel_hold_time = 0.8
+repel_impulse_force = 600.0
+pull_base_speed = 133.0
+pull_max_speed = 1000.0
+pull_ramp_time = 0.6
+weapon_offset = Vector2(-15.125, 0)
+weapon_rotation = -0.14660765
+muzzle_position = Vector2(-55.915, -4.695)

@@ -21,6 +21,10 @@
 [ext_resource type="Texture2D" uid="uid://cd42vx545sgxe" path="res://_project/ui/sprites/hud_player_hp_health.png" id="19_a5bm7"]
 [ext_resource type="Script" uid="uid://b8fg0vsqnib1y" path="res://_project/ui/hotbar.gd" id="20_hotbar"]
 [ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/ui/sprites/ui_player_itemslot.png" id="21_a5bm7"]
+[ext_resource type="Shader" uid="uid://dc4veltos4jti" path="res://_project/ui/hotbar_gradient.gdshader" id="22_gradient"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
+shader = ExtResource("22_gradient")
 
 [node name="GameUI" type="Control" unique_id=1333566747]
 layout_mode = 3
@@ -262,14 +266,14 @@ texture_progress_offset = Vector2(12, 0)
 layout_mode = 2
 
 [node name="Hotbar" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer" unique_id=827461523]
-custom_minimum_size = Vector2(288, 48)
+custom_minimum_size = Vector2(288, 72)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("20_hotbar")
 
-[node name="HotbarMask" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=827461524]
-clip_contents = true
-custom_minimum_size = Vector2(288, 48)
+[node name="HotbarMask" type="SubViewportContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=827461524]
+material = SubResource("ShaderMaterial_hotbar_gradient")
+custom_minimum_size = Vector2(288, 72)
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -277,209 +281,314 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+stretch = true
 
-[node name="HotbarStrip" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask" unique_id=827461525]
-layout_mode = 1
+[node name="SubViewport" type="SubViewport" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask" unique_id=1821687198]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(288, 72)
+render_target_update_mode = 4
+
+[node name="HotbarStrip" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport" unique_id=827461525]
 anchors_preset = 4
 anchor_top = 0.5
 anchor_bottom = 0.5
-offset_left = -96.0
 offset_top = -24.0
-offset_right = 384.0
-offset_bottom = 24.0
+offset_right = 480.0
+offset_bottom = 48.0
 grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 0
 
-[node name="Slot0" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461530]
-custom_minimum_size = Vector2(96, 48)
+[node name="Slot0" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461530]
+custom_minimum_size = Vector2(96, 72)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 
-[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot0" unique_id=1647201080]
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1647201080]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot0" unique_id=827461532]
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=827461532]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Slot1" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461540]
-custom_minimum_size = Vector2(96, 48)
-layout_mode = 2
-size_flags_vertical = 4
-mouse_filter = 2
-
-[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=944645037]
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1762474811]
 layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-texture = ExtResource("21_a5bm7")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=827461542]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-expand_mode = 1
-stretch_mode = 5
-
-[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=827461543]
-layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
 offset_left = -16.0
-offset_top = -16.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 12
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0/SlotNumberContainer" unique_id=361961231]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot1" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461540]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=944645037]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=827461542]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=320346799]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1/SlotNumberContainer" unique_id=896681503]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
 text = "1"
-horizontal_alignment = 2
-vertical_alignment = 2
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Slot2" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461550]
-custom_minimum_size = Vector2(96, 48)
+[node name="Slot2" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461550]
+custom_minimum_size = Vector2(96, 72)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 
-[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=335140841]
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=335140841]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=827461552]
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=827461552]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=827461553]
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=871942949]
 layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
 offset_left = -16.0
-offset_top = -16.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 12
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2/SlotNumberContainer" unique_id=678578121]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
 text = "2"
-horizontal_alignment = 2
-vertical_alignment = 2
+horizontal_alignment = 1
+vertical_alignment = 1
 
-[node name="Slot3" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461560]
-custom_minimum_size = Vector2(96, 48)
+[node name="Slot3" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461560]
+custom_minimum_size = Vector2(96, 72)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 
-[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=864315287]
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=864315287]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=827461562]
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=827461562]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
 
-[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=827461563]
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=1097802775]
 layout_mode = 1
-anchors_preset = 3
-anchor_left = 1.0
-anchor_top = 1.0
-anchor_right = 1.0
-anchor_bottom = 1.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
 offset_left = -16.0
-offset_top = -16.0
-grow_horizontal = 0
-grow_vertical = 0
-theme_override_font_sizes/font_size = 12
-text = "3"
-horizontal_alignment = 2
-vertical_alignment = 2
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
 
-[node name="Slot4" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461570]
-custom_minimum_size = Vector2(96, 48)
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3/SlotNumberContainer" unique_id=565172974]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot4" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461570]
+custom_minimum_size = Vector2(96, 72)
 layout_mode = 2
 size_flags_vertical = 4
 mouse_filter = 2
 
-[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot4" unique_id=839025272]
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=839025272]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot4" unique_id=827461572]
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=827461572]
 layout_mode = 1
-anchors_preset = 15
+anchors_preset = 10
 anchor_right = 1.0
-anchor_bottom = 1.0
+offset_bottom = 48.0
 grow_horizontal = 2
-grow_vertical = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=503464414]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4/SlotNumberContainer" unique_id=116601764]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1

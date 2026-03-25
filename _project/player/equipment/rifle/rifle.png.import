@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://vq163jt8x6as"
-path="res://.godot/imported/guy_part_legs_bend.png-b40fed00cc2997dc3e076c500d6f9963.ctex"
+uid="uid://dw3tx5nn36drf"
+path="res://.godot/imported/rifle.png-e9ee907e395f95aad780a09c902f57c1.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_part_legs_bend.png"
-dest_files=["res://.godot/imported/guy_part_legs_bend.png-b40fed00cc2997dc3e076c500d6f9963.ctex"]
+source_file="res://_project/player/equipment/rifle/rifle.png"
+dest_files=["res://.godot/imported/rifle.png-e9ee907e395f95aad780a09c902f57c1.ctex"]
 
 [params]
 

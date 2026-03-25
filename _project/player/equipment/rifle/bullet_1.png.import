@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dx1rtfv6p7g1o"
-path="res://.godot/imported/guy_part_body.png-92f65f3233def09f19385bfd495b6dbd.ctex"
+uid="uid://3bx0akmn8eib"
+path="res://.godot/imported/bullet_1.png-6093c1199442ec88a4fa4613fde2e37f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_part_body.png"
-dest_files=["res://.godot/imported/guy_part_body.png-92f65f3233def09f19385bfd495b6dbd.ctex"]
+source_file="res://_project/player/equipment/rifle/bullet_1.png"
+dest_files=["res://.godot/imported/bullet_1.png-6093c1199442ec88a4fa4613fde2e37f.ctex"]
 
 [params]
 

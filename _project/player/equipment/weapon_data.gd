@@ -1,7 +1,5 @@
-extends Resource
+extends EquipmentData
 class_name WeaponData
-
-@export var weapon_name: String = ""
 @export var damage: float = 10.0
 @export var fire_rate: float = 5.0
 @export var bullet_speed: float = 1800.0

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cegsvxxw88tcp"
-path="res://.godot/imported/guy_part_legs_stretch.png-ecd795a670b78d61c6b38e1ce6638ed7.ctex"
+uid="uid://cfcg12aph5ogr"
+path="res://.godot/imported/ui_player_itemslot_sniper.png-43567e76227474544015ae324bc8a8e6.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_part_legs_stretch.png"
-dest_files=["res://.godot/imported/guy_part_legs_stretch.png-ecd795a670b78d61c6b38e1ce6638ed7.ctex"]
+source_file="res://_project/ui/sprites/ui_player_itemslot_sniper.png"
+dest_files=["res://.godot/imported/ui_player_itemslot_sniper.png-43567e76227474544015ae324bc8a8e6.ctex"]
 
 [params]
 

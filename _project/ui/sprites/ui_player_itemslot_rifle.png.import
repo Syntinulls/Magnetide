@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dmw5ph0068wu5"
-path="res://.godot/imported/guy_part_legs_brace.png-142e908f79e1794dffdf754239b0c034.ctex"
+uid="uid://brxpe4qiqvo"
+path="res://.godot/imported/ui_player_itemslot_rifle.png-0324164a634d0a9fbd8aefe3805ab5e7.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_part_legs_brace.png"
-dest_files=["res://.godot/imported/guy_part_legs_brace.png-142e908f79e1794dffdf754239b0c034.ctex"]
+source_file="res://_project/ui/sprites/ui_player_itemslot_rifle.png"
+dest_files=["res://.godot/imported/ui_player_itemslot_rifle.png-0324164a634d0a9fbd8aefe3805ab5e7.ctex"]
 
 [params]
 

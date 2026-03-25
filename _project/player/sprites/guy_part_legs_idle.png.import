@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://x7y278qulorq"
-path="res://.godot/imported/guy_magnetgun.png-3066b13cd6714fe308349fe73078383d.ctex"
+uid="uid://ba2hadpeipo0h"
+path="res://.godot/imported/guy_part_legs_idle.png-d26d128704aefe2a74a9ebae349dd786.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_magnetgun.png"
-dest_files=["res://.godot/imported/guy_magnetgun.png-3066b13cd6714fe308349fe73078383d.ctex"]
+source_file="res://_project/player/sprites/guy_part_legs_idle.png"
+dest_files=["res://.godot/imported/guy_part_legs_idle.png-d26d128704aefe2a74a9ebae349dd786.ctex"]
 
 [params]
 

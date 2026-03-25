@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ieq1qs5oqos0"
-path="res://.godot/imported/guy_part_arm_back.png-2415992e9b3e8c0d193aa477dcc898d3.ctex"
+uid="uid://bcjnenayhx0in"
+path="res://.godot/imported/guy_part_legs_walk.png-2fa81f513a61b5e4b29c0842fda53d7f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/guy_part_arm_back.png"
-dest_files=["res://.godot/imported/guy_part_arm_back.png-2415992e9b3e8c0d193aa477dcc898d3.ctex"]
+source_file="res://_project/player/sprites/guy_part_legs_walk.png"
+dest_files=["res://.godot/imported/guy_part_legs_walk.png-2fa81f513a61b5e4b29c0842fda53d7f.ctex"]
 
 [params]
 

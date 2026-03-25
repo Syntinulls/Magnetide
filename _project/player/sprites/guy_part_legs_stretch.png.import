@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://3bx0akmn8eib"
-path="res://.godot/imported/bullet_1.png-04326f49e7574df16e631658ef49cb33.ctex"
+uid="uid://cegsvxxw88tcp"
+path="res://.godot/imported/guy_part_legs_stretch.png-8510113adbe6eb1283fac1030079cd1e.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/player/weapons/rifle/bullet_1.png"
-dest_files=["res://.godot/imported/bullet_1.png-04326f49e7574df16e631658ef49cb33.ctex"]
+source_file="res://_project/player/sprites/guy_part_legs_stretch.png"
+dest_files=["res://.godot/imported/guy_part_legs_stretch.png-8510113adbe6eb1283fac1030079cd1e.ctex"]
 
 [params]
 

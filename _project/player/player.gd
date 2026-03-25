@@ -1,34 +1,56 @@
 extends CharacterBody2D
 class_name Player
 
-enum Weapon { GUN, MAGNET_GUN }
-
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
-@export var weapon: WeaponData
+
+## Equipment slots - indices match hotbar slots
+@export var equipment: Array[EquipmentData] = []
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
-const MagnetGunTexture: Texture2D = preload("res://_project/player/guy_magnetgun.png")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
-
-## Distance from muzzle to the magnet gun hold point.
-@export var magnet_gun_hold_distance: float = 30.0
-## Time in seconds to hold right-click to repel an item.
-@export var repel_hold_time: float = 0.8
-## Impulse force applied when repelling an item.
-@export var repel_impulse_force: float = 600.0
-
-## Magnet gun pull config (weaker than main magnet - about 1/1.5x)
-var pull_base_speed: float = 133.0  # 200 / 1.5
-var pull_max_speed: float = 1000.0  # 1500 / 1.5
-var pull_ramp_time: float = 0.6
 
 var input_enabled: bool = true
 var facing_right: bool = false
-var current_weapon: Weapon = Weapon.GUN
 var magnet_effect: Sprite2D = null
 var _fire_cooldown: float = 0.0
+var _selected_equipment_index: int = 0
+
+## Currently selected equipment
+var current_equipment: EquipmentData:
+	get:
+		if _selected_equipment_index >= 0 and _selected_equipment_index < equipment.size():
+			return equipment[_selected_equipment_index]
+		return null
+
+## Convenience getter for current weapon (if equipped)
+var current_weapon_data: WeaponData:
+	get:
+		var equip := current_equipment
+		return equip as WeaponData if equip is WeaponData else null
+
+## Convenience getter for current magnet tool (if equipped)
+var current_magnet_tool: MagnetToolData:
+	get:
+		var equip := current_equipment
+		return equip as MagnetToolData if equip is MagnetToolData else null
+
+## Pull config - read from current magnet tool or use defaults
+var pull_base_speed: float:
+	get:
+		var tool := current_magnet_tool
+		return tool.pull_base_speed if tool else 133.0
+
+var pull_max_speed: float:
+	get:
+		var tool := current_magnet_tool
+		return tool.pull_max_speed if tool else 1000.0
+
+var pull_ramp_time: float:
+	get:
+		var tool := current_magnet_tool
+		return tool.pull_ramp_time if tool else 0.6
 
 # Magnet gun state
 var _held_item: SalvageItem = null
@@ -47,14 +69,15 @@ var _repel_bar_container: Control = null
 
 
 func _ready() -> void:
-	if weapon and weapon.weapon_sprite:
-		weapon_sprite.texture = weapon.weapon_sprite
 	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
 	_create_repel_bar()
-	_connect_hotbar()
+	_apply_current_equipment()
+	# Defer hotbar setup to ensure UI is ready
+	call_deferred("_connect_hotbar")
+	call_deferred("_populate_hotbar")
 
 
 const ARM_OFFSET_X: float = -13.585
@@ -63,6 +86,8 @@ const ARM_POSITION_X: float = 12.56
 
 func _apply_facing(new_facing_right: bool) -> void:
 	facing_right = new_facing_right
+	if not body_sprite:
+		return
 	body_sprite.flip_h = facing_right
 	legs_sprite.flip_h = facing_right
 	arm_sprite.flip_h = facing_right
@@ -71,10 +96,25 @@ func _apply_facing(new_facing_right: bool) -> void:
 	var offset_mult := -1.0 if facing_right else 1.0
 	arm_sprite.offset.x = ARM_OFFSET_X * offset_mult
 	arm_sprite.position.x = ARM_POSITION_X * offset_mult
-	if weapon:
-		weapon_sprite.offset = Vector2(weapon.weapon_offset.x * offset_mult, weapon.weapon_offset.y)
-		weapon_sprite.rotation = weapon.weapon_rotation * offset_mult
-		muzzle.position = Vector2(weapon.muzzle_position.x * offset_mult, weapon.muzzle_position.y)
+	_apply_equipment_positioning(offset_mult)
+
+
+func _facing_mult() -> float:
+	return -1.0 if facing_right else 1.0
+
+
+func _apply_equipment_positioning(offset_mult: float) -> void:
+	var equip := current_equipment
+	if equip is WeaponData:
+		var wpn := equip as WeaponData
+		weapon_sprite.offset = Vector2(wpn.weapon_offset.x * offset_mult, wpn.weapon_offset.y)
+		weapon_sprite.rotation = wpn.weapon_rotation * offset_mult
+		muzzle.position = Vector2(wpn.muzzle_position.x * offset_mult, wpn.muzzle_position.y)
+	elif equip is MagnetToolData:
+		var tool := equip as MagnetToolData
+		weapon_sprite.offset = Vector2(tool.weapon_offset.x * offset_mult, tool.weapon_offset.y)
+		weapon_sprite.rotation = tool.weapon_rotation * offset_mult
+		muzzle.position = Vector2(tool.muzzle_position.x * offset_mult, tool.muzzle_position.y)
 
 
 func _physics_process(delta: float) -> void:
@@ -109,12 +149,11 @@ func _physics_process(delta: float) -> void:
 			arm_rotation = -arm_rotation
 		arm_sprite.rotation = arm_rotation
 		
-		match current_weapon:
-			Weapon.GUN:
-				if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
-					shoot()
-			Weapon.MAGNET_GUN:
-				_process_magnet_gun(delta)
+		var equip := current_equipment
+		if equip is WeaponData:
+			_process_weapon_input(delta)
+		elif equip is MagnetToolData:
+			_process_magnet_tool_input(delta)
 		
 		if Input.is_action_just_pressed("move_jump") and is_on_floor():
 			velocity.y = jump_velocity
@@ -170,43 +209,77 @@ func _setup_hotbar_connection() -> void:
 
 
 func _on_hotbar_slot_selected(index: int) -> void:
-	match index:
-		0: _switch_to_weapon(Weapon.GUN)
-		1: _switch_to_weapon(Weapon.MAGNET_GUN)
+	_switch_to_equipment(index)
 
 
-func _switch_to_weapon(new_weapon: Weapon) -> void:
-	if current_weapon == new_weapon:
+func _switch_to_equipment(index: int) -> void:
+	if index == _selected_equipment_index:
+		return
+	if index < 0 or index >= equipment.size():
 		return
 	
-	if current_weapon == Weapon.MAGNET_GUN:
+	_cleanup_current_equipment()
+	_selected_equipment_index = index
+	_apply_current_equipment()
+
+
+func _cleanup_current_equipment() -> void:
+	var equip := current_equipment
+	if equip is MagnetToolData:
 		stop_magnetize()
 		_clear_magnet_gun_state()
-	
-	current_weapon = new_weapon
-	_update_weapon_sprite()
 
 
-func _update_weapon_sprite() -> void:
-	match current_weapon:
-		Weapon.GUN:
-			if weapon and weapon.weapon_sprite:
-				weapon_sprite.texture = weapon.weapon_sprite
-		Weapon.MAGNET_GUN:
-			weapon_sprite.texture = MagnetGunTexture
+func _apply_current_equipment() -> void:
+	if not weapon_sprite:
+		return
+	var equip := current_equipment
+	if equip is WeaponData:
+		var wpn := equip as WeaponData
+		weapon_sprite.texture = wpn.weapon_sprite
+	elif equip is MagnetToolData:
+		var tool := equip as MagnetToolData
+		weapon_sprite.texture = tool.weapon_sprite
+	elif equip == null:
+		weapon_sprite.texture = null
+	# If equip exists but type not recognized, keep existing texture
+	_apply_equipment_positioning(_facing_mult())
+
+
+func _populate_hotbar() -> void:
+	var hotbar := Magnetide.hotbar
+	if not hotbar:
+		return
+	var items: Array = []
+	for equip in equipment:
+		if equip:
+			items.append({ "icon": equip.hotbar_icon, "data": equip })
+		else:
+			items.append({ "icon": null, "data": null })
+	hotbar.set_all_slots(items)
+
+
+func _process_weapon_input(_delta: float) -> void:
+	if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
+		shoot()
+
+
+func _process_magnet_tool_input(delta: float) -> void:
+	_process_magnet_gun(delta)
 
 
 func shoot() -> void:
-	if not weapon:
+	var wpn := current_weapon_data
+	if not wpn:
 		return
-	_fire_cooldown = 1.0 / weapon.fire_rate
+	_fire_cooldown = 1.0 / wpn.fire_rate
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()
-	bullet.damage = weapon.damage
-	bullet.speed = weapon.bullet_speed
-	if weapon.bullet_sprite:
-		bullet.get_node("Sprite2D").texture = weapon.bullet_sprite
+	bullet.damage = wpn.damage
+	bullet.speed = wpn.bullet_speed
+	if wpn.bullet_sprite:
+		bullet.get_node("Sprite2D").texture = wpn.bullet_sprite
 	get_tree().current_scene.add_child(bullet)
 
 
@@ -230,8 +303,10 @@ func stop_magnetize() -> void:
 # =============================================================================
 
 func _get_magnet_gun_hold_point() -> Vector2:
+	var tool := current_magnet_tool
+	var hold_dist := tool.hold_distance if tool else 30.0
 	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
-	return muzzle.global_position + gun_dir * magnet_gun_hold_distance
+	return muzzle.global_position + gun_dir * hold_dist
 
 
 func _process_magnet_gun(delta: float) -> void:
@@ -246,7 +321,9 @@ func _process_magnet_gun(delta: float) -> void:
 				_is_repel_holding = true
 				_repel_hold_elapsed += delta
 				_update_repel_bar()
-				if _repel_hold_elapsed >= repel_hold_time:
+				var tool := current_magnet_tool
+				var repel_time := tool.repel_hold_time if tool else 0.8
+				if _repel_hold_elapsed >= repel_time:
 					_repel_held_item()
 			else:
 				if _is_repel_holding:
@@ -357,8 +434,10 @@ func _repel_held_item() -> void:
 		return
 	
 	# Calculate repel direction (away from gun, toward where gun is pointing)
+	var tool := current_magnet_tool
+	var repel_force := tool.repel_impulse_force if tool else 600.0
 	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
-	var impulse := gun_dir * repel_impulse_force
+	var impulse := gun_dir * repel_force
 	
 	_held_item.repel_from_gun(impulse)
 	_held_item = null
@@ -457,7 +536,9 @@ func _update_repel_bar() -> void:
 		var screen_pos := get_viewport().get_canvas_transform() * (global_position + Vector2(0, REPEL_BAR_OFFSET_Y))
 		_repel_bar_container.position = screen_pos
 		if _repel_bar:
-			var fill := clampf(_repel_hold_elapsed / repel_hold_time, 0.0, 1.0)
+			var tool := current_magnet_tool
+			var repel_time := tool.repel_hold_time if tool else 0.8
+			var fill := clampf(_repel_hold_elapsed / repel_time, 0.0, 1.0)
 			_repel_bar.size.x = REPEL_BAR_WIDTH * fill
 
 
