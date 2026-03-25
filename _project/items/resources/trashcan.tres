@@ -2,12 +2,12 @@
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_g4fth"]
 [ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="2_x2ho7"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_4q3rw"]
+[ext_resource type="Texture2D" uid="uid://dlgntlw33i1qf" path="res://_project/items/sprites/salvage_trashcan.png" id="3_x2ho7"]
 
 [resource]
 script = ExtResource("1_g4fth")
 item_name = "Trashcan"
-sprite = ExtResource("3_4q3rw")
-area = Vector2(120, 120)
+sprite = ExtResource("3_x2ho7")
+area = Vector2(100, 100)
 components = Array[ExtResource("1_g4fth")]([ExtResource("2_x2ho7")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

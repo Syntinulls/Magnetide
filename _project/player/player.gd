@@ -54,6 +54,7 @@ func _ready() -> void:
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
 	_create_repel_bar()
+	_connect_hotbar()
 
 
 const ARM_OFFSET_X: float = -13.585
@@ -108,9 +109,6 @@ func _physics_process(delta: float) -> void:
 			arm_rotation = -arm_rotation
 		arm_sprite.rotation = arm_rotation
 		
-		if Input.is_action_just_pressed("swap_weapon"):
-			swap_weapon()
-		
 		match current_weapon:
 			Weapon.GUN:
 				if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
@@ -159,16 +157,43 @@ func _update_leg_animation() -> void:
 		legs_sprite.speed_scale = 1.0
 
 
-func swap_weapon() -> void:
-	if current_weapon == Weapon.GUN:
-		current_weapon = Weapon.MAGNET_GUN
-		weapon_sprite.texture = MagnetGunTexture
+func _connect_hotbar() -> void:
+	call_deferred("_setup_hotbar_connection")
+
+
+func _setup_hotbar_connection() -> void:
+	var hotbar := Magnetide.hotbar
+	if hotbar:
+		hotbar.slot_selected.connect(_on_hotbar_slot_selected)
 	else:
-		current_weapon = Weapon.GUN
-		if weapon and weapon.weapon_sprite:
-			weapon_sprite.texture = weapon.weapon_sprite
+		push_warning("Player: Hotbar not found")
+
+
+func _on_hotbar_slot_selected(index: int) -> void:
+	match index:
+		0: _switch_to_weapon(Weapon.GUN)
+		1: _switch_to_weapon(Weapon.MAGNET_GUN)
+
+
+func _switch_to_weapon(new_weapon: Weapon) -> void:
+	if current_weapon == new_weapon:
+		return
+	
+	if current_weapon == Weapon.MAGNET_GUN:
 		stop_magnetize()
 		_clear_magnet_gun_state()
+	
+	current_weapon = new_weapon
+	_update_weapon_sprite()
+
+
+func _update_weapon_sprite() -> void:
+	match current_weapon:
+		Weapon.GUN:
+			if weapon and weapon.weapon_sprite:
+				weapon_sprite.texture = weapon.weapon_sprite
+		Weapon.MAGNET_GUN:
+			weapon_sprite.texture = MagnetGunTexture
 
 
 func shoot() -> void:

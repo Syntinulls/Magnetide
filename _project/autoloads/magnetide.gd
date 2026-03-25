@@ -31,3 +31,10 @@ var game_ui: Control:
 		if lvl and "ui_root" in lvl and lvl.ui_root:
 			return lvl.ui_root.get_node_or_null("GameUI") as Control
 		return null
+
+var hotbar: Hotbar:
+	get:
+		var ui = game_ui
+		if ui:
+			return ui.get_node_or_null("PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar") as Hotbar
+		return null

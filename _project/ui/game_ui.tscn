@@ -1,6 +1,9 @@
 [gd_scene format=3 uid="uid://4p6nir6m115b"]
 
+[ext_resource type="Texture2D" uid="uid://dd3rdls7x4miy" path="res://_project/ui/sprites/ui_ship_hp_bg.png" id="1_0iwrd"]
+[ext_resource type="Texture2D" uid="uid://2n1fcn020y6g" path="res://_project/ui/sprites/ui_ship_hp_hull.png" id="2_bsnt1"]
 [ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
+[ext_resource type="Texture2D" uid="uid://dgrocedjnu8rf" path="res://_project/ui/sprites/ui_ship_hp_magnet.png" id="3_7b8vq"]
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
@@ -12,6 +15,12 @@
 [ext_resource type="Texture2D" uid="uid://cdc62yjilkyfo" path="res://_project/ui/sprites/ui_ship_icon_crate.png" id="11_crate"]
 [ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/ui/sprites/ui_ship_icon_magnet.png" id="12_magnet"]
 [ext_resource type="FontFile" uid="uid://di6vyfikhtwi8" path="res://_project/ui/fonts/Maneuver-Thin.otf" id="13_font_thin"]
+[ext_resource type="Texture2D" uid="uid://c2ac5cijo4oxe" path="res://_project/ui/sprites/ui_player_icon_1.png" id="16_si552"]
+[ext_resource type="Texture2D" uid="uid://bsjh8klbucwvl" path="res://_project/ui/sprites/hud_player_hp_back.png" id="17_si552"]
+[ext_resource type="Texture2D" uid="uid://dthmieu1ukrex" path="res://_project/ui/sprites/hud_player_hp_fore.png" id="18_s0nsh"]
+[ext_resource type="Texture2D" uid="uid://cd42vx545sgxe" path="res://_project/ui/sprites/hud_player_hp_health.png" id="19_a5bm7"]
+[ext_resource type="Script" uid="uid://b8fg0vsqnib1y" path="res://_project/ui/hotbar.gd" id="20_hotbar"]
+[ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/ui/sprites/ui_player_itemslot.png" id="21_a5bm7"]
 
 [node name="GameUI" type="Control" unique_id=1333566747]
 layout_mode = 3
@@ -22,78 +31,115 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ShipStatusUI" type="TextureRect" parent="." unique_id=1764653112]
+[node name="TopRight_UI" type="MarginContainer" parent="." unique_id=1147719616]
 layout_mode = 1
 anchors_preset = 1
 anchor_left = 1.0
 anchor_right = 1.0
-offset_left = -328.0
-offset_top = 8.0
-offset_right = -8.0
-offset_bottom = 88.0
+offset_left = -320.0
+offset_bottom = 80.0
 grow_horizontal = 0
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TopRight_UI" unique_id=848010941]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShipHealthUI" type="TextureRect" parent="TopRight_UI/VBoxContainer" unique_id=51726717]
+layout_mode = 2
+texture = ExtResource("1_0iwrd")
+
+[node name="ShipHPHull" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=759997521]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bsnt1")
+
+[node name="ShipHPMagnet" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=1168552077]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_7b8vq")
+
+[node name="ShipStatusUI" type="TextureRect" parent="TopRight_UI/VBoxContainer" unique_id=1764653112]
+custom_minimum_size = Vector2(360, 120)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
 mouse_filter = 2
 texture = ExtResource("10_ship_bg")
+expand_mode = 1
 script = ExtResource("7_ship_status")
 
-[node name="MarginContainer" type="MarginContainer" parent="ShipStatusUI" unique_id=1965247952]
+[node name="MarginContainer" type="MarginContainer" parent="TopRight_UI/VBoxContainer/ShipStatusUI" unique_id=1965247952]
 layout_mode = 0
-offset_right = 320.0
-offset_bottom = 80.0
-theme_override_constants/margin_top = 5
+offset_right = 360.0
+offset_bottom = 120.0
+theme_override_constants/margin_top = 1
 
-[node name="VBoxContainer" type="VBoxContainer" parent="ShipStatusUI/MarginContainer" unique_id=1468112491]
+[node name="VBoxContainer" type="VBoxContainer" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer" unique_id=1468112491]
 layout_mode = 2
-theme_override_constants/separation = 4
+size_flags_horizontal = 8
+size_flags_vertical = 4
+theme_override_constants/separation = 22
 
-[node name="StorageRow" type="HBoxContainer" parent="ShipStatusUI/MarginContainer/VBoxContainer" unique_id=523522864]
+[node name="StorageRow" type="HBoxContainer" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer" unique_id=523522864]
 custom_minimum_size = Vector2(0, 33)
 layout_mode = 2
 mouse_filter = 2
 alignment = 2
 
-[node name="StorageLabel" type="Label" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=722082794]
+[node name="StorageLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=722082794]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("13_font_thin")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "0.0 / 100.0kg"
 horizontal_alignment = 2
 
-[node name="StorageIcon" type="TextureRect" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1554762277]
+[node name="StorageIcon" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1554762277]
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("11_crate")
+expand_mode = 2
 stretch_mode = 5
 
-[node name="Margin" type="Control" parent="ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1655888135]
+[node name="Margin" type="Control" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=1655888135]
 custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="MagnetRow" type="HBoxContainer" parent="ShipStatusUI/MarginContainer/VBoxContainer" unique_id=1108105376]
+[node name="MagnetRow" type="HBoxContainer" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer" unique_id=1108105376]
 custom_minimum_size = Vector2(0, 33)
 layout_mode = 2
 mouse_filter = 2
 alignment = 2
 
-[node name="MagnetLabel" type="Label" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1737146126]
+[node name="MagnetLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1737146126]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_fonts/font = ExtResource("13_font_thin")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 32
 text = "0.0 / 60.0kg"
 horizontal_alignment = 2
 
-[node name="MagnetIcon" type="TextureRect" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1987184274]
+[node name="MagnetIcon" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1987184274]
 layout_mode = 2
 mouse_filter = 2
 texture = ExtResource("12_magnet")
+expand_mode = 2
 stretch_mode = 5
 
-[node name="Margin" type="Control" parent="ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=164199045]
+[node name="Margin" type="Control" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=164199045]
 custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 mouse_filter = 2
@@ -137,6 +183,8 @@ offset_right = 11.0
 offset_bottom = 168.00003
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
 theme_override_fonts/font = ExtResource("9_font_regular")
 theme_override_font_sizes/font_size = 24
 text = "Departure in 30.0s"
@@ -174,6 +222,264 @@ script = ExtResource("3_activation")
 marker_appear_delay = 0.2
 cog_max_speed_ratio = 0.8
 cog_accel_time = 4.0
-green_threshold_ratio = 0.03
-yellow_threshold_ratio = 0.05
 result_display_time = 0.75
+
+[node name="PlayerStatus" type="MarginContainer" parent="." unique_id=954909846]
+layout_mode = 1
+offset_right = 355.0
+offset_bottom = 123.0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PlayerStatus" unique_id=186683031]
+layout_mode = 2
+
+[node name="PlayerIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer" unique_id=1649901788]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("16_si552")
+stretch_mode = 2
+
+[node name="PlayerBars" type="VBoxContainer" parent="PlayerStatus/HBoxContainer" unique_id=467069703]
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=2133808651]
+layout_mode = 2
+theme_override_constants/margin_left = -32
+
+[node name="PlayerHPBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/MarginContainer" unique_id=884906908]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+value = 100.0
+texture_under = ExtResource("17_si552")
+texture_over = ExtResource("18_s0nsh")
+texture_progress = ExtResource("19_a5bm7")
+texture_progress_offset = Vector2(12, 0)
+
+[node name="ItemSlotContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=526615491]
+layout_mode = 2
+
+[node name="Hotbar" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer" unique_id=827461523]
+custom_minimum_size = Vector2(288, 48)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("20_hotbar")
+
+[node name="HotbarMask" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=827461524]
+clip_contents = true
+custom_minimum_size = Vector2(288, 48)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="HotbarStrip" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask" unique_id=827461525]
+layout_mode = 1
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_left = -96.0
+offset_top = -24.0
+offset_right = 384.0
+offset_bottom = 24.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Slot0" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461530]
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot0" unique_id=1647201080]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot0" unique_id=827461532]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Slot1" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461540]
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=944645037]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=827461542]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot1" unique_id=827461543]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "1"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Slot2" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461550]
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=335140841]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=827461552]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot2" unique_id=827461553]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "2"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Slot3" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461560]
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=864315287]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=827461562]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot3" unique_id=827461563]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -16.0
+offset_top = -16.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 12
+text = "3"
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="Slot4" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip" unique_id=827461570]
+custom_minimum_size = Vector2(96, 48)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot4" unique_id=839025272]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/HotbarStrip/Slot4" unique_id=827461572]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
