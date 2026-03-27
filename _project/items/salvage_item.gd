@@ -2,7 +2,15 @@ extends RigidBody2D
 class_name SalvageItem
 
 signal fell_off_screen(item: SalvageItem)
+signal frozen(item: SalvageItem)
+signal unfrozen(item: SalvageItem)
 
+## Pull phase state machine for magnet pull behavior
+enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
+
+# ============================================================================
+# DEPRECATED - To be removed after refactor
+# ============================================================================
 const SETTLE_TIME: float = 0.05
 const STORAGE_COLLISION_LAYER: int = 8
 const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
@@ -25,16 +33,59 @@ var _gun_hold_velocity: Vector2 = Vector2.ZERO
 var _is_flying_to_gun: bool = false  # True while traveling to anchor, false once tethered
 var _pull_elapsed: float = 0.0  # Time spent being pulled (for speed ramp)
 
+# New pull phase state machine
+var _pull_phase: PullPhase = PullPhase.NONE
+var _surface_dwell_elapsed: float = 0.0        # Time spent at surface (Phase 2)
+var _surface_line: Line2D = null               # Reference to pile's surface line
+var _soft_collision_area: Area2D = null        # Child Area2D for soft-body collision
+var _overlapping_items: Array[SalvageItem] = []
+var _soft_velocity: Vector2 = Vector2.ZERO     # Accumulated soft-body repulsion velocity
+var _freeze_timer: float = 0.0                 # Timer for freeze settling
+var _is_frozen: bool = false                   # True when item is frozen/attached
+var _is_touching_magnet: bool = false          # True when in contact with magnet body
+var _is_settling_on_magnet: bool = false       # True when ramping down velocity after magnet contact
+var _is_touching_frozen_item: bool = false     # True when in contact with a frozen item
+
 # Pull config from the magnet/gun pulling this item
 var _pull_base_speed: float = 200.0
 var _pull_max_speed: float = 1500.0
 var _pull_ramp_time: float = 0.6
 var _pull_direction: Vector2 = Vector2.UP  # Fixed pull direction based on trapezoid edge
 
-# Item-specific physics constants (independent of what's pulling)
+# Surface resistance config (Phase 2/3) - copied from magnet on pull start
+var _surface_slow_speed: float = 15.0
+var _surface_dwell_time: float = 1.2
+var _breakaway_ramp_time: float = 0.3
+var _breakaway_max_speed: float = 2000.0
+var _breakaway_elapsed: float = 0.0  # Time spent in breakaway phase
+
+# ============================================================================
+# DEPRECATED - To be removed after refactor
+# ============================================================================
 const ITEM_PULL_DAMPING: float = 0.85
 const ITEM_MAX_SPEED: float = 2000.0  # Absolute max speed cap
 const PULL_ARRIVAL_THRESHOLD: float = 15.0  # Distance to consider "arrived"
+
+# ============================================================================
+# NEW PHYSICS CONSTANTS
+# ============================================================================
+
+# Freeze/Settle constants
+const FREEZE_VELOCITY_THRESHOLD: float = 20.0  # Speed below which settle timer ticks
+const FREEZE_TIME: float = 0.15                 # Seconds of low velocity before freezing
+
+# Soft-body collision constants (Area2D simulation)
+const SOFT_REPULSION_STRENGTH: float = 200.0   # Force multiplier for overlap pushback
+const SOFT_DAMPING: float = 0.9                # Velocity damping per frame
+const SOFT_MAX_REPULSION: float = 300.0        # Cap on repulsion velocity
+
+# Weight bias constants
+const REFERENCE_WEIGHT: float = 1.0            # Weight at which acceleration is unmodified
+const WEIGHT_INFLUENCE: float = 0.3            # 0.0 = weight ignored, 1.0 = fully proportional
+
+# Storage friction constants
+const STORAGE_LINEAR_DAMP: float = 5.0         # High damping to prevent rolling
+const STORAGE_ANGULAR_DAMP: float = 5.0        # High damping to prevent spinning
 
 # Tethered mode constants (when attached to magnet gun anchor)
 const TETHER_SMOOTHING: float = 15.0
@@ -63,11 +114,11 @@ var can_be_grabbed: bool:
 	get:
 		return (_is_attached_to_magnet or _magnet_target != null) and not _is_held_by_gun and not _is_in_storage and not _is_falling and not _is_repelled
 
-## Size of the item hitbox in pixels, from item data hitbox_size.
+## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
 	get:
 		if item_data:
-			return item_data.hitbox_size
+			return item_data.actual_hitbox_size
 		return Vector2(40.0, 40.0)
 
 
@@ -75,10 +126,20 @@ func _ready() -> void:
 	gravity_scale = 0.0
 	contact_monitor = true
 	max_contacts_reported = 8
+	angular_damp = 50.0  # Very high angular drag to minimize rotation
+	linear_damp = 2.0    # Some linear drag for softer movement
+	continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY  # Enable CCD to prevent tunneling at high speeds
 	
-	# Collision setup: layer 2 = salvage items, mask 2+4 = other items + magnet body
+	# Collision setup: layer 2 = salvage items
+	# Mask: 1 = boundaries, 2 = other items, 4 = magnet body
 	collision_layer = 2
-	collision_mask = 2 | 4  # Collide with other items (2) and magnet body (4)
+	collision_mask = 1 | 2 | 4  # Collide with boundaries, other items, and magnet
+	
+	# Soft physics material (Suika-style: low bounce, moderate friction)
+	var soft_material := PhysicsMaterial.new()
+	soft_material.bounce = 0.1      # Very low bounce
+	soft_material.friction = 0.3    # Moderate friction
+	physics_material_override = soft_material
 	
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
@@ -118,7 +179,9 @@ func setup(data: SalvageItemData) -> void:
 			_create_placeholder_sprite()
 	
 	if _collision_shape and _collision_shape.shape is CircleShape2D:
-		(_collision_shape.shape as CircleShape2D).radius = minf(hitbox_size.x, hitbox_size.y) * 0.5
+		var new_radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
+		(_collision_shape.shape as CircleShape2D).radius = new_radius
+	
 
 
 func _create_placeholder_sprite() -> void:
@@ -139,11 +202,29 @@ func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
 	_pull_elapsed = 0.0  # Reset speed ramp
 	_pull_direction = direction.normalized()
 	
+	# Initialize pull phase system
+	_pull_phase = PullPhase.UNDERGROUND
+	_surface_dwell_elapsed = 0.0
+	_breakaway_elapsed = 0.0
+	_is_frozen = false
+	_freeze_timer = 0.0
+	
 	# Get pull config from the magnet
 	if magnet.has_method("get") or "pull_base_speed" in magnet:
 		_pull_base_speed = magnet.pull_base_speed
 		_pull_max_speed = magnet.pull_max_speed
 		_pull_ramp_time = magnet.pull_ramp_time
+	
+	# Get surface resistance config from magnet
+	if "surface_slow_speed" in magnet:
+		_surface_slow_speed = magnet.surface_slow_speed
+		_surface_dwell_time = magnet.surface_dwell_time
+		_breakaway_ramp_time = magnet.breakaway_ramp_time
+		_breakaway_max_speed = magnet.breakaway_max_speed
+	
+	# Get surface line from magnet's pile
+	if magnet.has_method("get_surface_line"):
+		_surface_line = magnet.get_surface_line()
 	
 	gravity_scale = 0.0
 	freeze = false
@@ -232,36 +313,44 @@ func _physics_process(delta: float) -> void:
 	if _is_attached_to_magnet:
 		return
 	
-	if _magnet_target:
-		var to_magnet := _magnet_target.global_position - global_position
-		var distance := to_magnet.length()
+	if _is_frozen:
+		return
+	
+	# Handle settling on magnet - aggressively ramp down all velocity until frozen
+	if _is_settling_on_magnet:
+		# Rapidly decay all velocity
+		linear_velocity *= 0.8
+		angular_velocity *= 0.7
 		
-		# Use fixed pull direction based on trapezoid edge angle
-		var direction := _pull_direction
+		# Check if velocity is low enough to freeze
+		var total_velocity := linear_velocity.length() + absf(angular_velocity) * 10.0
+		if total_velocity < 5.0:
+			_freeze_item()
+		return  # Don't process normal pull logic while settling
+	
+	if _magnet_target and _pull_phase != PullPhase.NONE:
+		# Get pull speed based on current phase (this also increments phase timers)
+		var target_speed := _process_pull_phase(delta)
 		
-		# Use position-based movement with speed ramp (same as magnet gun)
-		_pull_elapsed += delta
-		var speed := _get_ramped_pull_speed()
+		# Check for phase transitions AFTER updating timers
+		_check_phase_transition()
 		
-		# Cap and apply velocity
-		linear_velocity = direction * speed
-		linear_velocity *= ITEM_PULL_DAMPING
+		# Don't apply pull impulse if touching frozen items or magnet - let physics settle naturally
+		if not _is_touching_frozen_item and not _is_touching_magnet:
+			var current_pull_speed := linear_velocity.dot(_pull_direction)
+			var speed_diff := target_speed - current_pull_speed
+			# Use weaker impulse in SURFACE phase to reduce jitter
+			var impulse_strength := 0.05 if _pull_phase == PullPhase.SURFACE else 0.1
+			var impulse := _pull_direction * speed_diff * mass * impulse_strength
+			apply_central_impulse(impulse)
 		
-		if _is_in_magnet_field:
-			# Inside magnet field - check for settling
-			var magnet_radius := 50.0
-			var proximity := clampf(1.0 - (distance - magnet_radius) / 200.0, 0.0, 1.0)
-			
-			# Settle time: 0.2s far away, 0.02s when close
-			var settle_time := lerpf(0.2, 0.02, proximity)
-			
-			# Check if item has settled (close enough to magnet)
-			if distance < magnet_radius + 20.0:
-				_settle_timer += delta
-				if _settle_timer >= settle_time:
-					attach_to_magnet()
-			else:
-				_settle_timer = 0.0
+		# Aggressively zero out angular velocity to prevent spinning
+		angular_velocity *= 0.8
+		
+		# Check if item should freeze (only in magnet field AND after breakaway)
+		# Don't freeze during SURFACE phase - items need to complete dwell time first
+		if _is_in_magnet_field and _pull_phase == PullPhase.BREAKAWAY:
+			_check_freeze_condition(delta)
 
 
 func _get_ramped_pull_speed() -> float:
@@ -289,24 +378,55 @@ func set_outlined(enabled: bool) -> void:
 		_outline_material.set_shader_parameter("outline_enabled", enabled)
 
 
-## Contact tracking for dependency chain
+## Contact tracking for dependency chain and magnet friction
 func _on_body_entered(body: Node) -> void:
+	# Check if touching magnet body (StaticBody2D on layer 4)
+	if body is StaticBody2D:
+		if body.collision_layer & 4:
+			_is_touching_magnet = true
+			# Only start settling if in BREAKAWAY phase (not SURFACE or UNDERGROUND)
+			if _pull_phase == PullPhase.BREAKAWAY:
+				_is_settling_on_magnet = true
+			return
+	
 	var other := body as SalvageItem
-	if other and other not in _contacting_items:
-		_contacting_items.append(other)
+	if other:
+		if other not in _contacting_items:
+			_contacting_items.append(other)
+		# Track contact with frozen items
+		if other._is_frozen:
+			_is_touching_frozen_item = true
+			# Start settling if in BREAKAWAY phase and touching frozen pile
+			if _pull_phase == PullPhase.BREAKAWAY:
+				_is_settling_on_magnet = true
 
 
 func _on_body_exited(body: Node) -> void:
+	# Check if leaving magnet body
+	if body is StaticBody2D and body.collision_layer & 4:
+		_is_touching_magnet = false
+		# Don't reset _is_settling_on_magnet - once settling starts, it continues until frozen
+		return
+	
 	var other := body as SalvageItem
 	if other:
-		_contacting_items.erase(other)
+		# Don't remove contacts if we're frozen - we need to keep them for unfreeze chain
+		if not _is_frozen:
+			_contacting_items.erase(other)
+			# Check if still touching any frozen items
+			_is_touching_frozen_item = false
+			for item in _contacting_items:
+				if item._is_frozen:
+					_is_touching_frozen_item = true
+					break
 
 
 func _record_contacts() -> void:
-	_contacting_items.clear()
+	# Don't clear - keep contacts tracked via _on_body_entered
+	# Just add any we might have missed from get_colliding_bodies
 	for body in get_colliding_bodies():
 		var other := body as SalvageItem
-		if other:
+		if other and other not in _contacting_items:
 			_contacting_items.append(other)
 
 
@@ -329,6 +449,9 @@ func get_contact_chain() -> Array[SalvageItem]:
 
 ## Grab from magnet onto magnet gun
 func grab_for_magnet_gun(puller: Node2D) -> void:
+	# Unfreeze all contacting frozen items so they can resettle
+	_unfreeze_contacting_items()
+	
 	_is_attached_to_magnet = false
 	_is_in_magnet_field = false
 	_is_held_by_gun = true
@@ -429,3 +552,250 @@ func force_release_from_gun() -> void:
 	if not _is_held_by_gun:
 		return
 	repel_from_gun(Vector2.DOWN * 200.0)
+
+
+# ============================================================================
+# NEW PULL PHASE SYSTEM (Stubs)
+# ============================================================================
+
+## Set the surface line reference for Phase 2 detection
+func set_surface_line(line: Line2D) -> void:
+	_surface_line = line
+
+
+## Get the Y position of the surface line at the item's current X position
+func _get_surface_y_at_position() -> float:
+	if not _surface_line or _surface_line.points.size() < 2:
+		return INF  # No surface line, never trigger Phase 2
+	
+	# Convert item's global position to surface line's local space
+	var local_pos := _surface_line.to_local(global_position)
+	var local_x := local_pos.x
+	var points := _surface_line.points
+	
+	# Find the two points that bracket the given X
+	for i in range(points.size() - 1):
+		var p1 := points[i]
+		var p2 := points[i + 1]
+		
+		if (p1.x <= local_x and local_x <= p2.x) or (p2.x <= local_x and local_x <= p1.x):
+			# Interpolate Y between these two points
+			var t := (local_x - p1.x) / (p2.x - p1.x) if abs(p2.x - p1.x) > 0.001 else 0.0
+			var local_y := lerpf(p1.y, p2.y, t)
+			# Convert back to global Y
+			return _surface_line.to_global(Vector2(local_x, local_y)).y
+	
+	# X is outside the line bounds - return nearest endpoint's global Y
+	if local_x < points[0].x:
+		return _surface_line.to_global(points[0]).y
+	return _surface_line.to_global(points[points.size() - 1]).y
+
+
+## Process pull physics based on current phase. Returns the pull speed for this frame.
+func _process_pull_phase(delta: float) -> float:
+	var weight_factor := _get_weight_factor()
+	
+	match _pull_phase:
+		PullPhase.UNDERGROUND:
+			# Phase 1: Normal exponential ramp from base to max speed
+			_pull_elapsed += delta
+			var ramp_t := clampf(_pull_elapsed / _pull_ramp_time, 0.0, 1.0)
+			var speed := lerpf(_pull_base_speed, _pull_max_speed, ramp_t * ramp_t)
+			return speed * weight_factor
+		
+		PullPhase.SURFACE:
+			# Phase 2: Slow crawl at surface while "freeing" from ground
+			_surface_dwell_elapsed += delta
+			return _surface_slow_speed * weight_factor
+		
+		PullPhase.BREAKAWAY:
+			# Phase 3: Sharp acceleration then normal ramp to max
+			_breakaway_elapsed += delta
+			var ramp_t := clampf(_breakaway_elapsed / _breakaway_ramp_time, 0.0, 1.0)
+			# Use cubic easing for sharp initial acceleration
+			var eased_t := ramp_t * ramp_t * ramp_t
+			var speed := lerpf(_surface_slow_speed, _breakaway_max_speed, eased_t)
+			return speed * weight_factor
+		
+		_:
+			return 0.0
+
+
+## Check if item should transition to next pull phase
+func _check_phase_transition() -> void:
+	match _pull_phase:
+		PullPhase.UNDERGROUND:
+			# Transition to SURFACE when item crosses the surface line
+			var surface_y := _get_surface_y_at_position()
+			if global_position.y <= surface_y:
+				_pull_phase = PullPhase.SURFACE
+				_surface_dwell_elapsed = 0.0
+				# Abrupt slowdown - immediately set velocity to surface slow speed
+				linear_velocity = _pull_direction * _surface_slow_speed
+				angular_velocity = 0.0
+		
+		PullPhase.SURFACE:
+			# Transition to BREAKAWAY after dwell time expires (scaled by weight)
+			var weight_scaled_dwell := _surface_dwell_time * _get_dwell_weight_factor()
+			if _surface_dwell_elapsed >= weight_scaled_dwell:
+				_pull_phase = PullPhase.BREAKAWAY
+				_breakaway_elapsed = 0.0
+		
+		PullPhase.BREAKAWAY:
+			# Breakaway continues until item enters magnet field and freezes
+			# No automatic transition - handled by freeze logic
+			pass
+
+
+## Get weight-biased speed multiplier (lighter = faster)
+func _get_weight_factor() -> float:
+	if not item_data:
+		return 1.0
+	var item_weight := item_data.weight
+	if item_weight <= 0.0:
+		return 1.0
+	return lerpf(1.0, REFERENCE_WEIGHT / item_weight, WEIGHT_INFLUENCE)
+
+
+## Get weight-biased dwell time multiplier (heavier = longer dwell, lighter = shorter)
+## Returns multiplier where 1.0 = reference weight, >1.0 = heavier, <1.0 = lighter
+func _get_dwell_weight_factor() -> float:
+	if not item_data:
+		return 1.0
+	var item_weight := item_data.weight
+	if item_weight <= 0.0:
+		return 1.0
+	# Heavier items take longer to break away (higher multiplier)
+	# Lighter items break away faster (lower multiplier)
+	# Using sqrt for gentler scaling
+	return sqrt(item_weight / REFERENCE_WEIGHT)
+
+
+# ============================================================================
+# NEW SOFT-BODY COLLISION SYSTEM (Stubs)
+# ============================================================================
+
+## Setup the child Area2D for soft-body collision detection
+func _setup_soft_collision_area() -> void:
+	_soft_collision_area = Area2D.new()
+	# Use layer 8 for soft-body detection (separate from RigidBody layer 2)
+	_soft_collision_area.collision_layer = 8  # Be detectable by other soft-body areas
+	_soft_collision_area.collision_mask = 8   # Detect other soft-body areas
+	_soft_collision_area.monitoring = true
+	_soft_collision_area.monitorable = true
+	
+	# Create shape matching our collision shape - use a reasonable default
+	# Will be updated in setup() with actual item size
+	var area_shape := CollisionShape2D.new()
+	var circle := CircleShape2D.new()
+	var radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
+	if radius < 1.0:
+		radius = 20.0  # Default fallback
+	circle.radius = radius
+	area_shape.shape = circle
+	_soft_collision_area.add_child(area_shape)
+	add_child(_soft_collision_area)
+	
+	_soft_collision_area.area_entered.connect(_on_soft_area_entered)
+	_soft_collision_area.area_exited.connect(_on_soft_area_exited)
+
+
+func _on_soft_area_entered(area: Area2D) -> void:
+	var other_item := area.get_parent() as SalvageItem
+	if other_item and other_item != self and other_item not in _overlapping_items:
+		_overlapping_items.append(other_item)
+		# Frozen items don't unfreeze - they act as immovable obstacles
+
+
+func _on_soft_area_exited(area: Area2D) -> void:
+	var other_item := area.get_parent() as SalvageItem
+	if other_item:
+		_overlapping_items.erase(other_item)
+
+
+## Calculate and apply soft-body repulsion forces from overlapping items
+func _apply_soft_collision_forces(delta: float) -> void:
+	if _overlapping_items.is_empty():
+		_soft_velocity *= SOFT_DAMPING
+		return
+	
+	var repulsion := Vector2.ZERO
+	for other in _overlapping_items:
+		if not is_instance_valid(other):
+			continue
+		var to_self := global_position - other.global_position
+		var dist := to_self.length()
+		if dist < 0.01:
+			to_self = Vector2(randf() - 0.5, randf() - 0.5).normalized()
+			dist = 0.01
+		
+		var combined_radii := (hitbox_size.x * 0.5) + (other.hitbox_size.x * 0.5)
+		var overlap_depth := combined_radii - dist
+		if overlap_depth > 0:
+			var force := to_self.normalized() * overlap_depth * SOFT_REPULSION_STRENGTH
+			repulsion += force
+	
+	# Apply weight factor - heavier items resist pushback more
+	repulsion *= _get_weight_factor()
+	
+	# Accumulate and cap velocity
+	_soft_velocity += repulsion
+	if _soft_velocity.length() > SOFT_MAX_REPULSION:
+		_soft_velocity = _soft_velocity.normalized() * SOFT_MAX_REPULSION
+	_soft_velocity *= SOFT_DAMPING
+	
+	# Apply soft velocity as position offset (since RigidBody2D item-to-item collision is disabled)
+	global_position += _soft_velocity * delta
+
+
+# ============================================================================
+# NEW FREEZE/UNFREEZE SYSTEM (Stubs)
+# ============================================================================
+
+## Check if item should freeze based on velocity threshold
+func _check_freeze_condition(delta: float) -> void:
+	if _is_frozen:
+		return
+	
+	if linear_velocity.length() < FREEZE_VELOCITY_THRESHOLD:
+		_freeze_timer += delta
+		if _freeze_timer >= FREEZE_TIME:
+			_freeze_item()
+	else:
+		_freeze_timer = 0.0
+
+
+## Freeze the item in place
+func _freeze_item() -> void:
+	if _is_frozen:
+		return
+	_is_frozen = true
+	_freeze_timer = 0.0
+	freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
+	freeze = true
+	linear_velocity = Vector2.ZERO
+	_record_contacts()
+	frozen.emit(self)
+
+
+## Unfreeze the item and re-enter pull cycle
+func unfreeze_for_resettle() -> void:
+	if not _is_frozen:
+		return
+	_is_frozen = false
+	_is_settling_on_magnet = false
+	_is_touching_frozen_item = false
+	_pull_phase = PullPhase.BREAKAWAY  # Re-enter at BREAKAWAY since already above surface
+	_pull_elapsed = 0.0
+	_breakaway_elapsed = 0.0
+	_freeze_timer = 0.0
+	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	freeze = false
+	unfrozen.emit(self)
+
+
+## Unfreeze all frozen items currently in contact with this item
+func _unfreeze_contacting_items() -> void:
+	for item in _contacting_items:
+		if is_instance_valid(item) and item._is_frozen:
+			item.call_deferred("unfreeze_for_resettle")

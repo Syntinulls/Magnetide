@@ -3,19 +3,43 @@ class_name Magnet
 
 signal item_attached(item: SalvageItem)
 signal item_removed(item: SalvageItem)
-signal overweight()
+signal capacity_reached()
 signal all_items_released()
 
-## Maximum carry weight before the magnet stops pulling new items.
-@export var max_carry_weight: float = 60.0
+# ============================================================================
+# MAGNET PROPERTIES
+# ============================================================================
+
+## Time between pulling each item from the pile (seconds).
+@export var pull_frequency: float = 2.5
+## Number of items pulled simultaneously per interval. Always 1 for now.
+@export var pull_batch_size: int = 1
+## Max number of items the magnet can hold at once. Stops pulling once reached.
+@export var hold_capacity: int = 10
+
+# ============================================================================
+# PULL SPEED PARAMETERS
+# ============================================================================
+
 ## Base speed items are pulled toward the magnet.
 @export var pull_base_speed: float = 200.0
 ## Max speed items are pulled toward the magnet.
 @export var pull_max_speed: float = 1500.0
 ## Time for pull speed to ramp from base to max.
 @export var pull_ramp_time: float = 0.6
-## Time between pulling new items from the pile in seconds.
-@export var pull_interval: float = 2.5
+
+# ============================================================================
+# SURFACE RESISTANCE PARAMETERS (Phase 2)
+# ============================================================================
+
+## Near-zero crawl speed when item is at surface.
+@export var surface_slow_speed: float = 15.0
+## Seconds spent freeing from ground at surface.
+@export var surface_dwell_time: float = 1.2
+## Time to ramp from surface to max speed after breakaway.
+@export var breakaway_ramp_time: float = 0.3
+## Max speed after breakaway.
+@export var breakaway_max_speed: float = 2000.0
 ## Distance the magnet lowers from its starting position when activated.
 @export var lower_distance: float = 80.0
 ## Time to lower/raise the magnet in seconds.
@@ -30,8 +54,9 @@ signal all_items_released()
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
-var _current_weight: float = 0.0
+var _held_count: int = 0
 var _pull_timer: float = 0.0
+var _items_in_field: Array[SalvageItem] = []  # All unfrozen items currently in pull area
 var _pile_data: SalvagePileData = null
 var _current_threat_level: int = 0
 var _pile_node: SalvagePile = null
@@ -50,13 +75,13 @@ var _right_wall: StaticBody2D = null
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
 
-var current_weight: float:
+var held_count: int:
 	get:
-		return _current_weight
+		return _held_count
 
-var is_overweight: bool:
+var is_at_capacity: bool:
 	get:
-		return _current_weight >= max_carry_weight
+		return _held_count >= hold_capacity
 
 var is_active: bool:
 	get:
@@ -83,8 +108,9 @@ func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int =
 	_current_threat_level = threat_level
 	_is_active = true
 	_pull_timer = 0.0
-	_current_weight = 0.0
+	_held_count = 0
 	_attached_items.clear()
+	_items_in_field.clear()
 	_original_position = position
 	
 	# Resize magnetic field trapezoid based on pile
@@ -131,7 +157,8 @@ func _release_all_items() -> void:
 		if child is SalvageItem:
 			child.release_from_magnet()
 	
-	_current_weight = 0.0
+	_held_count = 0
+	_items_in_field.clear()
 	all_items_released.emit()
 
 
@@ -148,7 +175,7 @@ func _process(delta: float) -> void:
 		return
 
 	_pull_timer += delta
-	if _pull_timer >= pull_interval and not is_overweight:
+	if _pull_timer >= pull_frequency and not is_at_capacity:
 		_pull_timer = 0.0
 		_spawn_item_from_pile()
 
@@ -162,7 +189,7 @@ func _process_lowering(delta: float) -> void:
 	if t >= 1.0:
 		_is_lowering = false
 		# Pull first item immediately
-		if _is_active and not is_overweight:
+		if _is_active and not is_at_capacity:
 			_spawn_item_from_pile()
 
 
@@ -205,8 +232,8 @@ func _spawn_item_from_pile() -> void:
 		return
 
 	# Check if adding this item would exceed capacity
-	if _current_weight + data.weight > max_carry_weight:
-		overweight.emit()
+	if is_at_capacity:
+		capacity_reached.emit()
 		return
 
 	var item := SalvageItem.new()
@@ -242,16 +269,14 @@ func _spawn_item_from_pile() -> void:
 	item.start_magnet_pull(self, pull_direction)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
 
-	if is_overweight:
-		overweight.emit()
+	if is_at_capacity:
+		capacity_reached.emit()
 
 
 func remove_item(item: SalvageItem) -> void:
 	if item in _attached_items:
 		_attached_items.erase(item)
-		if item.item_data:
-			_current_weight -= item.item_data.weight
-			_current_weight = maxf(_current_weight, 0.0)
+		_held_count = maxi(_held_count - 1, 0)
 		item_removed.emit(item)
 
 
@@ -271,22 +296,21 @@ func _on_body_entered(body: Node2D) -> void:
 	if not item or item in _attached_items:
 		return
 	
-	# Check weight capacity
-	if item.item_data and _current_weight + item.item_data.weight > max_carry_weight:
-		overweight.emit()
+	# Check capacity
+	if is_at_capacity:
+		capacity_reached.emit()
 		return
 	
 	# Item entered magnet field - enable gravity mode
 	item.enter_magnet_field()
 	
-	# Track weight and item
-	if item.item_data:
-		_current_weight += item.item_data.weight
+	# Track item
 	_attached_items.append(item)
+	_held_count += 1
 	item_attached.emit(item)
 	
-	if is_overweight:
-		overweight.emit()
+	if is_at_capacity:
+		capacity_reached.emit()
 
 
 func _update_field_shape_for_pile(pile: SalvagePile) -> void:
@@ -299,8 +323,8 @@ func _update_field_shape_for_pile(pile: SalvagePile) -> void:
 	if pile_sprite and pile_sprite.texture:
 		pile_half_width = pile_sprite.texture.get_size().x * pile.scale.x * 0.5
 	
-	# Bottom width = pile spawn width (35% of pile width on each side)
-	var bottom_half_width := pile_half_width * SPAWN_WIDTH_RATIO
+	# Bottom width = 3/4 of pile width
+	var bottom_half_width := pile_half_width * 0.75
 	
 	# Height = distance from magnet to bottom of screen
 	var screen_height := get_viewport().get_visible_rect().size.y
@@ -349,7 +373,7 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	# Create walls if they don't exist
 	if not _left_wall:
 		_left_wall = StaticBody2D.new()
-		_left_wall.collision_layer = 4  # Same as magnet body
+		_left_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
 		_left_wall.collision_mask = 2  # Collide with salvage items
 		var new_left_shape := CollisionShape2D.new()
 		new_left_shape.shape = ConvexPolygonShape2D.new()
@@ -358,7 +382,7 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	
 	if not _right_wall:
 		_right_wall = StaticBody2D.new()
-		_right_wall.collision_layer = 4  # Same as magnet body
+		_right_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
 		_right_wall.collision_mask = 2  # Collide with salvage items
 		var new_right_shape := CollisionShape2D.new()
 		new_right_shape.shape = ConvexPolygonShape2D.new()
@@ -396,3 +420,54 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	var right_shape := _right_wall.get_child(0) as CollisionShape2D
 	if right_shape and right_shape.shape is ConvexPolygonShape2D:
 		(right_shape.shape as ConvexPolygonShape2D).points = right_poly
+
+
+# ============================================================================
+# NEW AREA-BASED PULL SYSTEM (Stubs)
+# ============================================================================
+
+## Called when an item enters the magnetic field area
+func _on_item_entered_field(item: SalvageItem) -> void:
+	if item not in _items_in_field:
+		_items_in_field.append(item)
+		# Set surface line reference on item for Phase 2 detection
+		if _pile_node:
+			item.set_surface_line(_pile_node.get_surface_line())
+
+
+## Called when an item exits the magnetic field area
+func _on_item_exited_field(item: SalvageItem) -> void:
+	_items_in_field.erase(item)
+
+
+## Apply pull force to all unfrozen items in the field (called each frame)
+func _apply_pull_to_field_items(delta: float) -> void:
+	# Clean up invalid items
+	_items_in_field = _items_in_field.filter(func(item): return is_instance_valid(item))
+	
+	for item in _items_in_field:
+		# Skip frozen items - they don't receive pull force
+		if item._is_frozen:
+			continue
+		
+		# Check for phase transitions
+		item._check_phase_transition()
+		
+		# Get pull speed based on current phase
+		var speed := item._process_pull_phase(delta)
+		
+		# Apply pull velocity in the item's pull direction
+		item.linear_velocity = item._pull_direction * speed
+		
+		# Apply soft-body collision forces
+		item._apply_soft_collision_forces(delta)
+		
+		# Check if item should freeze
+		item._check_freeze_condition(delta)
+
+
+## Get the surface line from the current pile (for Phase 2 detection)
+func get_surface_line() -> Line2D:
+	if _pile_node and _pile_node.has_method("get_surface_line"):
+		return _pile_node.get_surface_line()
+	return null

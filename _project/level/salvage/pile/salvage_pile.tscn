@@ -17,3 +17,6 @@ texture_filter = 3
 texture_repeat = 2
 material = SubResource("ShaderMaterial_pile")
 texture = ExtResource("1_icon")
+
+[node name="Line2D" type="Line2D" parent="Sprite2D" unique_id=69529324]
+points = PackedVector2Array(-478, -3, -368, -97, -250, -153, -124, -191, -1, -200, 137, -187, 265, -149, 373, -90, 483, -1)

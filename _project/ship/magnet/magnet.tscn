@@ -17,6 +17,10 @@ shader_parameter/target_size = Vector2(132, 44)
 [sub_resource type="ConvexPolygonShape2D" id="ConvexPolygonShape2D_cone"]
 points = PackedVector2Array(-50, 0, 50, 0, 70, 300, -70, 300)
 
+[sub_resource type="PhysicsMaterial" id="PhysicsMaterial_magnet"]
+friction = 10.0
+rough = true
+
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
 size = Vector2(100, 20)
 
@@ -89,11 +93,13 @@ collision_layer = 0
 collision_mask = 2
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Area2D" unique_id=590321452]
+visible = false
 shape = SubResource("ConvexPolygonShape2D_cone")
 
 [node name="StaticBody2D" type="StaticBody2D" parent="." unique_id=2074830324]
 collision_layer = 4
 collision_mask = 0
+physics_material_override = SubResource("PhysicsMaterial_magnet")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="StaticBody2D" unique_id=178050141]
 shape = SubResource("RectangleShape2D_body")

@@ -37,7 +37,7 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 ## Time for pull speed to ramp from base to max.
 @export var magnet_pull_ramp_time: float = 0.6
 ## Time between pulling new items from the pile.
-@export var magnet_pull_interval: float = 2.5
+@export var magnet_pull_frequency: float = 2.5
 ## Distance the magnet lowers when activated.
 @export var magnet_lower_distance: float = 80.0
 
@@ -125,7 +125,7 @@ func _ready() -> void:
 			_magnet.pull_base_speed = magnet_pull_base_speed
 			_magnet.pull_max_speed = magnet_pull_max_speed
 			_magnet.pull_ramp_time = magnet_pull_ramp_time
-			_magnet.pull_interval = magnet_pull_interval
+			_magnet.pull_frequency = magnet_pull_frequency
 			_magnet.lower_distance = magnet_lower_distance
 			_magnet.item_attached.connect(_on_magnet_item_attached)
 			_magnet.item_removed.connect(_on_magnet_item_removed)

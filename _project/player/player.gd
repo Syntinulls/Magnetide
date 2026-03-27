@@ -403,18 +403,8 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 
 
 func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
-	# Fully undo the freeze so the item goes through the normal
-	# magnet-pull → settle → freeze cycle again on its own.
-	item._is_attached_to_magnet = false
-	item._is_in_magnet_field = false
-	item._settle_timer = 0.0
-	
-	# Unfreeze and restore dynamic physics
-	item.freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
-	item.freeze = false
-	item.gravity_scale = 0.0
-	item.linear_velocity = Vector2.ZERO
-	item.angular_velocity = 0.0
+	# Use the new unfreeze API on SalvageItem
+	item.unfreeze_for_resettle()
 	
 	# Reparent to scene root (out of Magnet) so physics runs normally
 	var magnet := Magnetide.magnet
