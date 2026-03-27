@@ -22,6 +22,7 @@
 [ext_resource type="Script" uid="uid://b8fg0vsqnib1y" path="res://_project/ui/hotbar.gd" id="20_hotbar"]
 [ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/ui/sprites/ui_player_itemslot.png" id="21_a5bm7"]
 [ext_resource type="Shader" uid="uid://dc4veltos4jti" path="res://_project/ui/hotbar_gradient.gdshader" id="22_gradient"]
+[ext_resource type="Script" uid="uid://bsjye4vj3a1tp" path="res://_project/ui/countdown_timer.gd" id="23_timer"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -34,6 +35,26 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="CountdownTimer" type="Label" parent="." unique_id=1211342197]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -60.0
+offset_top = 10.0
+offset_right = 60.0
+offset_bottom = 50.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("9_font_regular")
+theme_override_font_sizes/font_size = 48
+text = "10:00"
+horizontal_alignment = 1
+vertical_alignment = 1
+script = ExtResource("23_timer")
 
 [node name="TopRight_UI" type="MarginContainer" parent="." unique_id=1147719616]
 layout_mode = 1
