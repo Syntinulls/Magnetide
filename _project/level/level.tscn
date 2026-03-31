@@ -26,6 +26,8 @@ gradient = SubResource("Gradient_bg")
 fill_from = Vector2(0.5, 0)
 fill_to = Vector2(0.5, 1)
 
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_pho3n"]
+
 [node name="Level" type="Node2D" unique_id=843647019]
 script = ExtResource("1_script")
 level_speed = 4000.0
@@ -128,3 +130,134 @@ script = ExtResource("13_threat")
 position = Vector2(1985, 365)
 motion_mode = 1
 data = ExtResource("13_12w7p")
+
+[node name="SpawnZones" type="Node2D" parent="." unique_id=736015592]
+
+[node name="SpawnN" type="Area2D" parent="SpawnZones" unique_id=670992158]
+unique_name_in_owner = true
+position = Vector2(1280, -200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnN" unique_id=341622807]
+unique_name_in_owner = true
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnNNW" type="Area2D" parent="SpawnZones" unique_id=1351861669]
+unique_name_in_owner = true
+position = Vector2(550, -200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnNNW" unique_id=562401573]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnNW" type="Area2D" parent="SpawnZones" unique_id=1409296323]
+unique_name_in_owner = true
+position = Vector2(-185, -200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnNW" unique_id=671452463]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnWNW" type="Area2D" parent="SpawnZones" unique_id=1467219276]
+unique_name_in_owner = true
+position = Vector2(-185, 275)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnWNW" unique_id=1082133909]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnW" type="Area2D" parent="SpawnZones" unique_id=23038418]
+unique_name_in_owner = true
+position = Vector2(-185, 750)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnW" unique_id=2018980240]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnWSW" type="Area2D" parent="SpawnZones" unique_id=1130857476]
+unique_name_in_owner = true
+position = Vector2(-185, 1210)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnWSW" unique_id=1901777021]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnSW" type="Area2D" parent="SpawnZones" unique_id=1742020194]
+unique_name_in_owner = true
+position = Vector2(-185, 1650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnSW" unique_id=1070468957]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnSSW" type="Area2D" parent="SpawnZones" unique_id=1769331794]
+unique_name_in_owner = true
+position = Vector2(550, 1650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnSSW" unique_id=1745883098]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnS" type="Area2D" parent="SpawnZones" unique_id=1906323303]
+unique_name_in_owner = true
+position = Vector2(1280, 1650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnS" unique_id=160627527]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnSSE" type="Area2D" parent="SpawnZones" unique_id=1034832678]
+unique_name_in_owner = true
+position = Vector2(2000, 1650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnSSE" unique_id=2060538648]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnSE" type="Area2D" parent="SpawnZones" unique_id=1787467596]
+unique_name_in_owner = true
+position = Vector2(2750, 1650)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnSE" unique_id=1277751121]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnESE" type="Area2D" parent="SpawnZones" unique_id=1819800887]
+unique_name_in_owner = true
+position = Vector2(2750, 1210)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnESE" unique_id=8572956]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnE" type="Area2D" parent="SpawnZones" unique_id=2025964464]
+unique_name_in_owner = true
+position = Vector2(2750, 720)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnE" unique_id=2029415260]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnENE" type="Area2D" parent="SpawnZones" unique_id=2113253512]
+unique_name_in_owner = true
+position = Vector2(2750, 275)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnENE" unique_id=689690039]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnNE" type="Area2D" parent="SpawnZones" unique_id=1222689341]
+unique_name_in_owner = true
+position = Vector2(2750, -200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnNE" unique_id=1469134375]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnNNE" type="Area2D" parent="SpawnZones" unique_id=296502115]
+unique_name_in_owner = true
+position = Vector2(2000, -200)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnNNE" unique_id=709767922]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
