@@ -7,11 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://vq163jt8x6as" path="res://_project/player/sprites/guy_part_legs_bend.png" id="3_6i4jc"]
 [ext_resource type="Texture2D" uid="uid://dmw5ph0068wu5" path="res://_project/player/sprites/guy_part_legs_brace.png" id="3_dnlrs"]
 [ext_resource type="Texture2D" uid="uid://ba2hadpeipo0h" path="res://_project/player/sprites/guy_part_legs_idle.png" id="3_k6685"]
-[ext_resource type="Resource" path="res://_project/player/equipment/magnet_gun.tres" id="3_magnet_gun"]
+[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/player/equipment/magnet_gun.tres" id="3_magnet_gun"]
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
-[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/equipment/rifle/rifle.png" id="5_gun"]
+[ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="12_a1ni1"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j86yb"]
 atlas = ExtResource("3_6i4jc")
@@ -136,8 +136,8 @@ offset = Vector2(-13.585, 8.13)
 show_behind_parent = true
 position = Vector2(-2.485, 15.465)
 rotation = -0.14660765
-texture = ExtResource("5_gun")
+texture = ExtResource("12_a1ni1")
 offset = Vector2(-15.125, 0.39)
 
 [node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
-position = Vector2(-55.915, -4.695)
+position = Vector2(-66.94, -4.695)

@@ -3,12 +3,14 @@
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/player/equipment/weapon_data.gd" id="1_kecvl"]
 [ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/player/equipment/rifle/bullet_1.png" id="1_pxyta"]
 [ext_resource type="Texture2D" uid="uid://brxpe4qiqvo" path="res://_project/ui/sprites/ui_player_itemslot_rifle.png" id="2_02vt3"]
-[ext_resource type="Texture2D" uid="uid://dw3tx5nn36drf" path="res://_project/player/equipment/rifle/rifle.png" id="3_vl06k"]
+[ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="4_02vt3"]
 
 [resource]
 script = ExtResource("1_kecvl")
-weapon_sprite = ExtResource("3_vl06k")
+weapon_sprite = ExtResource("4_02vt3")
 bullet_sprite = ExtResource("1_pxyta")
+weapon_rotation = 0.0
+muzzle_position = Vector2(-71.58, -4.695)
 display_name = "Rifle"
 hotbar_icon = ExtResource("2_02vt3")
 metadata/_custom_type_script = "uid://dswvbat8qx1i4"
