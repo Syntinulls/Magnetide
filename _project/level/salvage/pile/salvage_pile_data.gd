@@ -9,6 +9,10 @@ class_name SalvagePileData
 ## Loot table for non-salvageable items (redeemed directly to inventory).
 @export var non_salvageable_loot_table: LootTable = null
 
+@export_group("Threat")
+## Additional threat cost applied on top of the magnet's base activation cost.
+@export var threat_cost_bonus: float = 0.0
+
 @export_group("Pity System")
 ## Base probability (0-100) for pulling a salvageable item.
 @export var salvageable_base_percent: float = 30.0
@@ -28,6 +32,11 @@ func get_salvageable_chance(pull_count: int) -> float:
 func roll_is_salvageable(pull_count: int) -> bool:
 	var chance := get_salvageable_chance(pull_count)
 	return randf() * 100.0 < chance
+
+
+## Get the total activation threat cost for this pile using the magnet's base cost.
+func get_activation_threat_cost(base_cost: float) -> float:
+	return base_cost + threat_cost_bonus
 
 
 ## Roll an item from this pile's loot tables.

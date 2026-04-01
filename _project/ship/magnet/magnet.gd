@@ -44,7 +44,7 @@ signal all_items_released()
 @export var lower_distance: float = 80.0
 ## Time to lower/raise the magnet in seconds.
 @export var lower_raise_time: float = 0.8
-## Threat penalty per magnet activation. Affected by upgrades.
+## Base threat cost per magnet activation. Affected by upgrades.
 @export var threat_penalty: float = 10.0
 ## Width of the magnet pull area at the top (full width, not half).
 @export var magnet_width: float = 100.0:
@@ -357,6 +357,13 @@ func increment_pity_counter() -> void:
 ## Get the current pity counter value.
 func get_pity_counter() -> int:
 	return _salvageable_pull_count
+
+
+## Get the total threat cost for activating the magnet over the given pile.
+func get_activation_threat_cost(pile_data: SalvagePileData = null) -> float:
+	if pile_data:
+		return pile_data.get_activation_threat_cost(threat_penalty)
+	return threat_penalty
 
 
 ## Update magnet visuals (sprite size) and collision shape based on magnet_width.
