@@ -1,6 +1,17 @@
 extends Resource
 class_name EnemyData
 
+enum TargetCategory {
+	PLAYER,
+	MAGNET,
+	SHIP,
+}
+
+enum TargetPointSelectionMode {
+	RANDOM,
+	CLOSEST,
+}
+
 @export var enemy_name: String = ""
 
 @export_group("Stats")
@@ -10,18 +21,26 @@ class_name EnemyData
 @export var damage: float = 5.0
 ## Movement speed in pixels per second.
 @export var movement_speed: float = 100.0
-## Maximum distance at which the enemy can detect targets.
+## Legacy field kept for compatibility. Target acquisition no longer uses range.
 @export var detection_range: float = 500.0
 ## Distance at which the enemy stops moving and begins attacking.
 @export var attack_range: float = 50.0
 ## Seconds between each attack hit while in range.
 @export var attack_interval: float = 1.0
-## Health ratio (0-1) at which the enemy may retarget to a higher-priority node.
-@export var retarget_health_ratio: float = 0.3
 ## Seconds the corpse lingers after death before being freed.
 @export var death_linger_time: float = 1.5
-## Radius of the collision circle.
-@export var collision_radius: float = 20.0
+
+@export_group("Hitbox")
+## Rectangle size used for the enemy damage hitbox.
+@export var hitbox_size: Vector2 = Vector2(40.0, 40.0)
+
+@export_group("Targeting")
+@export var initial_target_priorities: Array[TargetCategory] = [TargetCategory.PLAYER]
+@export var damaged_target_priorities: Array[TargetCategory] = []
+@export var retarget_on_damage: bool = false
+@export var retarget_on_health_threshold: bool = false
+@export_range(0.0, 1.0, 0.01) var retarget_health_threshold: float = 0.3
+@export var structure_point_selection_mode: TargetPointSelectionMode = TargetPointSelectionMode.RANDOM
 
 @export_group("Move Animation")
 @export var move_spritesheet: Texture2D

@@ -51,6 +51,8 @@ signal all_items_released()
 	set(value):
 		magnet_width = value
 		_update_magnet_visuals()
+@export_group("Combat")
+@export var max_health: float = 150.0
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
@@ -72,6 +74,7 @@ var _magnet_sprite: NinePatchSprite = null
 var _body_shape: CollisionShape2D = null
 var _left_wall: StaticBody2D = null
 var _right_wall: StaticBody2D = null
+var current_health: float = 0.0
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
 
@@ -89,14 +92,19 @@ var is_active: bool:
 
 
 func _ready() -> void:
+	current_health = max_health
 	set_process(false)
-	_area = get_node_or_null("Area2D") as Area2D
+	_area = get_node_or_null("MagnetPullArea") as Area2D
+	if not _area:
+		_area = get_node_or_null("Area2D") as Area2D
 	if _area:
 		_area.body_entered.connect(_on_body_entered)
 		_field_shape = _area.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	_effect_animation = get_node_or_null("EffectAnimation") as AnimatedSprite2D
 	_magnet_sprite = get_node_or_null("MagnetSprite") as NinePatchSprite
-	var static_body := get_node_or_null("StaticBody2D") as StaticBody2D
+	var static_body := get_node_or_null("Collider") as StaticBody2D
+	if not static_body:
+		static_body = get_node_or_null("StaticBody2D") as StaticBody2D
 	if static_body:
 		_body_shape = static_body.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	_update_magnet_visuals()
@@ -373,6 +381,46 @@ func _update_magnet_visuals() -> void:
 	if _body_shape and _body_shape.shape is RectangleShape2D:
 		var rect_shape := _body_shape.shape as RectangleShape2D
 		rect_shape.size = Vector2(magnet_width, 44.0)
+	_sync_enemy_hitbox_to_body_shape()
+
+
+func _sync_enemy_hitbox_to_body_shape() -> void:
+	var hitbox := get_hitbox()
+	if not hitbox or not _body_shape:
+		return
+
+	var hitbox_collision_shape := _get_first_hitbox_collision_shape(hitbox)
+	var hitbox_collision_polygon := _get_first_hitbox_collision_polygon(hitbox)
+
+	if _body_shape.shape is RectangleShape2D:
+		var rect_shape := _body_shape.shape as RectangleShape2D
+		var rect_size := rect_shape.size
+		if hitbox_collision_shape and hitbox_collision_shape.shape is RectangleShape2D:
+			var hitbox_rect := hitbox_collision_shape.shape as RectangleShape2D
+			hitbox_rect.size = rect_size
+			hitbox_collision_shape.position = _body_shape.position
+		elif hitbox_collision_polygon:
+			hitbox_collision_polygon.polygon = PackedVector2Array([
+				Vector2(-rect_size.x * 0.5, -rect_size.y * 0.5),
+				Vector2(rect_size.x * 0.5, -rect_size.y * 0.5),
+				Vector2(rect_size.x * 0.5, rect_size.y * 0.5),
+				Vector2(-rect_size.x * 0.5, rect_size.y * 0.5),
+			])
+			hitbox_collision_polygon.position = _body_shape.position
+
+
+func _get_first_hitbox_collision_shape(hitbox: Hitbox) -> CollisionShape2D:
+	var shapes := hitbox.find_children("*", "CollisionShape2D", true, false)
+	if shapes.is_empty():
+		return null
+	return shapes[0] as CollisionShape2D
+
+
+func _get_first_hitbox_collision_polygon(hitbox: Hitbox) -> CollisionPolygon2D:
+	var polygons := hitbox.find_children("*", "CollisionPolygon2D", true, false)
+	if polygons.is_empty():
+		return null
+	return polygons[0] as CollisionPolygon2D
 
 
 ## Create or update edge collision walls along the trapezoid edges.
@@ -478,3 +526,23 @@ func get_surface_line() -> Line2D:
 	if _pile_node and _pile_node.has_method("get_surface_line"):
 		return _pile_node.get_surface_line()
 	return null
+
+
+func take_damage(amount: float) -> void:
+	current_health = maxf(current_health - amount, 0.0)
+
+
+func get_hitbox() -> Hitbox:
+	var hitboxes := find_children("*", "Hitbox", true, false)
+	if hitboxes.is_empty():
+		return null
+	return hitboxes[0] as Hitbox
+
+
+func get_enemy_target_points() -> Array[EnemyTargetPoint]:
+	var points: Array[EnemyTargetPoint] = []
+	for child in find_children("*", "EnemyTargetPoint", true, false):
+		var point := child as EnemyTargetPoint
+		if point and point.category == EnemyData.TargetCategory.MAGNET and point.is_target_enabled():
+			points.append(point)
+	return points

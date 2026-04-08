@@ -1,6 +1,7 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
 [ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/player/equipment/equipment_data.gd" id="2_fbtnf"]
+[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="2_hitbox"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="2_rifle"]
 [ext_resource type="Script" uid="uid://cgymaxcdced8s" path="res://_project/player/player.gd" id="2_script"]
 [ext_resource type="Texture2D" uid="uid://dx1rtfv6p7g1o" path="res://_project/player/sprites/guy_part_body.png" id="2_unxfp"]
@@ -109,7 +110,11 @@ animations = [{
 "speed": 5.0
 }]
 
-[sub_resource type="RectangleShape2D" id="RectangleShape2D_player"]
+[sub_resource type="CapsuleShape2D" id="CapsuleShape2D_g7wmw"]
+radius = 26.0
+height = 114.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_g7wmw"]
 size = Vector2(52, 112)
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
@@ -125,7 +130,18 @@ animation = &"walk_1"
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=372960679]
 visible = false
-shape = SubResource("RectangleShape2D_player")
+shape = SubResource("CapsuleShape2D_g7wmw")
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=1552825495]
+collision_layer = 0
+collision_mask = 0
+script = ExtResource("2_hitbox")
+owner_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=360981932]
+visible = false
+position = Vector2(-0.5, 0)
+shape = SubResource("RectangleShape2D_g7wmw")
 
 [node name="ArmSprite" type="Sprite2D" parent="." unique_id=1625981677]
 position = Vector2(12.56, -8.88)

@@ -1,22 +1,28 @@
-[gd_scene format=3]
+[gd_scene format=3 uid="uid://cd6a7mxd1b7qr"]
 
-[ext_resource type="Script" path="res://_project/enemies/enemy.gd" id="1_script"]
-[ext_resource type="Shader" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://cxm5f00ilm0xv" path="res://_project/enemies/enemy.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="3_hitbox"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
 shader = ExtResource("2_shader")
 shader_parameter/flash_intensity = 0.0
 
-[sub_resource type="CircleShape2D" id="CircleShape2D_enemy"]
-radius = 20.0
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_enemy_hitbox"]
+size = Vector2(40, 40)
 
-[node name="Enemy" type="CharacterBody2D"]
-collision_layer = 4
-collision_mask = 4
+[node name="Enemy" type="CharacterBody2D" unique_id=576680254]
 script = ExtResource("1_script")
 
-[node name="Sprite" type="Sprite2D" parent="."]
+[node name="Sprite" type="Sprite2D" parent="." unique_id=1528223351]
 material = SubResource("ShaderMaterial_flash")
 
-[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
-shape = SubResource("CircleShape2D_enemy")
+[node name="Hitbox" type="Area2D" parent="." unique_id=139964733]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_hitbox")
+owner_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=203427982]
+visible = false
+shape = SubResource("RectangleShape2D_enemy_hitbox")

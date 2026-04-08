@@ -40,6 +40,7 @@ var _salvage_pile_scene: PackedScene
 var _spawn_timer: Timer
 var _current_pile: SalvagePile = null
 var _level: Node = null
+var _threat_manager: ThreatManager = null
 var _viewport_anchor: ViewportAnchor = null
 
 
@@ -62,6 +63,7 @@ func _ready() -> void:
 	_level = get_parent()
 	if _level and "viewport_anchor" in _level:
 		_viewport_anchor = _level.viewport_anchor
+	_resolve_threat_manager()
 
 	_spawn_timer = Timer.new()
 	_spawn_timer.one_shot = true
@@ -142,21 +144,48 @@ func on_pile_acquired() -> void:
 
 
 func _pick_rarity() -> SalvagePile.Rarity:
-	var total := common_weight + rare_weight + epic_weight + legendary_weight
+	var weights := _get_active_rarity_weights()
+	var active_common_weight := float(weights.get(SalvagePile.Rarity.COMMON, 0.0))
+	var active_rare_weight := float(weights.get(SalvagePile.Rarity.RARE, 0.0))
+	var active_epic_weight := float(weights.get(SalvagePile.Rarity.EPIC, 0.0))
+	var active_legendary_weight := float(weights.get(SalvagePile.Rarity.LEGENDARY, 0.0))
+	var total := active_common_weight + active_rare_weight + active_epic_weight + active_legendary_weight
+	if total <= 0.0:
+		return SalvagePile.Rarity.COMMON
 	var roll := randf() * total
 
-	if roll < common_weight:
+	if roll < active_common_weight:
 		return SalvagePile.Rarity.COMMON
-	roll -= common_weight
+	roll -= active_common_weight
 
-	if roll < rare_weight:
+	if roll < active_rare_weight:
 		return SalvagePile.Rarity.RARE
-	roll -= rare_weight
+	roll -= active_rare_weight
 
-	if roll < epic_weight:
+	if roll < active_epic_weight:
 		return SalvagePile.Rarity.EPIC
 
 	return SalvagePile.Rarity.LEGENDARY
+
+
+func _get_active_rarity_weights() -> Dictionary:
+	if not _threat_manager:
+		_resolve_threat_manager()
+	if _threat_manager:
+		return _threat_manager.get_pile_rarity_weights()
+	return {
+		SalvagePile.Rarity.COMMON: common_weight,
+		SalvagePile.Rarity.RARE: rare_weight,
+		SalvagePile.Rarity.EPIC: epic_weight,
+		SalvagePile.Rarity.LEGENDARY: legendary_weight,
+	}
+
+
+func _resolve_threat_manager() -> void:
+	if _threat_manager:
+		return
+	if _level:
+		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 
 func _spawn_salvage() -> void:

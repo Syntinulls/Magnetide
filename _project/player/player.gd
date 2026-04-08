@@ -4,6 +4,8 @@ class_name Player
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
+@export_group("Combat")
+@export var max_health: float = 100.0
 
 ## Equipment slots - indices match hotbar slots
 @export var equipment: Array[EquipmentData] = []
@@ -14,6 +16,7 @@ const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 var input_enabled: bool = true
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
+var current_health: float = 0.0
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
 
@@ -69,6 +72,7 @@ var _repel_bar_container: Control = null
 
 
 func _ready() -> void:
+	current_health = max_health
 	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
@@ -538,3 +542,14 @@ func on_looting_ended() -> void:
 	if _hovered_item and is_instance_valid(_hovered_item):
 		_hovered_item.set_outlined(false)
 	_hovered_item = null
+
+
+func take_damage(amount: float) -> void:
+	current_health = maxf(current_health - amount, 0.0)
+
+
+func get_hitbox() -> Hitbox:
+	var hitboxes := find_children("*", "Hitbox", true, false)
+	if hitboxes.is_empty():
+		return null
+	return hitboxes[0] as Hitbox

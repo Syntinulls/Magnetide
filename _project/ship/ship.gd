@@ -11,6 +11,8 @@ signal item_stored(item: SalvageItem)
 @export var storage_marker_height: float = 24.0
 ## Maximum weight capacity for ship storage.
 @export var storage_max_weight: float = 100.0
+@export_group("Combat")
+@export var max_health: float = 250.0
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
@@ -18,6 +20,7 @@ const STORAGE_BORDER_THICKNESS: float = 8.0
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
+var current_health: float = 0.0
 
 var stored_items: Array[SalvageItem]:
 	get:
@@ -25,6 +28,7 @@ var stored_items: Array[SalvageItem]:
 
 
 func _ready() -> void:
+	current_health = max_health
 	_create_storage_zone()
 
 
@@ -139,3 +143,23 @@ func get_storage_weight() -> float:
 func remove_from_storage(item: SalvageItem) -> void:
 	_stored_items.erase(item)
 	_update_storage_weight_ui()
+
+
+func take_damage(amount: float) -> void:
+	current_health = maxf(current_health - amount, 0.0)
+
+
+func get_hitbox() -> Hitbox:
+	var hitboxes := find_children("*", "Hitbox", true, false)
+	if hitboxes.is_empty():
+		return null
+	return hitboxes[0] as Hitbox
+
+
+func get_enemy_target_points() -> Array[EnemyTargetPoint]:
+	var points: Array[EnemyTargetPoint] = []
+	for child in find_children("*", "EnemyTargetPoint", true, false):
+		var point := child as EnemyTargetPoint
+		if point and point.category == EnemyData.TargetCategory.SHIP and point.is_target_enabled():
+			points.append(point)
+	return points
