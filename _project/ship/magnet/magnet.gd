@@ -40,10 +40,6 @@ signal all_items_released()
 @export var breakaway_ramp_time: float = 0.3
 ## Max speed after breakaway.
 @export var breakaway_max_speed: float = 2000.0
-## Distance the magnet lowers from its starting position when activated.
-@export var lower_distance: float = 80.0
-## Time to lower/raise the magnet in seconds.
-@export var lower_raise_time: float = 0.8
 ## Base threat cost per magnet activation. Affected by upgrades.
 @export var threat_penalty: float = 10.0
 ## Width of the magnet pull area at the top (full width, not half).
@@ -56,6 +52,7 @@ signal all_items_released()
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
+var _counted_items: Array[SalvageItem] = []
 var _held_count: int = 0
 var _pull_timer: float = 0.0
 var _items_in_field: Array[SalvageItem] = []  # All unfrozen items currently in pull area
@@ -63,10 +60,6 @@ var _pile_data: SalvagePileData = null
 var _current_threat_level: int = 0
 var _pile_node: SalvagePile = null
 var _salvageable_pull_count: int = 0
-var _original_position: Vector2 = Vector2.ZERO
-var _is_lowering: bool = false
-var _is_raising: bool = false
-var _lower_elapsed: float = 0.0
 var _area: Area2D = null
 var _field_shape: CollisionShape2D = null
 var _effect_animation: AnimatedSprite2D = null
@@ -74,9 +67,13 @@ var _magnet_sprite: NinePatchSprite = null
 var _body_shape: CollisionShape2D = null
 var _left_wall: StaticBody2D = null
 var _right_wall: StaticBody2D = null
+var _is_pull_suspended_by_capacity: bool = false
+var _is_spawn_paused_for_departure: bool = false
 var current_health: float = 0.0
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
+const EDGE_WALL_FRICTION: float = 0.0
+const EDGE_WALL_BOUNCE: float = 0.0
 
 var held_count: int:
 	get:
@@ -108,6 +105,7 @@ func _ready() -> void:
 	if static_body:
 		_body_shape = static_body.get_node_or_null("CollisionShape2D") as CollisionShape2D
 	_update_magnet_visuals()
+	_update_pull_state()
 
 
 func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int = 0) -> void:
@@ -118,21 +116,15 @@ func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int =
 	_pull_timer = 0.0
 	_held_count = 0
 	_attached_items.clear()
+	_counted_items.clear()
 	_items_in_field.clear()
-	_original_position = position
+	_is_pull_suspended_by_capacity = false
+	_is_spawn_paused_for_departure = false
 	
 	# Resize magnetic field trapezoid based on pile
 	_update_field_shape_for_pile(pile)
 	
-	# Show and play effect animation
-	if _effect_animation:
-		_effect_animation.visible = true
-		_effect_animation.play("default")
-
-	# Start lowering
-	_is_lowering = true
-	_is_raising = false
-	_lower_elapsed = 0.0
+	_update_pull_state()
 	set_process(true)
 
 
@@ -140,17 +132,12 @@ func deactivate() -> void:
 	_is_active = false
 	_pile_data = null
 	_pile_node = null
+	_is_pull_suspended_by_capacity = false
+	_is_spawn_paused_for_departure = false
 	_release_all_items()
 	
-	# Hide and stop effect animation
-	if _effect_animation:
-		_effect_animation.stop()
-		_effect_animation.visible = false
-
-	# Start raising back to original position
-	_is_raising = true
-	_is_lowering = false
-	_lower_elapsed = 0.0
+	_update_pull_state()
+	set_process(false)
 
 
 func _release_all_items() -> void:
@@ -159,6 +146,7 @@ func _release_all_items() -> void:
 		if is_instance_valid(item):
 			item.release_from_magnet()
 	_attached_items.clear()
+	_counted_items.clear()
 	
 	# Also release any SalvageItem children that may have been reparented to magnet
 	for child in get_children():
@@ -167,52 +155,21 @@ func _release_all_items() -> void:
 	
 	_held_count = 0
 	_items_in_field.clear()
+	_is_pull_suspended_by_capacity = false
+	_update_pull_state()
 	all_items_released.emit()
 
 
 func _process(delta: float) -> void:
-	if _is_lowering:
-		_process_lowering(delta)
-		return
-
-	if _is_raising:
-		_process_raising(delta)
-		return
-
 	if not _is_active:
+		return
+	if _is_spawn_paused_for_departure:
 		return
 
 	_pull_timer += delta
 	if _pull_timer >= pull_frequency and not is_at_capacity:
 		_pull_timer = 0.0
 		_spawn_item_from_pile()
-
-
-func _process_lowering(delta: float) -> void:
-	_lower_elapsed += delta
-	var t := clampf(_lower_elapsed / lower_raise_time, 0.0, 1.0)
-	var eased := 1.0 - (1.0 - t) * (1.0 - t)
-	position.y = _original_position.y + lower_distance * eased
-
-	if t >= 1.0:
-		_is_lowering = false
-		# Pull first item immediately
-		if _is_active and not is_at_capacity:
-			_spawn_item_from_pile()
-
-
-func _process_raising(delta: float) -> void:
-	_lower_elapsed += delta
-	var t := clampf(_lower_elapsed / lower_raise_time, 0.0, 1.0)
-	var eased := 1.0 - (1.0 - t) * (1.0 - t)
-	var target_y := _original_position.y
-	var start_y := _original_position.y + lower_distance
-	position.y = lerpf(start_y, target_y, eased)
-
-	if t >= 1.0:
-		position = _original_position
-		_is_raising = false
-		set_process(false)
 
 
 func _spawn_item_from_pile() -> void:
@@ -241,7 +198,6 @@ func _spawn_item_from_pile() -> void:
 
 	# Check if adding this item would exceed capacity
 	if is_at_capacity:
-		capacity_reached.emit()
 		return
 
 	var item := SalvageItem.new()
@@ -277,23 +233,29 @@ func _spawn_item_from_pile() -> void:
 	item.start_magnet_pull(self, pull_direction)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
 
-	if is_at_capacity:
-		capacity_reached.emit()
-
 
 func remove_item(item: SalvageItem) -> void:
 	if item in _attached_items:
 		_attached_items.erase(item)
-		_held_count = maxi(_held_count - 1, 0)
-		item_removed.emit(item)
+		if _remove_counted_item(item):
+			_update_pull_state()
+			item_removed.emit(item)
 
 
 func get_attached_items() -> Array[SalvageItem]:
 	return _attached_items
 
 
+func set_spawn_paused_for_departure(paused: bool) -> void:
+	_is_spawn_paused_for_departure = paused
+
+
 func _on_item_fell_off_screen(item: SalvageItem) -> void:
-	_attached_items.erase(item)
+	if item in _attached_items:
+		_attached_items.erase(item)
+		if _remove_counted_item(item):
+			_update_pull_state()
+			item_removed.emit(item)
 
 
 func _on_body_entered(body: Node2D) -> void:
@@ -306,7 +268,7 @@ func _on_body_entered(body: Node2D) -> void:
 	
 	# Check capacity
 	if is_at_capacity:
-		capacity_reached.emit()
+		item.release_from_magnet()
 		return
 	
 	# Item entered magnet field - enable gravity mode
@@ -314,11 +276,8 @@ func _on_body_entered(body: Node2D) -> void:
 	
 	# Track item
 	_attached_items.append(item)
-	_held_count += 1
-	item_attached.emit(item)
-	
-	if is_at_capacity:
-		capacity_reached.emit()
+	if not item.frozen.is_connected(_on_tracked_item_frozen):
+		item.frozen.connect(_on_tracked_item_frozen)
 
 
 func _update_field_shape_for_pile(pile: SalvagePile) -> void:
@@ -384,6 +343,63 @@ func _update_magnet_visuals() -> void:
 	_sync_enemy_hitbox_to_body_shape()
 
 
+func _update_pull_state() -> void:
+	var was_suspended := _is_pull_suspended_by_capacity
+	_is_pull_suspended_by_capacity = _is_active and is_at_capacity
+
+	if _area:
+		_area.monitoring = _is_active
+
+	if _effect_animation:
+		var should_show_effect := _is_active and not _is_pull_suspended_by_capacity
+		_effect_animation.visible = should_show_effect
+		if should_show_effect:
+			if not _effect_animation.is_playing():
+				_effect_animation.play("default")
+		else:
+			_effect_animation.stop()
+
+	if _is_pull_suspended_by_capacity and not was_suspended:
+		_release_uncounted_tracked_items()
+		capacity_reached.emit()
+
+
+func _on_tracked_item_frozen(item: SalvageItem) -> void:
+	if not _is_active:
+		return
+	if item not in _attached_items:
+		return
+	if item in _counted_items:
+		return
+
+	_counted_items.append(item)
+	_held_count += 1
+	_update_pull_state()
+	item_attached.emit(item)
+
+
+func _remove_counted_item(item: SalvageItem) -> bool:
+	if item not in _counted_items:
+		return false
+
+	_counted_items.erase(item)
+	_held_count = maxi(_held_count - 1, 0)
+	return true
+
+
+func _release_uncounted_tracked_items() -> void:
+	var items_to_release: Array[SalvageItem] = []
+	for item in _attached_items:
+		if is_instance_valid(item) and item not in _counted_items:
+			items_to_release.append(item)
+
+	for item in items_to_release:
+		_attached_items.erase(item)
+		if item.frozen.is_connected(_on_tracked_item_frozen):
+			item.frozen.disconnect(_on_tracked_item_frozen)
+		item.release_from_magnet()
+
+
 func _sync_enemy_hitbox_to_body_shape() -> void:
 	var hitbox := get_hitbox()
 	if not hitbox or not _body_shape:
@@ -430,6 +446,7 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 		_left_wall = StaticBody2D.new()
 		_left_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
 		_left_wall.collision_mask = 2  # Collide with salvage items
+		_left_wall.physics_material_override = _create_edge_wall_material()
 		var new_left_shape := CollisionShape2D.new()
 		new_left_shape.shape = ConvexPolygonShape2D.new()
 		_left_wall.add_child(new_left_shape)
@@ -439,6 +456,7 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 		_right_wall = StaticBody2D.new()
 		_right_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
 		_right_wall.collision_mask = 2  # Collide with salvage items
+		_right_wall.physics_material_override = _create_edge_wall_material()
 		var new_right_shape := CollisionShape2D.new()
 		new_right_shape.shape = ConvexPolygonShape2D.new()
 		_right_wall.add_child(new_right_shape)
@@ -475,6 +493,14 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	var right_shape := _right_wall.get_child(0) as CollisionShape2D
 	if right_shape and right_shape.shape is ConvexPolygonShape2D:
 		(right_shape.shape as ConvexPolygonShape2D).points = right_poly
+
+
+func _create_edge_wall_material() -> PhysicsMaterial:
+	var material := PhysicsMaterial.new()
+	material.friction = EDGE_WALL_FRICTION
+	material.bounce = EDGE_WALL_BOUNCE
+	material.rough = true
+	return material
 
 
 # ============================================================================

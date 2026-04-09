@@ -13,6 +13,7 @@ signal item_stored(item: SalvageItem)
 @export var storage_max_weight: float = 100.0
 @export_group("Combat")
 @export var max_health: float = 250.0
+@export var ship_status_ui_path: NodePath
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
@@ -22,6 +23,8 @@ var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
 var current_health: float = 0.0
 
+@onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
+
 var stored_items: Array[SalvageItem]:
 	get:
 		return _stored_items
@@ -30,6 +33,7 @@ var stored_items: Array[SalvageItem]:
 func _ready() -> void:
 	current_health = max_health
 	_create_storage_zone()
+	call_deferred("_update_storage_weight_ui")
 
 
 func _create_storage_zone() -> void:
@@ -115,7 +119,17 @@ func is_point_in_storage_area(global_point: Vector2) -> bool:
 	return get_storage_area_global_rect().has_point(global_point)
 
 
+func can_accept_new_storage_item() -> bool:
+	return get_storage_weight() < storage_max_weight
+
+
+func is_storage_at_or_over_capacity() -> bool:
+	return get_storage_weight() >= storage_max_weight
+
+
 func add_to_storage(item: SalvageItem) -> void:
+	if not can_accept_new_storage_item():
+		return
 	if item not in _stored_items:
 		_stored_items.append(item)
 		item_stored.emit(item)
@@ -123,13 +137,10 @@ func add_to_storage(item: SalvageItem) -> void:
 
 
 func _update_storage_weight_ui() -> void:
-	var game_ui := Magnetide.game_ui
-	if not game_ui:
+	if not _ship_status_ui:
 		return
-	var ship_status := game_ui.get_node_or_null("ShipStatusUI")
-	if ship_status and ship_status.has_method("set_storage_weight"):
-		var total_weight := get_storage_weight()
-		ship_status.set_storage_weight(total_weight, storage_max_weight)
+	var total_weight := get_storage_weight()
+	_ship_status_ui.set_storage_weight(total_weight, storage_max_weight)
 
 
 func get_storage_weight() -> float:

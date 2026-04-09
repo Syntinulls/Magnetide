@@ -83,9 +83,17 @@ const SOFT_MAX_REPULSION: float = 300.0        # Cap on repulsion velocity
 const REFERENCE_WEIGHT: float = 1.0            # Weight at which acceleration is unmodified
 const WEIGHT_INFLUENCE: float = 0.3            # 0.0 = weight ignored, 1.0 = fully proportional
 
+# Base damping constants
+const DEFAULT_LINEAR_DAMP: float = 2.0
+const DEFAULT_ANGULAR_DAMP: float = 50.0
+const REPEL_LINEAR_DAMP: float = 0.0
+const REPEL_ANGULAR_DAMP: float = 0.0
+
 # Storage friction constants
 const STORAGE_LINEAR_DAMP: float = 5.0         # High damping to prevent rolling
 const STORAGE_ANGULAR_DAMP: float = 5.0        # High damping to prevent spinning
+const DROP_GRAVITY_SCALE: float = 2.0
+const REPEL_GRAVITY_SCALE: float = 2.5
 
 # Tethered mode constants (when attached to magnet gun anchor)
 const TETHER_SMOOTHING: float = 15.0
@@ -126,8 +134,8 @@ func _ready() -> void:
 	gravity_scale = 0.0
 	contact_monitor = true
 	max_contacts_reported = 8
-	angular_damp = 50.0  # Very high angular drag to minimize rotation
-	linear_damp = 2.0    # Some linear drag for softer movement
+	angular_damp = DEFAULT_ANGULAR_DAMP  # Very high angular drag to minimize rotation
+	linear_damp = DEFAULT_LINEAR_DAMP    # Some linear drag for softer movement
 	continuous_cd = RigidBody2D.CCD_MODE_CAST_RAY  # Enable CCD to prevent tunneling at high speeds
 	
 	# Collision setup: layer 2 = salvage items
@@ -274,7 +282,7 @@ func release_from_magnet() -> void:
 		global_position = pos
 	
 	_magnet_target = null
-	gravity_scale = 1.0
+	gravity_scale = DROP_GRAVITY_SCALE
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 
@@ -524,7 +532,7 @@ func place_in_storage(target_pos: Vector2) -> void:
 	# Unfreeze and enable gravity to let it drop
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 	freeze = false
-	gravity_scale = 1.0
+	gravity_scale = DROP_GRAVITY_SCALE
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 	z_index = -3  # Render behind ship and storage marker
@@ -541,7 +549,9 @@ func repel_from_gun(impulse: Vector2) -> void:
 	# Unfreeze and apply impulse
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 	freeze = false
-	gravity_scale = 0.5
+	gravity_scale = REPEL_GRAVITY_SCALE
+	linear_damp = REPEL_LINEAR_DAMP
+	angular_damp = REPEL_ANGULAR_DAMP
 	linear_velocity = Vector2.ZERO
 	apply_central_impulse(impulse)
 	z_index = 10

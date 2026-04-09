@@ -25,8 +25,7 @@ script = ExtResource("1_ship_script")
 
 [node name="Magnet" parent="." unique_id=143007537 instance=ExtResource("4_magnet")]
 position = Vector2(0, 136)
-lower_distance = 0.0
-lower_raise_time = 0.0
+hold_capacity = 5
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
 texture = ExtResource("1_back")

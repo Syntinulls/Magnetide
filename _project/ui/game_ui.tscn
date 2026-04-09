@@ -8,13 +8,12 @@
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
 [ext_resource type="Script" uid="uid://ec0hkbrs4sq" path="res://_project/ui/departure_icon.gd" id="6_departure"]
+[ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="7_pqqpn"]
 [ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/ship_status_ui.gd" id="7_ship_status"]
 [ext_resource type="Texture2D" uid="uid://c0mo2wu2y4q1n" path="res://_project/ui/sprites/alert_departure_y.png" id="8_departure_y"]
-[ext_resource type="FontFile" uid="uid://r6clo3nxywuh" path="res://_project/ui/fonts/Maneuver-Regular.otf" id="9_font_regular"]
 [ext_resource type="Texture2D" uid="uid://dwkrun3rqdmap" path="res://_project/ui/sprites/ui_ship_storage_bg.png" id="10_ship_bg"]
 [ext_resource type="Texture2D" uid="uid://cdc62yjilkyfo" path="res://_project/ui/sprites/ui_ship_icon_crate.png" id="11_crate"]
 [ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/ui/sprites/ui_ship_icon_magnet.png" id="12_magnet"]
-[ext_resource type="FontFile" uid="uid://di6vyfikhtwi8" path="res://_project/ui/fonts/Maneuver-Thin.otf" id="13_font_thin"]
 [ext_resource type="Texture2D" uid="uid://c2ac5cijo4oxe" path="res://_project/ui/sprites/ui_player_icon_1.png" id="16_si552"]
 [ext_resource type="Texture2D" uid="uid://bsjh8klbucwvl" path="res://_project/ui/sprites/hud_player_hp_back.png" id="17_si552"]
 [ext_resource type="Texture2D" uid="uid://dthmieu1ukrex" path="res://_project/ui/sprites/hud_player_hp_fore.png" id="18_s0nsh"]
@@ -23,6 +22,7 @@
 [ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/ui/sprites/ui_player_itemslot.png" id="21_a5bm7"]
 [ext_resource type="Shader" uid="uid://dc4veltos4jti" path="res://_project/ui/hotbar_gradient.gdshader" id="22_gradient"]
 [ext_resource type="Script" uid="uid://bsjye4vj3a1tp" path="res://_project/ui/countdown_timer.gd" id="23_timer"]
+[ext_resource type="Script" uid="uid://bfwl2ho2imvfr" path="res://_project/ui/game_ui.gd" id="24_game_ui"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -35,6 +35,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+script = ExtResource("24_game_ui")
 
 [node name="CountdownTimer" type="Label" parent="." unique_id=1211342197]
 layout_mode = 1
@@ -48,8 +49,8 @@ offset_bottom = 50.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_fonts/font = ExtResource("9_font_regular")
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 48
 text = "10:00"
 horizontal_alignment = 1
@@ -93,6 +94,38 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3_7b8vq")
 
+[node name="ShipHullIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=127456711]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 24
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ShipMagnetIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=146327803]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 94.0
+offset_bottom = 134.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 22
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="ShipStatusUI" type="TextureRect" parent="TopRight_UI/VBoxContainer" unique_id=1764653112]
 custom_minimum_size = Vector2(360, 120)
 layout_mode = 2
@@ -119,13 +152,14 @@ theme_override_constants/separation = 22
 custom_minimum_size = Vector2(0, 33)
 layout_mode = 2
 mouse_filter = 2
+theme_override_constants/separation = 10
 alignment = 2
 
 [node name="StorageLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/StorageRow" unique_id=722082794]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("13_font_thin")
+theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 32
 text = "0.0 / 100.0kg"
 horizontal_alignment = 2
@@ -146,15 +180,16 @@ mouse_filter = 2
 custom_minimum_size = Vector2(0, 33)
 layout_mode = 2
 mouse_filter = 2
+theme_override_constants/separation = 10
 alignment = 2
 
 [node name="MagnetLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1737146126]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_fonts/font = ExtResource("13_font_thin")
+theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 32
-text = "0.0 / 60.0kg"
+text = "0 / 10"
 horizontal_alignment = 2
 
 [node name="MagnetIcon" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipStatusUI/MarginContainer/VBoxContainer/MagnetRow" unique_id=1987184274]
@@ -210,7 +245,7 @@ grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("9_font_regular")
+theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 24
 text = "Departure in 30.0s"
 horizontal_alignment = 1

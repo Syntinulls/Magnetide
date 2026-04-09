@@ -8,7 +8,7 @@ class_name MagnetToolData
 ## Time in seconds to hold right-click to repel an item
 @export var repel_hold_time: float = 0.8
 ## Impulse force applied when repelling an item
-@export var repel_impulse_force: float = 600.0
+@export var repel_impulse_force: float = 2400.0
 ## Base speed items are pulled toward the magnet tool
 @export var pull_base_speed: float = 133.0
 ## Max speed items are pulled toward the magnet tool

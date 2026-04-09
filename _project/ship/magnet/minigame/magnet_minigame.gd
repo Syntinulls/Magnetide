@@ -30,6 +30,8 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 @export_group("Magnet Looting")
 ## Duration of the departure timer in seconds (how long the player can loot).
 @export var departure_duration: float = 30.0
+## Last X seconds before departure when new salvage stops spawning.
+@export var spawn_cutoff_before_departure: float = 5.0
 ## Base speed items are pulled toward the magnet.
 @export var magnet_pull_base_speed: float = 200.0
 ## Max speed items are pulled toward the magnet.
@@ -38,8 +40,6 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 @export var magnet_pull_ramp_time: float = 0.6
 ## Time between pulling new items from the pile.
 @export var magnet_pull_frequency: float = 2.5
-## Distance the magnet lowers when activated.
-@export var magnet_lower_distance: float = 80.0
 
 @export_group("Activation Minigame")
 ## Target timescale during activation minigame (0.01 = almost paused).
@@ -56,6 +56,18 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 @export var zoom_tween_time: float = 0.5
 ## Vignette/darkening intensity during activation (0-1).
 @export var vignette_intensity: float = 0.6
+@export_group("Scene References")
+@export var salvage_spawner_path: NodePath
+@export var ship_path: NodePath
+@export var player_path: NodePath
+@export var magnet_lever_path: NodePath
+@export var magnet_path: NodePath
+@export var camera_path: NodePath
+@export var warning_icon_path: NodePath
+@export var activation_minigame_path: NodePath
+@export var departure_icon_path: NodePath
+@export var ship_status_ui_path: NodePath
+@export var activation_anchor_path: NodePath
 
 var _state: State = State.COOLDOWN
 var _base_level_speed: float = 0.0
@@ -87,7 +99,6 @@ var _magnet_lever: MagnetLever = null
 var _viewport_anchor: ViewportAnchor = null
 var _activation_minigame: Node = null  # ActivationMinigame
 var _player: Node2D = null  # Player
-var _ui_root: Control = null
 var _ship: Node2D = null
 var _magnet: Magnet = null
 var _departure_icon: DepartureIcon = null
@@ -102,39 +113,33 @@ func _ready() -> void:
 		_base_level_speed = _level.level_speed
 	if _level and "viewport_anchor" in _level:
 		_viewport_anchor = _level.viewport_anchor
-	if _level and "ui_root" in _level:
-		_ui_root = _level.ui_root
 
-	_salvage_spawner = _level.get_node_or_null("SalvageSpawner") as SalvageSpawner
+	_salvage_spawner = _resolve_node(salvage_spawner_path) as SalvageSpawner
 
 	# Defer UI lookup to ensure GameUI nodes are ready
 	call_deferred("_setup_ui_references")
 
-	_ship = _level.get_node_or_null("Ship")
-	if _ship:
-		_player = _ship.get_node_or_null("Player")
-		_magnet_lever = _ship.get_node_or_null("MagnetLever") as MagnetLever
-		if _magnet_lever:
-			_magnet_lever.lever_flipped.connect(_on_lever_flipped)
-			_magnet_lever.lever_flipped_back.connect(_on_lever_flipped_back)
+	_ship = _resolve_node(ship_path) as Node2D
+	_player = _resolve_node(player_path) as Node2D
+	_magnet_lever = _resolve_node(magnet_lever_path) as MagnetLever
+	if _magnet_lever:
+		_magnet_lever.lever_flipped.connect(_on_lever_flipped)
+		_magnet_lever.lever_flipped_back.connect(_on_lever_flipped_back)
 
-	# Get Magnet from ship scene
-	if _ship:
-		_magnet = _ship.get_node_or_null("Magnet") as Magnet
-		if _magnet:
-			_magnet.pull_base_speed = magnet_pull_base_speed
-			_magnet.pull_max_speed = magnet_pull_max_speed
-			_magnet.pull_ramp_time = magnet_pull_ramp_time
-			_magnet.pull_frequency = magnet_pull_frequency
-			_magnet.lower_distance = magnet_lower_distance
-			_magnet.item_attached.connect(_on_magnet_item_attached)
-			_magnet.item_removed.connect(_on_magnet_item_removed)
+	_magnet = _resolve_node(magnet_path) as Magnet
+	if _magnet:
+		_magnet.pull_base_speed = magnet_pull_base_speed
+		_magnet.pull_max_speed = magnet_pull_max_speed
+		_magnet.pull_ramp_time = magnet_pull_ramp_time
+		_magnet.pull_frequency = magnet_pull_frequency
+		_magnet.item_attached.connect(_on_magnet_item_attached)
+		_magnet.item_removed.connect(_on_magnet_item_removed)
 
 	_cooldown_timer.one_shot = true
 	_cooldown_timer.timeout.connect(_on_cooldown_finished)
 
 	# Get camera reference
-	_camera = _level.get_node_or_null("Camera2D") as Camera2D
+	_camera = _resolve_node(camera_path) as Camera2D
 	if _camera:
 		_original_zoom = _camera.zoom
 		_original_camera_offset = _camera.offset
@@ -144,37 +149,33 @@ func _ready() -> void:
 
 
 func _setup_ui_references() -> void:
-	# Get ui_root here since @onready vars aren't ready during _ready()
-	if _level and "ui_root" in _level:
-		_ui_root = _level.ui_root
-	
-	# Find UI elements from the GameUI scene in ui_root
-	if _ui_root:
-		var game_ui := _ui_root.get_node_or_null("GameUI")
-		if game_ui:
-			_warning_icon = game_ui.get_node_or_null("WarningIconAnchor/WarningIcon") as WarningIcon
-			_activation_minigame = game_ui.get_node_or_null("ActivationMinigame")
-			_departure_icon = game_ui.get_node_or_null("DepartureIconAnchor/DepartureIcon") as DepartureIcon
-			_ship_status_ui = game_ui.get_node_or_null("ShipStatusUI") as ShipStatusUI
+	_warning_icon = _resolve_node(warning_icon_path) as WarningIcon
+	_activation_minigame = _resolve_node(activation_minigame_path)
+	_departure_icon = _resolve_node(departure_icon_path) as DepartureIcon
+	_ship_status_ui = _resolve_node(ship_status_ui_path) as ShipStatusUI
 	
 	if _activation_minigame:
 		_activation_minigame.minigame_completed.connect(_on_activation_completed)
 		_activation_minigame.marker_hit_success.connect(_on_marker_hit_success)
-		# Pass the world-space anchor marker for camera tracking (marker is in ship)
-		if _ship:
-			var anchor := _ship.get_node_or_null("ActivationMinigameAnchor") as Marker2D
-			if anchor:
-				_activation_minigame.set_anchor_marker(anchor)
+		var anchor := _resolve_node(activation_anchor_path) as Marker2D
+		if anchor:
+			_activation_minigame.set_anchor_marker(anchor)
 	
 	if _departure_icon:
 		_departure_icon.timer_expired.connect(_on_departure_timer_expired)
 	
-	# Initialize ship status UI with magnet max weight
-	if _ship_status_ui and _magnet:
-		_ship_status_ui.set_magnet_weight(0.0, _magnet.max_carry_weight)
+	# Initialize ship status UI with current storage and magnet capacity values.
+	_update_ship_storage_ui()
+	_update_magnet_capacity_ui()
 	
 	# Start cooldown now that UI references are set up
 	_start_cooldown()
+
+
+func _resolve_node(path: NodePath) -> Node:
+	if path.is_empty():
+		return null
+	return get_node_or_null(path)
 
 
 func _start_cooldown() -> void:
@@ -309,7 +310,7 @@ func _process(delta: float) -> void:
 		State.DECELERATING:
 			_process_deceleration(delta)
 		State.LOOTING:
-			pass  # Magnet and departure timer handle themselves
+			_process_looting()
 		State.DROPPING:
 			_process_dropping(delta)
 		State.ACCELERATING:
@@ -361,9 +362,10 @@ func _process_deceleration(delta: float) -> void:
 func _start_looting() -> void:
 	_state = State.LOOTING
 
-	# Activate magnet to lower and start pulling items
+	# Activate magnet and start pulling items
 	if _magnet and _current_pile and _current_pile.pile_data:
 		_magnet.activate(_current_pile.pile_data, _current_pile, 0)
+		_magnet.set_spawn_paused_for_departure(false)
 
 	# Increase threat from magnet activation
 	if _magnet and Magnetide.level and Magnetide.level.threat:
@@ -376,6 +378,15 @@ func _start_looting() -> void:
 	# Make lever available so player can flip it back to abort
 	if _magnet_lever:
 		_magnet_lever.set_available(true)
+
+
+func _process_looting() -> void:
+	if not _magnet or not _departure_icon:
+		return
+
+	var spawn_cutoff := maxf(spawn_cutoff_before_departure, 0.0)
+	var should_pause_spawning := _departure_icon.time_remaining <= spawn_cutoff
+	_magnet.set_spawn_paused_for_departure(should_pause_spawning)
 
 
 func _end_looting() -> void:
@@ -394,8 +405,8 @@ func _end_looting() -> void:
 	if _magnet:
 		_magnet.deactivate()
 	
-	# Reset magnet weight UI to 0
-	_update_magnet_weight_ui()
+	# Reset magnet capacity UI to 0
+	_update_magnet_capacity_ui()
 
 	# Flip lever back to starting position
 	if _magnet_lever:
@@ -571,16 +582,21 @@ func _start_activation_effects() -> void:
 
 
 func _on_magnet_item_attached(_item: SalvageItem) -> void:
-	_update_magnet_weight_ui()
+	_update_magnet_capacity_ui()
 
 
 func _on_magnet_item_removed(_item: SalvageItem) -> void:
-	_update_magnet_weight_ui()
+	_update_magnet_capacity_ui()
 
 
-func _update_magnet_weight_ui() -> void:
+func _update_magnet_capacity_ui() -> void:
 	if _ship_status_ui and _magnet:
-		_ship_status_ui.set_magnet_weight(_magnet.current_weight, _magnet.max_carry_weight)
+		_ship_status_ui.set_magnet_capacity(_magnet.held_count, _magnet.hold_capacity)
+
+
+func _update_ship_storage_ui() -> void:
+	if _ship_status_ui and _ship and _ship.has_method("get_storage_weight"):
+		_ship_status_ui.set_storage_weight(_ship.get_storage_weight(), _ship.storage_max_weight)
 
 
 func _end_activation_effects() -> void:

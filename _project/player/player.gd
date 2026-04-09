@@ -340,7 +340,7 @@ func _process_magnet_gun(delta: float) -> void:
 			if Input.is_action_just_pressed("shoot"):
 				var mouse_pos := get_global_mouse_position()
 				var ship_node := _get_ship()
-				if ship_node and ship_node.is_point_in_storage_area(mouse_pos):
+				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_new_storage_item():
 					_place_item_in_storage(mouse_pos)
 	else:
 		# No item held - hover detection and grab
@@ -446,6 +446,8 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	
 	var ship_node := _get_ship()
 	if not ship_node:
+		return
+	if not ship_node.can_accept_new_storage_item():
 		return
 	
 	_held_item.place_in_storage(mouse_pos)
