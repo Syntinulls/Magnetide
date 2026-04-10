@@ -3,12 +3,12 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_dumwk"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="2_wjw8g"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_jca57"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_ay1pw"]
+[ext_resource type="Texture2D" uid="uid://bbrs2cfispkd4" path="res://_project/items/sprites/salvage_fridge.png" id="4_wjw8g"]
 
 [resource]
 script = ExtResource("1_dumwk")
 item_name = "Refrigerator"
-sprite = ExtResource("4_ay1pw")
-area = Vector2(120, 120)
+sprite = ExtResource("4_wjw8g")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_dumwk")]([ExtResource("2_wjw8g"), ExtResource("3_jca57")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

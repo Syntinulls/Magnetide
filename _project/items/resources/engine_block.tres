@@ -5,12 +5,12 @@
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_coyih"]
 [ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="4_tue4q"]
 [ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="5_ojdu2"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_kwyfm"]
+[ext_resource type="Texture2D" uid="uid://bvi1v7l22qf4e" path="res://_project/items/sprites/salvage_engineblock.png" id="6_vyt7e"]
 
 [resource]
 script = ExtResource("1_sh01t")
 item_name = "Engine Block"
-sprite = ExtResource("6_kwyfm")
-area = Vector2(120, 120)
+sprite = ExtResource("6_vyt7e")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_sh01t")]([ExtResource("2_vyt7e"), ExtResource("3_coyih"), ExtResource("4_tue4q"), ExtResource("5_ojdu2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

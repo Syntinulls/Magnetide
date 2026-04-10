@@ -5,12 +5,12 @@
 [ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="3_wl67t"]
 [ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="4_fe8h1"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="5_ryfei"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_1ij3o"]
+[ext_resource type="Texture2D" uid="uid://dk0i60uayffj7" path="res://_project/items/sprites/salvage_airconditioner.png" id="6_bnmka"]
 
 [resource]
 script = ExtResource("1_25sn2")
 item_name = "Air Conditioner"
-sprite = ExtResource("6_1ij3o")
-area = Vector2(120, 120)
+sprite = ExtResource("6_bnmka")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_25sn2")]([ExtResource("2_bnmka"), ExtResource("3_wl67t"), ExtResource("4_fe8h1"), ExtResource("5_ryfei")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://b5x2n8j4wq6mc"]
 
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_2np1l"]
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_2np1l"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
 [ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="2_4r4n4"]
 [ext_resource type="Resource" uid="uid://dwgm51pknakej" path="res://_project/items/resources/processor.tres" id="3_hw3ye"]
@@ -54,4 +54,7 @@ script = ExtResource("1_hloxr")
 rarity = 3
 salvageable_loot_table = SubResource("Resource_yd261")
 non_salvageable_loot_table = SubResource("Resource_wus0p")
+salvageable_base_percent = 10.0
+salvageable_increment_percent = 2.0
+salvageable_max_percent = 20.0
 metadata/_custom_type_script = "uid://elnbd45b0anw"
