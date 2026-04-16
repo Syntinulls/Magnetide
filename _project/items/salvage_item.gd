@@ -16,7 +16,6 @@ const STORAGE_COLLISION_LAYER: int = 8
 const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
 
 var item_data: SalvageItemData = null
-var _is_attached_to_magnet: bool = false
 var _is_held_by_gun: bool = false
 var _is_in_storage: bool = false
 var _is_repelled: bool = false
@@ -95,14 +94,14 @@ const STORAGE_ANGULAR_DAMP: float = 5.0        # High damping to prevent spinnin
 const DROP_GRAVITY_SCALE: float = 2.0
 const REPEL_GRAVITY_SCALE: float = 2.5
 
+# Resettle re-entry tuning
+const RESETTLE_BREAKAWAY_PROGRESS_EXPONENT: float = 1.75
+const RESETTLE_INITIAL_SPEED_FACTOR: float = 0.35
+
 # Tethered mode constants (when attached to magnet gun anchor)
 const TETHER_SMOOTHING: float = 15.0
 const TETHER_DAMPING: float = 0.85
 const TETHER_MAX_SPEED: float = 400.0
-
-var is_attached_to_magnet: bool:
-	get:
-		return _is_attached_to_magnet
 
 var is_held_by_gun: bool:
 	get:
@@ -117,10 +116,15 @@ var has_reached_anchor: bool:
 	get:
 		return _is_held_by_gun and not _is_flying_to_gun
 
-## Returns true if this item can be grabbed by the magnet gun (attached or being pulled)
+## Returns true if this item is currently settled on the magnet and can be grabbed.
+var is_frozen_on_magnet: bool:
+	get:
+		return _is_frozen
+
+## Returns true if this item can be grabbed by the magnet gun.
 var can_be_grabbed: bool:
 	get:
-		return (_is_attached_to_magnet or _magnet_target != null) and not _is_held_by_gun and not _is_in_storage and not _is_falling and not _is_repelled
+		return is_frozen_on_magnet and not _is_held_by_gun and not _is_in_storage and not _is_falling and not _is_repelled
 
 ## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
@@ -205,7 +209,6 @@ func _create_placeholder_sprite() -> void:
 
 func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
 	_magnet_target = magnet
-	_is_attached_to_magnet = false
 	_is_falling = false
 	_pull_elapsed = 0.0  # Reset speed ramp
 	_pull_direction = direction.normalized()
@@ -217,25 +220,28 @@ func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
 	_is_frozen = false
 	_freeze_timer = 0.0
 	
-	# Get pull config from the magnet
-	if magnet.has_method("get") or "pull_base_speed" in magnet:
-		_pull_base_speed = magnet.pull_base_speed
-		_pull_max_speed = magnet.pull_max_speed
-		_pull_ramp_time = magnet.pull_ramp_time
-	
-	# Get surface resistance config from magnet
-	if "surface_slow_speed" in magnet:
-		_surface_slow_speed = magnet.surface_slow_speed
-		_surface_dwell_time = magnet.surface_dwell_time
-		_breakaway_ramp_time = magnet.breakaway_ramp_time
-		_breakaway_max_speed = magnet.breakaway_max_speed
-	
-	# Get surface line from magnet's pile
-	if magnet.has_method("get_surface_line"):
-		_surface_line = magnet.get_surface_line()
+	_apply_pull_config_from_source(magnet)
 	
 	gravity_scale = 0.0
 	freeze = false
+
+
+func restart_magnet_pull_for_resettle(magnet: Node2D) -> void:
+	var was_frozen := _is_frozen
+	_enter_resettle_pull_state()
+	if was_frozen:
+		unfrozen.emit(self)
+	if magnet == null:
+		return
+
+	_magnet_target = magnet
+	_is_falling = false
+	if _pull_direction == Vector2.ZERO:
+		_pull_direction = Vector2.UP
+	_apply_pull_config_from_source(magnet)
+	_breakaway_elapsed = _get_resettle_breakaway_elapsed(magnet)
+	linear_velocity = _pull_direction * (_get_breakaway_speed_for_elapsed(_breakaway_elapsed) * RESETTLE_INITIAL_SPEED_FACTOR)
+	angular_velocity = 0.0
 
 
 func enter_magnet_field() -> void:
@@ -243,29 +249,12 @@ func enter_magnet_field() -> void:
 	_settle_timer = 0.0
 
 
-func attach_to_magnet() -> void:
-	if _is_attached_to_magnet:
-		return
-	_is_attached_to_magnet = true
-	# Use kinematic freeze to maintain collision but stop movement
-	freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
-	freeze = true
-	linear_velocity = Vector2.ZERO
-	# Reparent to magnet so item moves with ship
-	if _magnet_target:
-		var local_pos := global_position - _magnet_target.global_position
-		reparent(_magnet_target)
-		position = local_pos
-	# Record contacts at time of freezing for dependency tracking
-	_record_contacts()
-
-
 func release_from_magnet() -> void:
 	# Don't release if held by magnet gun - gun takes priority
 	if _is_held_by_gun:
 		return
 	
-	_is_attached_to_magnet = false
+	_clear_settled_magnet_state()
 	_is_in_magnet_field = false
 	_is_falling = true
 	_settle_timer = 0.0
@@ -318,9 +307,6 @@ func _physics_process(delta: float) -> void:
 			global_position += _gun_hold_velocity
 		return
 	
-	if _is_attached_to_magnet:
-		return
-	
 	if _is_frozen:
 		return
 	
@@ -367,6 +353,36 @@ func _get_ramped_pull_speed() -> float:
 	var speed := lerpf(_pull_base_speed, _pull_max_speed, ramp_t * ramp_t)
 	# Cap at item's absolute max speed
 	return minf(speed, ITEM_MAX_SPEED)
+
+
+func _apply_pull_config_from_source(pull_source: Node2D) -> void:
+	if pull_source == null:
+		return
+	if "pull_base_speed" in pull_source:
+		_pull_base_speed = pull_source.pull_base_speed
+		_pull_max_speed = pull_source.pull_max_speed
+		_pull_ramp_time = pull_source.pull_ramp_time
+	if "surface_slow_speed" in pull_source:
+		_surface_slow_speed = pull_source.surface_slow_speed
+		_surface_dwell_time = pull_source.surface_dwell_time
+		_breakaway_ramp_time = pull_source.breakaway_ramp_time
+		_breakaway_max_speed = pull_source.breakaway_max_speed
+	if pull_source.has_method("get_surface_line"):
+		_surface_line = pull_source.get_surface_line()
+
+
+func _get_resettle_breakaway_elapsed(magnet: Node2D) -> float:
+	if magnet == null:
+		return 0.0
+	if _breakaway_ramp_time <= 0.0:
+		return 0.0
+
+	var distance_to_magnet := global_position.distance_to(magnet.global_position)
+	var viewport_height := get_viewport().get_visible_rect().size.y
+	var pull_reference_distance := maxf(viewport_height - magnet.global_position.y, 1.0)
+	var pull_progress := 1.0 - clampf(distance_to_magnet / pull_reference_distance, 0.0, 1.0)
+	var resettle_progress := pow(pull_progress, RESETTLE_BREAKAWAY_PROGRESS_EXPONENT)
+	return _breakaway_ramp_time * resettle_progress
 
 
 func _check_off_screen() -> void:
@@ -442,7 +458,7 @@ func get_contact_chain() -> Array[SalvageItem]:
 	var visited: Array[SalvageItem] = []
 	var stack: Array[SalvageItem] = []
 	for c in _contacting_items:
-		if is_instance_valid(c) and c._is_attached_to_magnet:
+		if is_instance_valid(c) and c.is_frozen_on_magnet:
 			stack.append(c)
 	while stack.size() > 0:
 		var current: SalvageItem = stack.pop_back()
@@ -450,7 +466,7 @@ func get_contact_chain() -> Array[SalvageItem]:
 			continue
 		visited.append(current)
 		for neighbor in current._contacting_items:
-			if is_instance_valid(neighbor) and neighbor._is_attached_to_magnet and neighbor not in visited:
+			if is_instance_valid(neighbor) and neighbor.is_frozen_on_magnet and neighbor not in visited:
 				stack.append(neighbor)
 	return visited
 
@@ -460,7 +476,7 @@ func grab_for_magnet_gun(puller: Node2D) -> void:
 	# Unfreeze all contacting frozen items so they can resettle
 	_unfreeze_contacting_items()
 	
-	_is_attached_to_magnet = false
+	_clear_settled_magnet_state()
 	_is_in_magnet_field = false
 	_is_held_by_gun = true
 	_is_flying_to_gun = true
@@ -514,6 +530,7 @@ func flip_relative_to_anchor(anchor_pos: Vector2) -> void:
 
 ## Place item into storage at the given position
 func place_in_storage(target_pos: Vector2) -> void:
+	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = true
 	_gun_hold_velocity = Vector2.ZERO
@@ -540,6 +557,7 @@ func place_in_storage(target_pos: Vector2) -> void:
 
 ## Repel item off the magnet gun with an impulse
 func repel_from_gun(impulse: Vector2) -> void:
+	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_repelled = true
 	
@@ -788,19 +806,36 @@ func _freeze_item() -> void:
 	frozen.emit(self)
 
 
+func _clear_settled_magnet_state() -> void:
+	_is_frozen = false
+	_freeze_timer = 0.0
+	_is_settling_on_magnet = false
+	_is_touching_magnet = false
+	_is_touching_frozen_item = false
+
+
+func _enter_resettle_pull_state() -> void:
+	_clear_settled_magnet_state()
+	_pull_phase = PullPhase.BREAKAWAY
+	_pull_elapsed = 0.0
+	_surface_dwell_elapsed = 0.0
+	_breakaway_elapsed = 0.0
+	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	freeze = false
+
+
+func _get_breakaway_speed_for_elapsed(elapsed: float) -> float:
+	var ramp_t := clampf(elapsed / _breakaway_ramp_time, 0.0, 1.0) if _breakaway_ramp_time > 0.0 else 1.0
+	var eased_t := ramp_t * ramp_t * ramp_t
+	var speed := lerpf(_surface_slow_speed, _breakaway_max_speed, eased_t)
+	return speed * _get_weight_factor()
+
+
 ## Unfreeze the item and re-enter pull cycle
 func unfreeze_for_resettle() -> void:
 	if not _is_frozen:
 		return
-	_is_frozen = false
-	_is_settling_on_magnet = false
-	_is_touching_frozen_item = false
-	_pull_phase = PullPhase.BREAKAWAY  # Re-enter at BREAKAWAY since already above surface
-	_pull_elapsed = 0.0
-	_breakaway_elapsed = 0.0
-	_freeze_timer = 0.0
-	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
-	freeze = false
+	_enter_resettle_pull_state()
 	unfrozen.emit(self)
 
 

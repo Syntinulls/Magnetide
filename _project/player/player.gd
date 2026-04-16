@@ -384,6 +384,8 @@ func _process_magnet_gun_hover() -> void:
 func _grab_item_from_magnet(item: SalvageItem) -> void:
 	if _held_item != null:
 		return  # Already holding an item
+	if not item.can_be_grabbed:
+		return
 	
 	# Get contact chain before grabbing (items that need to re-settle)
 	var dependents := item.get_contact_chain()
@@ -402,15 +404,11 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	
 	# Unfreeze dependent items so they can re-settle
 	for dep in dependents:
-		if is_instance_valid(dep) and dep != item and dep.is_attached_to_magnet:
+		if is_instance_valid(dep) and dep != item:
 			_unfreeze_item_for_resettle(dep)
 
 
 func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
-	# Use the new unfreeze API on SalvageItem
-	item.unfreeze_for_resettle()
-	
-	# Reparent to scene root (out of Magnet) so physics runs normally
 	var magnet := Magnetide.magnet
 	var scene_root := get_tree().current_scene
 	if scene_root and item.get_parent() != scene_root:
@@ -418,9 +416,10 @@ func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
 		item.reparent(scene_root)
 		item.global_position = pos
 	
-	# Re-start the magnet pull so the item flies back and re-attaches
 	if magnet:
-		item.start_magnet_pull(magnet)
+		item.restart_magnet_pull_for_resettle(magnet)
+	else:
+		item.unfreeze_for_resettle()
 
 
 func _repel_held_item() -> void:

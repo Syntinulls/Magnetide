@@ -1,0 +1,61 @@
+[gd_resource type="Resource" script_class="EnemySpawnerProfile" format=3 uid="uid://biwc1i3625md3"]
+
+[ext_resource type="Script" uid="uid://bbx577etftj5i" path="res://_project/level/enemies/enemy_spawner_profile.gd" id="1_profile_script"]
+[ext_resource type="Script" uid="uid://bifkkauxxlvrr" path="res://_project/level/enemies/enemy_spawn_threat_level_data.gd" id="2_level_script"]
+[ext_resource type="Script" uid="uid://b1c3cbik3sxy" path="res://_project/level/enemies/weighted_enemy_spawn_entry.gd" id="3_entry_script"]
+[ext_resource type="Resource" uid="uid://blraxsix36r8h" path="res://_project/level/enemies/worm_spawn_definition.tres" id="4_worm_definition"]
+
+[sub_resource type="Resource" id="Resource_worm_entry_0"]
+script = ExtResource("3_entry_script")
+enemy = ExtResource("4_worm_definition")
+
+[sub_resource type="Resource" id="Resource_threat_0"]
+script = ExtResource("2_level_script")
+magnet_active_pool = Array[ExtResource("3_entry_script")]([SubResource("Resource_worm_entry_0")])
+max_concurrent_enemies = 4
+
+[sub_resource type="Resource" id="Resource_worm_entry_1"]
+script = ExtResource("3_entry_script")
+enemy = ExtResource("4_worm_definition")
+
+[sub_resource type="Resource" id="Resource_threat_1"]
+script = ExtResource("2_level_script")
+spawn_interval_seconds = 9.0
+magnet_active_pool = Array[ExtResource("3_entry_script")]([SubResource("Resource_worm_entry_1")])
+max_concurrent_enemies = 6
+
+[sub_resource type="Resource" id="Resource_worm_entry_2"]
+script = ExtResource("3_entry_script")
+enemy = ExtResource("4_worm_definition")
+
+[sub_resource type="Resource" id="Resource_threat_2"]
+script = ExtResource("2_level_script")
+spawn_interval_seconds = 8.0
+magnet_active_pool = Array[ExtResource("3_entry_script")]([SubResource("Resource_worm_entry_2")])
+max_concurrent_enemies = 8
+
+[sub_resource type="Resource" id="Resource_worm_entry_3"]
+script = ExtResource("3_entry_script")
+enemy = ExtResource("4_worm_definition")
+
+[sub_resource type="Resource" id="Resource_threat_3"]
+script = ExtResource("2_level_script")
+spawn_interval_seconds = 7.0
+max_batches_per_spawn = 2
+magnet_active_pool = Array[ExtResource("3_entry_script")]([SubResource("Resource_worm_entry_3")])
+max_concurrent_enemies = 10
+
+[sub_resource type="Resource" id="Resource_worm_entry_4"]
+script = ExtResource("3_entry_script")
+enemy = ExtResource("4_worm_definition")
+
+[sub_resource type="Resource" id="Resource_threat_4"]
+script = ExtResource("2_level_script")
+spawn_interval_seconds = 6.0
+max_batches_per_spawn = 2
+magnet_active_pool = Array[ExtResource("3_entry_script")]([SubResource("Resource_worm_entry_4")])
+max_concurrent_enemies = 12
+
+[resource]
+script = ExtResource("1_profile_script")
+levels = Array[ExtResource("2_level_script")]([SubResource("Resource_threat_0"), SubResource("Resource_threat_1"), SubResource("Resource_threat_2"), SubResource("Resource_threat_3"), SubResource("Resource_threat_4")])

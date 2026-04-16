@@ -55,6 +55,9 @@ func _apply_data() -> void:
 		hitbox_shape = hitbox_shape.duplicate()
 		hitbox_shape.size = data.hitbox_size
 		hitbox_collision_shape.shape = hitbox_shape
+	var sprite_material := sprite.material as ShaderMaterial
+	if sprite_material:
+		sprite.material = sprite_material.duplicate()
 	_set_animation(data.move_spritesheet, data.move_frames)
 
 

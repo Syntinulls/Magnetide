@@ -13,11 +13,11 @@
 [ext_resource type="Resource" uid="uid://b5x2n8j4wq6mc" path="res://_project/level/salvage/pile/rarities/legendary.tres" id="9_uj1ub"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
-[ext_resource type="PackedScene" uid="uid://cd6a7mxd1b7qr" path="res://_project/enemies/enemy.tscn" id="12_0ditq"]
 [ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
-[ext_resource type="Resource" uid="uid://cn0vfgi3l8a37" path="res://_project/enemies/worm/worm_data.tres" id="13_12w7p"]
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
 [ext_resource type="Script" uid="uid://bgpa0y1q8s3n7" path="res://_project/level/threat/threat_level_data.gd" id="16_ig01q"]
+[ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/level/enemies/enemy_spawner.gd" id="17_enemy_spawner"]
+[ext_resource type="Resource" path="res://_project/level/enemies/worm_enemy_spawner_profile.tres" id="18_enemy_spawner_profile"]
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
@@ -178,10 +178,10 @@ layout_mode = 1
 script = ExtResource("13_threat")
 threat_level_factors = Array[ExtResource("16_ig01q")]([SubResource("Resource_v4meo"), SubResource("Resource_uj1ub"), SubResource("Resource_17v6t"), SubResource("Resource_x74ax"), SubResource("Resource_dx42g")])
 
-[node name="Enemy" parent="." unique_id=45131909 instance=ExtResource("12_0ditq")]
-position = Vector2(1985, 365)
-motion_mode = 1
-data = ExtResource("13_12w7p")
+[node name="EnemySpawner" type="Node2D" parent="." unique_id=45131909]
+script = ExtResource("17_enemy_spawner")
+spawn_zones = Array[NodePath]([NodePath("../SpawnZones/SpawnN"), NodePath("../SpawnZones/SpawnNNE"), NodePath("../SpawnZones/SpawnNE"), NodePath("../SpawnZones/SpawnENE"), NodePath("../SpawnZones/SpawnE"), NodePath("../SpawnZones/SpawnESE"), NodePath("../SpawnZones/SpawnSE"), NodePath("../SpawnZones/SpawnSSE"), NodePath("../SpawnZones/SpawnESE/SpawnS"), NodePath("../SpawnZones/SpawnSSW"), NodePath("../SpawnZones/SpawnSW"), NodePath("../SpawnZones/SpawnWSW"), NodePath("../SpawnZones/SpawnW"), NodePath("../SpawnZones/SpawnWNW"), NodePath("../SpawnZones/SpawnNW"), NodePath("../SpawnZones/SpawnNNW")])
+profile = ExtResource("18_enemy_spawner_profile")
 
 [node name="SpawnZones" type="Node2D" parent="." unique_id=736015592]
 
@@ -250,14 +250,6 @@ position = Vector2(550, 1650)
 scale = Vector2(10, 10)
 shape = SubResource("RectangleShape2D_pho3n")
 
-[node name="SpawnS" type="Area2D" parent="SpawnZones" unique_id=1906323303]
-unique_name_in_owner = true
-position = Vector2(1280, 1650)
-
-[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnS" unique_id=160627527]
-scale = Vector2(10, 10)
-shape = SubResource("RectangleShape2D_pho3n")
-
 [node name="SpawnSSE" type="Area2D" parent="SpawnZones" unique_id=1034832678]
 unique_name_in_owner = true
 position = Vector2(2000, 1650)
@@ -279,6 +271,14 @@ unique_name_in_owner = true
 position = Vector2(2750, 1210)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnESE" unique_id=8572956]
+scale = Vector2(10, 10)
+shape = SubResource("RectangleShape2D_pho3n")
+
+[node name="SpawnS" type="Area2D" parent="SpawnZones/SpawnESE" unique_id=1906323303]
+unique_name_in_owner = true
+position = Vector2(-1470, 440)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="SpawnZones/SpawnESE/SpawnS" unique_id=160627527]
 scale = Vector2(10, 10)
 shape = SubResource("RectangleShape2D_pho3n")
 

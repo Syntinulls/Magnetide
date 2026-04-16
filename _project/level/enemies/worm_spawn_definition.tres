@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="EnemySpawnDefinition" format=3 uid="uid://blraxsix36r8h"]
+
+[ext_resource type="Script" uid="uid://deq0sxn3lqayt" path="res://_project/level/enemies/enemy_spawn_definition.gd" id="1_script"]
+[ext_resource type="PackedScene" uid="uid://cd6a7mxd1b7qr" path="res://_project/enemies/enemy.tscn" id="2_enemy_scene"]
+[ext_resource type="Resource" uid="uid://cn0vfgi3l8a37" path="res://_project/enemies/worm/worm_data.tres" id="3_enemy_data"]
+
+[resource]
+script = ExtResource("1_script")
+id = &"worm"
+enemy_scene = ExtResource("2_enemy_scene")
+enemy_data = ExtResource("3_enemy_data")
+allowed_spawn_zones = PackedStringArray("SpawnN", "SpawnNNE", "SpawnNE", "SpawnENE", "SpawnE", "SpawnESE", "SpawnSE", "SpawnSSE", "SpawnS", "SpawnSSW", "SpawnSW", "SpawnWSW", "SpawnW", "SpawnWNW", "SpawnNW", "SpawnNNW")
+max_batch_sizes_by_threat = PackedInt32Array(1, 2, 3, 4, 5)
