@@ -5,12 +5,12 @@
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_fuhes"]
 [ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="4_ft587"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="5_rkajb"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_s5yed"]
+[ext_resource type="Texture2D" uid="uid://de507ncepujec" path="res://_project/items/sprites/salvage_microwave.png" id="6_nbm5j"]
 
 [resource]
 script = ExtResource("1_4l7pp")
 item_name = "Microwave"
-sprite = ExtResource("6_s5yed")
-area = Vector2(120, 120)
+sprite = ExtResource("6_nbm5j")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_4l7pp")]([ExtResource("2_nbm5j"), ExtResource("3_fuhes"), ExtResource("4_ft587"), ExtResource("5_rkajb")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://dqr8k2m5xvn1a"]
 
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_o7p4a"]
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_o7p4a"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="2_sbkg1"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="3_metq8"]
 [ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="4_mafig"]
@@ -74,4 +74,7 @@ script = ExtResource("1_hloxr")
 rarity = 1
 salvageable_loot_table = SubResource("Resource_re1s3")
 non_salvageable_loot_table = SubResource("Resource_qf3a7")
+salvageable_base_percent = 10.0
+salvageable_increment_percent = 4.0
+salvageable_max_percent = 40.0
 metadata/_custom_type_script = "uid://elnbd45b0anw"

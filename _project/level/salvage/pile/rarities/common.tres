@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://bcweuy5i0bfcm"]
 
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_0jeth"]
+[ext_resource type="Script" path="res://_project/items/loot_entry.gd" id="1_0jeth"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
 [ext_resource type="Resource" uid="uid://dbwsf18itsq6q" path="res://_project/items/resources/gear.tres" id="2_22cg2"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_jggux"]
@@ -58,4 +58,6 @@ metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 script = ExtResource("1_hloxr")
 salvageable_loot_table = SubResource("Resource_yptx6")
 non_salvageable_loot_table = SubResource("Resource_fhog6")
+salvageable_base_percent = 10.0
+salvageable_max_percent = 50.0
 metadata/_custom_type_script = "uid://elnbd45b0anw"

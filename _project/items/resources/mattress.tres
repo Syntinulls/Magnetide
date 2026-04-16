@@ -9,6 +9,5 @@ script = ExtResource("1_xadeq")
 item_name = "Mattress"
 sprite = ExtResource("3_o2dxo")
 area = Vector2(140, 140)
-hitbox_size = Vector2(70, 70)
 components = Array[ExtResource("1_xadeq")]([ExtResource("2_o2dxo")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -3,12 +3,12 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_5t66u"]
 [ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/resources/cathode_ray_tube.tres" id="2_t7ldp"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_wfm31"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_plxh3"]
+[ext_resource type="Texture2D" uid="uid://bjml16kk6r5pg" path="res://_project/items/sprites/salvage_crtmonitor.png" id="4_t7ldp"]
 
 [resource]
 script = ExtResource("1_5t66u")
 item_name = "Old Monitor"
-sprite = ExtResource("4_plxh3")
-area = Vector2(120, 120)
+sprite = ExtResource("4_t7ldp")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_5t66u")]([ExtResource("2_t7ldp"), ExtResource("3_wfm31")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"
