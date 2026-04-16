@@ -414,7 +414,7 @@ func _on_body_entered(body: Node) -> void:
 			return
 	
 	var other := body as SalvageItem
-	if other:
+	if is_instance_valid(other):
 		if other not in _contacting_items:
 			_contacting_items.append(other)
 		# Track contact with frozen items
@@ -433,10 +433,11 @@ func _on_body_exited(body: Node) -> void:
 		return
 	
 	var other := body as SalvageItem
-	if other:
+	if is_instance_valid(other):
 		# Don't remove contacts if we're frozen - we need to keep them for unfreeze chain
 		if not _is_frozen:
 			_contacting_items.erase(other)
+			_prune_contacting_items()
 			# Check if still touching any frozen items
 			_is_touching_frozen_item = false
 			for item in _contacting_items:
@@ -446,15 +447,17 @@ func _on_body_exited(body: Node) -> void:
 
 
 func _record_contacts() -> void:
+	_prune_contacting_items()
 	# Don't clear - keep contacts tracked via _on_body_entered
 	# Just add any we might have missed from get_colliding_bodies
 	for body in get_colliding_bodies():
 		var other := body as SalvageItem
-		if other and other not in _contacting_items:
+		if is_instance_valid(other) and other not in _contacting_items:
 			_contacting_items.append(other)
 
 
 func get_contact_chain() -> Array[SalvageItem]:
+	_prune_contacting_items()
 	var visited: Array[SalvageItem] = []
 	var stack: Array[SalvageItem] = []
 	for c in _contacting_items:
@@ -465,6 +468,7 @@ func get_contact_chain() -> Array[SalvageItem]:
 		if current in visited:
 			continue
 		visited.append(current)
+		current._prune_contacting_items()
 		for neighbor in current._contacting_items:
 			if is_instance_valid(neighbor) and neighbor.is_frozen_on_magnet and neighbor not in visited:
 				stack.append(neighbor)
@@ -841,6 +845,13 @@ func unfreeze_for_resettle() -> void:
 
 ## Unfreeze all frozen items currently in contact with this item
 func _unfreeze_contacting_items() -> void:
+	_prune_contacting_items()
 	for item in _contacting_items:
 		if is_instance_valid(item) and item._is_frozen:
 			item.call_deferred("unfreeze_for_resettle")
+
+
+func _prune_contacting_items() -> void:
+	for i in range(_contacting_items.size() - 1, -1, -1):
+		if not is_instance_valid(_contacting_items[i]):
+			_contacting_items.remove_at(i)
