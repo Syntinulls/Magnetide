@@ -15,6 +15,7 @@
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="12_a1ni1"]
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/player/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/player/equipment/player_item_magnet_effect.png" id="14_5c2p4"]
+[ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/player/equipment/player_item_gun_effect_1.png" id="15_4y3ad"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j86yb"]
 atlas = ExtResource("3_6i4jc")
@@ -135,6 +136,22 @@ region = Rect2(88, 0, 44, 44)
 atlas = ExtResource("14_5c2p4")
 region = Rect2(132, 0, 44, 44)
 
+[sub_resource type="AtlasTexture" id="AtlasTexture_op25k"]
+atlas = ExtResource("15_4y3ad")
+region = Rect2(0, 0, 20, 27)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_kxulv"]
+atlas = ExtResource("15_4y3ad")
+region = Rect2(20, 0, 20, 27)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_qtfhl"]
+atlas = ExtResource("15_4y3ad")
+region = Rect2(40, 0, 20, 27)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_70yra"]
+atlas = ExtResource("15_4y3ad")
+region = Rect2(60, 0, 20, 27)
+
 [sub_resource type="SpriteFrames" id="SpriteFrames_op25k"]
 animations = [{
 "frames": [{
@@ -153,6 +170,23 @@ animations = [{
 "loop": true,
 "name": &"magnet_gun",
 "speed": 15.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_op25k")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_kxulv")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_qtfhl")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_70yra")
+}],
+"loop": true,
+"name": &"rifle_flash",
+"speed": 20.0
 }]
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
@@ -197,7 +231,9 @@ offset = Vector2(-15.125, 0.39)
 position = Vector2(-66.94, -4.695)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
-visible = false
 sprite_frames = SubResource("SpriteFrames_op25k")
-animation = &"magnet_gun"
+animation = &"rifle_flash"
+frame = 1
+frame_progress = 0.24417512
+flip_h = true
 script = ExtResource("13_muzzle_effect")

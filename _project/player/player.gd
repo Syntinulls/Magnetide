@@ -97,6 +97,8 @@ func _apply_facing(new_facing_right: bool) -> void:
 	legs_sprite.flip_h = facing_right
 	arm_sprite.flip_h = facing_right
 	weapon_sprite.flip_h = facing_right
+	if muzzle_effect:
+		muzzle_effect.flip_h = not facing_right
 	# Negate x-offset and x-position when flipped to keep pivot point correct
 	var offset_mult := -1.0 if facing_right else 1.0
 	arm_sprite.offset.x = ARM_OFFSET_X * offset_mult
@@ -280,6 +282,8 @@ func shoot() -> void:
 	if not wpn:
 		return
 	_fire_cooldown = 1.0 / wpn.fire_rate
+	if muzzle_effect:
+		muzzle_effect.play_effect(MuzzleEffect.EffectType.RIFLE_FLASH)
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()

@@ -45,12 +45,16 @@ func _play_magnet_gun() -> void:
 func _play_rifle_flash() -> void:
 	visible = true
 	if sprite_frames and sprite_frames.has_animation("rifle_flash"):
+		# Play from beginning each time
 		play("rifle_flash")
-		# Rifle flash is a one-shot effect
-		if not animation_finished.is_connected(_on_rifle_flash_finished):
-			animation_finished.connect(_on_rifle_flash_finished, CONNECT_ONE_SHOT)
+		frame = 0
+		# Connect to animation_looped to stop after one cycle
+		if not animation_looped.is_connected(_on_rifle_flash_looped):
+			animation_looped.connect(_on_rifle_flash_looped)
 
 
-func _on_rifle_flash_finished() -> void:
+func _on_rifle_flash_looped() -> void:
 	if _current_effect == EffectType.RIFLE_FLASH:
 		stop_effect()
+		if animation_looped.is_connected(_on_rifle_flash_looped):
+			animation_looped.disconnect(_on_rifle_flash_looped)

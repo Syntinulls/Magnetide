@@ -5,7 +5,7 @@ signal slot_selected(index: int)
 signal scroll_started(from_index: int, to_index: int)
 signal scroll_finished(index: int)
 
-const SLOT_COUNT := 3
+const MAX_SLOTS := 3
 const SLOT_SIZE := Vector2(96.0, 48.0)
 const SLOT_SPACING := 0.0
 const SCROLL_DURATION := 0.2
@@ -16,6 +16,7 @@ var _selected_index: int = 0
 var _previous_index: int = 0
 var _slot_data: Array[Dictionary] = []
 var _is_scrolling: bool = false
+var _equipped_indices: Array[int] = []  # Indices of non-empty slots
 
 @onready var _strip: HBoxContainer = $HotbarMask/SubViewport/HotbarStrip
 @onready var _slots: Array[Control] = [
@@ -30,8 +31,8 @@ var _is_scrolling: bool = false
 const BUFFER_OFFSET := -SLOT_SIZE.x  # Offset to hide left buffer slot
 
 func _ready() -> void:
-	_slot_data.resize(SLOT_COUNT)
-	for i in SLOT_COUNT:
+	_slot_data.resize(MAX_SLOTS)
+	for i in MAX_SLOTS:
 		_slot_data[i] = { "icon": null, "data": null }
 	# Ensure strip is positioned to hide left buffer
 	_strip.position.x = BUFFER_OFFSET
@@ -52,15 +53,28 @@ func _input(event: InputEvent) -> void:
 	elif event.is_action_pressed("hotbar_slot_3"):
 		select_slot(2)
 	elif event.is_action_pressed("hotbar_scroll_up"):
-		select_slot((_selected_index - 1 + SLOT_COUNT) % SLOT_COUNT)
+		_cycle_slot(-1)
 	elif event.is_action_pressed("hotbar_scroll_down"):
-		select_slot((_selected_index + 1) % SLOT_COUNT)
+		_cycle_slot(1)
+
+
+func _cycle_slot(direction: int) -> void:
+	if _equipped_indices.is_empty():
+		return
+	# Find current position in equipped list
+	var current_pos := _equipped_indices.find(_selected_index)
+	if current_pos < 0:
+		current_pos = 0
+	# Cycle to next/previous equipped slot
+	var new_pos := (current_pos + direction + _equipped_indices.size()) % _equipped_indices.size()
+	select_slot(_equipped_indices[new_pos])
 
 
 func set_slot(index: int, icon: Texture2D, item_data: Variant = null) -> void:
-	if index < 0 or index >= SLOT_COUNT:
+	if index < 0 or index >= MAX_SLOTS:
 		return
 	_slot_data[index] = { "icon": icon, "data": item_data }
+	_update_equipped_indices()
 	_update_visual_slots()
 
 
@@ -69,21 +83,32 @@ func clear_slot(index: int) -> void:
 
 
 func set_all_slots(items: Array) -> void:
-	for i in mini(items.size(), SLOT_COUNT):
+	for i in mini(items.size(), MAX_SLOTS):
 		var item: Dictionary = items[i]
 		_slot_data[i] = {
 			"icon": item.get("icon", null),
 			"data": item.get("data", null)
 		}
+	_update_equipped_indices()
 	_update_visual_slots()
 
 
+func _update_equipped_indices() -> void:
+	_equipped_indices.clear()
+	for i in MAX_SLOTS:
+		if _slot_data[i].get("data") != null:
+			_equipped_indices.append(i)
+
+
 func select_slot(index: int) -> void:
-	if index < 0 or index >= SLOT_COUNT:
+	if index < 0 or index >= MAX_SLOTS:
 		return
 	if index == _selected_index:
 		return
 	if _is_scrolling:
+		return
+	# Only allow selecting equipped slots
+	if not _equipped_indices.has(index):
 		return
 	
 	var from_index := _selected_index
@@ -122,20 +147,35 @@ func _scroll_to(from_index: int, to_index: int) -> void:
 
 
 func _get_scroll_direction(from_index: int, to_index: int) -> int:
-	var direct_diff := to_index - from_index
-	if absf(direct_diff) <= SLOT_COUNT / 2.0:
+	var slot_count := _equipped_indices.size()
+	if slot_count <= 1:
+		return 1
+	# Find positions in equipped list
+	var from_pos := _equipped_indices.find(from_index)
+	var to_pos := _equipped_indices.find(to_index)
+	if from_pos < 0 or to_pos < 0:
+		return signi(to_index - from_index)
+	var direct_diff := to_pos - from_pos
+	if absf(direct_diff) <= slot_count / 2.0:
 		return signi(direct_diff)
 	else:
 		return -signi(direct_diff)
 
 
 func _get_equipment_index_for_visual_slot(visual_slot: int, base_index: int = -1) -> int:
-	# Returns the equipment index (0, 1, 2) for a given visual slot position
+	# Returns the equipment index for a given visual slot position
 	# Visual slots: 0=far left buffer, 1=left, 2=center, 3=right, 4=far right buffer
+	if _equipped_indices.is_empty():
+		return 0
 	if base_index < 0:
 		base_index = _selected_index
+	var base_pos := _equipped_indices.find(base_index)
+	if base_pos < 0:
+		base_pos = 0
 	var offset := visual_slot - 2  # -2, -1, 0, 1, 2
-	return (base_index + offset + SLOT_COUNT) % SLOT_COUNT
+	var slot_count := _equipped_indices.size()
+	var target_pos := (base_pos + offset + slot_count) % slot_count
+	return _equipped_indices[target_pos]
 
 
 func _populate_buffer_slot(direction: int) -> void:
