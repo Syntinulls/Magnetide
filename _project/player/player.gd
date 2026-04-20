@@ -69,6 +69,7 @@ var _repel_bar_container: Control = null
 @onready var arm_sprite: Sprite2D = $ArmSprite
 @onready var weapon_sprite: Sprite2D = $ArmSprite/Weapon
 @onready var muzzle: Marker2D = $ArmSprite/Weapon/Muzzle
+@onready var muzzle_effect: MuzzleEffect = $ArmSprite/Weapon/Muzzle/MuzzleEffect
 
 
 func _ready() -> void:
@@ -232,6 +233,8 @@ func _cleanup_current_equipment() -> void:
 	if equip is MagnetToolData:
 		stop_magnetize()
 		_clear_magnet_gun_state()
+		if muzzle_effect:
+			muzzle_effect.stop_effect()
 
 
 func _apply_current_equipment() -> void:
@@ -315,6 +318,10 @@ func _get_magnet_gun_hold_point() -> Vector2:
 
 func _process_magnet_gun(delta: float) -> void:
 	if _held_item and is_instance_valid(_held_item):
+		# Show magnet gun effect while holding item
+		if muzzle_effect:
+			muzzle_effect.play_effect(MuzzleEffect.EffectType.MAGNET_GUN)
+		
 		# Update held item position to follow gun
 		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
 		
@@ -437,6 +444,8 @@ func _repel_held_item() -> void:
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
 
 
 func _place_item_in_storage(mouse_pos: Vector2) -> void:
@@ -455,6 +464,8 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
 
 
 func _clear_magnet_gun_state() -> void:
@@ -471,6 +482,8 @@ func _clear_magnet_gun_state() -> void:
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
 
 
 func _get_ship() -> Node2D:
