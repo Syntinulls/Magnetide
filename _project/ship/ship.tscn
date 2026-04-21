@@ -5,6 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
 [ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet/magnet_lever.tscn" id="3_lever"]
 [ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="4_magnet"]
+[ext_resource type="PackedScene" path="res://_project/ship/departure_pylon.tscn" id="5_departure_pylon"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="6_dbcm7"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/enemies/enemy_target_point.gd" id="7_r6cvl"]
 
@@ -55,6 +56,12 @@ shape = SubResource("RectangleShape2D_front")
 
 [node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
 position = Vector2(0, -77)
+
+[node name="DeparturePylonLeft" parent="." instance=ExtResource("5_departure_pylon")]
+position = Vector2(-348, -126)
+
+[node name="DeparturePylonRight" parent="." instance=ExtResource("5_departure_pylon")]
+position = Vector2(348, -126)
 
 [node name="ActivationMinigameAnchor" type="Marker2D" parent="." unique_id=143007536]
 position = Vector2(0, -350)

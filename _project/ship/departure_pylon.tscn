@@ -1,0 +1,23 @@
+[gd_scene load_steps=3 format=3]
+
+[ext_resource type="Script" path="res://_project/ship/departure_pylon.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(90, 150)
+
+[node name="DeparturePylon" type="Area2D"]
+script = ExtResource("1_script")
+
+[node name="Body" type="Polygon2D" parent="."]
+color = Color(0.6, 0.9, 1, 1)
+polygon = PackedVector2Array(-26, 48, -26, -48, 26, -48, 26, 48)
+
+[node name="Light" type="Polygon2D" parent="."]
+color = Color(1, 0.85, 0.32, 1)
+polygon = PackedVector2Array(-14, -62, -14, -46, 14, -46, 14, -62)
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="."]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="UIAnchor" type="Marker2D" parent="."]
+position = Vector2(0, -92)

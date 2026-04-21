@@ -1,6 +1,8 @@
 extends CharacterBody2D
 class_name Player
 
+signal destroyed
+
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
@@ -291,7 +293,9 @@ func shoot() -> void:
 	bullet.speed = wpn.bullet_speed
 	if wpn.bullet_sprite:
 		bullet.get_node("Sprite2D").texture = wpn.bullet_sprite
-	get_tree().current_scene.add_child(bullet)
+	var world_root := Magnetide.world_root
+	if world_root:
+		world_root.add_child(bullet)
 
 
 func magnetize() -> void:
@@ -421,7 +425,7 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 
 func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
 	var magnet := Magnetide.magnet
-	var scene_root := get_tree().current_scene
+	var scene_root := Magnetide.world_root
 	if scene_root and item.get_parent() != scene_root:
 		var pos := item.global_position
 		item.reparent(scene_root)
@@ -563,7 +567,25 @@ func on_looting_ended() -> void:
 
 
 func take_damage(amount: float) -> void:
+	if current_health <= 0.0:
+		return
+	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
+	if previous_health > 0.0 and current_health <= 0.0:
+		destroyed.emit()
+
+
+func stop_for_run_end() -> void:
+	input_enabled = false
+	velocity = Vector2.ZERO
+	_fire_cooldown = 0.0
+	stop_magnetize()
+	_cleanup_current_equipment()
+	_clear_magnet_gun_state()
+	if _repel_bar_container:
+		_repel_bar_container.visible = false
+	set_process(false)
+	set_physics_process(false)
 
 
 func get_hitbox() -> Hitbox:

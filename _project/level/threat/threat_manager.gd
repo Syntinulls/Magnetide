@@ -139,3 +139,7 @@ static func _normalize_threat_level_factors(value: Array[ThreatLevelData]) -> Ar
 			normalized.append(defaults[i])
 
 	return normalized
+
+
+func stop_for_run_end() -> void:
+	set_process(false)

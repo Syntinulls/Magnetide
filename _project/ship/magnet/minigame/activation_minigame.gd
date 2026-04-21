@@ -497,3 +497,10 @@ func _end_minigame() -> void:
 	set_process(false)
 	_state = State.INACTIVE
 	minigame_completed.emit(_game_won)
+
+
+func cancel_minigame() -> void:
+	visible = false
+	set_process(false)
+	_state = State.INACTIVE
+	_reset_state()

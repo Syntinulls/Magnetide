@@ -1,6 +1,8 @@
 extends Node2D
 class_name EnemySpawner
 
+signal enemy_killed(enemy: Enemy)
+
 const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 
 @export var spawn_zones: Array[NodePath] = []
@@ -119,6 +121,7 @@ func _track_enemy(enemy: Enemy) -> void:
 
 func _on_enemy_died(enemy: Enemy) -> void:
 	_untrack_enemy(enemy)
+	enemy_killed.emit(enemy)
 
 
 func _on_enemy_tree_exited(enemy: Enemy) -> void:
@@ -247,3 +250,8 @@ func _resolve_threat_manager() -> void:
 
 func _is_magnet_active() -> bool:
 	return Magnetide.magnet != null and Magnetide.magnet.is_active
+
+
+func stop_for_run_end() -> void:
+	set_process(false)
+	_spawn_timer_remaining = 0.0

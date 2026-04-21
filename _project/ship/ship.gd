@@ -2,6 +2,7 @@ extends Node2D
 class_name Ship
 
 signal item_stored(item: SalvageItem)
+signal destroyed
 
 ## Size of the full storage area (clickable zone extending upward from floor).
 @export var storage_area_size: Vector2 = Vector2(400, 250)
@@ -157,7 +158,12 @@ func remove_from_storage(item: SalvageItem) -> void:
 
 
 func take_damage(amount: float) -> void:
+	if current_health <= 0.0:
+		return
+	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
+	if previous_health > 0.0 and current_health <= 0.0:
+		destroyed.emit()
 
 
 func get_hitbox() -> Hitbox:
@@ -174,3 +180,28 @@ func get_enemy_target_points() -> Array[EnemyTargetPoint]:
 		if point and point.category == EnemyData.TargetCategory.SHIP and point.is_target_enabled():
 			points.append(point)
 	return points
+
+
+func get_stored_item_count() -> int:
+	var total := 0
+	for item in _stored_items:
+		if is_instance_valid(item):
+			total += 1
+	return total
+
+
+func get_stored_loot_payload() -> Array[SalvageItemData]:
+	var loot: Array[SalvageItemData] = []
+	for item in _stored_items:
+		if is_instance_valid(item) and item.item_data != null:
+			loot.append(item.item_data)
+	return loot
+
+
+func get_departure_pylons() -> Array[DeparturePylon]:
+	var pylons: Array[DeparturePylon] = []
+	for child in find_children("*", "DeparturePylon", true, false):
+		var pylon := child as DeparturePylon
+		if pylon:
+			pylons.append(pylon)
+	return pylons

@@ -624,3 +624,26 @@ func _end_activation_effects() -> void:
 		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/vignette_intensity", 0.0, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/grayscale_intensity", 0.0, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
 		_vignette_tween.tween_callback(_vignette_overlay.hide).set_delay(transition_time)
+
+
+func stop_for_run_end() -> void:
+	if _cooldown_timer:
+		_cooldown_timer.stop()
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.OFF)
+	if _departure_icon:
+		_departure_icon.stop()
+	if _magnet_lever:
+		_magnet_lever.set_available(false)
+	if _player and _player.has_method("on_looting_ended"):
+		_player.on_looting_ended()
+	if _magnet:
+		_magnet.deactivate()
+	if _activation_minigame and _activation_minigame.has_method("cancel_minigame"):
+		_activation_minigame.cancel_minigame()
+	Engine.time_scale = 1.0
+	process_mode = Node.PROCESS_MODE_INHERIT
+	_end_activation_effects()
+	_set_level_speed(0.0)
+	_state = State.COOLDOWN
+	set_process(false)

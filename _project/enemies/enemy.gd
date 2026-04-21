@@ -325,3 +325,9 @@ func _rotate_toward_target() -> void:
 	if current_target_point and is_instance_valid(current_target_point):
 		var angle := global_position.angle_to_point(current_target_point.global_position)
 		rotation = angle + PI / 2.0
+
+
+func stop_for_run_end() -> void:
+	velocity = Vector2.ZERO
+	set_process(false)
+	set_physics_process(false)

@@ -38,3 +38,7 @@ func _update_display() -> void:
 	var minutes := int(_time_remaining) / 60
 	var seconds := int(_time_remaining) % 60
 	text = "%d:%02d" % [minutes, seconds]
+
+
+func stop_timer() -> void:
+	_is_running = false

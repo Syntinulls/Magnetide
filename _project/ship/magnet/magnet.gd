@@ -202,7 +202,11 @@ func _spawn_item_from_pile() -> void:
 
 	var item := SalvageItem.new()
 	# Add to scene tree at a scope that persists
-	get_tree().current_scene.add_child(item)
+	var world_root := Magnetide.world_root
+	if world_root:
+		world_root.add_child(item)
+	else:
+		add_child(item)
 	item.setup(data)
 
 	# Spawn item at pile position (top of pile) with random x variance within pile width

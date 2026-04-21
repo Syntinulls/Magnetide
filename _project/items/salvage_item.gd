@@ -264,7 +264,7 @@ func release_from_magnet() -> void:
 	freeze = false
 	
 	# Reparent back to scene root so item falls independently
-	var scene_root := get_tree().current_scene
+	var scene_root := Magnetide.world_root
 	if scene_root and get_parent() != scene_root:
 		var pos := global_position
 		reparent(scene_root)
@@ -505,7 +505,7 @@ func grab_for_magnet_gun(puller: Node2D) -> void:
 	gravity_scale = 0.0
 	
 	# Reparent to scene root
-	var scene_root := get_tree().current_scene
+	var scene_root := Magnetide.world_root
 	if scene_root and get_parent() != scene_root:
 		var pos := global_position
 		reparent(scene_root)

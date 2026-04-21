@@ -13,7 +13,7 @@
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="12_a1ni1"]
-[ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/player/muzzle_effect.gd" id="13_muzzle_effect"]
+[ext_resource type="Script" path="res://_project/player/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/player/equipment/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/player/equipment/player_item_gun_effect_1.png" id="15_4y3ad"]
 
