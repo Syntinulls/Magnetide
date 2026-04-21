@@ -7,8 +7,13 @@
 [resource]
 script = ExtResource("1_script")
 weapon_sprite = ExtResource("3_x47ok")
+hold_distance = 50.0
 pull_base_speed = 600.0
 pull_max_speed = 2000.0
 pull_ramp_time = 0.4
+weapon_rotation = 0.0
+muzzle_position = Vector2(-46.22568, -2.3631382)
 display_name = "Magnet Gun"
 hotbar_icon = ExtResource("1_x47ok")
+muzzle_effect_type = 1
+muzzle_effect_offset = Vector2(-13.25, 0)

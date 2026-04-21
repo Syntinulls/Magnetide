@@ -154,6 +154,26 @@ func _apply_equipment_positioning(offset_mult: float) -> void:
 		weapon_sprite.offset = Vector2(tool.weapon_offset.x * offset_mult, tool.weapon_offset.y)
 		weapon_sprite.rotation = tool.weapon_rotation * offset_mult
 		muzzle.position = Vector2(tool.muzzle_position.x * offset_mult, tool.muzzle_position.y)
+	_apply_muzzle_effect_positioning()
+
+
+func _apply_muzzle_effect_positioning() -> void:
+	if not muzzle_effect:
+		return
+
+	var equip := current_equipment
+	if equip == null:
+		muzzle_effect.offset = Vector2.ZERO
+		return
+
+	muzzle_effect.offset = equip.get_muzzle_effect_offset(facing_right)
+
+
+func _get_current_muzzle_effect_type() -> MuzzleEffect.EffectType:
+	var equip := current_equipment
+	if equip == null:
+		return MuzzleEffect.EffectType.NONE
+	return equip.get_muzzle_effect_type()
 
 
 func _physics_process(delta: float) -> void:
@@ -264,11 +284,11 @@ func _switch_to_equipment(index: int) -> void:
 
 func _cleanup_current_equipment() -> void:
 	var equip := current_equipment
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
 	if equip is MagnetToolData:
 		stop_magnetize()
 		_clear_magnet_gun_state()
-		if muzzle_effect:
-			muzzle_effect.stop_effect()
 
 
 func _apply_current_equipment() -> void:
@@ -315,7 +335,7 @@ func shoot() -> void:
 		return
 	_fire_cooldown = 1.0 / wpn.fire_rate
 	if muzzle_effect:
-		muzzle_effect.play_effect(MuzzleEffect.EffectType.RIFLE_FLASH)
+		muzzle_effect.play_effect(_get_current_muzzle_effect_type())
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()
@@ -350,15 +370,15 @@ func stop_magnetize() -> void:
 func _get_magnet_gun_hold_point() -> Vector2:
 	var tool := current_magnet_tool
 	var hold_dist := tool.hold_distance if tool else 30.0
-	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
-	return muzzle.global_position + gun_dir * hold_dist
+	var local_x_offset := hold_dist if facing_right else -hold_dist
+	return muzzle.to_global(Vector2(local_x_offset, 0.0))
 
 
 func _process_magnet_gun(delta: float) -> void:
 	if _held_item and is_instance_valid(_held_item):
 		# Show magnet gun effect while holding item
 		if muzzle_effect:
-			muzzle_effect.play_effect(MuzzleEffect.EffectType.MAGNET_GUN)
+			muzzle_effect.play_effect(_get_current_muzzle_effect_type())
 		
 		# Update held item position to follow gun
 		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
