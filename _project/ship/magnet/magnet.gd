@@ -108,6 +108,29 @@ func _ready() -> void:
 	_update_pull_state()
 
 
+func apply_run_loadout(loadout: RunLoadout) -> void:
+	if loadout == null:
+		return
+
+	pull_frequency = loadout.magnet_pull_frequency
+	pull_batch_size = loadout.magnet_pull_batch_size
+	hold_capacity = loadout.magnet_hold_capacity
+	pull_base_speed = loadout.magnet_pull_base_speed
+	pull_max_speed = loadout.magnet_pull_max_speed
+	pull_ramp_time = loadout.magnet_pull_ramp_time
+	surface_slow_speed = loadout.magnet_surface_slow_speed
+	surface_dwell_time = loadout.magnet_surface_dwell_time
+	breakaway_ramp_time = loadout.magnet_breakaway_ramp_time
+	breakaway_max_speed = loadout.magnet_breakaway_max_speed
+	threat_penalty = loadout.magnet_threat_penalty
+	magnet_width = loadout.magnet_width
+	max_health = loadout.magnet_max_health
+	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
+	if is_inside_tree():
+		_update_magnet_visuals()
+		_update_pull_state()
+
+
 func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int = 0) -> void:
 	_pile_data = pile_data
 	_pile_node = pile

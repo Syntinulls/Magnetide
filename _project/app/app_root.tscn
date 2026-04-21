@@ -1,10 +1,14 @@
-[gd_scene load_steps=6 format=3]
+[gd_scene load_steps=11 format=3]
 
 [ext_resource type="Script" path="res://_project/app/app_root.gd" id="1_script"]
 [ext_resource type="Script" path="res://_project/app/level_definition.gd" id="2_level_definition"]
 [ext_resource type="PackedScene" path="res://_project/level/level.tscn" id="3_level_scene"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/main_menu.tscn" id="4_main_menu"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/salvage_process_screen.tscn" id="5_salvage_screen"]
+[ext_resource type="Script" path="res://_project/run/run_loadout.gd" id="6_run_loadout"]
+[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/player/equipment/equipment_data.gd" id="7_equipment_data"]
+[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="8_rifle"]
+[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/player/equipment/magnet_gun.tres" id="9_magnet_gun"]
 
 [sub_resource type="Resource" id="Resource_default_level"]
 script = ExtResource("2_level_definition")
@@ -12,9 +16,37 @@ level_id = &"scrap_yard"
 display_name = "Scrap Yard"
 level_scene = ExtResource("3_level_scene")
 
+[sub_resource type="Resource" id="Resource_default_run_loadout"]
+script = ExtResource("6_run_loadout")
+ship_storage_area_size = Vector2(400, 250)
+ship_storage_area_position = Vector2(0, -95)
+ship_storage_marker_height = 24.0
+ship_storage_max_weight = 100.0
+ship_max_health = 250.0
+magnet_pull_frequency = 2.5
+magnet_pull_batch_size = 1
+magnet_hold_capacity = 5
+magnet_pull_base_speed = 200.0
+magnet_pull_max_speed = 1500.0
+magnet_pull_ramp_time = 0.6
+magnet_surface_slow_speed = 15.0
+magnet_surface_dwell_time = 1.2
+magnet_breakaway_ramp_time = 0.3
+magnet_breakaway_max_speed = 2000.0
+magnet_threat_penalty = 10.0
+magnet_width = 264.0
+magnet_max_health = 150.0
+player_speed = 400.0
+player_jump_velocity = -600.0
+player_gravity = 1600.0
+player_max_health = 100.0
+player_equipment = Array[ExtResource("7_equipment_data")]([ExtResource("8_rifle"), ExtResource("9_magnet_gun")])
+player_selected_equipment_index = 0
+
 [node name="AppRoot" type="Node"]
 script = ExtResource("1_script")
 default_level = SubResource("Resource_default_level")
+default_run_loadout = SubResource("Resource_default_run_loadout")
 main_menu_scene = ExtResource("4_main_menu")
 salvage_process_scene = ExtResource("5_salvage_screen")
 

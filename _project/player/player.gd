@@ -87,6 +87,36 @@ func _ready() -> void:
 	call_deferred("_populate_hotbar")
 
 
+func apply_run_loadout(loadout: RunLoadout) -> void:
+	if loadout == null:
+		return
+
+	var is_runtime_reconfigure := is_inside_tree()
+	if is_runtime_reconfigure:
+		_cleanup_current_equipment()
+
+	speed = loadout.player_speed
+	jump_velocity = loadout.player_jump_velocity
+	gravity = loadout.player_gravity
+	max_health = loadout.player_max_health
+	equipment = loadout.player_equipment.duplicate()
+
+	if equipment.is_empty():
+		_selected_equipment_index = 0
+	else:
+		_selected_equipment_index = clampi(
+			loadout.player_selected_equipment_index,
+			0,
+			equipment.size() - 1
+		)
+
+	current_health = max_health if not is_runtime_reconfigure else minf(current_health, max_health)
+
+	if is_runtime_reconfigure:
+		_apply_current_equipment()
+		call_deferred("_populate_hotbar")
+
+
 const ARM_OFFSET_X: float = -13.585
 const ARM_POSITION_X: float = 12.56
 

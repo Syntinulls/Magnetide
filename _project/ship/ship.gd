@@ -37,6 +37,20 @@ func _ready() -> void:
 	call_deferred("_update_storage_weight_ui")
 
 
+func apply_run_loadout(loadout: RunLoadout) -> void:
+	if loadout == null:
+		return
+
+	storage_area_size = loadout.ship_storage_area_size
+	storage_area_position = loadout.ship_storage_area_position
+	storage_marker_height = loadout.ship_storage_marker_height
+	storage_max_weight = loadout.ship_storage_max_weight
+	max_health = loadout.ship_max_health
+	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
+	if _ship_status_ui:
+		_update_storage_weight_ui()
+
+
 func _create_storage_zone() -> void:
 	_create_storage_floor_marker()
 	_create_storage_borders()

@@ -4,6 +4,7 @@ class_name AppRoot
 const RunControllerScript := preload("res://_project/run/run_controller.gd")
 
 @export var default_level: LevelDefinition
+@export var default_run_loadout: RunLoadout
 @export var main_menu_scene: PackedScene
 @export var salvage_process_scene: PackedScene
 
@@ -20,9 +21,11 @@ func _ready() -> void:
 	_show_main_menu()
 
 
-func start_run(level_definition: LevelDefinition = null) -> void:
+func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout = null) -> void:
 	if level_definition == null:
 		level_definition = default_level
+	if run_loadout == null:
+		run_loadout = default_run_loadout
 
 	if level_definition == null or level_definition.level_scene == null:
 		push_error("AppRoot: Cannot start run without a valid LevelDefinition.")
@@ -32,6 +35,8 @@ func start_run(level_definition: LevelDefinition = null) -> void:
 	_clear_run()
 
 	_active_level = level_definition.level_scene.instantiate()
+	if run_loadout:
+		run_loadout.apply_to_level(_active_level)
 	_active_run_controller = RunControllerScript.new()
 
 	var ship := _active_level.get_node_or_null("Ship") as Node2D
