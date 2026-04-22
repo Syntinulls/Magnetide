@@ -90,8 +90,8 @@ const REPEL_LINEAR_DAMP: float = 0.0
 const REPEL_ANGULAR_DAMP: float = 0.0
 
 # Storage friction constants
-const STORAGE_LINEAR_DAMP: float = 5.0         # High damping to prevent rolling
-const STORAGE_ANGULAR_DAMP: float = 5.0        # High damping to prevent spinning
+const STORAGE_LINEAR_DAMP: float = 10.0        # High damping to prevent rolling/drifting in storage
+const STORAGE_ANGULAR_DAMP: float = 60.0       # Very high damping so stored items barely rotate
 const DROP_GRAVITY_SCALE: float = 2.0
 const REPEL_GRAVITY_SCALE: float = 2.5
 
@@ -487,6 +487,25 @@ func get_contact_chain() -> Array[SalvageItem]:
 	return visited
 
 
+func get_storage_contact_chain() -> Array[SalvageItem]:
+	_prune_contacting_items()
+	var visited: Array[SalvageItem] = []
+	var stack: Array[SalvageItem] = []
+	for c in _contacting_items:
+		if is_instance_valid(c) and c.is_in_storage:
+			stack.append(c)
+	while stack.size() > 0:
+		var current: SalvageItem = stack.pop_back()
+		if current in visited:
+			continue
+		visited.append(current)
+		current._prune_contacting_items()
+		for neighbor in current._contacting_items:
+			if is_instance_valid(neighbor) and neighbor.is_in_storage and neighbor not in visited:
+				stack.append(neighbor)
+	return visited
+
+
 ## Grab from magnet onto magnet gun
 func grab_for_magnet_gun(puller: Node2D) -> void:
 	# Unfreeze all contacting frozen items so they can resettle
@@ -872,6 +891,26 @@ func unfreeze_for_resettle() -> void:
 		return
 	_enter_resettle_pull_state()
 	unfrozen.emit(self)
+
+
+func wake_for_storage_resettle() -> void:
+	if not _is_in_storage:
+		return
+
+	_clear_settled_magnet_state()
+	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	freeze = false
+	sleeping = false
+	gravity_scale = DROP_GRAVITY_SCALE
+	linear_damp = STORAGE_LINEAR_DAMP
+	angular_damp = STORAGE_ANGULAR_DAMP
+	angular_velocity = 0.0
+	if _collision_shape:
+		_collision_shape.set_deferred("disabled", false)
+
+	# Give the body a tiny downward push so resting stacks wake up immediately.
+	if linear_velocity.y < 10.0:
+		linear_velocity.y = 10.0
 
 
 ## Unfreeze all frozen items currently in contact with this item

@@ -451,10 +451,11 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 		return
 	
 	# Get contact chain before grabbing (items that need to re-settle)
-	var dependents := item.get_contact_chain()
+	var grabbed_from_storage := item.is_in_storage
+	var dependents := item.get_storage_contact_chain() if grabbed_from_storage else item.get_contact_chain()
 	var ship_node := _get_ship()
 
-	if item.is_in_storage and ship_node:
+	if grabbed_from_storage and ship_node:
 		ship_node.remove_from_storage(item)
 	
 	# Remove from magnet tracking
@@ -471,7 +472,10 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	# Unfreeze dependent items so they can re-settle
 	for dep in dependents:
 		if is_instance_valid(dep) and dep != item:
-			_unfreeze_item_for_resettle(dep)
+			if grabbed_from_storage:
+				dep.wake_for_storage_resettle()
+			else:
+				_unfreeze_item_for_resettle(dep)
 
 
 func _unfreeze_item_for_resettle(item: SalvageItem) -> void:

@@ -68,11 +68,13 @@ func _ensure_storage_items_root() -> Node2D:
 		_stored_salvage_items_root = Node2D.new()
 		_stored_salvage_items_root.name = STORAGE_ITEMS_ROOT_NAME
 		add_child(_stored_salvage_items_root)
-		var ship_fore := get_node_or_null("ShipFore")
-		if ship_fore:
-			move_child(_stored_salvage_items_root, ship_fore.get_index())
+
+	var ship_back := get_node_or_null("ShipBack")
+	if ship_back:
+		move_child(_stored_salvage_items_root, ship_back.get_index())
 
 	_stored_salvage_items_root.y_sort_enabled = true
+	_stored_salvage_items_root.z_index = -3
 	return _stored_salvage_items_root
 
 
