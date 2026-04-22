@@ -10,6 +10,7 @@
 [resource]
 script = ExtResource("1_25sn2")
 item_name = "Air Conditioner"
+rarity = 1
 sprite = ExtResource("6_bnmka")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_25sn2")]([ExtResource("2_bnmka"), ExtResource("3_wl67t"), ExtResource("4_fe8h1"), ExtResource("5_ryfei")])

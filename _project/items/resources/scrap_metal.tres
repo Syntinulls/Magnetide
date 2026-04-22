@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_u2icc")
 item_name = "Scrap Metal"
+rarity = 0
 sprite = ExtResource("2_t61j2")
 is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

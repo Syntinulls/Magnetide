@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("1_rdby6")
 item_name = "Microscope"
+rarity = 2
 sprite = ExtResource("4_hcw46")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_rdby6")]([ExtResource("2_y3viw"), ExtResource("3_knbne")])

@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_0mqpt")
 item_name = "Circuitry"
+rarity = 2
 sprite = ExtResource("2_ytgfh")
 is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("1_hm6qp")
 item_name = "generator"
+rarity = 2
 sprite = ExtResource("5_uhki7")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_hm6qp")]([ExtResource("2_ik25u"), ExtResource("3_7r7le"), ExtResource("4_ph50k")])

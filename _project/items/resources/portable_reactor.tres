@@ -10,6 +10,7 @@
 [resource]
 script = ExtResource("1_ut0o0")
 item_name = "Portable Reactor"
+rarity = 3
 sprite = ExtResource("6_7r2u0")
 area = Vector2(120, 120)
 is_component = true

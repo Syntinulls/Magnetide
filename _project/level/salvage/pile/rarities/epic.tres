@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://c3p7gak2lm8nb"]
 
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_g4ue2"]
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_item_data"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="2_bdkc8"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="3_y5qmb"]
@@ -18,70 +18,14 @@
 [ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/resources/transformer.tres" id="15_w8uai"]
 [ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/resources/xray_machine.tres" id="16_8re2k"]
 
-[sub_resource type="Resource" id="Resource_tvgnx"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("2_bdkc8")
-
-[sub_resource type="Resource" id="Resource_ftrmk"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("3_y5qmb")
-
-[sub_resource type="Resource" id="Resource_lio7y"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("4_fb0tn")
-
-[sub_resource type="Resource" id="Resource_aav0h"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("5_g4ue2")
-
-[sub_resource type="Resource" id="Resource_v13e3"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("6_g18rn")
-
-[sub_resource type="Resource" id="Resource_4vehb"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("7_xidhj")
-
-[sub_resource type="Resource" id="Resource_1n4fd"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("8_73dk3")
-
 [sub_resource type="Resource" id="Resource_jkfkd"]
 script = ExtResource("9_qsc00")
-entries = Array[ExtResource("1_g4ue2")]([SubResource("Resource_tvgnx"), SubResource("Resource_ftrmk"), SubResource("Resource_lio7y"), SubResource("Resource_aav0h"), SubResource("Resource_v13e3"), SubResource("Resource_4vehb"), SubResource("Resource_1n4fd")])
+entries = Array[ExtResource("1_item_data")]([ExtResource("2_bdkc8"), ExtResource("3_y5qmb"), ExtResource("4_fb0tn"), ExtResource("5_g4ue2"), ExtResource("6_g18rn"), ExtResource("7_xidhj"), ExtResource("8_73dk3")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
-
-[sub_resource type="Resource" id="Resource_dhwpx"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("10_kynpi")
-
-[sub_resource type="Resource" id="Resource_nb7xn"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("11_h1x5e")
-
-[sub_resource type="Resource" id="Resource_278e0"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("12_axxjw")
-
-[sub_resource type="Resource" id="Resource_mawsq"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("13_o4cq0")
-
-[sub_resource type="Resource" id="Resource_76ned"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("14_s15i5")
-
-[sub_resource type="Resource" id="Resource_3f01l"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("15_w8uai")
-
-[sub_resource type="Resource" id="Resource_xbp1x"]
-script = ExtResource("1_g4ue2")
-item_data = ExtResource("16_8re2k")
 
 [sub_resource type="Resource" id="Resource_o77jj"]
 script = ExtResource("9_qsc00")
-entries = Array[ExtResource("1_g4ue2")]([SubResource("Resource_dhwpx"), SubResource("Resource_nb7xn"), SubResource("Resource_278e0"), SubResource("Resource_mawsq"), SubResource("Resource_76ned"), SubResource("Resource_3f01l"), SubResource("Resource_xbp1x")])
+entries = Array[ExtResource("1_item_data")]([ExtResource("10_kynpi"), ExtResource("11_h1x5e"), ExtResource("12_axxjw"), ExtResource("13_o4cq0"), ExtResource("14_s15i5"), ExtResource("15_w8uai"), ExtResource("16_8re2k")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]

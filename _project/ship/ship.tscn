@@ -31,6 +31,9 @@ hold_capacity = 5
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
 texture = ExtResource("1_back")
 
+[node name="StoredSalvageItems" type="Node2D" parent="."]
+y_sort_enabled = true
+
 [node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
 texture = ExtResource("2_fore")
 

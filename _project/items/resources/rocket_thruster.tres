@@ -12,6 +12,7 @@
 [resource]
 script = ExtResource("1_nrg7l")
 item_name = "Rocket Thruster"
+rarity = 3
 sprite = ExtResource("8_tosae")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_nrg7l")]([ExtResource("2_o0464"), ExtResource("3_t5t8x"), ExtResource("4_w0ec0"), ExtResource("5_dbwr0"), ExtResource("6_lx7kv"), ExtResource("7_td7ne")])

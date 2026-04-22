@@ -1,7 +1,7 @@
 extends Resource
 class_name SalvagePileData
 
-## Rarity tier of this salvage pile.
+## Highest salvage item rarity this pile is allowed to roll.
 @export var rarity: SalvagePile.Rarity = SalvagePile.Rarity.COMMON
 
 ## Loot table for salvageable items (broken down into parts/scrap).
@@ -47,6 +47,6 @@ func roll_item(pull_count: int, threat_level: int = 0) -> Dictionary:
 	# 2. Pick appropriate loot table and roll item
 	var loot_table := salvageable_loot_table if is_salvageable else non_salvageable_loot_table
 	if loot_table:
-		var item := loot_table.roll_item(threat_level)
+		var item := loot_table.roll_item(threat_level, int(rarity))
 		return { "item": item, "is_salvageable": is_salvageable }
 	return { "item": null, "is_salvageable": false }

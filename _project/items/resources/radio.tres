@@ -9,6 +9,7 @@
 [resource]
 script = ExtResource("1_lwnlv")
 item_name = "Radio"
+rarity = 1
 sprite = ExtResource("5_sqv1b")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_lwnlv")]([ExtResource("2_sqv1b"), ExtResource("3_bqj6m"), ExtResource("4_604ol")])

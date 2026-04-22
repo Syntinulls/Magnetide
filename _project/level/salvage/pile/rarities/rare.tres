@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://dqr8k2m5xvn1a"]
 
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_item_data"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
-[ext_resource type="Script" uid="uid://df3upxsdcqmf8" path="res://_project/items/loot_entry.gd" id="1_o7p4a"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="2_sbkg1"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="3_metq8"]
 [ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="4_mafig"]
@@ -15,58 +15,14 @@
 [ext_resource type="Resource" uid="uid://c4o6h7rcfvgsa" path="res://_project/items/resources/refrigerator.tres" id="12_aqj0n"]
 [ext_resource type="Resource" uid="uid://b4m4e377rt8fk" path="res://_project/items/resources/air_conditioner.tres" id="13_h6mpk"]
 
-[sub_resource type="Resource" id="Resource_jdbte"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("2_sbkg1")
-
-[sub_resource type="Resource" id="Resource_ljxby"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("3_metq8")
-
-[sub_resource type="Resource" id="Resource_tbfv8"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("4_mafig")
-
-[sub_resource type="Resource" id="Resource_g5rku"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("5_8fx7j")
-
-[sub_resource type="Resource" id="Resource_sxdka"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("6_6xgc5")
-
-[sub_resource type="Resource" id="Resource_tqtll"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("7_dx84h")
-
 [sub_resource type="Resource" id="Resource_qf3a7"]
 script = ExtResource("8_whg8k")
-entries = Array[ExtResource("1_o7p4a")]([SubResource("Resource_jdbte"), SubResource("Resource_ljxby"), SubResource("Resource_tbfv8"), SubResource("Resource_g5rku"), SubResource("Resource_sxdka"), SubResource("Resource_tqtll")])
+entries = Array[ExtResource("1_item_data")]([ExtResource("2_sbkg1"), ExtResource("3_metq8"), ExtResource("4_mafig"), ExtResource("5_8fx7j"), ExtResource("6_6xgc5"), ExtResource("7_dx84h")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
-
-[sub_resource type="Resource" id="Resource_mbu67"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("9_yrw0r")
-
-[sub_resource type="Resource" id="Resource_v278c"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("10_i5d3h")
-
-[sub_resource type="Resource" id="Resource_bar64"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("11_w7aqm")
-
-[sub_resource type="Resource" id="Resource_lg3uw"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("12_aqj0n")
-
-[sub_resource type="Resource" id="Resource_2vh36"]
-script = ExtResource("1_o7p4a")
-item_data = ExtResource("13_h6mpk")
 
 [sub_resource type="Resource" id="Resource_re1s3"]
 script = ExtResource("8_whg8k")
-entries = Array[ExtResource("1_o7p4a")]([SubResource("Resource_mbu67"), SubResource("Resource_v278c"), SubResource("Resource_bar64"), SubResource("Resource_lg3uw"), SubResource("Resource_2vh36")])
+entries = Array[ExtResource("1_item_data")]([ExtResource("9_yrw0r"), ExtResource("10_i5d3h"), ExtResource("11_w7aqm"), ExtResource("12_aqj0n"), ExtResource("13_h6mpk")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]

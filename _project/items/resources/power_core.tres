@@ -6,6 +6,7 @@
 [resource]
 script = ExtResource("1_jctha")
 item_name = "Power Core"
+rarity = 3
 sprite = ExtResource("2_f50j5")
 is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

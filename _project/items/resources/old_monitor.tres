@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("1_5t66u")
 item_name = "Old Monitor"
+rarity = 1
 sprite = ExtResource("4_t7ldp")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_5t66u")]([ExtResource("2_t7ldp"), ExtResource("3_wfm31")])

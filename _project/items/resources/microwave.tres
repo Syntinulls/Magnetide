@@ -10,6 +10,7 @@
 [resource]
 script = ExtResource("1_4l7pp")
 item_name = "Microwave"
+rarity = 1
 sprite = ExtResource("6_nbm5j")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_4l7pp")]([ExtResource("2_nbm5j"), ExtResource("3_fuhes"), ExtResource("4_ft587"), ExtResource("5_rkajb")])

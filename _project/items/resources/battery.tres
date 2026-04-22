@@ -7,6 +7,6 @@
 script = ExtResource("1_mve1j")
 item_name = "Battery"
 value = 30
-chance = 15.0
+rarity = 1
 sprite = ExtResource("2_lioii")
 is_component = true

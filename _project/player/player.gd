@@ -14,6 +14,7 @@ signal destroyed
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
+const TooltipFont: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
 
 var input_enabled: bool = true
 var facing_right: bool = false
@@ -65,6 +66,7 @@ var _is_repel_holding: bool = false
 var _repel_bar: ColorRect = null
 var _repel_bar_bg: ColorRect = null
 var _repel_bar_container: Control = null
+var _hover_tooltip: Label = null
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var legs_sprite: AnimatedSprite2D = $LegsSprite
@@ -81,6 +83,7 @@ func _ready() -> void:
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
 	_create_repel_bar()
+	_create_hover_tooltip()
 	_apply_current_equipment()
 	# Defer hotbar setup to ensure UI is ready
 	call_deferred("_connect_hotbar")
@@ -228,6 +231,7 @@ func _physics_process(delta: float) -> void:
 	move_and_slide()
 	
 	_update_leg_animation()
+	_update_hover_tooltip()
 
 
 func _update_leg_animation() -> void:
@@ -405,7 +409,7 @@ func _process_magnet_gun(delta: float) -> void:
 			if Input.is_action_just_pressed("shoot"):
 				var mouse_pos := get_global_mouse_position()
 				var ship_node := _get_ship()
-				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_new_storage_item():
+				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
 					_place_item_in_storage(mouse_pos)
 	else:
 		# No item held - hover detection and grab
@@ -437,13 +441,7 @@ func _process_magnet_gun_hover() -> void:
 					best_dist = dist
 					best_item = item
 	
-	# Update outline
-	if _hovered_item != best_item:
-		if _hovered_item and is_instance_valid(_hovered_item):
-			_hovered_item.set_outlined(false)
-		_hovered_item = best_item
-		if _hovered_item:
-			_hovered_item.set_outlined(true)
+	_set_hovered_item(best_item)
 
 
 func _grab_item_from_magnet(item: SalvageItem) -> void:
@@ -454,6 +452,10 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	
 	# Get contact chain before grabbing (items that need to re-settle)
 	var dependents := item.get_contact_chain()
+	var ship_node := _get_ship()
+
+	if item.is_in_storage and ship_node:
+		ship_node.remove_from_storage(item)
 	
 	# Remove from magnet tracking
 	var magnet := Magnetide.magnet
@@ -461,11 +463,10 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 		magnet.remove_item(item)
 	
 	# Grab the item
-	item.set_outlined(false)
+	_set_hovered_item(null)
 	item.grab_for_magnet_gun(self)
 	item.update_gun_hold_position(_get_magnet_gun_hold_point())
 	_held_item = item
-	_hovered_item = null
 	
 	# Unfreeze dependent items so they can re-settle
 	for dep in dependents:
@@ -513,11 +514,12 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	var ship_node := _get_ship()
 	if not ship_node:
 		return
-	if not ship_node.can_accept_new_storage_item():
+	if not ship_node.can_accept_storage_item(_held_item):
 		return
 	
-	_held_item.place_in_storage(mouse_pos)
-	ship_node.add_to_storage(_held_item)
+	if not ship_node.store_item(_held_item, mouse_pos):
+		return
+
 	_held_item = null
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
@@ -527,10 +529,8 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 
 
 func _clear_magnet_gun_state() -> void:
-	# Clear hover
-	if _hovered_item and is_instance_valid(_hovered_item):
-		_hovered_item.set_outlined(false)
-	_hovered_item = null
+	_set_hovered_item(null)
+	_hide_hover_tooltip()
 	
 	# Force-release held item
 	if _held_item and is_instance_valid(_held_item):
@@ -558,6 +558,7 @@ func _get_ship() -> Node2D:
 const REPEL_BAR_WIDTH: float = 40.0
 const REPEL_BAR_HEIGHT: float = 6.0
 const REPEL_BAR_OFFSET_Y: float = -70.0
+const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
 
 func _create_repel_bar() -> void:
 	# Defer to ensure GameUI is ready
@@ -593,6 +594,65 @@ func _setup_repel_bar() -> void:
 	_repel_bar_container.add_child(_repel_bar)
 
 
+func _create_hover_tooltip() -> void:
+	call_deferred("_setup_hover_tooltip")
+
+
+func _setup_hover_tooltip() -> void:
+	var game_ui := Magnetide.game_ui
+	if not game_ui:
+		push_warning("Player: GameUI not found, hover tooltip will not be created")
+		return
+
+	_hover_tooltip = Label.new()
+	_hover_tooltip.name = "SalvageHoverTooltip"
+	_hover_tooltip.visible = false
+	_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_hover_tooltip.add_theme_font_override("font", TooltipFont)
+	_hover_tooltip.add_theme_font_size_override("font_size", 24)
+	_hover_tooltip.add_theme_color_override("font_outline_color", Color.BLACK)
+	_hover_tooltip.add_theme_constant_override("outline_size", 4)
+	game_ui.add_child(_hover_tooltip)
+
+
+func _update_hover_tooltip() -> void:
+	if not _hover_tooltip:
+		return
+
+	var should_show := input_enabled \
+		and current_magnet_tool != null \
+		and (_held_item == null or not is_instance_valid(_held_item)) \
+		and _hovered_item != null \
+		and is_instance_valid(_hovered_item)
+
+	if not should_show:
+		_hide_hover_tooltip()
+		return
+
+	_hover_tooltip.visible = true
+	_hover_tooltip.text = _hovered_item.get_display_name()
+	_hover_tooltip.add_theme_color_override("font_color", _hovered_item.get_rarity_color())
+	_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
+
+
+func _hide_hover_tooltip() -> void:
+	if _hover_tooltip:
+		_hover_tooltip.visible = false
+
+
+func _set_hovered_item(item: SalvageItem) -> void:
+	if _hovered_item == item:
+		return
+
+	if _hovered_item and is_instance_valid(_hovered_item):
+		_hovered_item.set_outlined(false)
+
+	_hovered_item = item
+
+	if _hovered_item and is_instance_valid(_hovered_item):
+		_hovered_item.set_outlined(true)
+
+
 func _update_repel_bar() -> void:
 	if not _repel_bar_container:
 		return
@@ -611,9 +671,8 @@ func _update_repel_bar() -> void:
 ## Called externally when looting ends to clean up hover state (but keep held item)
 func on_looting_ended() -> void:
 	# Clear hover only - player keeps any item held by magnet gun
-	if _hovered_item and is_instance_valid(_hovered_item):
-		_hovered_item.set_outlined(false)
-	_hovered_item = null
+	_set_hovered_item(null)
+	_hide_hover_tooltip()
 
 
 func take_damage(amount: float) -> void:

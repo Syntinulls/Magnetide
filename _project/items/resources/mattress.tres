@@ -7,6 +7,7 @@
 [resource]
 script = ExtResource("1_xadeq")
 item_name = "Mattress"
+rarity = 0
 sprite = ExtResource("3_o2dxo")
 area = Vector2(140, 140)
 components = Array[ExtResource("1_xadeq")]([ExtResource("2_o2dxo")])

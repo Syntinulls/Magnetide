@@ -10,6 +10,7 @@
 [resource]
 script = ExtResource("1_12d7p")
 item_name = "Server Rack"
+rarity = 2
 sprite = ExtResource("6_tdnh2")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_12d7p")]([ExtResource("2_e0cvs"), ExtResource("3_8wys0"), ExtResource("4_vsdtt"), ExtResource("5_jora2")])

@@ -16,6 +16,7 @@ const STORAGE_COLLISION_LAYER: int = 8
 const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
 
 var item_data: SalvageItemData = null
+var rarity: int = SalvageItemData.ItemRarity.COMMON
 var _is_held_by_gun: bool = false
 var _is_in_storage: bool = false
 var _is_repelled: bool = false
@@ -124,7 +125,7 @@ var is_frozen_on_magnet: bool:
 ## Returns true if this item can be grabbed by the magnet gun.
 var can_be_grabbed: bool:
 	get:
-		return is_frozen_on_magnet and not _is_held_by_gun and not _is_in_storage and not _is_falling and not _is_repelled
+		return not _is_held_by_gun and not _is_falling and not _is_repelled and (is_frozen_on_magnet or _is_in_storage)
 
 ## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
@@ -176,6 +177,7 @@ func _ready() -> void:
 
 func setup(data: SalvageItemData) -> void:
 	item_data = data
+	rarity = int(data.rarity) if data else SalvageItemData.ItemRarity.COMMON
 	
 	if _sprite:
 		if data.sprite:
@@ -201,10 +203,20 @@ func _create_placeholder_sprite() -> void:
 		return
 	var size := hitbox_size
 	var img := Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
-	var color: Color = SalvagePile.RARITY_COLORS.get(item_data.rarity, Color.WHITE)
+	var color: Color = get_rarity_color()
 	img.fill(color)
 	var tex := ImageTexture.create_from_image(img)
 	_sprite.texture = tex
+
+
+func get_display_name() -> String:
+	if item_data and not item_data.item_name.is_empty():
+		return item_data.item_name
+	return "Unknown Salvage"
+
+
+func get_rarity_color() -> Color:
+	return SalvageItemData.get_color_for_rarity(rarity)
 
 
 func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
@@ -483,9 +495,16 @@ func grab_for_magnet_gun(puller: Node2D) -> void:
 	_clear_settled_magnet_state()
 	_is_in_magnet_field = false
 	_is_held_by_gun = true
+	_is_in_storage = false
+	_is_repelled = false
+	_is_falling = false
 	_is_flying_to_gun = true
 	_pull_elapsed = 0.0
 	_settle_timer = 0.0
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
+	linear_damp = DEFAULT_LINEAR_DAMP
+	angular_damp = DEFAULT_ANGULAR_DAMP
 	
 	# Get pull config from the magnet gun (player)
 	if "pull_base_speed" in puller:
@@ -533,11 +552,21 @@ func flip_relative_to_anchor(anchor_pos: Vector2) -> void:
 
 
 ## Place item into storage at the given position
-func place_in_storage(target_pos: Vector2) -> void:
+func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = true
+	_is_repelled = false
+	_is_falling = false
+	_is_flying_to_gun = false
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
 	_gun_hold_velocity = Vector2.ZERO
+
+	if storage_parent and get_parent() != storage_parent:
+		var current_pos := global_position
+		reparent(storage_parent)
+		global_position = current_pos
 	
 	# Teleport to target position
 	global_position = target_pos
@@ -554,9 +583,11 @@ func place_in_storage(target_pos: Vector2) -> void:
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 	freeze = false
 	gravity_scale = DROP_GRAVITY_SCALE
+	linear_damp = STORAGE_LINEAR_DAMP
+	angular_damp = STORAGE_ANGULAR_DAMP
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
-	z_index = -3  # Render behind ship and storage marker
+	z_index = 0
 
 
 ## Repel item off the magnet gun with an impulse

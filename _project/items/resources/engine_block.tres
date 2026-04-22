@@ -10,6 +10,7 @@
 [resource]
 script = ExtResource("1_sh01t")
 item_name = "Engine Block"
+rarity = 2
 sprite = ExtResource("6_vyt7e")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_sh01t")]([ExtResource("2_vyt7e"), ExtResource("3_coyih"), ExtResource("4_tue4q"), ExtResource("5_ojdu2")])

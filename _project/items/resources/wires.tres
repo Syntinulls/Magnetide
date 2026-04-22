@@ -7,6 +7,6 @@
 script = ExtResource("1_script")
 item_name = "Copper Wires"
 value = 20
-chance = 20.0
+rarity = 0
 sprite = ExtResource("2_kksav")
 is_component = true

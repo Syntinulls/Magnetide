@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("1_dumwk")
 item_name = "Refrigerator"
+rarity = 1
 sprite = ExtResource("4_wjw8g")
 area = Vector2(160, 160)
 components = Array[ExtResource("1_dumwk")]([ExtResource("2_wjw8g"), ExtResource("3_jca57")])

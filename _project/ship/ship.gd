@@ -18,10 +18,12 @@ signal destroyed
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
+const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
+var _stored_salvage_items_root: Node2D = null
 var current_health: float = 0.0
 
 @onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
@@ -33,6 +35,7 @@ var stored_items: Array[SalvageItem]:
 
 func _ready() -> void:
 	current_health = max_health
+	_ensure_storage_items_root()
 	_create_storage_zone()
 	call_deferred("_update_storage_weight_ui")
 
@@ -54,6 +57,23 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 func _create_storage_zone() -> void:
 	_create_storage_floor_marker()
 	_create_storage_borders()
+
+
+func _ensure_storage_items_root() -> Node2D:
+	if _stored_salvage_items_root and is_instance_valid(_stored_salvage_items_root):
+		return _stored_salvage_items_root
+
+	_stored_salvage_items_root = get_node_or_null(STORAGE_ITEMS_ROOT_NAME) as Node2D
+	if _stored_salvage_items_root == null:
+		_stored_salvage_items_root = Node2D.new()
+		_stored_salvage_items_root.name = STORAGE_ITEMS_ROOT_NAME
+		add_child(_stored_salvage_items_root)
+		var ship_fore := get_node_or_null("ShipFore")
+		if ship_fore:
+			move_child(_stored_salvage_items_root, ship_fore.get_index())
+
+	_stored_salvage_items_root.y_sort_enabled = true
+	return _stored_salvage_items_root
 
 
 func _create_storage_floor_marker() -> void:
@@ -138,6 +158,17 @@ func can_accept_new_storage_item() -> bool:
 	return get_storage_weight() < storage_max_weight
 
 
+func can_accept_storage_item(item: SalvageItem) -> bool:
+	if item == null or not is_instance_valid(item):
+		return false
+
+	var current_weight := get_storage_weight()
+	if item in _stored_items:
+		current_weight -= _get_item_weight(item)
+
+	return current_weight + _get_item_weight(item) <= storage_max_weight
+
+
 func is_storage_at_or_over_capacity() -> bool:
 	return get_storage_weight() >= storage_max_weight
 
@@ -149,6 +180,17 @@ func add_to_storage(item: SalvageItem) -> void:
 		_stored_items.append(item)
 		item_stored.emit(item)
 		_update_storage_weight_ui()
+
+
+func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
+	if item == null or not is_instance_valid(item):
+		return false
+	if not can_accept_storage_item(item):
+		return false
+
+	item.place_in_storage(target_pos, _ensure_storage_items_root())
+	add_to_storage(item)
+	return true
 
 
 func _update_storage_weight_ui() -> void:
@@ -169,6 +211,16 @@ func get_storage_weight() -> float:
 func remove_from_storage(item: SalvageItem) -> void:
 	_stored_items.erase(item)
 	_update_storage_weight_ui()
+
+
+func get_storage_items_root() -> Node2D:
+	return _ensure_storage_items_root()
+
+
+func _get_item_weight(item: SalvageItem) -> float:
+	if item and item.item_data:
+		return item.item_data.weight
+	return 0.0
 
 
 func take_damage(amount: float) -> void:

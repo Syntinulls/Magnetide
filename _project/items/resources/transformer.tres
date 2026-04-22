@@ -8,6 +8,7 @@
 [resource]
 script = ExtResource("1_w27kj")
 item_name = "Transformer"
+rarity = 2
 sprite = ExtResource("4_x3rr8")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_w27kj")]([ExtResource("2_s6li1"), ExtResource("3_m6033")])
