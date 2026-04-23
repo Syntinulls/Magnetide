@@ -6,9 +6,8 @@ signal main_menu_requested
 const ENTRY_ICON_SIZE := Vector2(40.0, 40.0)
 const SOURCE_ICON_SIZE := Vector2(24.0, 24.0)
 const ENTRY_NAME_WIDTH := 220.0
-const SOURCE_ICON_TEXTURE: Texture2D = preload("res://icon.svg")
-const COLLECTION_ICON_COLOR := Color("6cc6ff")
-const SALVAGE_ICON_COLOR := Color("f4c86a")
+const SALVAGED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_salvaged.png")
+const COLLECTED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_collected.png")
 
 var _run_result: RunResult = null
 var _result_entries: Array[Dictionary] = []
@@ -78,8 +77,10 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 
 	var item_data := entry.get("item_data", null) as SalvageItemData
 
-	row.add_child(_build_source_icon(bool(entry.get("from_collection", false)), COLLECTION_ICON_COLOR))
-	row.add_child(_build_source_icon(bool(entry.get("from_salvage", false)), SALVAGE_ICON_COLOR))
+	var was_collected := bool(entry.get("from_collection", false))
+	var was_salvaged := bool(entry.get("from_salvage", false))
+	row.add_child(_build_source_icon(was_collected, COLLECTED_ICON_TEXTURE))
+	row.add_child(_build_source_icon(was_salvaged, SALVAGED_ICON_TEXTURE))
 
 	var icon_holder := CenterContainer.new()
 	icon_holder.custom_minimum_size = ENTRY_ICON_SIZE
@@ -131,7 +132,7 @@ func _create_placeholder_texture(item_data: SalvageItemData) -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func _build_source_icon(is_active: bool, color: Color) -> Control:
+func _build_source_icon(is_active: bool, tex: Texture2D) -> Control:
 	var holder := CenterContainer.new()
 	holder.custom_minimum_size = SOURCE_ICON_SIZE
 
@@ -141,8 +142,7 @@ func _build_source_icon(is_active: bool, color: Color) -> Control:
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
-	icon.texture = SOURCE_ICON_TEXTURE
-	icon.modulate = color
+	icon.texture = tex
 	icon.visible = is_active
 	holder.add_child(icon)
 	return holder

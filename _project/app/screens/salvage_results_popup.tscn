@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://pxf3svvn15ss"]
 
-[ext_resource type="Script" path="res://_project/app/screens/salvage_results_popup.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://qe6h4a44uvjt" path="res://_project/app/screens/salvage_results_popup.gd" id="1_script"]
 
-[node name="SalvageResultsPopup" type="Control"]
+[node name="SalvageResultsPopup" type="Control" unique_id=730142289]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,7 +12,7 @@ grow_vertical = 2
 mouse_filter = 1
 script = ExtResource("1_script")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=586617490]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -22,7 +22,7 @@ grow_vertical = 2
 mouse_filter = 1
 color = Color(0.027451, 0.0313726, 0.0470588, 0.8)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1179189975]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -30,149 +30,149 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
+[node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=1421134963]
 custom_minimum_size = Vector2(980, 640)
 layout_mode = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer" unique_id=1589894354]
 layout_mode = 2
 theme_override_constants/margin_left = 24
 theme_override_constants/margin_top = 24
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 24
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer" unique_id=758286383]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=355959639]
 layout_mode = 2
 theme_override_font_sizes/font_size = 30
 text = "Run Summary"
 horizontal_alignment = 1
 
-[node name="BodyColumns" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="BodyColumns" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1985736872]
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 24
 
-[node name="StatsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns"]
+[node name="StatsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns" unique_id=147399309]
 custom_minimum_size = Vector2(280, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="StatsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn"]
+[node name="StatsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn" unique_id=639534814]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Run Stats"
 
-[node name="StatsPanel" type="PanelContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn"]
+[node name="StatsPanel" type="PanelContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn" unique_id=755457015]
 layout_mode = 2
 size_flags_vertical = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel"]
+[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel" unique_id=1647575197]
 layout_mode = 2
 theme_override_constants/margin_left = 18
 theme_override_constants/margin_top = 18
 theme_override_constants/margin_right = 18
 theme_override_constants/margin_bottom = 18
 
-[node name="StatsVBox" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer"]
+[node name="StatsVBox" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer" unique_id=303897705]
 layout_mode = 2
 theme_override_constants/separation = 14
 
-[node name="TimeRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox"]
+[node name="TimeRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=107821875]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow"]
+[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow" unique_id=133331713]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Time"
 
-[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow"]
+[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow" unique_id=985723115]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0:00"
 
-[node name="KillsRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox"]
+[node name="KillsRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=2125460514]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow"]
+[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow" unique_id=990554284]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Enemies Killed"
 
-[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow"]
+[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow" unique_id=613376786]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0"
 
-[node name="CollectedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox"]
+[node name="CollectedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=1631354666]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow"]
+[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow" unique_id=1053928005]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Collected Items"
 
-[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow"]
+[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow" unique_id=1315145103]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0"
 
-[node name="SalvagedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox"]
+[node name="SalvagedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=1834579581]
 layout_mode = 2
 theme_override_constants/separation = 12
 
-[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow"]
+[node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow" unique_id=1564518309]
 custom_minimum_size = Vector2(140, 0)
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "Items Salvaged"
 
-[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow"]
+[node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow" unique_id=791815804]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "0"
 
-[node name="ItemsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns"]
+[node name="ItemsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns" unique_id=85700356]
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
-[node name="ItemsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn"]
+[node name="ItemsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=591809339]
 layout_mode = 2
 theme_override_font_sizes/font_size = 22
 text = "Recovered Items"
 
-[node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn"]
+[node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=762304841]
 custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
 size_flags_horizontal = 3
 size_flags_vertical = 3
 horizontal_scroll_mode = 0
 
-[node name="ListContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/ScrollContainer"]
+[node name="ListContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/ScrollContainer" unique_id=2004633045]
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
 
-[node name="EmptyLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn"]
+[node name="EmptyLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=1599433966]
 layout_mode = 2
 theme_override_font_sizes/font_size = 18
 text = "No materials recovered"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="MenuButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="MenuButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=288758738]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 text = "Return To Main Menu"
