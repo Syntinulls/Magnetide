@@ -3,7 +3,7 @@ class_name RunController
 
 signal run_finished(result: RunResult)
 
-const RunSummaryPopupScene := preload("res://_project/ui/run_summary_popup.tscn")
+const DEBUG_EXTRA_SALVAGE_ITEM: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
 
 var _level_definition: LevelDefinition = null
 var _level: Node = null
@@ -17,7 +17,6 @@ var _elapsed_seconds: float = 0.0
 var _enemies_killed: int = 0
 var _end_reason: RunResult.EndReason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 var _is_run_ending: bool = false
-var _summary_popup: RunSummaryPopup = null
 
 
 func start_run(level_definition: LevelDefinition, level_node: Node) -> void:
@@ -82,7 +81,7 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 	_shutdown_gameplay()
 
 	var result := _build_result()
-	_show_summary_popup(result)
+	call_deferred("_finish_run", result)
 
 
 func _shutdown_gameplay() -> void:
@@ -127,18 +126,15 @@ func _build_result() -> RunResult:
 		result.salvage_items_collected = _ship.get_stored_item_count()
 		result.stored_loot = _ship.get_stored_loot_payload()
 
+	if DEBUG_EXTRA_SALVAGE_ITEM != null:
+		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM)
+		result.salvage_items_collected += 1
+
 	return result
 
 
-func _show_summary_popup(result: RunResult) -> void:
-	if _game_ui == null:
-		run_finished.emit(result)
-		return
-
-	_summary_popup = RunSummaryPopupScene.instantiate() as RunSummaryPopup
-	_game_ui.add_child(_summary_popup)
-	_summary_popup.setup(result)
-	_summary_popup.continue_requested.connect(_on_summary_continue.bind(result))
+func _finish_run(result: RunResult) -> void:
+	run_finished.emit(result)
 
 
 func _on_player_destroyed() -> void:
@@ -157,10 +153,6 @@ func _on_departure_requested(_pylon: DeparturePylon) -> void:
 	if not can_accept_departure_request():
 		return
 	request_end_run(RunResult.EndReason.VOLUNTARY_DEPARTURE)
-
-
-func _on_summary_continue(result: RunResult) -> void:
-	run_finished.emit(result)
 
 
 func _exit_tree() -> void:

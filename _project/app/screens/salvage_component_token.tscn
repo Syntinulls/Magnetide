@@ -1,0 +1,10 @@
+[gd_scene load_steps=2 format=3]
+
+[ext_resource type="Script" path="res://_project/app/screens/salvage_component_token.gd" id="1_script"]
+
+[node name="SalvageComponentToken" type="TextureRect"]
+visible = false
+offset_right = 80.0
+offset_bottom = 80.0
+mouse_filter = 2
+script = ExtResource("1_script")

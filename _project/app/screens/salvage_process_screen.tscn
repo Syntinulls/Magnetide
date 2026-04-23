@@ -1,6 +1,7 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene load_steps=3 format=3]
 
 [ext_resource type="Script" path="res://_project/app/screens/salvage_process_screen.gd" id="1_script"]
+[ext_resource type="Texture2D" path="res://icon.svg" id="3_storage_icon"]
 
 [node name="SalvageProcessScreen" type="Control"]
 layout_mode = 3
@@ -18,56 +19,124 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0509804, 0.0627451, 0.0784314, 0.95)
+color = Color(0.0470588, 0.0588235, 0.0862745, 1)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="StageGlow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -210.0
+offset_top = -180.0
+offset_right = 210.0
+offset_bottom = 180.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.117647, 0.14902, 0.196078, 0.45)
+
+[node name="TopHUD" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 18.0
+offset_bottom = 148.0
+grow_horizontal = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 12
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 12
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TopHUD"]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ProgressLabel" type="Label" parent="TopHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "SALVAGE"
+horizontal_alignment = 1
+
+[node name="ItemNameLabel" type="Label" parent="TopHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 34
+text = "Awaiting Run Data"
+horizontal_alignment = 1
+
+[node name="InstructionLabel" type="Label" parent="TopHUD/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 16
+text = "Preparing salvage manifest..."
+horizontal_alignment = 1
+
+[node name="StageLayer" type="Control" parent="."]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
+mouse_filter = 1
 
-[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(460, 280)
-layout_mode = 2
+[node name="StorageAnchor" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 0.0
+anchor_right = 0.0
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 24.0
+offset_top = -228.0
+offset_right = 184.0
+offset_bottom = -24.0
+grow_horizontal = 0
+grow_vertical = 0
+mouse_filter = 2
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
-layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
+[node name="StorageIconPivot" type="Control" parent="StorageAnchor"]
+offset_left = 28.0
+offset_top = 80.0
+offset_right = 132.0
+offset_bottom = 184.0
+pivot_offset = Vector2(52, 52)
+mouse_filter = 2
 
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 18
+[node name="StorageIcon" type="TextureRect" parent="StorageAnchor/StorageIconPivot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_storage_icon")
+stretch_mode = 3
+expand_mode = 1
+texture_filter = 0
 
-[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 24
-text = "Salvage Processing"
-horizontal_alignment = 1
-
-[node name="SummaryLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 120)
-layout_mode = 2
+[node name="StorageLabel" type="Label" parent="StorageAnchor"]
+offset_left = 0.0
+offset_top = 194.0
+offset_right = 160.0
+offset_bottom = 220.0
 theme_override_font_sizes/font_size = 16
-text = "Salvage processing will be implemented later."
+text = "Storage"
 horizontal_alignment = 1
-vertical_alignment = 1
 
-[node name="ButtonRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_constants/separation = 12
-alignment = 1
+[node name="LootLabelLayer" type="Control" parent="StorageAnchor"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
 
-[node name="StartButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ButtonRow"]
-custom_minimum_size = Vector2(160, 46)
-layout_mode = 2
-text = "Start Another Run"
-
-[node name="MenuButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/ButtonRow"]
-custom_minimum_size = Vector2(140, 46)
-layout_mode = 2
-text = "Main Menu"
+[node name="ResultsLayer" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
