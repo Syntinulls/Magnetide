@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dhlgokwuf4cnu"
-path="res://.godot/imported/salvage_part_fan.png-6e4835f9a1ef994101336caa9b3c72eb.ctex"
+uid="uid://bpqoftdnvu0jw"
+path="res://.godot/imported/part_lightbulb.png-7e738ee1ccd86176c96121660885614c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_fan.png"
-dest_files=["res://.godot/imported/salvage_part_fan.png-6e4835f9a1ef994101336caa9b3c72eb.ctex"]
+source_file="res://_project/items/sprites/part_lightbulb.png"
+dest_files=["res://.godot/imported/part_lightbulb.png-7e738ee1ccd86176c96121660885614c.ctex"]
 
 [params]
 

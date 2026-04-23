@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://dqr8k2m5xvn1a"]
 
-[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_item_data"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_item_data"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="2_sbkg1"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="3_metq8"]
 [ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/resources/motor.tres" id="4_mafig"]

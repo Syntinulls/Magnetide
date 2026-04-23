@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://8c7wh87ikg8b"
-path="res://.godot/imported/salvage_loot_processor.png-0943798a35232b4f8c33c259ffe62d09.ctex"
+uid="uid://dhlgokwuf4cnu"
+path="res://.godot/imported/part_fan.png-5722d0c3d18675fe10a352f874d44856.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_loot_processor.png"
-dest_files=["res://.godot/imported/salvage_loot_processor.png-0943798a35232b4f8c33c259ffe62d09.ctex"]
+source_file="res://_project/items/sprites/part_fan.png"
+dest_files=["res://.godot/imported/part_fan.png-5722d0c3d18675fe10a352f874d44856.ctex"]
 
 [params]
 

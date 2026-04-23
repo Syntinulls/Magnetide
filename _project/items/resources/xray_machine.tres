@@ -3,13 +3,13 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_ojuvv"]
 [ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/resources/cathode_ray_tube.tres" id="2_rd0rs"]
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="3_wpksi"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_k64ai"]
+[ext_resource type="Texture2D" uid="uid://bnprpf767mhmp" path="res://_project/items/sprites/salvage_xray.png" id="4_rd0rs"]
 
 [resource]
 script = ExtResource("1_ojuvv")
 item_name = "X-Ray Machine"
 rarity = 2
-sprite = ExtResource("4_k64ai")
-area = Vector2(120, 120)
+sprite = ExtResource("4_rd0rs")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_ojuvv")]([ExtResource("2_rd0rs"), ExtResource("3_wpksi")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

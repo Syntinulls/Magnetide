@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://col0mk1t7osly"
-path="res://.godot/imported/salvage_part_rubber.png-114356d995b8a29d8dd9954aea3c6603.ctex"
+uid="uid://tb57xnkj3mxe"
+path="res://.godot/imported/salvage_camera.png-3ff819a0320e1e0661401e66485a4fe8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_rubber.png"
-dest_files=["res://.godot/imported/salvage_part_rubber.png-114356d995b8a29d8dd9954aea3c6603.ctex"]
+source_file="res://_project/items/sprites/salvage_camera.png"
+dest_files=["res://.godot/imported/salvage_camera.png-3ff819a0320e1e0661401e66485a4fe8.ctex"]
 
 [params]
 

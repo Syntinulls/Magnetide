@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://2038mfxoiilf"
-path="res://.godot/imported/salvage_part_circuit.png-65777885696e77ae6bb499aea98d8a68.ctex"
+uid="uid://bm57nnat63xdd"
+path="res://.godot/imported/part_motor.png-ad9b54178ffd9afe83e59fa4288dcacd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_circuit.png"
-dest_files=["res://.godot/imported/salvage_part_circuit.png-65777885696e77ae6bb499aea98d8a68.ctex"]
+source_file="res://_project/items/sprites/part_motor.png"
+dest_files=["res://.godot/imported/part_motor.png-ad9b54178ffd9afe83e59fa4288dcacd.ctex"]
 
 [params]
 

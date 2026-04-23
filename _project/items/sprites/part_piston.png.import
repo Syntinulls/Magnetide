@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://yi1bm5s161mk"
-path="res://.godot/imported/salvage_loot_magnet.png-eb81caa1e6134dd7cb6d2ff93e01244a.ctex"
+uid="uid://chbrd05lg7q4w"
+path="res://.godot/imported/part_piston.png-7a8d518aab0915eeac7abb9cb0bc29d2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_loot_magnet.png"
-dest_files=["res://.godot/imported/salvage_loot_magnet.png-eb81caa1e6134dd7cb6d2ff93e01244a.ctex"]
+source_file="res://_project/items/sprites/part_piston.png"
+dest_files=["res://.godot/imported/part_piston.png-7a8d518aab0915eeac7abb9cb0bc29d2.ctex"]
 
 [params]
 

@@ -17,7 +17,7 @@
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
 [ext_resource type="Script" uid="uid://bgpa0y1q8s3n7" path="res://_project/level/threat/threat_level_data.gd" id="16_ig01q"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/level/enemies/enemy_spawner.gd" id="17_enemy_spawner"]
-[ext_resource type="Resource" path="res://_project/level/enemies/worm_enemy_spawner_profile.tres" id="18_enemy_spawner_profile"]
+[ext_resource type="Resource" uid="uid://biwc1i3625md3" path="res://_project/level/enemies/worm_enemy_spawner_profile.tres" id="18_enemy_spawner_profile"]
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)

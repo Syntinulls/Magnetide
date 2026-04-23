@@ -7,7 +7,6 @@
 [resource]
 script = ExtResource("1_r1xb2")
 item_name = "Tire"
-rarity = 0
 sprite = ExtResource("3_mdwgx")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_r1xb2")]([ExtResource("2_mdwgx")])

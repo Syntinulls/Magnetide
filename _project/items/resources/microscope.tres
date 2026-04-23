@@ -3,13 +3,13 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_rdby6"]
 [ext_resource type="Resource" uid="uid://bfheki3dmj8e8" path="res://_project/items/resources/lens.tres" id="2_y3viw"]
 [ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/resources/light_bulb.tres" id="3_knbne"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_hcw46"]
+[ext_resource type="Texture2D" uid="uid://crko6d3ukhtp8" path="res://_project/items/sprites/salvage_microscope.png" id="4_y3viw"]
 
 [resource]
 script = ExtResource("1_rdby6")
 item_name = "Microscope"
 rarity = 2
-sprite = ExtResource("4_hcw46")
-area = Vector2(120, 120)
+sprite = ExtResource("4_y3viw")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_rdby6")]([ExtResource("2_y3viw"), ExtResource("3_knbne")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

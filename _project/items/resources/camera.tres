@@ -3,13 +3,13 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_g5ona"]
 [ext_resource type="Resource" uid="uid://dwgm51pknakej" path="res://_project/items/resources/processor.tres" id="2_65w3e"]
 [ext_resource type="Resource" uid="uid://bfheki3dmj8e8" path="res://_project/items/resources/lens.tres" id="3_xlbrl"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="4_t3ag1"]
+[ext_resource type="Texture2D" uid="uid://tb57xnkj3mxe" path="res://_project/items/sprites/salvage_camera.png" id="4_65w3e"]
 
 [resource]
 script = ExtResource("1_g5ona")
 item_name = "Camera"
 rarity = 2
-sprite = ExtResource("4_t3ag1")
-area = Vector2(120, 120)
+sprite = ExtResource("4_65w3e")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_g5ona")]([ExtResource("2_65w3e"), ExtResource("3_xlbrl")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

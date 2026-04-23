@@ -7,7 +7,6 @@
 [resource]
 script = ExtResource("1_g4fth")
 item_name = "Trashcan"
-rarity = 0
 sprite = ExtResource("3_x2ho7")
 area = Vector2(120, 120)
 components = Array[ExtResource("1_g4fth")]([ExtResource("2_x2ho7")])

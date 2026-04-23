@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://m6j4757eg7s1"]
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_x3mtv"]
-[ext_resource type="Texture2D" uid="uid://ca37tlm03ck3p" path="res://_project/items/sprites/salvage_part_hose.png" id="2_x3mtv"]
+[ext_resource type="Texture2D" uid="uid://ca37tlm03ck3p" path="res://_project/items/sprites/part_hose.png" id="2_x3mtv"]
 
 [resource]
 script = ExtResource("1_x3mtv")

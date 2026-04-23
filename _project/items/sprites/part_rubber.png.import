@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://xu5sfuw7nf2e"
-path="res://.godot/imported/salvage_part_spring.png-a767589350e640f07b829bca341180c8.ctex"
+uid="uid://col0mk1t7osly"
+path="res://.godot/imported/part_rubber.png-58490a53e113216dea39f1f269f14811.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_spring.png"
-dest_files=["res://.godot/imported/salvage_part_spring.png-a767589350e640f07b829bca341180c8.ctex"]
+source_file="res://_project/items/sprites/part_rubber.png"
+dest_files=["res://.godot/imported/part_rubber.png-58490a53e113216dea39f1f269f14811.ctex"]
 
 [params]
 

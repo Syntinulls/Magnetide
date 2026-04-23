@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b1frsjcd2k8pq"
-path="res://.godot/imported/salvage_part_battery.png-680ade7d23b03aa6d9bbd1af6e786207.ctex"
+uid="uid://6b53527yfqfq"
+path="res://.godot/imported/part_wires.png-c3400829eeaba27668220fd9d2786e93.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_battery.png"
-dest_files=["res://.godot/imported/salvage_part_battery.png-680ade7d23b03aa6d9bbd1af6e786207.ctex"]
+source_file="res://_project/items/sprites/part_wires.png"
+dest_files=["res://.godot/imported/part_wires.png-c3400829eeaba27668220fd9d2786e93.ctex"]
 
 [params]
 

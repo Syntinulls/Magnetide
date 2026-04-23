@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7fcfebubmbb1"
-path="res://.godot/imported/salvage_part_cathoderaytube.png-cba3db325c1ec08027ab756aa94c83ab.ctex"
+uid="uid://8c7wh87ikg8b"
+path="res://.godot/imported/part_processor.png-f9df7206d45ca50ff3214ee307b97271.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_cathoderaytube.png"
-dest_files=["res://.godot/imported/salvage_part_cathoderaytube.png-cba3db325c1ec08027ab756aa94c83ab.ctex"]
+source_file="res://_project/items/sprites/part_processor.png"
+dest_files=["res://.godot/imported/part_processor.png-f9df7206d45ca50ff3214ee307b97271.ctex"]
 
 [params]
 

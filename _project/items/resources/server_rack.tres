@@ -5,13 +5,13 @@
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_8wys0"]
 [ext_resource type="Resource" uid="uid://dwgm51pknakej" path="res://_project/items/resources/processor.tres" id="4_vsdtt"]
 [ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="5_jora2"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_tdnh2"]
+[ext_resource type="Texture2D" uid="uid://duw0a1yx8q7kr" path="res://_project/items/sprites/salvage_serverrack.png" id="6_e0cvs"]
 
 [resource]
 script = ExtResource("1_12d7p")
 item_name = "Server Rack"
 rarity = 2
-sprite = ExtResource("6_tdnh2")
-area = Vector2(120, 120)
+sprite = ExtResource("6_e0cvs")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_12d7p")]([ExtResource("2_e0cvs"), ExtResource("3_8wys0"), ExtResource("4_vsdtt"), ExtResource("5_jora2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

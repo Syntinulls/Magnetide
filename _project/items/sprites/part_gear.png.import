@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://lh73acavqjl5"
-path="res://.godot/imported/salvage_part_lens.png-d8d11630ae84e6af120a36a15e01fb7d.ctex"
+uid="uid://boxg8omke0fl7"
+path="res://.godot/imported/part_gear.png-154e7ee26c60da801ebdf92453274c30.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_lens.png"
-dest_files=["res://.godot/imported/salvage_part_lens.png-d8d11630ae84e6af120a36a15e01fb7d.ctex"]
+source_file="res://_project/items/sprites/part_gear.png"
+dest_files=["res://.godot/imported/part_gear.png-154e7ee26c60da801ebdf92453274c30.ctex"]
 
 [params]
 

@@ -5,14 +5,14 @@
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_yyequ"]
 [ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="4_y6cmx"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="5_68jek"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="6_7r2u0"]
+[ext_resource type="Texture2D" uid="uid://croolm6o8tocd" path="res://_project/items/sprites/salvage_reactor.png" id="6_dmtty"]
 
 [resource]
 script = ExtResource("1_ut0o0")
 item_name = "Portable Reactor"
 rarity = 3
-sprite = ExtResource("6_7r2u0")
-area = Vector2(120, 120)
+sprite = ExtResource("6_dmtty")
+area = Vector2(160, 160)
 is_component = true
 components = Array[ExtResource("1_ut0o0")]([ExtResource("2_dmtty"), ExtResource("3_yyequ"), ExtResource("4_y6cmx"), ExtResource("5_68jek")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

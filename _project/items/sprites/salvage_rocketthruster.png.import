@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bm57nnat63xdd"
-path="res://.godot/imported/salvage_part_motor.png-d4a5cc4e7d23672c66dadcbed4f02e1c.ctex"
+uid="uid://bkf38vxc5lw7d"
+path="res://.godot/imported/salvage_rocketthruster.png-0c483fbdea0421d9ed34aad3b8472ed9.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_motor.png"
-dest_files=["res://.godot/imported/salvage_part_motor.png-d4a5cc4e7d23672c66dadcbed4f02e1c.ctex"]
+source_file="res://_project/items/sprites/salvage_rocketthruster.png"
+dest_files=["res://.godot/imported/salvage_rocketthruster.png-0c483fbdea0421d9ed34aad3b8472ed9.ctex"]
 
 [params]
 

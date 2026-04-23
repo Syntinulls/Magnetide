@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://6b53527yfqfq"
-path="res://.godot/imported/salvage_part_wires.png-f3924c8aac237fd9e6a28cd1dfe45616.ctex"
+uid="uid://yi1bm5s161mk"
+path="res://.godot/imported/part_magnet.png-bff9df72696533e1d7fedfd99af9240a.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_wires.png"
-dest_files=["res://.godot/imported/salvage_part_wires.png-f3924c8aac237fd9e6a28cd1dfe45616.ctex"]
+source_file="res://_project/items/sprites/part_magnet.png"
+dest_files=["res://.godot/imported/part_magnet.png-bff9df72696533e1d7fedfd99af9240a.ctex"]
 
 [params]
 

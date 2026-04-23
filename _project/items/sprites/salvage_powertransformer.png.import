@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cnibak5n8wbm4"
-path="res://.godot/imported/salvage_loot_inductioncoil.png-fc56b4271ad45726eecf235a255f5b67.ctex"
+uid="uid://dvxpobp842nh3"
+path="res://.godot/imported/salvage_powertransformer.png-aabc15a684e745e9b14850da221cb664.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_loot_inductioncoil.png"
-dest_files=["res://.godot/imported/salvage_loot_inductioncoil.png-fc56b4271ad45726eecf235a255f5b67.ctex"]
+source_file="res://_project/items/sprites/salvage_powertransformer.png"
+dest_files=["res://.godot/imported/salvage_powertransformer.png-aabc15a684e745e9b14850da221cb664.ctex"]
 
 [params]
 

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://bpqoftdnvu0jw"
-path="res://.godot/imported/salvage_part_lightbulb.png-984d1c2494d9ebd84580fc207e2c85fe.ctex"
+uid="uid://b7fcfebubmbb1"
+path="res://.godot/imported/part_cathoderaytube.png-5b8eb1a38395a37993ba1fd664b15fbb.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_lightbulb.png"
-dest_files=["res://.godot/imported/salvage_part_lightbulb.png-984d1c2494d9ebd84580fc207e2c85fe.ctex"]
+source_file="res://_project/items/sprites/part_cathoderaytube.png"
+dest_files=["res://.godot/imported/part_cathoderaytube.png-5b8eb1a38395a37993ba1fd664b15fbb.ctex"]
 
 [params]
 

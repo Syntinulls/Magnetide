@@ -4,13 +4,13 @@
 [ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="2_ik25u"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_7r7le"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="4_ph50k"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="5_uhki7"]
+[ext_resource type="Texture2D" uid="uid://c732tobuce0il" path="res://_project/items/sprites/salvage_generator.png" id="5_ik25u"]
 
 [resource]
 script = ExtResource("1_hm6qp")
 item_name = "generator"
 rarity = 2
-sprite = ExtResource("5_uhki7")
-area = Vector2(120, 120)
+sprite = ExtResource("5_ik25u")
+area = Vector2(160, 160)
 components = Array[ExtResource("1_hm6qp")]([ExtResource("2_ik25u"), ExtResource("3_7r7le"), ExtResource("4_ph50k")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

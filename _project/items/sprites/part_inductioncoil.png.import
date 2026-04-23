@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://ca37tlm03ck3p"
-path="res://.godot/imported/salvage_part_hose.png-f6982d16e41cbbf9b785ccdc50f8938b.ctex"
+uid="uid://cnibak5n8wbm4"
+path="res://.godot/imported/part_inductioncoil.png-d2a9077d6b806608da0d5155db25a418.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_part_hose.png"
-dest_files=["res://.godot/imported/salvage_part_hose.png-f6982d16e41cbbf9b785ccdc50f8938b.ctex"]
+source_file="res://_project/items/sprites/part_inductioncoil.png"
+dest_files=["res://.godot/imported/part_inductioncoil.png-d2a9077d6b806608da0d5155db25a418.ctex"]
 
 [params]
 

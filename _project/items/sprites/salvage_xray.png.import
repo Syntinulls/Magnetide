@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dlquyf20mxvwb"
-path="res://.godot/imported/salvage_loot_powercore.png-9507b87c8f84910ab732d1b991f1632d.ctex"
+uid="uid://bnprpf767mhmp"
+path="res://.godot/imported/salvage_xray.png-44968ec9c78a09a0edda733532a16356.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/items/sprites/salvage_loot_powercore.png"
-dest_files=["res://.godot/imported/salvage_loot_powercore.png-9507b87c8f84910ab732d1b991f1632d.ctex"]
+source_file="res://_project/items/sprites/salvage_xray.png"
+dest_files=["res://.godot/imported/salvage_xray.png-44968ec9c78a09a0edda733532a16356.ctex"]
 
 [params]
 
