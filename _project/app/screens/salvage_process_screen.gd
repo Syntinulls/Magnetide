@@ -21,8 +21,9 @@ enum ScreenState {
 }
 
 const LOOT_LABEL_SPACING: float = 28.0
-const LOOT_LABEL_LIFETIME_SECONDS: float = 0.9
+const LOOT_LABEL_LIFETIME_SECONDS: float = 1.8
 const LOOT_LABEL_FADE_SECONDS: float = 0.35
+const LOOT_LABEL_POP_DURATION: float = 0.14
 
 @export var active_item_display_size: Vector2 = Vector2(340.0, 340.0)
 @export var component_token_display_size: Vector2 = Vector2(80.0, 80.0)
@@ -42,8 +43,9 @@ const LOOT_LABEL_FADE_SECONDS: float = 0.35
 
 var _run_result: RunResult = null
 var _state: ScreenState = ScreenState.SETUP
-var _salvage_queue: Array[SalvageItemData] = []
+var _salvage_queue: Array[Dictionary] = []
 var _final_result_counts: Dictionary = {}
+var _salvage_item_total_count: int = 0
 var _current_item_index: int = -1
 var _current_required_clicks: int = 0
 var _current_clicks: int = 0
@@ -89,6 +91,7 @@ func _begin_processing() -> void:
 	_state = ScreenState.SETUP
 	_salvage_queue.clear()
 	_final_result_counts.clear()
+	_salvage_item_total_count = 0
 	_current_item_index = -1
 	_current_clicks = 0
 	_current_required_clicks = 0
@@ -100,10 +103,10 @@ func _begin_processing() -> void:
 	for item_data in _run_result.stored_loot:
 		if item_data == null:
 			continue
-		if item_data.components.is_empty():
-			_add_final_result(item_data, true, false)
+		if item_data.parts.is_empty():
+			_add_final_result(item_data, 1, true, false)
 		else:
-			_salvage_queue.append(item_data)
+			_queue_salvage_item(item_data)
 
 	if _salvage_queue.is_empty():
 		_show_results_popup()
@@ -148,7 +151,7 @@ func _enter_active_item(item_data: SalvageItemData) -> void:
 	_state = ScreenState.ITEM_ENTER
 	_clear_active_item()
 
-	var button := _create_active_item_button(item_data)
+	var button := _create_active_item_button(item_data, _get_current_item_count())
 	var center_position := _get_stage_center()
 	var start_position := Vector2(_stage_layer.size.x + active_item_display_size.x * 0.6, center_position.y)
 	_stage_layer.add_child(button)
@@ -176,6 +179,7 @@ func _enter_active_item(item_data: SalvageItemData) -> void:
 
 func _resolve_current_item() -> void:
 	var item_data := _get_current_item_data()
+	var item_count := _get_current_item_count()
 	if item_data == null:
 		return
 
@@ -185,7 +189,7 @@ func _resolve_current_item() -> void:
 		await _play_item_pop_animation()
 		_clear_active_item()
 
-	var spawned_tokens := _spawn_component_tokens(item_data.components, source_center)
+	var spawned_tokens := _spawn_component_tokens(_build_part_entries(item_data, item_count), source_center)
 	if spawned_tokens.is_empty():
 		_state = ScreenState.BETWEEN_ITEMS
 		await get_tree().create_timer(between_items_seconds).timeout
@@ -260,17 +264,19 @@ func _begin_token_flight_after_delay(
 	token.begin_flight(target_center, initial_velocity)
 
 
-func _spawn_component_tokens(components: Array[SalvageItemData], source_center: Vector2) -> Array[SalvageComponentToken]:
+func _spawn_component_tokens(part_entries: Array[Dictionary], source_center: Vector2) -> Array[SalvageComponentToken]:
 	_clear_active_tokens()
 
 	var spawned: Array[SalvageComponentToken] = []
-	for component_data in components:
-		if component_data == null:
+	for part_entry in part_entries:
+		var part_data := part_entry.get("item_data", null) as SalvageItemData
+		var part_count := maxi(int(part_entry.get("count", 1)), 1)
+		if part_data == null:
 			continue
 		var token := SalvageComponentTokenScene.instantiate() as SalvageComponentToken
 		if token == null:
 			continue
-		token.setup(component_data, component_token_display_size)
+		token.setup(part_data, component_token_display_size, part_count)
 		_stage_layer.add_child(token)
 		token.set_center_position(source_center)
 		token.visible = false
@@ -281,14 +287,14 @@ func _spawn_component_tokens(components: Array[SalvageItemData], source_center: 
 	return spawned
 
 
-func _on_component_token_arrived(token: SalvageComponentToken, item_data: SalvageItemData) -> void:
+func _on_component_token_arrived(token: SalvageComponentToken, item_data: SalvageItemData, count: int) -> void:
 	if token != null:
 		_active_tokens.erase(token)
 		token.queue_free()
 
 	if item_data != null:
-		_add_final_result(item_data, false, true)
-		_add_loot_label(item_data)
+		_add_final_result(item_data, count, false, true)
+		_add_loot_label(item_data, count)
 	_pulse_storage_icon()
 
 	_pending_token_arrivals = maxi(_pending_token_arrivals - 1, 0)
@@ -298,6 +304,7 @@ func _on_component_token_arrived(token: SalvageComponentToken, item_data: Salvag
 
 func _add_final_result(
 	item_data: SalvageItemData,
+	count: int = 1,
 	from_collection: bool = false,
 	from_salvage: bool = false
 ) -> void:
@@ -315,7 +322,7 @@ func _add_final_result(
 		"from_collection": false,
 		"from_salvage": false,
 	})
-	entry["count"] = int(entry.get("count", 0)) + 1
+	entry["count"] = int(entry.get("count", 0)) + maxi(count, 1)
 	entry["from_collection"] = bool(entry.get("from_collection", false)) or from_collection
 	entry["from_salvage"] = bool(entry.get("from_salvage", false)) or from_salvage
 	_final_result_counts[key] = entry
@@ -359,7 +366,7 @@ func _show_results_popup() -> void:
 		"time_elapsed": _run_result.elapsed_seconds if _run_result != null else 0.0,
 		"enemies_killed": _run_result.enemies_killed if _run_result != null else 0,
 		"collected_items": _run_result.salvage_items_collected if _run_result != null else 0,
-		"items_salvaged": _salvage_queue.size(),
+		"items_salvaged": _salvage_item_total_count,
 	}
 
 	_results_layer.add_child(_run_summary_popup)
@@ -378,18 +385,28 @@ func _update_header_labels() -> void:
 
 	if _state == ScreenState.RESULTS_POPUP or (_current_item_index >= _salvage_queue.size() and _did_begin_processing):
 		_progress_label.text = "SALVAGE COMPLETE"
-		_item_name_label.text = "Recovered Materials"
+		_item_name_label.text = ""
+		_item_name_label.add_theme_color_override("font_color", Color.WHITE)
+		_instruction_label.text = ""
 		return
 
 	if _salvage_queue.is_empty() or _current_item_index < 0 or _current_item_index >= _salvage_queue.size():
 		_progress_label.text = "SALVAGE"
-		_item_name_label.text = "Awaiting Run Data"
-		_instruction_label.text = "Preparing salvage manifest..."
+		_item_name_label.text = ""
+		_item_name_label.add_theme_color_override("font_color", Color.WHITE)
+		_instruction_label.text = ""
 		return
 
-	var item_data := _salvage_queue[_current_item_index]
+	var item_data := _get_current_item_data()
+	var item_count := _get_current_item_count()
 	_progress_label.text = "SALVAGE %d / %d" % [_current_item_index + 1, _salvage_queue.size()]
-	_item_name_label.text = item_data.item_name.to_upper() if item_data != null else "UNKNOWN SALVAGE"
+	if item_data != null:
+		var quantity_suffix := " x%d" % item_count if item_count > 1 else ""
+		_item_name_label.text = "%s%s" % [item_data.item_name.to_upper(), quantity_suffix]
+		_item_name_label.add_theme_color_override("font_color", item_data.get_rarity_color())
+	else:
+		_item_name_label.text = "UNKNOWN SALVAGE"
+		_item_name_label.add_theme_color_override("font_color", Color.WHITE)
 	_update_instruction_label()
 
 
@@ -400,19 +417,19 @@ func _update_instruction_label() -> void:
 	if _state != ScreenState.WAITING_FOR_CLICKS:
 		match _state:
 			ScreenState.ITEM_ENTER:
-				_instruction_label.text = "Bringing the next item onto the table..."
+				_instruction_label.text = ""
 			ScreenState.ITEM_POP:
-				_instruction_label.text = "Breakdown in progress..."
+				_instruction_label.text = ""
 			ScreenState.COMPONENTS_RESTING:
-				_instruction_label.text = "Recovered components identified."
+				_instruction_label.text = ""
 			ScreenState.COMPONENTS_FLYING:
-				_instruction_label.text = "Transferring components into storage..."
+				_instruction_label.text = ""
 			ScreenState.BETWEEN_ITEMS:
-				_instruction_label.text = "Preparing the next salvage item..."
+				_instruction_label.text = ""
 			ScreenState.RESULTS_POPUP:
-				_instruction_label.text = "Recovered materials ready for review."
+				_instruction_label.text = ""
 			_:
-				_instruction_label.text = "Preparing salvage manifest..."
+				_instruction_label.text = ""
 		return
 
 	var clicks_remaining := maxi(_current_required_clicks - _current_clicks, 0)
@@ -420,7 +437,7 @@ func _update_instruction_label() -> void:
 	_instruction_label.text = "Break it down with %d more %s." % [clicks_remaining, click_word]
 
 
-func _create_active_item_button(item_data: SalvageItemData) -> TextureButton:
+func _create_active_item_button(item_data: SalvageItemData, quantity: int = 1) -> TextureButton:
 	var button := TextureButton.new()
 	button.ignore_texture_size = true
 	button.stretch_mode = TextureButton.STRETCH_KEEP_ASPECT_CENTERED
@@ -433,6 +450,8 @@ func _create_active_item_button(item_data: SalvageItemData) -> TextureButton:
 	button.focus_mode = Control.FOCUS_NONE
 	button.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND
 	button.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	if quantity > 1:
+		button.add_child(_create_quantity_badge("x%d" % quantity, 28))
 	return button
 
 
@@ -488,20 +507,29 @@ func _pulse_storage_icon() -> void:
 	_storage_pulse_tween.parallel().tween_property(_storage_icon_pivot, "rotation", 0.0, 0.12)
 
 
-func _add_loot_label(item_data: SalvageItemData) -> void:
+func _add_loot_label(item_data: SalvageItemData, count: int = 1) -> void:
 	if _loot_label_layer == null or item_data == null:
 		return
 
 	var label := Label.new()
-	label.text = "+1 %s" % (item_data.item_name if not item_data.item_name.is_empty() else "Unknown Material")
-	label.add_theme_font_size_override("font_size", 18)
+	label.text = "+%d %s" % [maxi(count, 1), (item_data.item_name if not item_data.item_name.is_empty() else "Unknown Material")]
+	Magnetide.apply_label_font(label)
 	label.add_theme_color_override("font_color", item_data.get_rarity_color())
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	_loot_label_layer.add_child(label)
 	label.size = label.get_combined_minimum_size()
-	label.modulate = Color.WHITE
+	label.position = _get_loot_label_target_position(label, 0)
+	label.scale = Vector2(0.82, 0.82)
+	label.modulate = Color(1.0, 1.0, 1.0, 0.0)
 	_active_loot_labels.append(label)
 	_reposition_loot_labels()
+
+	var pop_tween := create_tween()
+	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.tween_property(label, "scale", Vector2.ONE, LOOT_LABEL_POP_DURATION)
+	pop_tween.parallel().tween_property(label, "modulate:a", 1.0, LOOT_LABEL_POP_DURATION * 0.8)
 
 	var fade_tween := create_tween()
 	fade_tween.tween_interval(LOOT_LABEL_LIFETIME_SECONDS)
@@ -510,7 +538,6 @@ func _add_loot_label(item_data: SalvageItemData) -> void:
 
 
 func _reposition_loot_labels() -> void:
-	var base_position := _get_loot_label_base_position()
 	for index in range(_active_loot_labels.size()):
 		var label := _active_loot_labels[index]
 		if label == null or not is_instance_valid(label):
@@ -518,10 +545,7 @@ func _reposition_loot_labels() -> void:
 
 		label.size = label.get_combined_minimum_size()
 		var reverse_index := (_active_loot_labels.size() - 1) - index
-		var target_position := Vector2(
-			base_position.x - (label.size.x * 0.5),
-			base_position.y - (reverse_index * LOOT_LABEL_SPACING) - label.size.y
-		)
+		var target_position := _get_loot_label_target_position(label, reverse_index)
 		var tween := create_tween()
 		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
 		tween.tween_property(label, "position", target_position, 0.12)
@@ -539,10 +563,26 @@ func _get_loot_label_base_position() -> Vector2:
 	return Vector2(local_center.x, _storage_icon_pivot.position.y - 10.0)
 
 
+func _get_loot_label_target_position(label: Label, stack_index_from_bottom: int) -> Vector2:
+	var base_position := _get_loot_label_base_position()
+	return Vector2(
+		base_position.x - (label.size.x * 0.5),
+		base_position.y - (stack_index_from_bottom * LOOT_LABEL_SPACING) - label.size.y
+	)
+
+
 func _get_current_item_data() -> SalvageItemData:
-	if _current_item_index < 0 or _current_item_index >= _salvage_queue.size():
+	var queue_entry := _get_current_queue_entry()
+	if queue_entry.is_empty():
 		return null
-	return _salvage_queue[_current_item_index]
+	return queue_entry.get("item_data", null) as SalvageItemData
+
+
+func _get_current_item_count() -> int:
+	var queue_entry := _get_current_queue_entry()
+	if queue_entry.is_empty():
+		return 1
+	return maxi(int(queue_entry.get("count", 1)), 1)
 
 
 func _get_required_clicks_for_item(item_data: SalvageItemData) -> int:
@@ -613,6 +653,99 @@ func _create_placeholder_texture(item_data: SalvageItemData, display_size: Vecto
 		fill_color = item_data.get_rarity_color()
 	image.fill(fill_color)
 	return ImageTexture.create_from_image(image)
+
+
+func _queue_salvage_item(item_data: SalvageItemData) -> void:
+	if item_data == null:
+		return
+
+	_salvage_item_total_count += 1
+	var key := _get_item_key(item_data)
+	for index in range(_salvage_queue.size()):
+		var entry := _salvage_queue[index]
+		if str(entry.get("key", "")) != key:
+			continue
+		entry["count"] = int(entry.get("count", 0)) + 1
+		_salvage_queue[index] = entry
+		return
+
+	_salvage_queue.append({
+		"key": key,
+		"item_data": item_data,
+		"name": item_data.item_name if not item_data.item_name.is_empty() else "Unknown Salvage",
+		"count": 1,
+	})
+
+
+func _build_part_entries(item_data: SalvageItemData, source_item_count: int) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if item_data == null or source_item_count <= 0:
+		return entries
+
+	var key_to_index: Dictionary = {}
+	for _source_index in range(source_item_count):
+		for part_entry in item_data.parts:
+			if part_entry == null or part_entry.item_data == null:
+				continue
+			var part_data := part_entry.item_data
+			var rolled_count := part_entry.roll_quantity()
+			if rolled_count <= 0:
+				continue
+			var key := _get_item_key(part_data)
+			if key_to_index.has(key):
+				var existing_index := int(key_to_index[key])
+				var existing_entry := entries[existing_index]
+				existing_entry["count"] = int(existing_entry.get("count", 0)) + rolled_count
+				entries[existing_index] = existing_entry
+				continue
+
+			key_to_index[key] = entries.size()
+			entries.append({
+				"key": key,
+				"item_data": part_data,
+				"name": part_data.item_name if not part_data.item_name.is_empty() else "Unknown Part",
+				"count": rolled_count,
+			})
+
+	return entries
+
+
+func _get_current_queue_entry() -> Dictionary:
+	if _current_item_index < 0 or _current_item_index >= _salvage_queue.size():
+		return {}
+	return _salvage_queue[_current_item_index]
+
+
+func _get_item_key(item_data: SalvageItemData) -> String:
+	if item_data == null:
+		return ""
+
+	var key := item_data.resource_path
+	if key.is_empty():
+		key = item_data.item_name
+	return key
+
+
+func _create_quantity_badge(text: String, font_size: int) -> Label:
+	var label := Label.new()
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	label.text = text
+	Magnetide.apply_label_font(label)
+	label.horizontal_alignment = HORIZONTAL_ALIGNMENT_RIGHT
+	label.vertical_alignment = VERTICAL_ALIGNMENT_BOTTOM
+	label.anchor_left = 1.0
+	label.anchor_top = 1.0
+	label.anchor_right = 1.0
+	label.anchor_bottom = 1.0
+	label.offset_left = -160.0
+	label.offset_top = -48.0
+	label.offset_right = -8.0
+	label.offset_bottom = -8.0
+	label.add_theme_font_size_override("font_size", font_size)
+	label.add_theme_color_override("font_color", Color.WHITE)
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	return label
 
 
 func _clear_active_item() -> void:

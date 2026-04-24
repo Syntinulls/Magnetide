@@ -3,15 +3,18 @@ class_name SalvageResultsPopup
 
 signal main_menu_requested
 
-const ENTRY_ICON_SIZE := Vector2(40.0, 40.0)
-const SOURCE_ICON_SIZE := Vector2(24.0, 24.0)
-const ENTRY_NAME_WIDTH := 220.0
+const ENTRY_ICON_SIZE := Vector2(60.0, 60.0)
+const SOURCE_ICON_SIZE := Vector2(36.0, 36.0)
+const ENTRY_NAME_WIDTH := 300.0
+const ENTRY_COUNT_WIDTH := 84.0
+const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
 const SALVAGED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_salvaged.png")
 const COLLECTED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_collected.png")
 
 var _run_result: RunResult = null
 var _result_entries: Array[Dictionary] = []
 var _run_stats: Dictionary = {}
+var _hover_tooltip: Label = null
 
 @onready var _time_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow/Value
 @onready var _kills_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow/Value
@@ -23,6 +26,7 @@ var _run_stats: Dictionary = {}
 
 
 func _ready() -> void:
+	_setup_hover_tooltip()
 	_menu_button.pressed.connect(_on_menu_pressed)
 	_apply_data()
 
@@ -32,6 +36,11 @@ func setup(run_result: RunResult, result_entries: Array[Dictionary], run_stats: 
 	_result_entries = result_entries.duplicate(true)
 	_run_stats = run_stats.duplicate(true)
 	_apply_data()
+
+
+func _process(_delta: float) -> void:
+	if _hover_tooltip != null and _hover_tooltip.visible:
+		_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
 
 
 func _apply_data() -> void:
@@ -56,6 +65,7 @@ func _rebuild_list() -> void:
 	if _list_container == null:
 		return
 
+	_hide_hover_tooltip()
 	for child in _list_container.get_children():
 		child.queue_free()
 
@@ -73,14 +83,14 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 	var row := HBoxContainer.new()
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.alignment = BoxContainer.ALIGNMENT_BEGIN
-	row.add_theme_constant_override("separation", 18)
+	row.add_theme_constant_override("separation", 24)
 
 	var item_data := entry.get("item_data", null) as SalvageItemData
 
 	var was_collected := bool(entry.get("from_collection", false))
 	var was_salvaged := bool(entry.get("from_salvage", false))
-	row.add_child(_build_source_icon(was_collected, COLLECTED_ICON_TEXTURE))
-	row.add_child(_build_source_icon(was_salvaged, SALVAGED_ICON_TEXTURE))
+	row.add_child(_build_source_icon(was_collected, COLLECTED_ICON_TEXTURE, "Collected"))
+	row.add_child(_build_source_icon(was_salvaged, SALVAGED_ICON_TEXTURE, "Salvaged"))
 
 	var icon_holder := CenterContainer.new()
 	icon_holder.custom_minimum_size = ENTRY_ICON_SIZE
@@ -99,7 +109,7 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 	var name_label := Label.new()
 	name_label.custom_minimum_size = Vector2(ENTRY_NAME_WIDTH, 0.0)
 	name_label.text = str(entry.get("name", "Unknown Material"))
-	name_label.add_theme_font_size_override("font_size", 18)
+	Magnetide.apply_label_font(name_label)
 	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 
 	if item_data != null:
@@ -107,10 +117,10 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 	row.add_child(name_label)
 
 	var count_label := Label.new()
-	count_label.custom_minimum_size = Vector2(56.0, 0.0)
+	count_label.custom_minimum_size = Vector2(ENTRY_COUNT_WIDTH, 0.0)
 	count_label.text = "x%d" % int(entry.get("count", 0))
+	Magnetide.apply_label_font(count_label)
 	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
-	count_label.add_theme_font_size_override("font_size", 18)
 	row.add_child(count_label)
 
 	return row
@@ -132,9 +142,14 @@ func _create_placeholder_texture(item_data: SalvageItemData) -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func _build_source_icon(is_active: bool, tex: Texture2D) -> Control:
+func _build_source_icon(is_active: bool, tex: Texture2D, tooltip_text: String) -> Control:
 	var holder := CenterContainer.new()
 	holder.custom_minimum_size = SOURCE_ICON_SIZE
+	holder.mouse_filter = Control.MOUSE_FILTER_STOP if is_active else Control.MOUSE_FILTER_IGNORE
+	holder.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if is_active else Control.CURSOR_ARROW
+	if is_active:
+		holder.mouse_entered.connect(_show_hover_tooltip.bind(tooltip_text))
+		holder.mouse_exited.connect(_hide_hover_tooltip)
 
 	var icon := TextureRect.new()
 	icon.custom_minimum_size = SOURCE_ICON_SIZE
@@ -146,6 +161,36 @@ func _build_source_icon(is_active: bool, tex: Texture2D) -> Control:
 	icon.visible = is_active
 	holder.add_child(icon)
 	return holder
+
+
+func _setup_hover_tooltip() -> void:
+	if _hover_tooltip != null:
+		return
+
+	_hover_tooltip = Label.new()
+	_hover_tooltip.name = "RunSummaryTooltip"
+	_hover_tooltip.visible = false
+	_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Magnetide.apply_label_font(_hover_tooltip)
+	_hover_tooltip.add_theme_font_size_override("font_size", 24)
+	_hover_tooltip.add_theme_color_override("font_color", Color.WHITE)
+	_hover_tooltip.add_theme_color_override("font_outline_color", Color.BLACK)
+	_hover_tooltip.add_theme_constant_override("outline_size", 4)
+	add_child(_hover_tooltip)
+
+
+func _show_hover_tooltip(text: String) -> void:
+	if _hover_tooltip == null:
+		return
+
+	_hover_tooltip.text = text
+	_hover_tooltip.visible = true
+	_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
+
+
+func _hide_hover_tooltip() -> void:
+	if _hover_tooltip != null:
+		_hover_tooltip.visible = false
 
 
 func _on_menu_pressed() -> void:

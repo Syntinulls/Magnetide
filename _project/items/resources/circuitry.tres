@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://dy3aedgus0ssj"]
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_0mqpt"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="1_w1h5t"]
 [ext_resource type="Texture2D" uid="uid://2038mfxoiilf" path="res://_project/items/sprites/part_circuit.png" id="2_ytgfh"]
 
 [resource]
@@ -8,5 +9,4 @@ script = ExtResource("1_0mqpt")
 item_name = "Circuitry"
 rarity = 2
 sprite = ExtResource("2_ytgfh")
-is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

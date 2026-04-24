@@ -1,9 +1,9 @@
-[gd_scene load_steps=3 format=3]
+[gd_scene format=3 uid="uid://bg6n3xmpeudo1"]
 
-[ext_resource type="Script" path="res://_project/app/screens/salvage_process_screen.gd" id="1_script"]
-[ext_resource type="Texture2D" path="res://icon.svg" id="3_storage_icon"]
+[ext_resource type="Script" uid="uid://b8kgxtf1uxydl" path="res://_project/app/screens/salvage_process_screen.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_storage_icon"]
 
-[node name="SalvageProcessScreen" type="Control"]
+[node name="SalvageProcessScreen" type="Control" unique_id=1895989213]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -12,7 +12,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=822279589]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -21,7 +21,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0470588, 0.0588235, 0.0862745, 1)
 
-[node name="StageGlow" type="ColorRect" parent="."]
+[node name="StageGlow" type="ColorRect" parent="." unique_id=688731082]
 layout_mode = 1
 anchors_preset = 8
 anchor_left = 0.5
@@ -36,7 +36,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.117647, 0.14902, 0.196078, 0.45)
 
-[node name="TopHUD" type="MarginContainer" parent="."]
+[node name="TopHUD" type="MarginContainer" parent="." unique_id=562997124]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
@@ -48,29 +48,25 @@ theme_override_constants/margin_top = 12
 theme_override_constants/margin_right = 24
 theme_override_constants/margin_bottom = 12
 
-[node name="VBoxContainer" type="VBoxContainer" parent="TopHUD"]
+[node name="VBoxContainer" type="VBoxContainer" parent="TopHUD" unique_id=818276498]
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="ProgressLabel" type="Label" parent="TopHUD/VBoxContainer"]
+[node name="ProgressLabel" type="Label" parent="TopHUD/VBoxContainer" unique_id=985377389]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "SALVAGE"
 horizontal_alignment = 1
 
-[node name="ItemNameLabel" type="Label" parent="TopHUD/VBoxContainer"]
+[node name="ItemNameLabel" type="Label" parent="TopHUD/VBoxContainer" unique_id=1734484866]
 layout_mode = 2
-theme_override_font_sizes/font_size = 34
-text = "Awaiting Run Data"
+theme_override_font_sizes/font_size = 48
 horizontal_alignment = 1
 
-[node name="InstructionLabel" type="Label" parent="TopHUD/VBoxContainer"]
+[node name="InstructionLabel" type="Label" parent="TopHUD/VBoxContainer" unique_id=1761130146]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Preparing salvage manifest..."
 horizontal_alignment = 1
 
-[node name="StageLayer" type="Control" parent="."]
+[node name="StageLayer" type="Control" parent="." unique_id=366364639]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -79,11 +75,9 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 1
 
-[node name="StorageAnchor" type="Control" parent="."]
+[node name="StorageAnchor" type="Control" parent="." unique_id=1362731716]
 layout_mode = 1
-anchors_preset = 1
-anchor_left = 0.0
-anchor_right = 0.0
+anchors_preset = 2
 anchor_top = 1.0
 anchor_bottom = 1.0
 offset_left = 24.0
@@ -94,15 +88,16 @@ grow_horizontal = 0
 grow_vertical = 0
 mouse_filter = 2
 
-[node name="StorageIconPivot" type="Control" parent="StorageAnchor"]
+[node name="StorageIconPivot" type="Control" parent="StorageAnchor" unique_id=2139454428]
+anchors_preset = 0
 offset_left = 28.0
-offset_top = 80.0
+offset_top = 72.0
 offset_right = 132.0
-offset_bottom = 184.0
+offset_bottom = 176.0
 pivot_offset = Vector2(52, 52)
 mouse_filter = 2
 
-[node name="StorageIcon" type="TextureRect" parent="StorageAnchor/StorageIconPivot"]
+[node name="StorageIcon" type="TextureRect" parent="StorageAnchor/StorageIconPivot" unique_id=1817601815]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -110,20 +105,18 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3_storage_icon")
-stretch_mode = 3
 expand_mode = 1
-texture_filter = 0
+stretch_mode = 3
 
-[node name="StorageLabel" type="Label" parent="StorageAnchor"]
-offset_left = 0.0
+[node name="StorageLabel" type="Label" parent="StorageAnchor" unique_id=1868762144]
+layout_mode = 0
 offset_top = 194.0
 offset_right = 160.0
 offset_bottom = 220.0
-theme_override_font_sizes/font_size = 16
 text = "Storage"
 horizontal_alignment = 1
 
-[node name="LootLabelLayer" type="Control" parent="StorageAnchor"]
+[node name="LootLabelLayer" type="Control" parent="StorageAnchor" unique_id=373648894]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -132,7 +125,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 
-[node name="ResultsLayer" type="Control" parent="."]
+[node name="ResultsLayer" type="Control" parent="." unique_id=287945648]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0

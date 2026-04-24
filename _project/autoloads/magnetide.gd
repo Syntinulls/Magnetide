@@ -1,5 +1,8 @@
 extends Node
 
+const DIGITAL_FONT: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
+const LABEL_FONT: Font = preload("res://_project/ui/fonts/Super Wonder.ttf")
+
 var _active_app_root: Node = null
 var _active_run: Node = null
 var _active_level: Node = null
@@ -45,9 +48,29 @@ func clear_run_context(run: Node = null) -> void:
 	_active_magnet = null
 
 
+func apply_digital_font(control: Control) -> void:
+	if control == null:
+		return
+	control.add_theme_font_override("font", DIGITAL_FONT)
+
+
+func apply_label_font(control: Control) -> void:
+	if control == null:
+		return
+	control.add_theme_font_override("font", LABEL_FONT)
+
+
 var app_root: Node:
 	get:
 		return _active_app_root
+
+var digital_font: Font:
+	get:
+		return DIGITAL_FONT
+
+var label_font: Font:
+	get:
+		return LABEL_FONT
 
 var run: Node:
 	get:

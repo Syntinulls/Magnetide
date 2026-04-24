@@ -31,7 +31,7 @@ grow_horizontal = 2
 grow_vertical = 2
 
 [node name="PanelContainer" type="PanelContainer" parent="CenterContainer" unique_id=1421134963]
-custom_minimum_size = Vector2(980, 640)
+custom_minimum_size = Vector2(1200, 720)
 layout_mode = 2
 
 [node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer" unique_id=1589894354]
@@ -43,7 +43,7 @@ theme_override_constants/margin_bottom = 24
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer" unique_id=758286383]
 layout_mode = 2
-theme_override_constants/separation = 14
+theme_override_constants/separation = 32
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=355959639]
 layout_mode = 2
@@ -57,13 +57,14 @@ size_flags_vertical = 3
 theme_override_constants/separation = 24
 
 [node name="StatsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns" unique_id=147399309]
-custom_minimum_size = Vector2(280, 0)
+custom_minimum_size = Vector2(320, 0)
 layout_mode = 2
 size_flags_vertical = 3
 theme_override_constants/separation = 10
 
 [node name="StatsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn" unique_id=639534814]
 layout_mode = 2
+size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Run Stats"
 
@@ -87,14 +88,12 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow" unique_id=133331713]
-custom_minimum_size = Vector2(140, 0)
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "Time"
 
 [node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow" unique_id=985723115]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "0:00"
 
 [node name="KillsRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=2125460514]
@@ -102,14 +101,12 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow" unique_id=990554284]
-custom_minimum_size = Vector2(140, 0)
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "Enemies Killed"
 
 [node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow" unique_id=613376786]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "0"
 
 [node name="CollectedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=1631354666]
@@ -117,14 +114,12 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow" unique_id=1053928005]
-custom_minimum_size = Vector2(140, 0)
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "Collected Items"
 
 [node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow" unique_id=1315145103]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "0"
 
 [node name="SalvagedRow" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox" unique_id=1834579581]
@@ -132,14 +127,12 @@ layout_mode = 2
 theme_override_constants/separation = 12
 
 [node name="Label" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow" unique_id=1564518309]
-custom_minimum_size = Vector2(140, 0)
+custom_minimum_size = Vector2(180, 0)
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "Items Salvaged"
 
 [node name="Value" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow" unique_id=791815804]
 layout_mode = 2
-theme_override_font_sizes/font_size = 18
 text = "0"
 
 [node name="ItemsColumn" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns" unique_id=85700356]
@@ -150,6 +143,7 @@ theme_override_constants/separation = 10
 
 [node name="ItemsHeader" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=591809339]
 layout_mode = 2
+size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Recovered Items"
 
@@ -175,4 +169,5 @@ vertical_alignment = 1
 [node name="MenuButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=288758738]
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
+theme_override_font_sizes/font_size = 32
 text = "Return To Main Menu"

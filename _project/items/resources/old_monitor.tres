@@ -4,6 +4,15 @@
 [ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/resources/cathode_ray_tube.tres" id="2_t7ldp"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_wfm31"]
 [ext_resource type="Texture2D" uid="uid://bjml16kk6r5pg" path="res://_project/items/sprites/salvage_crtmonitor.png" id="4_t7ldp"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_t7ldp")
+
+[sub_resource type="Resource" id="PartEntry_2"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("3_wfm31")
 
 [resource]
 script = ExtResource("1_5t66u")
@@ -11,5 +20,5 @@ item_name = "Old Monitor"
 rarity = 1
 sprite = ExtResource("4_t7ldp")
 area = Vector2(160, 160)
-components = Array[ExtResource("1_5t66u")]([ExtResource("2_t7ldp"), ExtResource("3_wfm31")])
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

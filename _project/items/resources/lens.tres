@@ -8,5 +8,4 @@ script = ExtResource("1_iprpb")
 item_name = "Lens"
 rarity = 2
 sprite = ExtResource("2_ne2a7")
-is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

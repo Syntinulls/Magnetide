@@ -4,6 +4,15 @@
 [ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/resources/cathode_ray_tube.tres" id="2_rd0rs"]
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="3_wpksi"]
 [ext_resource type="Texture2D" uid="uid://bnprpf767mhmp" path="res://_project/items/sprites/salvage_xray.png" id="4_rd0rs"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_rd0rs")
+
+[sub_resource type="Resource" id="PartEntry_2"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("3_wpksi")
 
 [resource]
 script = ExtResource("1_ojuvv")
@@ -11,5 +20,5 @@ item_name = "X-Ray Machine"
 rarity = 2
 sprite = ExtResource("4_rd0rs")
 area = Vector2(160, 160)
-components = Array[ExtResource("1_ojuvv")]([ExtResource("2_rd0rs"), ExtResource("3_wpksi")])
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

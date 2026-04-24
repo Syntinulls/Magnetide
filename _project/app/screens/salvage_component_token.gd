@@ -1,7 +1,7 @@
 extends TextureRect
 class_name SalvageComponentToken
 
-signal arrived(token: SalvageComponentToken, item_data: SalvageItemData)
+signal arrived(token: SalvageComponentToken, item_data: SalvageItemData, count: int)
 
 @export var acceleration: float = 2200.0
 @export var max_speed: float = 2600.0
@@ -9,6 +9,7 @@ signal arrived(token: SalvageComponentToken, item_data: SalvageItemData)
 @export var arrival_radius: float = 48.0
 
 var item_data: SalvageItemData = null
+var item_count: int = 1
 
 var _velocity: Vector2 = Vector2.ZERO
 var _target_center: Vector2 = Vector2.ZERO
@@ -23,8 +24,9 @@ func _ready() -> void:
 	set_process(false)
 
 
-func setup(data: SalvageItemData, display_size: Vector2 = Vector2(80.0, 80.0)) -> void:
+func setup(data: SalvageItemData, display_size: Vector2 = Vector2(80.0, 80.0), count: int = 1) -> void:
 	item_data = data
+	item_count = maxi(count, 1)
 	custom_minimum_size = display_size
 	size = display_size
 	pivot_offset = display_size * 0.5
@@ -63,7 +65,7 @@ func _process(delta: float) -> void:
 	if to_target.length() <= arrival_radius:
 		_is_flying = false
 		set_process(false)
-		arrived.emit(self, item_data)
+		arrived.emit(self, item_data, item_count)
 		return
 
 	var desired_direction := to_target.normalized()

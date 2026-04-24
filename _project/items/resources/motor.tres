@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://motor001"]
 
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="1_cduqp"]
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://bm57nnat63xdd" path="res://_project/items/sprites/part_motor.png" id="2_cu241"]
 
@@ -9,4 +10,3 @@ item_name = "Motor"
 value = 50
 rarity = 1
 sprite = ExtResource("2_cu241")
-is_component = true

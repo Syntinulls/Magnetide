@@ -1,8 +1,8 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://dgev4ui17r143"]
 
-[ext_resource type="Script" path="res://_project/app/screens/main_menu.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://c0qyxpdv63dbh" path="res://_project/app/screens/main_menu.gd" id="1_script"]
 
-[node name="MainMenu" type="Control"]
+[node name="MainMenu" type="Control" unique_id=1254868277]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -11,7 +11,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 
-[node name="Backdrop" type="ColorRect" parent="."]
+[node name="Backdrop" type="ColorRect" parent="." unique_id=1792857157]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,7 +20,7 @@ grow_horizontal = 2
 grow_vertical = 2
 color = Color(0.0431373, 0.0705882, 0.0941176, 0.92)
 
-[node name="CenterContainer" type="CenterContainer" parent="."]
+[node name="CenterContainer" type="CenterContainer" parent="." unique_id=1789835475]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -28,34 +28,29 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="CenterContainer"]
-custom_minimum_size = Vector2(420, 240)
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1409200106]
 layout_mode = 2
+theme_override_constants/separation = 64
 
-[node name="MarginContainer" type="MarginContainer" parent="CenterContainer/PanelContainer"]
+[node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=2079488368]
 layout_mode = 2
-theme_override_constants/margin_left = 24
-theme_override_constants/margin_top = 24
-theme_override_constants/margin_right = 24
-theme_override_constants/margin_bottom = 24
-
-[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer"]
-layout_mode = 2
-theme_override_constants/separation = 16
-
-[node name="TitleLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-layout_mode = 2
-theme_override_font_sizes/font_size = 28
+size_flags_vertical = 3
+theme_override_font_sizes/font_size = 64
 text = "Magnetide"
 horizontal_alignment = 1
 
-[node name="BodyLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+[node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer/VBoxContainer" unique_id=1676040190]
 layout_mode = 2
-theme_override_font_sizes/font_size = 16
-text = "Main menu placeholder\nStart a run to load the current test level through the new app shell."
-horizontal_alignment = 1
+theme_override_constants/separation = 8
 
-[node name="StartButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
-custom_minimum_size = Vector2(0, 48)
+[node name="StartButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=918562721]
+custom_minimum_size = Vector2(200, 48)
 layout_mode = 2
+size_flags_horizontal = 4
 text = "Start Run"
+
+[node name="ExitButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=205118440]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Exit"

@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://c88hehy55soyv"]
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_gey8e"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="1_k3mha"]
 [ext_resource type="Texture2D" uid="uid://bpqoftdnvu0jw" path="res://_project/items/sprites/part_lightbulb.png" id="2_iwgyn"]
 
 [resource]
@@ -8,5 +9,4 @@ script = ExtResource("1_gey8e")
 item_name = "Light Bulb"
 rarity = 1
 sprite = ExtResource("2_iwgyn")
-is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

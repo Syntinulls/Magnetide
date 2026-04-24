@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://dwgm51pknakej"]
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_fyyfq"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="1_tcegb"]
 [ext_resource type="Texture2D" uid="uid://8c7wh87ikg8b" path="res://_project/items/sprites/part_processor.png" id="2_ab7gb"]
 
 [resource]
@@ -8,5 +9,4 @@ script = ExtResource("1_fyyfq")
 item_name = "Processor"
 rarity = 3
 sprite = ExtResource("2_ab7gb")
-is_component = true
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

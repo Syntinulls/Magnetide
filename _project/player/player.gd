@@ -14,7 +14,6 @@ signal destroyed
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
-const TooltipFont: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
 
 var input_enabled: bool = true
 var facing_right: bool = false
@@ -612,7 +611,7 @@ func _setup_hover_tooltip() -> void:
 	_hover_tooltip.name = "SalvageHoverTooltip"
 	_hover_tooltip.visible = false
 	_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_hover_tooltip.add_theme_font_override("font", TooltipFont)
+	Magnetide.apply_label_font(_hover_tooltip)
 	_hover_tooltip.add_theme_font_size_override("font_size", 24)
 	_hover_tooltip.add_theme_color_override("font_outline_color", Color.BLACK)
 	_hover_tooltip.add_theme_constant_override("outline_size", 4)

@@ -3,11 +3,16 @@
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_r1xb2"]
 [ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="2_mdwgx"]
 [ext_resource type="Texture2D" uid="uid://bvo4n13xx1qyd" path="res://_project/items/sprites/salvage_tire.png" id="3_mdwgx"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_mdwgx")
 
 [resource]
 script = ExtResource("1_r1xb2")
 item_name = "Tire"
 sprite = ExtResource("3_mdwgx")
 area = Vector2(120, 120)
-components = Array[ExtResource("1_r1xb2")]([ExtResource("2_mdwgx")])
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

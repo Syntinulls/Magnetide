@@ -28,6 +28,12 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 ## Time to accelerate from initial to max speed.
 @export var cog_accel_time: float = 3.0
 
+@export_group("Guide Layout")
+## Pixel gap between the top of the bar and the chevron guide.
+@export var chevron_bar_gap: float = 6.0
+## Pixel gap between the chevron guide and the result icons above it.
+@export var result_icon_chevron_gap: float = 8.0
+
 @export_group("Scoring")
 ## Distance threshold for green (perfect) hit as ratio of bar width.
 @export var green_threshold_ratio: float = 0.03
@@ -58,6 +64,7 @@ var _game_won: bool = false
 # UI References
 var _bar_sprite: Sprite2D
 var _cog_sprite: Sprite2D
+var _chevron_sprite: Sprite2D
 var _marker_container: Node2D
 var _result_icon_container: Node2D
 var _yellow_allowance_container: Node2D
@@ -77,6 +84,7 @@ var _marker_texture: Texture2D
 var _icon_neutral: Texture2D
 var _icon_success: Texture2D
 var _icon_failure: Texture2D
+var _icon_chevron: Texture2D
 var _icon_yellow_empty: Texture2D
 var _icon_yellow_filled: Texture2D
 
@@ -88,6 +96,7 @@ func _ready() -> void:
 	_icon_neutral = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_neutral.png")
 	_icon_success = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_success.png")
 	_icon_failure = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_failure.png")
+	_icon_chevron = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_chevron.png")
 	# Use neutral icon for yellow allowance (modulated to show state)
 	_icon_yellow_empty = _icon_neutral
 	_icon_yellow_filled = _icon_neutral
@@ -114,13 +123,20 @@ func _setup_ui() -> void:
 	# Create result icon container (above markers)
 	_result_icon_container = Node2D.new()
 	_bar_sprite.add_child(_result_icon_container)
-	
+
 	# Create cog sprite
 	_cog_sprite = Sprite2D.new()
 	_cog_sprite.texture = _cog_texture
 	_cog_sprite.centered = true
 	_bar_sprite.add_child(_cog_sprite)
-	
+
+	# Create chevron guide sprite above the bar
+	_chevron_sprite = Sprite2D.new()
+	_chevron_sprite.texture = _icon_chevron
+	_chevron_sprite.centered = true
+	_chevron_sprite.position.y = _get_chevron_y()
+	_bar_sprite.add_child(_chevron_sprite)
+
 	# Create yellow allowance container (below bar, left side)
 	_yellow_allowance_container = Node2D.new()
 	_bar_sprite.add_child(_yellow_allowance_container)
@@ -135,7 +151,8 @@ func start_minigame(rarity: SalvagePile.Rarity) -> void:
 	# Apply rarity color to cog
 	var rarity_color: Color = SalvagePile.RARITY_COLORS.get(rarity, Color.WHITE)
 	_cog_sprite.modulate = rarity_color
-	
+	_chevron_sprite.modulate = rarity_color
+
 	visible = true
 	set_process(true)
 	_state = State.PLACING_MARKERS
@@ -287,7 +304,6 @@ func _process_placing_markers(delta: float) -> void:
 
 func _place_marker(index: int) -> void:
 	var bar_width := _bar_texture.get_size().x
-	var bar_height := _bar_texture.get_size().y
 	var pos_ratio := _marker_positions[index]
 	
 	# Create animated marker sprite (12 frames, 1 row, 12fps)
@@ -322,7 +338,7 @@ func _place_marker(index: int) -> void:
 	icon.texture = _icon_neutral
 	icon.centered = true
 	icon.position.x = marker.position.x
-	icon.position.y = -bar_height * 0.5 - 30.0  # Above the bar
+	icon.position.y = _get_result_icon_y()
 	icon.modulate = Color.WHITE  # Neutral - no modulation
 	_result_icon_container.add_child(icon)
 
@@ -402,6 +418,23 @@ func _update_cog_position() -> void:
 	var usable_width := bar_width - bar_padding * 2.0
 	var x := (bar_padding + usable_width * _cog_position_ratio) - bar_width * 0.5
 	_cog_sprite.position.x = x
+	_chevron_sprite.position.x = x
+
+
+func _get_chevron_y() -> float:
+	return _get_bar_top_y() - _get_texture_half_height(_icon_chevron) - chevron_bar_gap
+
+
+func _get_result_icon_y() -> float:
+	return _get_chevron_y() - _get_texture_half_height(_icon_chevron) - _get_texture_half_height(_icon_neutral) - result_icon_chevron_gap
+
+
+func _get_bar_top_y() -> float:
+	return -_bar_texture.get_size().y * 0.5
+
+
+func _get_texture_half_height(texture: Texture2D) -> float:
+	return texture.get_size().y * 0.5 if texture else 0.0
 
 
 func _input(event: InputEvent) -> void:

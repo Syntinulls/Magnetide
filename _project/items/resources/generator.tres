@@ -5,6 +5,19 @@
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="3_7r7le"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="4_ph50k"]
 [ext_resource type="Texture2D" uid="uid://c732tobuce0il" path="res://_project/items/sprites/salvage_generator.png" id="5_ik25u"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_ik25u")
+
+[sub_resource type="Resource" id="PartEntry_2"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("3_7r7le")
+
+[sub_resource type="Resource" id="PartEntry_3"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("4_ph50k")
 
 [resource]
 script = ExtResource("1_hm6qp")
@@ -12,5 +25,5 @@ item_name = "generator"
 rarity = 2
 sprite = ExtResource("5_ik25u")
 area = Vector2(160, 160)
-components = Array[ExtResource("1_hm6qp")]([ExtResource("2_ik25u"), ExtResource("3_7r7le"), ExtResource("4_ph50k")])
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2"), SubResource("PartEntry_3")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

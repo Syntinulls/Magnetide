@@ -1,10 +1,10 @@
 extends Resource
 class_name SalvageItemData
 
-## Standard hitbox size for components.
-const COMPONENT_HITBOX_SIZE: Vector2 = Vector2(40, 40)
-## Standard sprite size for components.
-const COMPONENT_SPRITE_SIZE: Vector2 = Vector2(80, 80)
+## Standard hitbox size for terminal parts.
+const PART_HITBOX_SIZE: Vector2 = Vector2(40, 40)
+## Standard sprite size for terminal parts.
+const PART_SPRITE_SIZE: Vector2 = Vector2(80, 80)
 
 enum ItemRarity { COMMON, RARE, EPIC, LEGENDARY }
 
@@ -43,8 +43,8 @@ const ITEM_RARITY_COLORS := {
 ## Visual sprite for the item.
 @export var sprite: Texture2D = null
 ## In-world size of the item in pixels. Sprite will be scaled to fit this area.
-## Ignored if is_component is true (uses COMPONENT_SPRITE_SIZE).
-@export var area: Vector2 = COMPONENT_SPRITE_SIZE
+## Terminal parts use PART_SPRITE_SIZE automatically.
+@export var area: Vector2 = PART_SPRITE_SIZE
 
 # =============================================================================
 # PHYSICS
@@ -58,33 +58,31 @@ const ITEM_RARITY_COLORS := {
 @export var hitbox_size_override: Vector2 = Vector2(40, 40)
 
 # =============================================================================
-# COMPONENT (BREAKDOWN)
+# PARTS (BREAKDOWN)
 # =============================================================================
-@export_group("Component")
-## If true, this item is a component that can be broken down further.
-@export var is_component: bool = false
-## Items this recycles into when broken down. Only used if is_component is true.
-@export var components: Array[SalvageItemData] = []
+@export_group("Parts")
+## Parts recovered when this item is salvaged. Empty means this item is already a terminal part.
+@export var parts: Array[SalvagePartEntry] = []
 
 # =============================================================================
 # COMPUTED PROPERTIES
 # =============================================================================
 
 ## Actual hitbox size used for collision.
-## Components: COMPONENT_HITBOX_SIZE (40x40)
+## Terminal parts: PART_HITBOX_SIZE (40x40)
 ## Salvageables: hitbox_size_override if use_hitbox_override, else half of area
 var actual_hitbox_size: Vector2:
 	get:
-		if is_component:
-			return COMPONENT_HITBOX_SIZE
+		if parts.is_empty():
+			return PART_HITBOX_SIZE
 		if use_hitbox_override:
 			return hitbox_size_override
 		return area * 0.5
 
-## Actual area used for rendering. Components use constant size.
+## Actual area used for rendering. Terminal parts use constant size.
 var actual_area: Vector2:
 	get:
-		return COMPONENT_SPRITE_SIZE if is_component else area
+		return PART_SPRITE_SIZE if parts.is_empty() else area
 
 
 func get_drop_weight() -> float:
