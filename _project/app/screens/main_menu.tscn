@@ -43,11 +43,11 @@ horizontal_alignment = 1
 layout_mode = 2
 theme_override_constants/separation = 8
 
-[node name="StartButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=918562721]
+[node name="NewGameButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=918562721]
 custom_minimum_size = Vector2(200, 48)
 layout_mode = 2
 size_flags_horizontal = 4
-text = "Start Run"
+text = "New Game"
 
 [node name="ExitButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=205118440]
 custom_minimum_size = Vector2(200, 48)

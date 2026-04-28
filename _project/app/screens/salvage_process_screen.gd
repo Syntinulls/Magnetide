@@ -3,6 +3,7 @@ class_name SalvageProcessScreen
 
 signal start_requested
 signal main_menu_requested
+signal station_requested
 signal component_arrivals_completed
 
 const SalvageComponentTokenScene := preload("res://_project/app/screens/salvage_component_token.tscn")
@@ -359,7 +360,7 @@ func _show_results_popup() -> void:
 
 	_run_summary_popup = RunSummaryPopupScene.instantiate() as SalvageResultsPopup
 	if _run_summary_popup == null:
-		main_menu_requested.emit()
+		station_requested.emit()
 		return
 
 	var run_stats := {
@@ -371,12 +372,12 @@ func _show_results_popup() -> void:
 
 	_results_layer.add_child(_run_summary_popup)
 	_run_summary_popup.setup(_run_result, _build_result_entries(), run_stats)
-	_run_summary_popup.main_menu_requested.connect(_on_results_popup_main_menu_requested)
+	_run_summary_popup.station_requested.connect(_on_results_popup_station_requested)
 
 
-func _on_results_popup_main_menu_requested() -> void:
+func _on_results_popup_station_requested() -> void:
 	_state = ScreenState.COMPLETE
-	main_menu_requested.emit()
+	station_requested.emit()
 
 
 func _update_header_labels() -> void:

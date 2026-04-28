@@ -1,7 +1,7 @@
 extends Control
 class_name SalvageResultsPopup
 
-signal main_menu_requested
+signal station_requested
 
 const ENTRY_ICON_SIZE := Vector2(60.0, 60.0)
 const SOURCE_ICON_SIZE := Vector2(36.0, 36.0)
@@ -194,4 +194,4 @@ func _hide_hover_tooltip() -> void:
 
 
 func _on_menu_pressed() -> void:
-	main_menu_requested.emit()
+	station_requested.emit()

@@ -170,4 +170,4 @@ vertical_alignment = 1
 custom_minimum_size = Vector2(0, 46)
 layout_mode = 2
 theme_override_font_sizes/font_size = 32
-text = "Return To Main Menu"
+text = "Return To Station"

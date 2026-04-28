@@ -6,6 +6,7 @@ const RunControllerScript := preload("res://_project/run/run_controller.gd")
 @export var default_level: LevelDefinition
 @export var default_run_loadout: RunLoadout
 @export var main_menu_scene: PackedScene
+@export var station_screen_scene: PackedScene
 @export var salvage_process_scene: PackedScene
 
 var _active_screen: Control = null
@@ -63,8 +64,19 @@ func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout
 func _show_main_menu() -> void:
 	_clear_run()
 	var screen := _show_screen(main_menu_scene)
-	if screen and screen.has_signal("start_requested"):
-		screen.start_requested.connect(_on_main_menu_start_requested)
+	if screen and screen.has_signal("new_game_requested"):
+		screen.new_game_requested.connect(_on_main_menu_new_game_requested)
+
+
+func _show_station_screen() -> void:
+	_clear_run()
+	var screen := _show_screen(station_screen_scene)
+	if screen == null:
+		return
+	if screen.has_signal("start_requested"):
+		screen.start_requested.connect(_on_station_start_requested)
+	if screen.has_signal("main_menu_requested"):
+		screen.main_menu_requested.connect(_on_station_main_menu_requested)
 
 
 func _show_salvage_process_screen(result: RunResult) -> void:
@@ -75,6 +87,8 @@ func _show_salvage_process_screen(result: RunResult) -> void:
 		screen.set_run_result(result)
 	if screen.has_signal("start_requested"):
 		screen.start_requested.connect(_on_salvage_screen_start_requested)
+	if screen.has_signal("station_requested"):
+		screen.station_requested.connect(_on_salvage_screen_station_requested)
 	if screen.has_signal("main_menu_requested"):
 		screen.main_menu_requested.connect(_on_salvage_screen_main_menu_requested)
 
@@ -112,16 +126,28 @@ func _clear_run() -> void:
 	_active_level = null
 
 
-func _on_main_menu_start_requested() -> void:
+func _on_main_menu_new_game_requested() -> void:
+	_show_station_screen()
+
+
+func _on_station_start_requested() -> void:
 	start_run(default_level)
+
+
+func _on_station_main_menu_requested() -> void:
+	_show_main_menu()
 
 
 func _on_salvage_screen_start_requested() -> void:
 	start_run(default_level)
 
 
+func _on_salvage_screen_station_requested() -> void:
+	_show_station_screen()
+
+
 func _on_salvage_screen_main_menu_requested() -> void:
-	_show_main_menu()
+	_show_station_screen()
 
 
 func _on_run_finished(result: RunResult) -> void:
