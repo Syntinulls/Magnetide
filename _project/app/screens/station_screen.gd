@@ -277,6 +277,7 @@ func _equip_weapon_from_popup(entry: Resource) -> void:
 		return
 
 	_run_loadout.equip_weapon(weapon_data)
+	_save_current_game()
 	_refresh_loadout_ui()
 	_close_weapon_popup()
 
@@ -378,6 +379,7 @@ func _on_upgrade_pressed(upgrade_id: StringName) -> void:
 	if _save_data != null and not bool(_save_data.call("spend_upgrade_cost", upgrade)):
 		return
 	_run_loadout.increase_upgrade(upgrade_id)
+	_save_current_game()
 	_refresh_loadout_ui()
 	if _upgrade_cost_popup.visible:
 		var button := _get_upgrade_button(upgrade_id)
@@ -518,6 +520,11 @@ func _get_storage_entries() -> Array[Dictionary]:
 	if not _save_data.has_method("get_storage_entries"):
 		return []
 	return _save_data.call("get_storage_entries")
+
+
+func _save_current_game() -> void:
+	if _save_data != null and _save_data.has_method("save_to_disk"):
+		_save_data.call("save_to_disk")
 
 
 func _get_upgrade_stat_name(upgrade: Resource) -> String:

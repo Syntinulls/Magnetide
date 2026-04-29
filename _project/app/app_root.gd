@@ -21,8 +21,7 @@ var _save_data: Resource = null
 
 func _ready() -> void:
 	Magnetide.register_app_root(self)
-	_save_data = AppSaveDataScript.new()
-	_save_data.setup(default_run_loadout)
+	_save_data = AppSaveDataScript.load_or_create(default_run_loadout)
 	_show_main_menu()
 
 
@@ -68,6 +67,10 @@ func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout
 func _show_main_menu() -> void:
 	_clear_run()
 	var screen := _show_screen(main_menu_scene)
+	if screen and screen.has_method("set_continue_available"):
+		screen.set_continue_available(_has_continue_save())
+	if screen and screen.has_signal("continue_requested"):
+		screen.continue_requested.connect(_on_main_menu_continue_requested)
 	if screen and screen.has_signal("new_game_requested"):
 		screen.new_game_requested.connect(_on_main_menu_new_game_requested)
 
@@ -135,6 +138,15 @@ func _clear_run() -> void:
 
 
 func _on_main_menu_new_game_requested() -> void:
+	if _save_data == null:
+		_save_data = AppSaveDataScript.new()
+	_save_data.reset_to_default(default_run_loadout)
+	_show_station_screen()
+
+
+func _on_main_menu_continue_requested() -> void:
+	if _save_data == null:
+		_save_data = AppSaveDataScript.load_or_create(default_run_loadout)
 	_show_station_screen()
 
 
@@ -178,3 +190,9 @@ func _get_current_run_loadout() -> RunLoadout:
 	if _save_data != null:
 		return _save_data.get("current_run_loadout") as RunLoadout
 	return default_run_loadout
+
+
+func _has_continue_save() -> bool:
+	if _save_data == null:
+		return false
+	return bool(_save_data.call("has_continue_data", default_run_loadout))
