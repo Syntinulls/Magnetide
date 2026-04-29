@@ -8,6 +8,9 @@ signal destroyed
 @export var gravity: float = 1600.0
 @export_group("Combat")
 @export var max_health: float = 100.0
+@export var max_shield: float = 0.0
+@export var shield_recharge_delay: float = 6.0
+@export var shield_recharge_duration: float = 4.0
 
 ## Equipment slots - indices match hotbar slots
 @export var equipment: Array[EquipmentData] = []
@@ -19,6 +22,8 @@ var input_enabled: bool = true
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
+var current_shield: float = 0.0
+var _shield_recharge_cooldown_remaining: float = 0.0
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
 
@@ -77,6 +82,7 @@ var _hover_tooltip: Label = null
 
 func _ready() -> void:
 	current_health = max_health
+	current_shield = max_shield
 	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
@@ -101,6 +107,9 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	jump_velocity = loadout.player_jump_velocity
 	gravity = loadout.player_gravity
 	max_health = loadout.player_max_health
+	max_shield = loadout.player_max_shield
+	shield_recharge_delay = loadout.player_shield_recharge_delay
+	shield_recharge_duration = loadout.player_shield_recharge_duration
 	equipment = loadout.player_equipment.duplicate()
 
 	if equipment.is_empty():
@@ -112,7 +121,15 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 			equipment.size() - 1
 		)
 
-	current_health = max_health if not is_runtime_reconfigure else minf(current_health, max_health)
+	if not is_runtime_reconfigure:
+		current_health = max_health
+		current_shield = max_shield
+	else:
+		current_health = minf(current_health, max_health)
+		current_shield = minf(current_shield, max_shield)
+	if max_shield <= 0.0:
+		current_shield = 0.0
+		_shield_recharge_cooldown_remaining = 0.0
 
 	if is_runtime_reconfigure:
 		_apply_current_equipment()
@@ -181,6 +198,7 @@ func _get_current_muzzle_effect_type() -> MuzzleEffect.EffectType:
 func _physics_process(delta: float) -> void:
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
+	_process_shield_recharge(delta)
 	if input_enabled:
 		var mouse_pos := get_global_mouse_position()
 		
@@ -681,10 +699,38 @@ func on_looting_ended() -> void:
 func take_damage(amount: float) -> void:
 	if current_health <= 0.0:
 		return
+	if amount <= 0.0:
+		return
+
+	if max_shield > 0.0:
+		_shield_recharge_cooldown_remaining = shield_recharge_delay
+	if current_shield > 0.0:
+		var shield_damage := minf(current_shield, amount)
+		current_shield -= shield_damage
+		amount -= shield_damage
+		if amount <= 0.0:
+			return
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
+
+
+func _process_shield_recharge(delta: float) -> void:
+	if max_shield <= 0.0 or current_health <= 0.0:
+		current_shield = 0.0
+		return
+	if current_shield >= max_shield:
+		current_shield = max_shield
+		_shield_recharge_cooldown_remaining = 0.0
+		return
+	if _shield_recharge_cooldown_remaining > 0.0:
+		_shield_recharge_cooldown_remaining = maxf(_shield_recharge_cooldown_remaining - delta, 0.0)
+		return
+
+	var recharge_duration := maxf(shield_recharge_duration, 0.01)
+	var recharge_rate := max_shield / recharge_duration
+	current_shield = minf(current_shield + recharge_rate * delta, max_shield)
 
 
 func stop_for_run_end() -> void:

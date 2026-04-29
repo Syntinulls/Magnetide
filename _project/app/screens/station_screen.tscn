@@ -1,4 +1,4 @@
-[gd_scene format=3 uid="uid://c8qj2ks8d0w1x"]
+[gd_scene load_steps=15 format=3 uid="uid://c8qj2ks8d0w1x"]
 
 [ext_resource type="Script" uid="uid://be85jd8hol6ol" path="res://_project/app/screens/station_screen.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b8rsmplore4d8" path="res://_project/player/sprites/guy.png" id="2_player"]
@@ -10,6 +10,13 @@
 [ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/ui/sprites/ui_icon_health.png" id="8_health_icon"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="9_shield_icon"]
 [ext_resource type="Texture2D" uid="uid://doqyin1wwyeju" path="res://_project/ui/sprites/ui_icon_upgrade.png" id="10_upgrade_icon"]
+[ext_resource type="Script" path="res://_project/player/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
+[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="12_rifle_data"]
+
+[sub_resource type="Resource" id="Resource_station_weapon_rifle"]
+script = ExtResource("11_equipment_catalog_entry")
+equipment_data = ExtResource("12_rifle_data")
+locked = false
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -19,6 +26,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
+weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_rifle")])
 
 [node name="Backdrop" type="ColorRect" parent="." unique_id=1722779487]
 layout_mode = 1

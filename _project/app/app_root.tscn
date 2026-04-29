@@ -41,6 +41,11 @@ player_speed = 400.0
 player_jump_velocity = -600.0
 player_gravity = 1600.0
 player_max_health = 100.0
+player_max_shield = 0.0
+player_shield_recharge_delay = 6.0
+player_shield_recharge_duration = 4.0
+equipped_weapon = ExtResource("8_rifle")
+equipped_magnet_tool = ExtResource("9_magnet_gun")
 player_equipment = Array[ExtResource("7_equipment_data")]([ExtResource("8_rifle"), ExtResource("9_magnet_gun")])
 player_selected_equipment_index = 0
 

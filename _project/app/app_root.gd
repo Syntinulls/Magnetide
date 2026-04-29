@@ -2,6 +2,7 @@ extends Node
 class_name AppRoot
 
 const RunControllerScript := preload("res://_project/run/run_controller.gd")
+const AppSaveDataScript := preload("res://_project/app/app_save_data.gd")
 
 @export var default_level: LevelDefinition
 @export var default_run_loadout: RunLoadout
@@ -12,6 +13,7 @@ const RunControllerScript := preload("res://_project/run/run_controller.gd")
 var _active_screen: Control = null
 var _active_level: Node = null
 var _active_run_controller: RunController = null
+var _save_data: Resource = null
 
 @onready var _run_root: Node = $RunRoot
 @onready var _screen_root: Control = $ScreenCanvas/ScreenRoot
@@ -19,6 +21,8 @@ var _active_run_controller: RunController = null
 
 func _ready() -> void:
 	Magnetide.register_app_root(self)
+	_save_data = AppSaveDataScript.new()
+	_save_data.setup(default_run_loadout)
 	_show_main_menu()
 
 
@@ -26,7 +30,7 @@ func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout
 	if level_definition == null:
 		level_definition = default_level
 	if run_loadout == null:
-		run_loadout = default_run_loadout
+		run_loadout = _get_current_run_loadout()
 
 	if level_definition == null or level_definition.level_scene == null:
 		push_error("AppRoot: Cannot start run without a valid LevelDefinition.")
@@ -73,6 +77,10 @@ func _show_station_screen() -> void:
 	var screen := _show_screen(station_screen_scene)
 	if screen == null:
 		return
+	if screen.has_method("set_save_data"):
+		screen.set_save_data(_save_data)
+	elif screen.has_method("set_run_loadout"):
+		screen.set_run_loadout(_get_current_run_loadout())
 	if screen.has_signal("start_requested"):
 		screen.start_requested.connect(_on_station_start_requested)
 	if screen.has_signal("main_menu_requested"):
@@ -131,7 +139,7 @@ func _on_main_menu_new_game_requested() -> void:
 
 
 func _on_station_start_requested() -> void:
-	start_run(default_level)
+	start_run(default_level, _get_current_run_loadout())
 
 
 func _on_station_main_menu_requested() -> void:
@@ -139,17 +147,34 @@ func _on_station_main_menu_requested() -> void:
 
 
 func _on_salvage_screen_start_requested() -> void:
-	start_run(default_level)
+	_collect_salvage_screen_storage()
+	start_run(default_level, _get_current_run_loadout())
 
 
 func _on_salvage_screen_station_requested() -> void:
+	_collect_salvage_screen_storage()
 	_show_station_screen()
 
 
 func _on_salvage_screen_main_menu_requested() -> void:
+	_collect_salvage_screen_storage()
 	_show_station_screen()
 
 
 func _on_run_finished(result: RunResult) -> void:
 	_clear_run()
 	_show_salvage_process_screen(result)
+
+
+func _collect_salvage_screen_storage() -> void:
+	if _save_data == null or _active_screen == null:
+		return
+	if not _active_screen.has_method("get_final_storage_entries"):
+		return
+	_save_data.add_storage_entries(_active_screen.call("get_final_storage_entries"))
+
+
+func _get_current_run_loadout() -> RunLoadout:
+	if _save_data != null:
+		return _save_data.get("current_run_loadout") as RunLoadout
+	return default_run_loadout

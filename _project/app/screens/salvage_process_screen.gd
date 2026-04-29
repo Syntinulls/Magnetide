@@ -82,6 +82,20 @@ func set_run_result(result: RunResult) -> void:
 		call_deferred("_begin_processing")
 
 
+func get_final_storage_entries() -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	for entry in _final_result_counts.values():
+		var item_data := entry.get("item_data", null) as SalvageItemData
+		var count := int(entry.get("count", 0))
+		if item_data == null or count <= 0:
+			continue
+		entries.append({
+			"item_data": item_data,
+			"quantity": count,
+		})
+	return entries
+
+
 func _begin_processing() -> void:
 	if _did_begin_processing:
 		return

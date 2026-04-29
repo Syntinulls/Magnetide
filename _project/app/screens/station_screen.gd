@@ -5,15 +5,26 @@ signal start_requested
 signal main_menu_requested
 
 const StorageSlotScene := preload("res://_project/app/screens/station_storage_slot.tscn")
-const PlaceholderGearData := preload("res://_project/items/resources/gear.tres")
-const PlaceholderMagnetData := preload("res://_project/items/resources/magnet.tres")
-const PlaceholderBatteryData := preload("res://_project/items/resources/battery.tres")
 
 @export var page_pan_duration: float = 0.35
+@export var run_loadout: RunLoadout = null
+const EquipmentCatalogEntryScript := preload("res://_project/player/equipment/equipment_catalog_entry.gd")
 
+@export var weapon_catalog: Array[Resource] = []
+
+const ACTIVE_TICK_COLOR := Color(0.82, 0.87, 0.95, 1.0)
+const INACTIVE_TICK_COLOR := Color(0.35, 0.4, 0.5, 1.0)
+const LOCKED_ENTRY_MODULATE := Color(0.58, 0.62, 0.68, 1.0)
+const UNLOCKED_ENTRY_MODULATE := Color.WHITE
+const WEAPON_STAT_PROPERTIES: Array[String] = ["damage", "fire_rate"]
+const STORAGE_STAT_PROPERTIES: Array[String] = ["rarity", "weight", "value"]
+
+var _save_data: Resource = null
+var _run_loadout: RunLoadout = null
 var _current_page_index: int = 0
 var _is_panning: bool = false
 var _page_tween: Tween = null
+var _is_ready: bool = false
 
 @onready var _page_viewport: Control = $PageViewport
 @onready var _page_container: Control = $PageViewport/PageContainer
@@ -25,7 +36,17 @@ var _page_tween: Tween = null
 @onready var _pan_to_player_button: Button = $PageViewport/PageContainer/ShipPage/PanToPlayerButton
 @onready var _weapon_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow/EquipmentButton
 @onready var _magnet_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow/EquipmentButton
+@onready var _weapon_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow
+@onready var _magnet_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow
+@onready var _health_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow
+@onready var _shield_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow
+@onready var _weapon_upgrade_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow/UpgradeButton
+@onready var _magnet_upgrade_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow/UpgradeButton
+@onready var _health_upgrade_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow/UpgradeButton
+@onready var _shield_upgrade_button: Button = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow/UpgradeButton
 @onready var _weapon_popup: Control = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup
+@onready var _weapon_popup_current_stats: Label = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/EquipmentPanel/CurrentStatsLabel
+@onready var _weapon_list: VBoxContainer = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/EquipmentPanel/WeaponList
 @onready var _weapon_popup_stats_panel: Control = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/HoveredWeaponStatsPanel
 @onready var _weapon_popup_stats_name: Label = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/HoveredWeaponStatsPanel/NameLabel
 @onready var _weapon_popup_stats_body: Label = $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/HoveredWeaponStatsPanel/BodyLabel
@@ -40,6 +61,12 @@ var _page_tween: Tween = null
 
 
 func _ready() -> void:
+	_is_ready = true
+	if _run_loadout == null:
+		_run_loadout = run_loadout
+	if _run_loadout:
+		_run_loadout.prepare_for_run()
+
 	_configure_mouse_filters(self)
 	_apply_fonts(self)
 	_weapon_popup.visible = false
@@ -57,23 +84,33 @@ func _ready() -> void:
 	_weapon_button.pressed.connect(_toggle_weapon_popup)
 	_magnet_button.pressed.connect(_close_weapon_popup)
 
-	_connect_upgrade_cost_hover($PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow/UpgradeButton, "350", "0 / 5")
-	_connect_upgrade_cost_hover($PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow/UpgradeButton, "250", "1 / 5")
-	_connect_upgrade_cost_hover($PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow/UpgradeButton, "200", "0 / 5")
-	_connect_upgrade_cost_hover($PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow/UpgradeButton, "275", "0 / 5")
+	_connect_upgrade_button(_weapon_upgrade_button, &"weapon_damage")
+	_connect_upgrade_button(_magnet_upgrade_button, &"magnet_tool_pull")
+	_connect_upgrade_button(_health_upgrade_button, &"player_health")
+	_connect_upgrade_button(_shield_upgrade_button, &"player_shield")
 
-	_populate_storage_slots(_get_placeholder_storage_entries())
-
-	for weapon_entry in $PageViewport/PageContainer/PlayerPage/WeaponEquipmentPopup/EquipmentPanel/WeaponList.get_children():
-		if weapon_entry is Button:
-			weapon_entry.mouse_entered.connect(_show_weapon_stats.bind(weapon_entry.text))
-			weapon_entry.focus_entered.connect(_show_weapon_stats.bind(weapon_entry.text))
-			if not weapon_entry.disabled:
-				weapon_entry.pressed.connect(_equip_weapon_from_popup.bind(weapon_entry.text))
+	_populate_storage_slots(_get_storage_entries())
 
 	_layout_pages()
 	_update_pan_buttons()
-	_refresh_stats_panel()
+	_refresh_loadout_ui()
+
+
+func set_run_loadout(loadout: RunLoadout) -> void:
+	_run_loadout = loadout
+	run_loadout = loadout
+	if _run_loadout:
+		_run_loadout.prepare_for_run()
+	if _is_ready:
+		_refresh_loadout_ui()
+
+
+func set_save_data(save_data: Resource) -> void:
+	_save_data = save_data
+	if _save_data != null:
+		set_run_loadout(_save_data.get("current_run_loadout") as RunLoadout)
+	elif _is_ready:
+		_refresh_loadout_ui()
 
 
 func _notification(what: int) -> void:
@@ -104,18 +141,32 @@ func _layout_pages() -> void:
 	_page_container.position = Vector2(-page_size.x * _current_page_index, 0.0)
 
 
-func _connect_upgrade_cost_hover(button: Button, credit_cost: String, secondary_cost: String) -> void:
+func _connect_upgrade_button(button: Button, upgrade_id: StringName) -> void:
 	if button == null:
 		return
-	button.mouse_entered.connect(_show_upgrade_cost_popup.bind(button, credit_cost, secondary_cost))
+	button.mouse_entered.connect(_show_upgrade_cost_popup.bind(button, upgrade_id))
 	button.mouse_exited.connect(_hide_upgrade_cost_popup)
-	button.focus_entered.connect(_show_upgrade_cost_popup.bind(button, credit_cost, secondary_cost))
+	button.focus_entered.connect(_show_upgrade_cost_popup.bind(button, upgrade_id))
 	button.focus_exited.connect(_hide_upgrade_cost_popup)
+	button.pressed.connect(_on_upgrade_pressed.bind(upgrade_id))
 
 
-func _show_upgrade_cost_popup(button: Button, credit_cost: String, secondary_cost: String) -> void:
-	$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = credit_cost
-	$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = secondary_cost
+func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
+	var upgrade := _get_upgrade(upgrade_id)
+	if upgrade == null:
+		return
+
+	if bool(upgrade.call("is_maxed")):
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = "MAX LEVEL"
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = ""
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = ""
+	else:
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = String(upgrade.call(
+			"get_next_level_gain_text",
+			_get_upgrade_stat_name(upgrade)
+		))
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = "Upgrade Cost"
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = String(upgrade.call("get_next_level_cost_text"))
 	var button_rect := button.get_global_rect()
 	var page_rect := _player_page.get_global_rect()
 	_upgrade_cost_popup.position = (button_rect.position - page_rect.position) + Vector2(72.0, -120.0)
@@ -176,11 +227,11 @@ func _update_pan_buttons() -> void:
 
 func _refresh_stats_panel() -> void:
 	if _current_page_index == 0:
-		_stats_title_label.text = "Stats"
-		_stats_body_label.text = "HEALTH: 100 / 100\nSHIELD: 50 / 50\nSPEED: 400\nLOADOUT: LIGHT"
+		_stats_title_label.text = "Player Loadout"
+		_stats_body_label.text = _build_player_stats_text()
 	else:
 		_stats_title_label.text = "Ship Stats"
-		_stats_body_label.text = "HULL: 250 / 250\nSTORAGE: 100\nMAGNET: ONLINE\nTHRUSTERS: READY"
+		_stats_body_label.text = _build_ship_stats_text()
 
 
 func _clear_stats_panel() -> void:
@@ -195,6 +246,8 @@ func _toggle_weapon_popup() -> void:
 	if should_show:
 		_hide_upgrade_cost_popup()
 		_hide_storage_detail()
+		_populate_weapon_list()
+		_refresh_current_weapon_stats()
 
 
 func _close_weapon_popup() -> void:
@@ -202,13 +255,29 @@ func _close_weapon_popup() -> void:
 	_weapon_popup_stats_panel.visible = false
 
 
-func _show_weapon_stats(weapon_name: String) -> void:
-	_weapon_popup_stats_name.text = weapon_name
-	_weapon_popup_stats_body.text = "RARITY: COMMON\nDAMAGE: 12\nFIRE RATE: 4.0 / S\nWEIGHT: 6\n\nPreview stats for the hovered weapon."
+func _show_weapon_stats(entry: Resource) -> void:
+	var entry_equipment := _catalog_entry_equipment(entry)
+	if entry == null or entry_equipment == null:
+		return
+
+	var weapon := _get_weapon_preview(entry_equipment as WeaponData)
+	_weapon_popup_stats_name.text = _catalog_entry_display_name(entry)
+	_weapon_popup_stats_body.text = _format_weapon_stats(weapon)
+	if _catalog_entry_locked(entry):
+		_weapon_popup_stats_body.text += "\n\nLOCKED\nUNLOCK: %s" % _catalog_entry_unlock_cost_text(entry)
 	_weapon_popup_stats_panel.visible = true
 
 
-func _equip_weapon_from_popup(_weapon_name: String) -> void:
+func _equip_weapon_from_popup(entry: Resource) -> void:
+	if entry == null or _catalog_entry_locked(entry) or _run_loadout == null:
+		return
+
+	var weapon_data := _catalog_entry_equipment(entry) as WeaponData
+	if weapon_data == null:
+		return
+
+	_run_loadout.equip_weapon(weapon_data)
+	_refresh_loadout_ui()
 	_close_weapon_popup()
 
 
@@ -231,23 +300,6 @@ func _populate_storage_slots(storage_entries: Array[Dictionary]) -> void:
 		slot.item_unhovered.connect(_hide_storage_detail)
 
 
-func _get_placeholder_storage_entries() -> Array[Dictionary]:
-	return [
-		{
-			"item_data": PlaceholderGearData,
-			"quantity": 12,
-		},
-		{
-			"item_data": PlaceholderMagnetData,
-			"quantity": 4,
-		},
-		{
-			"item_data": PlaceholderBatteryData,
-			"quantity": 2,
-		},
-	]
-
-
 func _show_storage_detail(_slot: StationStorageSlot, item_data: SalvageItemData, quantity: int) -> void:
 	if item_data == null:
 		_hide_storage_detail()
@@ -264,30 +316,387 @@ func _hide_storage_detail(_slot: StationStorageSlot = null) -> void:
 
 
 func _build_storage_detail_text(item_data: SalvageItemData, quantity: int) -> String:
-	var rarity_names := {
-		SalvageItemData.ItemRarity.COMMON: "COMMON",
-		SalvageItemData.ItemRarity.RARE: "RARE",
-		SalvageItemData.ItemRarity.EPIC: "EPIC",
-		SalvageItemData.ItemRarity.LEGENDARY: "LEGENDARY",
-	}
-	var rarity_name: String = rarity_names.get(int(item_data.rarity), "COMMON")
-	var parts_text := "NONE"
-	if not item_data.parts.is_empty():
-		var part_names := PackedStringArray()
-		for part_entry in item_data.parts:
-			if part_entry == null or part_entry.item_data == null:
-				continue
-			part_names.append(part_entry.item_data.item_name)
-		if not part_names.is_empty():
-			parts_text = ", ".join(part_names)
-
-	return "QUANTITY: %d\nRARITY: %s\nWEIGHT: %.1f\nVALUE: %d\nPARTS: %s\n\nRecovered station material." % [
+	return "QUANTITY: %d\n%s\n\nRecovered station material." % [
 		quantity,
-		rarity_name,
-		item_data.weight,
-		item_data.value,
-		parts_text,
+		_format_resource_stats(item_data, STORAGE_STAT_PROPERTIES),
 	]
+
+
+func _refresh_loadout_ui() -> void:
+	if _run_loadout:
+		_run_loadout.prepare_for_run()
+	_update_equipment_buttons()
+	_update_upgrade_rows()
+	_populate_weapon_list()
+	_populate_storage_slots(_get_storage_entries())
+	_refresh_current_weapon_stats()
+	_refresh_stats_panel()
+
+
+func _update_equipment_buttons() -> void:
+	if _run_loadout == null:
+		return
+
+	var weapon := _run_loadout.equipped_weapon
+	if weapon:
+		_weapon_button.icon = _get_equipment_icon(weapon)
+		_weapon_button.text = ""
+
+	var magnet_tool := _run_loadout.equipped_magnet_tool
+	if magnet_tool:
+		_magnet_button.icon = _get_equipment_icon(magnet_tool)
+
+
+func _update_upgrade_rows() -> void:
+	_set_upgrade_row_level(_weapon_row, _get_upgrade(&"weapon_damage"))
+	_set_upgrade_row_level(_magnet_row, _get_upgrade(&"magnet_tool_pull"))
+	_set_upgrade_row_level(_health_row, _get_upgrade(&"player_health"))
+	_set_upgrade_row_level(_shield_row, _get_upgrade(&"player_shield"))
+
+
+func _set_upgrade_row_level(row: HBoxContainer, upgrade: Resource) -> void:
+	if row == null or upgrade == null:
+		return
+
+	var tick_index := 0
+	for child in row.get_children():
+		if child is ColorRect and String(child.name).begins_with("Tick"):
+			tick_index += 1
+			var tick := child as ColorRect
+			tick.visible = tick_index <= int(upgrade.get("max_level"))
+			tick.color = ACTIVE_TICK_COLOR if tick_index <= int(upgrade.get("current_level")) else INACTIVE_TICK_COLOR
+
+
+func _on_upgrade_pressed(upgrade_id: StringName) -> void:
+	if _run_loadout == null:
+		return
+	var upgrade := _get_upgrade(upgrade_id)
+	if upgrade == null:
+		return
+	if bool(upgrade.call("is_maxed")):
+		return
+	if _save_data != null and not bool(_save_data.call("spend_upgrade_cost", upgrade)):
+		return
+	_run_loadout.increase_upgrade(upgrade_id)
+	_refresh_loadout_ui()
+	if _upgrade_cost_popup.visible:
+		var button := _get_upgrade_button(upgrade_id)
+		if button:
+			_show_upgrade_cost_popup(button, upgrade_id)
+
+
+func _populate_weapon_list() -> void:
+	if _weapon_list == null:
+		return
+
+	for child in _weapon_list.get_children():
+		child.queue_free()
+
+	var entries := _get_weapon_catalog_entries()
+	for entry in entries:
+		if entry == null or _catalog_entry_equipment(entry) == null:
+			continue
+
+		var button := Button.new()
+		button.custom_minimum_size = Vector2(340.0, 72.0)
+		button.text = _get_weapon_entry_text(entry)
+		button.icon = _catalog_entry_icon(entry)
+		button.expand_icon = false
+		button.modulate = LOCKED_ENTRY_MODULATE if _catalog_entry_locked(entry) else UNLOCKED_ENTRY_MODULATE
+		button.mouse_filter = Control.MOUSE_FILTER_STOP
+		Magnetide.apply_label_font(button)
+		_weapon_list.add_child(button)
+		button.mouse_entered.connect(_show_weapon_stats.bind(entry))
+		button.focus_entered.connect(_show_weapon_stats.bind(entry))
+		if not _catalog_entry_locked(entry):
+			button.pressed.connect(_equip_weapon_from_popup.bind(entry))
+
+
+func _get_weapon_catalog_entries() -> Array[Resource]:
+	var entries: Array[Resource] = []
+	for entry in weapon_catalog:
+		if entry != null and _catalog_entry_equipment(entry) is WeaponData:
+			entries.append(entry)
+
+	if _run_loadout != null and _run_loadout.equipped_weapon != null:
+		var has_equipped_weapon := false
+		for entry in entries:
+			if _same_equipment_data(_catalog_entry_equipment(entry), _run_loadout.equipped_weapon):
+				has_equipped_weapon = true
+				break
+		if not has_equipped_weapon:
+			var equipped_entry := EquipmentCatalogEntryScript.new()
+			equipped_entry.set("equipment_data", _run_loadout.equipped_weapon)
+			equipped_entry.set("locked", false)
+			entries.insert(0, equipped_entry)
+
+	return entries
+
+
+func _get_weapon_entry_text(entry: Resource) -> String:
+	var parts := PackedStringArray([_catalog_entry_display_name(entry)])
+	if _run_loadout != null and _same_equipment_data(_catalog_entry_equipment(entry), _run_loadout.equipped_weapon):
+		parts.append("Equipped")
+	if _catalog_entry_locked(entry):
+		parts.append("Locked")
+	return "  ".join(parts)
+
+
+func _catalog_entry_equipment(entry: Resource) -> EquipmentData:
+	if entry == null:
+		return null
+	return entry.get("equipment_data") as EquipmentData
+
+
+func _catalog_entry_locked(entry: Resource) -> bool:
+	return bool(entry.get("locked")) if entry != null else false
+
+
+func _catalog_entry_display_name(entry: Resource) -> String:
+	if entry != null and entry.has_method("get_display_name"):
+		return String(entry.call("get_display_name"))
+	var equipment_data := _catalog_entry_equipment(entry)
+	return _get_equipment_name(equipment_data)
+
+
+func _catalog_entry_icon(entry: Resource) -> Texture2D:
+	if entry != null and entry.has_method("get_icon"):
+		return entry.call("get_icon") as Texture2D
+	return _get_equipment_icon(_catalog_entry_equipment(entry))
+
+
+func _catalog_entry_unlock_cost_text(entry: Resource) -> String:
+	if entry != null and entry.has_method("get_unlock_cost_text"):
+		return String(entry.call("get_unlock_cost_text"))
+	return "No unlock cost"
+
+
+func _same_equipment_data(left: EquipmentData, right: EquipmentData) -> bool:
+	if left == null or right == null:
+		return false
+	if left == right:
+		return true
+	return not left.resource_path.is_empty() and left.resource_path == right.resource_path
+
+
+func _refresh_current_weapon_stats() -> void:
+	if _weapon_popup_current_stats == null:
+		return
+	if _run_loadout == null or _run_loadout.equipped_weapon == null:
+		_weapon_popup_current_stats.text = "No weapon equipped"
+		return
+
+	var weapon := _run_loadout.get_upgraded_weapon_preview()
+	_weapon_popup_current_stats.text = "%s\n%s" % [
+		_get_equipment_name(_run_loadout.equipped_weapon),
+		_format_weapon_stats(weapon),
+	]
+
+
+func _get_upgrade(upgrade_id: StringName) -> Resource:
+	if _run_loadout == null:
+		return null
+	return _run_loadout.get_upgrade(upgrade_id)
+
+
+func _get_upgrade_button(upgrade_id: StringName) -> Button:
+	match upgrade_id:
+		&"weapon_damage":
+			return _weapon_upgrade_button
+		&"magnet_tool_pull":
+			return _magnet_upgrade_button
+		&"player_health":
+			return _health_upgrade_button
+		&"player_shield":
+			return _shield_upgrade_button
+	return null
+
+
+func _get_storage_entries() -> Array[Dictionary]:
+	if _save_data == null:
+		return []
+	if not _save_data.has_method("get_storage_entries"):
+		return []
+	return _save_data.call("get_storage_entries")
+
+
+func _get_upgrade_stat_name(upgrade: Resource) -> String:
+	if upgrade == null:
+		return ""
+	var target_property := String(upgrade.get("target_property"))
+	match target_property:
+		"player_max_health":
+			return "Health"
+		"player_max_shield":
+			return "Shield"
+		"damage":
+			return "Damage"
+		"fire_rate":
+			return "Fire Rate"
+		"pull_max_speed":
+			return "Pull Speed"
+		"ship_max_health":
+			return "Hull"
+		"ship_storage_max_weight":
+			return "Storage"
+		"magnet_hold_capacity":
+			return "Magnet Capacity"
+		"magnet_max_health":
+			return "Magnet Health"
+	return _prettify_property_name(target_property).capitalize()
+
+
+func _get_weapon_preview(weapon_data: WeaponData) -> WeaponData:
+	if _run_loadout == null:
+		return weapon_data
+	return _run_loadout.get_upgraded_weapon_preview(weapon_data)
+
+
+func _get_equipment_icon(equipment_data: EquipmentData) -> Texture2D:
+	if equipment_data == null:
+		return null
+	if equipment_data.hotbar_icon:
+		return equipment_data.hotbar_icon
+	if equipment_data is WeaponData:
+		return (equipment_data as WeaponData).weapon_sprite
+	if equipment_data is MagnetToolData:
+		return (equipment_data as MagnetToolData).weapon_sprite
+	return null
+
+
+func _get_equipment_name(equipment_data: EquipmentData) -> String:
+	if equipment_data != null and not equipment_data.display_name.is_empty():
+		return equipment_data.display_name
+	return "Unknown Equipment"
+
+
+func _build_player_stats_text() -> String:
+	if _run_loadout == null:
+		return "No run loadout assigned"
+
+	var lines := PackedStringArray([
+		"HEALTH: %s" % _stringify_stat_value(_run_loadout.player_max_health),
+		"SHIELD: %s" % _stringify_stat_value(_run_loadout.player_max_shield),
+		"EQUIPPED WEAPON: %s" % _get_equipment_name(_run_loadout.equipped_weapon),
+		"EQUIPPED TOOL: %s" % _get_equipment_name(_run_loadout.equipped_magnet_tool),
+	])
+	return "\n".join(lines)
+
+
+func _build_ship_stats_text() -> String:
+	if _run_loadout == null:
+		return "No run loadout assigned"
+
+	var lines := PackedStringArray([
+		"HULL: %s" % _stringify_stat_value(_run_loadout.ship_max_health),
+		"STORAGE: %s" % _stringify_stat_value(_run_loadout.ship_storage_max_weight),
+		"MAGNET CAPACITY: %s" % _stringify_stat_value(_run_loadout.magnet_hold_capacity),
+		"MAGNET HEALTH: %s" % _stringify_stat_value(_run_loadout.magnet_max_health),
+	])
+	return "\n".join(lines)
+
+
+func _format_weapon_stats(weapon: WeaponData) -> String:
+	var lines := PackedStringArray([_format_resource_stats(weapon, WEAPON_STAT_PROPERTIES)])
+	var upgrade := _get_upgrade(&"weapon_damage")
+	if upgrade != null:
+		if bool(upgrade.call("is_maxed")):
+			lines.append("UPGRADE: MAX LEVEL")
+		else:
+			lines.append("UPGRADE COST:\n%s" % String(upgrade.call("get_next_level_cost_text")))
+	return "\n".join(lines)
+
+
+func _format_resource_stats(resource: Resource, property_names: Array[String]) -> String:
+	if resource == null:
+		return "No stats available"
+
+	var lines := PackedStringArray()
+	for property_name in property_names:
+		if not _has_property(resource, property_name):
+			continue
+		lines.append("%s: %s" % [
+			_prettify_property_name(property_name),
+			_stringify_stat_value(resource.get(property_name)),
+		])
+
+	if lines.is_empty():
+		return "No stats available"
+	return "\n".join(lines)
+
+
+func _is_exported_stat_property(property: Dictionary) -> bool:
+	var usage := int(property.get("usage", 0))
+	return (usage & PROPERTY_USAGE_EDITOR) != 0
+
+
+func _has_property(resource: Resource, property_name: String) -> bool:
+	for property in resource.get_property_list():
+		if String(property.get("name", "")) == property_name:
+			return true
+	return false
+
+
+func _prettify_property_name(property_name: String) -> String:
+	return property_name.replace("_", " ").to_upper()
+
+
+func _stringify_stat_value(value: Variant) -> String:
+	match typeof(value):
+		TYPE_FLOAT:
+			return _format_float(float(value))
+		TYPE_INT:
+			return str(int(value))
+		TYPE_BOOL:
+			return "YES" if bool(value) else "NO"
+		TYPE_VECTOR2:
+			var vector_value: Vector2 = value
+			return "%s x %s" % [_format_float(vector_value.x), _format_float(vector_value.y)]
+		TYPE_STRING, TYPE_STRING_NAME:
+			return str(value)
+		TYPE_OBJECT:
+			return _stringify_object_stat(value)
+		TYPE_ARRAY:
+			return _stringify_array_stat(value)
+	return str(value)
+
+
+func _stringify_object_stat(value: Variant) -> String:
+	if value == null:
+		return "NONE"
+	if value is Texture2D:
+		var texture := value as Texture2D
+		return texture.resource_path.get_file() if not texture.resource_path.is_empty() else "Texture"
+	if value is EquipmentData:
+		return _get_equipment_name(value as EquipmentData)
+	if value is SalvageItemData:
+		var item := value as SalvageItemData
+		return item.item_name if not item.item_name.is_empty() else "Unknown Item"
+	if value is Resource:
+		var resource := value as Resource
+		if resource.has_method("get_display_text"):
+			return String(resource.call("get_display_text"))
+		if not resource.resource_path.is_empty():
+			return resource.resource_path.get_file().get_basename().capitalize()
+		return resource.get_class()
+	return str(value)
+
+
+func _stringify_array_stat(value: Variant) -> String:
+	var array_value := value as Array
+	if array_value.is_empty():
+		return "NONE"
+
+	var parts := PackedStringArray()
+	for item in array_value:
+		parts.append(_stringify_stat_value(item))
+	return ", ".join(parts)
+
+
+func _format_float(value: float) -> String:
+	if is_equal_approx(value, roundf(value)):
+		return str(int(roundf(value)))
+	return "%.2f" % value
 
 
 func _apply_fonts(node: Node) -> void:

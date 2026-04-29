@@ -4,6 +4,8 @@ const HEALTHY_INTEGRITY_COLOR := Color("9bff63")
 const DAMAGED_INTEGRITY_COLOR := Color("ff7c7c")
 
 @onready var _player_health_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/MarginContainer/PlayerHPBar
+@onready var _player_shield_container: Control = $PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer
+@onready var _player_shield_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer/PlayerShieldBar
 @onready var _ship_hull_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPHull
 @onready var _ship_magnet_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPMagnet
 @onready var _ship_hull_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHullIntegrityLabel
@@ -45,6 +47,31 @@ func _update_player_health(player: Player) -> void:
 	_player_health_bar.min_value = 0.0
 	_player_health_bar.max_value = max_health
 	_player_health_bar.value = current_health
+
+	_update_player_shield(player)
+
+
+func _update_player_shield(player: Player) -> void:
+	if not _player_shield_bar:
+		return
+
+	var max_shield := 0.0
+	var current_shield := 0.0
+	if player:
+		max_shield = maxf(player.max_shield, 0.0)
+		current_shield = clampf(player.current_shield, 0.0, max_shield)
+
+	var shield_enabled := max_shield > 0.0
+	if _player_shield_container:
+		_player_shield_container.visible = shield_enabled
+	_player_shield_bar.visible = shield_enabled
+	if not shield_enabled:
+		_player_shield_bar.value = 0.0
+		return
+
+	_player_shield_bar.min_value = 0.0
+	_player_shield_bar.max_value = max_shield
+	_player_shield_bar.value = current_shield
 
 
 func _update_integrity_display(source: Node, rect: TextureRect, label: Label) -> void:

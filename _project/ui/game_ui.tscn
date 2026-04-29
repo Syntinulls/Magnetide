@@ -313,6 +313,23 @@ texture_over = ExtResource("18_s0nsh")
 texture_progress = ExtResource("19_a5bm7")
 texture_progress_offset = Vector2(12, 0)
 
+[node name="ShieldMarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars"]
+visible = false
+layout_mode = 2
+theme_override_constants/margin_left = -32
+theme_override_constants/margin_top = -10
+
+[node name="PlayerShieldBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer"]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+value = 100.0
+tint_progress = Color(0.25, 0.62, 1, 1)
+texture_under = ExtResource("17_si552")
+texture_over = ExtResource("18_s0nsh")
+texture_progress = ExtResource("19_a5bm7")
+texture_progress_offset = Vector2(12, 0)
+
 [node name="ItemSlotContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=526615491]
 layout_mode = 2
 
