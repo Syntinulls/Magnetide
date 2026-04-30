@@ -1,22 +1,25 @@
-[gd_scene load_steps=15 format=3 uid="uid://c8qj2ks8d0w1x"]
+[gd_scene format=3 uid="uid://c8qj2ks8d0w1x"]
 
 [ext_resource type="Script" uid="uid://be85jd8hol6ol" path="res://_project/app/screens/station_screen.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b8rsmplore4d8" path="res://_project/player/sprites/guy.png" id="2_player"]
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="3_ship"]
+[ext_resource type="Texture2D" uid="uid://blxkpy17kvix2" path="res://_project/ui/sprites/ui_icon_weapon.png" id="4_ghalh"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="4_rifle"]
 [ext_resource type="Texture2D" uid="uid://d1ly2sv5d6n6q" path="res://_project/player/equipment/player_item_magnet.png" id="5_magnet"]
 [ext_resource type="Texture2D" uid="uid://boxg8omke0fl7" path="res://_project/items/sprites/part_gear.png" id="6_gear"]
 [ext_resource type="Texture2D" uid="uid://bm60dsyc5rlug" path="res://_project/ui/sprites/ui_icon_galaxy.png" id="7_galaxy_icon"]
+[ext_resource type="Texture2D" uid="uid://cwqup4dtbiojs" path="res://_project/ui/sprites/ui_icon_magnet.png" id="7_pln3h"]
 [ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/ui/sprites/ui_icon_health.png" id="8_health_icon"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="9_shield_icon"]
 [ext_resource type="Texture2D" uid="uid://doqyin1wwyeju" path="res://_project/ui/sprites/ui_icon_upgrade.png" id="10_upgrade_icon"]
-[ext_resource type="Script" path="res://_project/player/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
+[ext_resource type="Script" uid="uid://poj3ou2ycfhc" path="res://_project/player/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
+[ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/ui/sprites/ui_icon_ship.png" id="12_4e5bg"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="12_rifle_data"]
+[ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/ui/sprites/ui_icon_player.png" id="14_h7pqf"]
 
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_equipment_catalog_entry")
 equipment_data = ExtResource("12_rifle_data")
-locked = false
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -71,43 +74,19 @@ offset_right = 2560.0
 offset_bottom = 816.0
 color = Color(0.72, 0.78, 0.86, 0.75)
 
-[node name="TopBar" type="Control" parent="." unique_id=482022141]
-anchors_preset = 0
-offset_right = 2560.0
-offset_bottom = 180.0
-
-[node name="MenuButton" type="Button" parent="TopBar" unique_id=1838080946]
-custom_minimum_size = Vector2(160, 60)
-layout_mode = 0
-offset_left = 24.0
-offset_top = 24.0
-offset_right = 184.0
-offset_bottom = 84.0
-text = "Menu"
-
-[node name="MapButton" type="Button" parent="TopBar" unique_id=610011860]
-custom_minimum_size = Vector2(150, 150)
-layout_mode = 0
-offset_left = 1205.0
-offset_top = 18.0
-offset_right = 1355.0
-offset_bottom = 168.0
-icon = ExtResource("7_galaxy_icon")
-expand_icon = true
-
 [node name="UpgradeLayer" type="Control" parent="PageViewport/PageContainer/PlayerPage" unique_id=555834022]
 anchors_preset = 0
 offset_right = 2560.0
 offset_bottom = 810.0
 
 [node name="LeftUpgradeGroup" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=1748560142]
-anchors_preset = 0
+layout_mode = 0
 offset_left = 442.0
 offset_top = 335.0
 offset_right = 1000.0
 offset_bottom = 660.0
 
-[node name="RowStack" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup"]
+[node name="RowStack" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup" unique_id=2122133003]
 layout_mode = 2
 theme_override_constants/separation = 55
 
@@ -116,11 +95,16 @@ custom_minimum_size = Vector2(538, 130)
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="WeaponCategoryIcon" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow" unique_id=1068407706]
+[node name="CategorySpacer" type="Control" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow" unique_id=575897232]
 custom_minimum_size = Vector2(110, 110)
 layout_mode = 2
 size_flags_vertical = 4
-texture = ExtResource("4_rifle")
+
+[node name="WeaponCategoryIcon" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow" unique_id=1068407706]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("4_ghalh")
 expand_mode = 1
 stretch_mode = 5
 
@@ -154,7 +138,7 @@ layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow"]
+[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow" unique_id=1873208663]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
@@ -172,10 +156,18 @@ custom_minimum_size = Vector2(538, 130)
 layout_mode = 2
 theme_override_constants/separation = 18
 
-[node name="CategorySpacer" type="Control" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow"]
+[node name="CategorySpacer" type="Control" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow" unique_id=1166473060]
 custom_minimum_size = Vector2(110, 110)
 layout_mode = 2
 size_flags_vertical = 4
+
+[node name="WeaponCategoryIcon" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow" unique_id=1399111957]
+custom_minimum_size = Vector2(64, 64)
+layout_mode = 2
+size_flags_vertical = 4
+texture = ExtResource("7_pln3h")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="EquipmentButton" type="Button" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow" unique_id=355245654]
 custom_minimum_size = Vector2(140, 120)
@@ -207,7 +199,7 @@ layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow"]
+[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow" unique_id=1331853792]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
@@ -231,7 +223,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="RightUpgradeGroup" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=803900801]
-anchors_preset = 0
+layout_mode = 0
 offset_left = 1580.0
 offset_top = 335.0
 offset_right = 1990.0
@@ -267,13 +259,13 @@ layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick4" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow"]
+[node name="Tick4" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow" unique_id=713631846]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow"]
+[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow" unique_id=1430912045]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
@@ -315,13 +307,13 @@ layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick4" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow"]
+[node name="Tick4" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow" unique_id=192464440]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
 color = Color(0.35, 0.4, 0.5, 1)
 
-[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow"]
+[node name="Tick5" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow" unique_id=1885855136]
 custom_minimum_size = Vector2(20, 50)
 layout_mode = 2
 size_flags_vertical = 4
@@ -342,7 +334,7 @@ offset_top = 545.0
 offset_right = 2520.0
 offset_bottom = 670.0
 text = "SHIP"
-icon = ExtResource("3_ship")
+icon = ExtResource("12_4e5bg")
 expand_icon = true
 
 [node name="UpgradeCostPopup" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=678031034]
@@ -474,6 +466,72 @@ text = "RARITY: COMMON
 DAMAGE: 12
 FIRE RATE: 4.0 / S"
 
+[node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
+anchors_preset = 0
+offset_left = 2560.0
+offset_right = 5120.0
+offset_bottom = 1440.0
+
+[node name="StageGlow" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=566812811]
+layout_mode = 0
+offset_left = 760.0
+offset_top = 245.0
+offset_right = 1800.0
+offset_bottom = 760.0
+color = Color(0.117647, 0.14902, 0.196078, 0.45)
+
+[node name="GroundLine" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=278510309]
+layout_mode = 0
+offset_top = 810.0
+offset_right = 2560.0
+offset_bottom = 816.0
+color = Color(0.72, 0.78, 0.86, 0.75)
+
+[node name="ShipSprite" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=833998602]
+layout_mode = 0
+offset_left = 910.0
+offset_top = 445.0
+offset_right = 1650.0
+offset_bottom = 710.0
+texture = ExtResource("3_ship")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]
+custom_minimum_size = Vector2(200, 125)
+layout_mode = 0
+offset_left = 40.0
+offset_top = 545.0
+offset_right = 240.0
+offset_bottom = 670.0
+text = "PLAYER"
+icon = ExtResource("14_h7pqf")
+expand_icon = true
+
+[node name="TopBar" type="Control" parent="." unique_id=482022141]
+anchors_preset = 0
+offset_right = 2560.0
+offset_bottom = 180.0
+
+[node name="MenuButton" type="Button" parent="TopBar" unique_id=1838080946]
+custom_minimum_size = Vector2(160, 60)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 184.0
+offset_bottom = 84.0
+text = "Menu"
+
+[node name="MapButton" type="Button" parent="TopBar" unique_id=610011860]
+custom_minimum_size = Vector2(150, 150)
+layout_mode = 0
+offset_left = 1205.0
+offset_top = 18.0
+offset_right = 1355.0
+offset_bottom = 168.0
+icon = ExtResource("7_galaxy_icon")
+expand_icon = true
+
 [node name="SharedBottomArea" type="Control" parent="." unique_id=1392624137]
 anchors_preset = 0
 offset_top = 840.0
@@ -580,45 +638,3 @@ offset_top = 24.0
 offset_right = 622.0
 offset_bottom = 535.0
 color = Color(0.8, 0.86, 0.95, 0.45)
-
-[node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
-anchors_preset = 0
-offset_left = 2560.0
-offset_right = 5120.0
-offset_bottom = 1440.0
-
-[node name="StageGlow" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=566812811]
-layout_mode = 0
-offset_left = 760.0
-offset_top = 245.0
-offset_right = 1800.0
-offset_bottom = 760.0
-color = Color(0.117647, 0.14902, 0.196078, 0.45)
-
-[node name="GroundLine" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=278510309]
-layout_mode = 0
-offset_top = 810.0
-offset_right = 2560.0
-offset_bottom = 816.0
-color = Color(0.72, 0.78, 0.86, 0.75)
-
-[node name="ShipSprite" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=833998602]
-layout_mode = 0
-offset_left = 910.0
-offset_top = 445.0
-offset_right = 1650.0
-offset_bottom = 710.0
-texture = ExtResource("3_ship")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]
-custom_minimum_size = Vector2(200, 125)
-layout_mode = 0
-offset_left = 40.0
-offset_top = 545.0
-offset_right = 240.0
-offset_bottom = 670.0
-text = "PLAYER"
-icon = ExtResource("2_player")
-expand_icon = true
