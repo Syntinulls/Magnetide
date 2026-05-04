@@ -1,7 +1,7 @@
 extends Control
 class_name StationScreen
 
-signal start_requested
+signal map_requested
 signal main_menu_requested
 
 const StorageSlotScene := preload("res://_project/app/screens/station_storage_slot.tscn")
@@ -139,6 +139,8 @@ func _layout_pages() -> void:
 	_ship_page.size = page_size
 	_ship_page.position = Vector2(page_size.x, 0.0)
 	_page_container.position = Vector2(-page_size.x * _current_page_index, 0.0)
+	if _weapon_popup != null and _weapon_popup.visible:
+		_position_weapon_popup()
 
 
 func _connect_upgrade_button(button: Button, upgrade_id: StringName) -> void:
@@ -178,7 +180,7 @@ func _hide_upgrade_cost_popup() -> void:
 
 
 func _on_map_pressed() -> void:
-	start_requested.emit()
+	map_requested.emit()
 
 
 func _on_menu_pressed() -> void:
@@ -246,6 +248,7 @@ func _toggle_weapon_popup() -> void:
 	if should_show:
 		_hide_upgrade_cost_popup()
 		_hide_storage_detail()
+		_position_weapon_popup()
 		_populate_weapon_list()
 		_refresh_current_weapon_stats()
 
@@ -253,6 +256,15 @@ func _toggle_weapon_popup() -> void:
 func _close_weapon_popup() -> void:
 	_weapon_popup.visible = false
 	_weapon_popup_stats_panel.visible = false
+
+
+func _position_weapon_popup() -> void:
+	if _weapon_popup == null or _weapon_button == null or _player_page == null:
+		return
+
+	var button_rect := _weapon_button.get_global_rect()
+	var page_rect := _player_page.get_global_rect()
+	_weapon_popup.position = button_rect.position - page_rect.position
 
 
 func _show_weapon_stats(entry: Resource) -> void:

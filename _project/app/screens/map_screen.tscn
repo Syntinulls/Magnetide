@@ -1,0 +1,335 @@
+[gd_scene load_steps=11 format=3]
+
+[ext_resource type="Script" path="res://_project/app/screens/map_screen.gd" id="1_script"]
+[ext_resource type="Script" path="res://_project/app/screens/map_level_entry.gd" id="2_map_level_entry"]
+[ext_resource type="Script" path="res://_project/app/level_definition.gd" id="3_level_definition"]
+[ext_resource type="PackedScene" path="res://_project/level/level.tscn" id="4_level_scene"]
+[ext_resource type="Texture2D" path="res://_project/level/decoration/sprites/trash_mountain_2_crop1.png" id="5_banner"]
+[ext_resource type="Texture2D" path="res://_project/level/threat/sprites/threat_0_color.png" id="6_threat_color"]
+[ext_resource type="Texture2D" path="res://_project/level/threat/sprites/threat_0_shape.png" id="7_threat_shape"]
+
+[sub_resource type="Resource" id="Resource_wasteland_definition"]
+script = ExtResource("3_level_definition")
+level_id = &"wasteland"
+display_name = "Wasteland"
+level_scene = ExtResource("4_level_scene")
+
+[sub_resource type="Resource" id="Resource_wasteland_entry"]
+script = ExtResource("2_map_level_entry")
+level_definition = SubResource("Resource_wasteland_definition")
+banner_texture = ExtResource("5_banner")
+threat_icons = 1
+
+[sub_resource type="Resource" id="Resource_locked_entry_1"]
+script = ExtResource("2_map_level_entry")
+display_name_override = "???"
+banner_texture = ExtResource("5_banner")
+threat_icons = 2
+locked = true
+
+[sub_resource type="Resource" id="Resource_locked_entry_2"]
+script = ExtResource("2_map_level_entry")
+display_name_override = "???"
+banner_texture = ExtResource("5_banner")
+threat_icons = 3
+locked = true
+
+[node name="MapScreen" type="Control"]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+levels = Array[Resource]([SubResource("Resource_wasteland_entry"), SubResource("Resource_locked_entry_1"), SubResource("Resource_locked_entry_2")])
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.0470588, 0.0588235, 0.0862745, 1)
+
+[node name="StageGlow" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -760.0
+offset_top = -420.0
+offset_right = 760.0
+offset_bottom = 390.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.117647, 0.14902, 0.196078, 0.46)
+
+[node name="TopBar" type="Control" parent="."]
+layout_mode = 0
+offset_right = 2560.0
+offset_bottom = 160.0
+
+[node name="BackButton" type="Button" parent="TopBar"]
+custom_minimum_size = Vector2(170, 60)
+layout_mode = 0
+offset_left = 24.0
+offset_top = 24.0
+offset_right = 194.0
+offset_bottom = 84.0
+text = "Back"
+
+[node name="TitleLabel" type="Label" parent="TopBar"]
+layout_mode = 0
+offset_left = 760.0
+offset_top = 30.0
+offset_right = 1800.0
+offset_bottom = 100.0
+theme_override_font_sizes/font_size = 42
+text = "SELECT DESTINATION"
+horizontal_alignment = 1
+
+[node name="Carousel" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="PreviousButton" type="Button" parent="Carousel"]
+custom_minimum_size = Vector2(180, 180)
+layout_mode = 0
+offset_left = 645.0
+offset_top = 600.0
+offset_right = 825.0
+offset_bottom = 780.0
+disabled = true
+theme_override_font_sizes/font_size = 78
+text = "<"
+
+[node name="NextButton" type="Button" parent="Carousel"]
+custom_minimum_size = Vector2(180, 180)
+layout_mode = 0
+offset_left = 1735.0
+offset_top = 600.0
+offset_right = 1915.0
+offset_bottom = 780.0
+disabled = true
+theme_override_font_sizes/font_size = 78
+text = ">"
+
+[node name="BannerFrame" type="ColorRect" parent="Carousel"]
+clip_contents = true
+layout_mode = 0
+offset_left = 966.0
+offset_top = 230.0
+offset_right = 1594.0
+offset_bottom = 1150.0
+color = Color(0.09, 0.12, 0.17, 0.96)
+
+[node name="BannerTexture" type="TextureRect" parent="Carousel/BannerFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("5_banner")
+expand_mode = 1
+stretch_mode = 6
+
+[node name="BannerShade" type="ColorRect" parent="Carousel/BannerFrame"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.027, 0.038, 0.36)
+
+[node name="LowerBand" type="ColorRect" parent="Carousel/BannerFrame"]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = -210.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 0
+color = Color(0.02, 0.027, 0.038, 0.72)
+
+[node name="LevelNameLabel" type="Label" parent="Carousel/BannerFrame"]
+layout_mode = 1
+anchors_preset = 2
+anchor_top = 1.0
+anchor_bottom = 1.0
+offset_left = 42.0
+offset_top = -190.0
+offset_right = 326.0
+offset_bottom = -112.0
+grow_vertical = 0
+theme_override_font_sizes/font_size = 52
+text = "Wasteland"
+
+[node name="ThreatBlock" type="HBoxContainer" parent="Carousel/BannerFrame"]
+layout_mode = 1
+anchors_preset = 3
+anchor_left = 1.0
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = -300.0
+offset_top = -130.0
+offset_right = -40.0
+offset_bottom = -62.0
+grow_horizontal = 0
+grow_vertical = 0
+theme_override_constants/separation = 12
+alignment = 2
+
+[node name="ThreatLabel" type="Label" parent="Carousel/BannerFrame/ThreatBlock"]
+custom_minimum_size = Vector2(78, 62)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_font_sizes/font_size = 22
+text = "THREAT"
+vertical_alignment = 1
+
+[node name="ThreatIcons" type="HBoxContainer" parent="Carousel/BannerFrame/ThreatBlock"]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Icon1" type="Control" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+
+[node name="Color" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_threat_color")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Shape" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon1"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("7_threat_shape")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Icon2" type="Control" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+
+[node name="Color" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_threat_color")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Shape" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon2"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("7_threat_shape")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Icon3" type="Control" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons"]
+custom_minimum_size = Vector2(46, 46)
+layout_mode = 2
+
+[node name="Color" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("6_threat_color")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Shape" type="TextureRect" parent="Carousel/BannerFrame/ThreatBlock/ThreatIcons/Icon3"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("7_threat_shape")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="LockedOverlay" type="ColorRect" parent="Carousel/BannerFrame"]
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 16.0
+offset_top = 16.0
+offset_right = -16.0
+offset_bottom = -16.0
+grow_horizontal = 2
+grow_vertical = 2
+color = Color(0.02, 0.027, 0.038, 0.58)
+
+[node name="LockedLabel" type="Label" parent="Carousel/BannerFrame/LockedOverlay"]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -240.0
+offset_top = -48.0
+offset_right = 240.0
+offset_bottom = 48.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_font_sizes/font_size = 54
+text = "LOCKED"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="DeployButton" type="Button" parent="."]
+custom_minimum_size = Vector2(440, 96)
+layout_mode = 0
+offset_left = 1060.0
+offset_top = 1212.0
+offset_right = 1500.0
+offset_bottom = 1308.0
+theme_override_font_sizes/font_size = 42
+text = "Deploy"

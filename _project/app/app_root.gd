@@ -8,6 +8,7 @@ const AppSaveDataScript := preload("res://_project/app/app_save_data.gd")
 @export var default_run_loadout: RunLoadout
 @export var main_menu_scene: PackedScene
 @export var station_screen_scene: PackedScene
+@export var map_screen_scene: PackedScene
 @export var salvage_process_scene: PackedScene
 
 var _active_screen: Control = null
@@ -84,10 +85,23 @@ func _show_station_screen() -> void:
 		screen.set_save_data(_save_data)
 	elif screen.has_method("set_run_loadout"):
 		screen.set_run_loadout(_get_current_run_loadout())
-	if screen.has_signal("start_requested"):
-		screen.start_requested.connect(_on_station_start_requested)
+	if screen.has_signal("map_requested"):
+		screen.map_requested.connect(_on_station_map_requested)
 	if screen.has_signal("main_menu_requested"):
 		screen.main_menu_requested.connect(_on_station_main_menu_requested)
+
+
+func _show_map_screen() -> void:
+	_clear_run()
+	var screen := _show_screen(map_screen_scene)
+	if screen == null:
+		return
+	if screen.has_method("set_default_level"):
+		screen.set_default_level(default_level)
+	if screen.has_signal("start_requested"):
+		screen.start_requested.connect(_on_map_start_requested)
+	if screen.has_signal("station_requested"):
+		screen.station_requested.connect(_on_map_station_requested)
 
 
 func _show_salvage_process_screen(result: RunResult) -> void:
@@ -150,12 +164,20 @@ func _on_main_menu_continue_requested() -> void:
 	_show_station_screen()
 
 
-func _on_station_start_requested() -> void:
-	start_run(default_level, _get_current_run_loadout())
+func _on_station_map_requested() -> void:
+	_show_map_screen()
 
 
 func _on_station_main_menu_requested() -> void:
 	_show_main_menu()
+
+
+func _on_map_start_requested(level_definition: LevelDefinition) -> void:
+	start_run(level_definition, _get_current_run_loadout())
+
+
+func _on_map_station_requested() -> void:
+	_show_station_screen()
 
 
 func _on_salvage_screen_start_requested() -> void:
