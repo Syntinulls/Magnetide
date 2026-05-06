@@ -3,7 +3,10 @@ class_name RunController
 
 signal run_finished(result: RunResult)
 
-const DEBUG_EXTRA_SALVAGE_ITEM: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/items/resources/tire.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_3: SalvageItemData = preload("res://_project/items/resources/xray_machine.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_4: SalvageItemData = preload("res://_project/items/resources/portable_reactor.tres")
 
 var _level_definition: LevelDefinition = null
 var _level: Node = null
@@ -126,9 +129,15 @@ func _build_result() -> RunResult:
 		result.salvage_items_collected = _ship.get_stored_item_count()
 		result.stored_loot = _ship.get_stored_loot_payload()
 
-	if DEBUG_EXTRA_SALVAGE_ITEM != null:
-		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM)
-		result.salvage_items_collected += 1
+	if DEBUG_EXTRA_SALVAGE_ITEM_1 != null and \
+		DEBUG_EXTRA_SALVAGE_ITEM_2 != null and \
+		DEBUG_EXTRA_SALVAGE_ITEM_3 != null and \
+		DEBUG_EXTRA_SALVAGE_ITEM_4 != null:
+		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_1)
+		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_2)
+		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_3)
+		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_4)
+		result.salvage_items_collected += 4
 
 	return result
 

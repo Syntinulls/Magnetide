@@ -2,11 +2,11 @@ extends Control
 class_name ThreatUI
 
 const LEVEL_COLORS: Array[Color] = [
-	Color("9bff63"),  # 0
-	Color("ffee63"),  # 1
-	Color("ffba74"),  # 2
-	Color("ff7c7c"),  # 3
-	Color("be7cff"),  # 4
+	Color("f0d23c"),  # 0
+	Color("e6964b"),  # 1
+	Color("d75555"),  # 2
+	Color("cd5abe"),  # 3
+	Color("785fbe"),  # 4
 ]
 
 @onready var _bar: TextureProgressBar = $Bar
@@ -25,6 +25,7 @@ func _ready() -> void:
 	_ticker_bottom_y = half_height + offset_y
 	_ticker_top_y = -half_height + offset_y
 	_bar.max_value = ThreatManager.MAX_THREAT
+	_update_icons()
 	_update_bar_color()
 	_update_display(0.0)
 	call_deferred("_connect_threat_manager")
@@ -45,6 +46,12 @@ func _on_threat_level_changed(new_level: int) -> void:
 	_current_level = new_level
 	_update_bar_color()
 
+func _update_icons():
+	var idx = 0
+	for child in $Icons.get_children():
+		var icon_color: Sprite2D = child.get_child(0)
+		icon_color.modulate = LEVEL_COLORS[idx]
+		idx += 1
 
 func _update_bar_color() -> void:
 	if _bar:

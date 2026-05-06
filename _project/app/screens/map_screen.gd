@@ -11,7 +11,9 @@ const LOCKED_BANNER_MODULATE := Color(0.62, 0.66, 0.72, 0.72)
 const UNLOCKED_BANNER_MODULATE := Color.WHITE
 const CURRENT_CARD_MODULATE := Color.WHITE
 const SIDE_CARD_MODULATE := Color(0.38, 0.42, 0.5, 0.72)
-const THREAT_FULL_COLOR := Color("9bff63")
+const THREAT_1_COLOR := Color("f0d23c")
+const THREAT_2_COLOR := Color("d75555")
+const THREAT_3_COLOR := Color("785fbe")
 const THREAT_EMPTY_COLOR := Color(1.0, 1.0, 1.0, 0.86)
 const SIDE_CARD_SCALE := 0.78
 
@@ -361,7 +363,14 @@ func _set_threat_icons(threat_icons: HBoxContainer, active_count: int) -> void:
 
 		if color_icon:
 			color_icon.visible = true
-			color_icon.modulate = THREAT_FULL_COLOR if is_active else THREAT_EMPTY_COLOR
+			if active_count == 1:
+				color_icon.modulate = THREAT_1_COLOR if is_active else THREAT_EMPTY_COLOR
+			elif active_count == 2:
+				color_icon.modulate = THREAT_2_COLOR if is_active else THREAT_EMPTY_COLOR
+			elif active_count == 3:
+				color_icon.modulate = THREAT_3_COLOR if is_active else THREAT_EMPTY_COLOR
+			else:
+				color_icon.modulate = THREAT_EMPTY_COLOR
 		if shape_icon:
 			shape_icon.visible = is_active
 			shape_icon.modulate = Color.WHITE

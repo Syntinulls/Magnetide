@@ -16,10 +16,10 @@ const ITEM_RARITY_WEIGHTS := {
 }
 
 const ITEM_RARITY_COLORS := {
-	ItemRarity.COMMON: Color(0.0, 0.8, 0.0),
-	ItemRarity.RARE: Color(0.2, 0.4, 1.0),
-	ItemRarity.EPIC: Color(0.6, 0.2, 0.8),
-	ItemRarity.LEGENDARY: Color(1.0, 0.85, 0.0),
+	ItemRarity.COMMON: Color("5af03c"),
+	ItemRarity.RARE: Color("7ebaff"),
+	ItemRarity.EPIC: Color("e17dff"),
+	ItemRarity.LEGENDARY: Color("f0d23c"),
 }
 
 # =============================================================================

@@ -24,9 +24,9 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 ## Initial speed of cog as ratio of bar width per second.
 @export var cog_initial_speed_ratio: float = 0.05
 ## Maximum speed of cog as ratio of bar width per second.
-@export var cog_max_speed_ratio: float = 0.4
+@export var cog_max_speed_ratio: float = 0.25
 ## Time to accelerate from initial to max speed.
-@export var cog_accel_time: float = 3.0
+@export var cog_accel_time: float = 1.5
 
 @export_group("Guide Layout")
 ## Pixel gap between the top of the bar and the chevron guide.
@@ -36,9 +36,9 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 
 @export_group("Scoring")
 ## Distance threshold for green (perfect) hit as ratio of bar width.
-@export var green_threshold_ratio: float = 0.03
+@export var green_threshold_ratio: float = 0.04
 ## Distance threshold for yellow (good) hit as ratio of bar width.
-@export var yellow_threshold_ratio: float = 0.05
+@export var yellow_threshold_ratio: float = 0.08
 ## Number of yellow markers allowed per rarity (COMMON, RARE, EPIC, LEGENDARY).
 @export var allowed_yellows: Array[int] = [2, 1, 1, 0]
 ## Number of markers per rarity (COMMON, RARE, EPIC, LEGENDARY).

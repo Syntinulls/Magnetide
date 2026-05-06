@@ -4,7 +4,8 @@
 
 [node name="MagnetMinigame" type="Node2D" unique_id=1609762701]
 script = ExtResource("1_script")
-activation_zoom = 2.0
+activation_zoom = 2.5
+zoom_offset = Vector2(0, -150)
 vignette_intensity = 0.8
 
 [node name="CooldownTimer" type="Timer" parent="." unique_id=402845569]

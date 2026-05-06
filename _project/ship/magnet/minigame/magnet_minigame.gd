@@ -54,6 +54,7 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 @export var activation_zoom: float = 1.5
 ## Time to zoom in/out.
 @export var zoom_tween_time: float = 0.5
+@export var zoom_offset: Vector2
 ## Vignette/darkening intensity during activation (0-1).
 @export var vignette_intensity: float = 0.6
 @export_group("Scene References")
@@ -567,7 +568,7 @@ func _start_activation_effects() -> void:
 		
 		_offset_tween = create_tween()
 		_offset_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-		_offset_tween.tween_property(_camera, "offset", target_offset, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		_offset_tween.tween_property(_camera, "offset", target_offset + zoom_offset, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
 	
 	# Fade in vignette + grayscale shader effect
 	if _vignette_overlay and _vignette_overlay.material:
