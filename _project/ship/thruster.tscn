@@ -1,0 +1,70 @@
+[gd_scene format=3 uid="uid://d4nnmhac6tp0q"]
+
+[ext_resource type="Texture2D" uid="uid://bt1kxetgjhge2" path="res://_project/ship/sprites/ship_thruster_effect_1_loop.png" id="1_mjibk"]
+[ext_resource type="Script" uid="uid://bm8crf5mswgbr" path="res://_project/ship/thruster.gd" id="1_x1vb2"]
+[ext_resource type="Texture2D" uid="uid://crgxls4sd11k" path="res://_project/ship/sprites/ship_thruster_effect_1_start.png" id="2_x1vb2"]
+[ext_resource type="Texture2D" uid="uid://wnbv58viosrx" path="res://_project/ship/sprites/ship_thruster.png" id="3_y8bgj"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_j282s"]
+atlas = ExtResource("1_mjibk")
+region = Rect2(0, 0, 144, 288)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_4ch07"]
+atlas = ExtResource("1_mjibk")
+region = Rect2(144, 0, 144, 288)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_abrqp"]
+atlas = ExtResource("2_x1vb2")
+region = Rect2(0, 0, 144, 288)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_euufb"]
+atlas = ExtResource("2_x1vb2")
+region = Rect2(144, 0, 144, 288)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_7hrym"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_j282s")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_4ch07")
+}],
+"loop": true,
+"name": &"loop_1",
+"speed": 10.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"loop_2",
+"speed": 5.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_abrqp")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_euufb")
+}],
+"loop": false,
+"name": &"start_1",
+"speed": 10.0
+}, {
+"frames": [],
+"loop": true,
+"name": &"start_2",
+"speed": 5.0
+}]
+
+[node name="Thruster" type="Node2D" unique_id=788938685]
+script = ExtResource("1_x1vb2")
+
+[node name="PlumeAnimation" type="AnimatedSprite2D" parent="." unique_id=580565471]
+position = Vector2(0, 72)
+sprite_frames = SubResource("SpriteFrames_7hrym")
+animation = &"loop_1"
+autoplay = "loop_1"
+frame_progress = 0.18115473
+
+[node name="ThrusterSprite" type="Sprite2D" parent="." unique_id=1981949889]
+texture = ExtResource("3_y8bgj")

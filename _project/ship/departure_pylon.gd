@@ -12,7 +12,6 @@ var _hold_elapsed: float = 0.0
 var _progress_popup: HoldProgressPopup = null
 
 @onready var _ui_anchor: Node2D = $UIAnchor
-@onready var _body: Polygon2D = $Body
 
 
 func _ready() -> void:
@@ -88,8 +87,7 @@ func _cancel_hold() -> void:
 
 
 func _set_highlight(active: bool) -> void:
-	if _body:
-		_body.color = Color(1.0, 0.8, 0.3, 1.0) if active else Color(0.6, 0.9, 1.0, 1.0)
+	pass
 
 
 func _on_body_entered(body: Node2D) -> void:

@@ -5,21 +5,34 @@
 [ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="2_fore"]
 [ext_resource type="PackedScene" uid="uid://d3mmmb0dgd71p" path="res://_project/ship/magnet/magnet_lever.tscn" id="3_lever"]
 [ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="4_magnet"]
-[ext_resource type="PackedScene" path="res://_project/ship/departure_pylon.tscn" id="5_departure_pylon"]
+[ext_resource type="PackedScene" uid="uid://cbjj3u6hbmydw" path="res://_project/ship/departure_pylon.tscn" id="5_departure_pylon"]
+[ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/ship_ff_gens.png" id="5_my72g"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="6_dbcm7"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/enemies/enemy_target_point.gd" id="7_r6cvl"]
+[ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="10_dbkfd"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_dbkfd"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("5_my72g")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
 size = Vector2(40, 497)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_right"]
-size = Vector2(44, 497)
+size = Vector2(41, 497)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_back"]
-size = Vector2(760, 40)
+size = Vector2(809, 40)
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_front"]
-size = Vector2(760, 40)
+size = Vector2(809, 40)
 
 [node name="Ship" type="Node2D" unique_id=1033807799]
 script = ExtResource("1_ship_script")
@@ -28,7 +41,7 @@ script = ExtResource("1_ship_script")
 position = Vector2(0, 136)
 hold_capacity = 5
 
-[node name="StoredSalvageItems" type="Node2D" parent="."]
+[node name="StoredSalvageItems" type="Node2D" parent="." unique_id=1915771884]
 y_sort_enabled = true
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
@@ -37,39 +50,46 @@ texture = ExtResource("1_back")
 [node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
 texture = ExtResource("2_fore")
 
+[node name="ShipGens" type="AnimatedSprite2D" parent="." unique_id=426583781]
+position = Vector2(0, -108)
+sprite_frames = SubResource("SpriteFrames_dbkfd")
+
 [node name="Boundaries" type="StaticBody2D" parent="." unique_id=762309736]
 visible = false
 position = Vector2(0, -237)
 
 [node name="LeftWall" type="CollisionShape2D" parent="Boundaries" unique_id=335042251]
-position = Vector2(-400, -48.5)
+position = Vector2(-426, -48.5)
 shape = SubResource("RectangleShape2D_left")
 
 [node name="RightWall" type="CollisionShape2D" parent="Boundaries" unique_id=859780882]
-position = Vector2(402, -48.5)
+position = Vector2(423.5, -48.5)
 shape = SubResource("RectangleShape2D_right")
 
 [node name="Ceiling" type="CollisionShape2D" parent="Boundaries" unique_id=1784236965]
-position = Vector2(0, -277)
+position = Vector2(-1.5, -277)
 shape = SubResource("RectangleShape2D_back")
 
 [node name="Floor" type="CollisionShape2D" parent="Boundaries" unique_id=453568164]
-position = Vector2(0, 180)
+position = Vector2(-1.5, 180)
 shape = SubResource("RectangleShape2D_front")
 
 [node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
 position = Vector2(0, -77)
 
-[node name="DeparturePylonLeft" parent="." instance=ExtResource("5_departure_pylon")]
-position = Vector2(-348, -126)
+[node name="DeparturePylonLeft" parent="." unique_id=1436115027 instance=ExtResource("5_departure_pylon")]
+visible = false
+position = Vector2(-398.19, -126)
 
-[node name="DeparturePylonRight" parent="." instance=ExtResource("5_departure_pylon")]
-position = Vector2(348, -126)
+[node name="DeparturePylonRight" parent="." unique_id=2049166863 instance=ExtResource("5_departure_pylon")]
+visible = false
+position = Vector2(396.58, -126)
 
 [node name="ActivationMinigameAnchor" type="Marker2D" parent="." unique_id=143007536]
 position = Vector2(0, -350)
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=65635393]
+visible = false
 script = ExtResource("6_dbcm7")
 owner_path = NodePath("..")
 
@@ -113,3 +133,9 @@ position = Vector2(160, 120)
 script = ExtResource("7_r6cvl")
 target_root_path = NodePath("../..")
 metadata/_custom_type_script = "uid://bqv3p643kd7me"
+
+[node name="ThrusterLeft" parent="." unique_id=788938685 instance=ExtResource("10_dbkfd")]
+position = Vector2(-333, 23)
+
+[node name="ThrusterRight" parent="." unique_id=906541704 instance=ExtResource("10_dbkfd")]
+position = Vector2(333, 23)

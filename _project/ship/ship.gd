@@ -4,6 +4,8 @@ class_name Ship
 signal item_stored(item: SalvageItem)
 signal destroyed
 
+enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
+
 ## Size of the full storage area (clickable zone extending upward from floor).
 @export var storage_area_size: Vector2 = Vector2(400, 250)
 ## Position of the storage area bottom-center relative to ship (floor level).
@@ -15,6 +17,12 @@ signal destroyed
 @export_group("Combat")
 @export var max_health: float = 250.0
 @export var ship_status_ui_path: NodePath
+@export_group("Thrusters")
+@export var auto_update_thrusters: bool = true
+@export var thruster_moving_speed_ratio_threshold: float = 0.15
+@export var thruster_near_stop_speed_ratio_threshold: float = 0.25
+@export var thruster_near_stop_left_lead: float = 0.35
+@export var thruster_speed_change_epsilon: float = 1.0
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
@@ -25,8 +33,13 @@ var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
 var _stored_salvage_items_root: Node2D = null
 var current_health: float = 0.0
+var _thruster_state: ThrusterState = ThrusterState.STOPPED
+var _thruster_reference_speed: float = 0.0
+var _last_level_speed: float = -1.0
 
 @onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
+@onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
+@onready var _thruster_right: Thruster = $ThrusterRight as Thruster
 
 var stored_items: Array[SalvageItem]:
 	get:
@@ -38,6 +51,12 @@ func _ready() -> void:
 	_ensure_storage_items_root()
 	_create_storage_zone()
 	call_deferred("_update_storage_weight_ui")
+	call_deferred("_initialize_thrusters")
+
+
+func _process(_delta: float) -> void:
+	if auto_update_thrusters:
+		_update_thrusters_from_level_speed()
 
 
 func apply_run_loadout(loadout: RunLoadout) -> void:
@@ -52,6 +71,23 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
 	if _ship_status_ui:
 		_update_storage_weight_ui()
+
+
+func set_thrusters_auto_update(enabled: bool) -> void:
+	auto_update_thrusters = enabled
+	if enabled:
+		_last_level_speed = -1.0
+		_update_thrusters_from_level_speed()
+
+
+func set_thruster_state(state: ThrusterState) -> void:
+	auto_update_thrusters = false
+	_apply_thruster_state(state)
+
+
+func refresh_thrusters_from_level_speed() -> void:
+	_last_level_speed = -1.0
+	_update_thrusters_from_level_speed()
 
 
 func _create_storage_zone() -> void:
@@ -222,6 +258,85 @@ func get_storage_items_root() -> Node2D:
 func _get_item_weight(item: SalvageItem) -> float:
 	if item and item.item_data:
 		return item.item_data.weight
+	return 0.0
+
+
+func _initialize_thrusters() -> void:
+	_thruster_reference_speed = maxf(_get_level_speed(), 0.0)
+	_update_thrusters_from_level_speed()
+
+
+func _update_thrusters_from_level_speed() -> void:
+	if _thruster_left == null or _thruster_right == null:
+		return
+
+	var speed := maxf(_get_level_speed(), 0.0)
+	if speed > _thruster_reference_speed:
+		_thruster_reference_speed = speed
+
+	var reference_speed := maxf(_thruster_reference_speed, 1.0)
+	var speed_ratio := speed / reference_speed
+	var next_state := ThrusterState.STOPPED
+	_thruster_left.set_ship_speed_ratio(speed_ratio)
+	_thruster_right.set_ship_speed_ratio(speed_ratio)
+
+	if speed <= thruster_speed_change_epsilon:
+		next_state = ThrusterState.STOPPED
+	elif _last_level_speed >= 0.0 and speed > _last_level_speed + thruster_speed_change_epsilon:
+		next_state = ThrusterState.MOVING
+	elif speed_ratio <= thruster_near_stop_speed_ratio_threshold:
+		next_state = ThrusterState.NEAR_STOPPED
+	elif _last_level_speed >= 0.0 and speed < _last_level_speed - thruster_speed_change_epsilon:
+		next_state = ThrusterState.DECELERATING
+	elif speed_ratio >= thruster_moving_speed_ratio_threshold:
+		next_state = ThrusterState.MOVING
+
+	_last_level_speed = speed
+	_apply_thruster_state(next_state)
+	if next_state == ThrusterState.NEAR_STOPPED:
+		_update_near_stop_thruster_rotation(speed_ratio)
+
+
+func _apply_thruster_state(state: ThrusterState) -> void:
+	if state == _thruster_state:
+		return
+	_thruster_state = state
+
+	match state:
+		ThrusterState.MOVING:
+			_thruster_left.aim_bottom_left()
+			_thruster_right.aim_bottom_left()
+			_thruster_left.set_thrust_level(Thruster.ThrustLevel.HIGH)
+			_thruster_right.set_thrust_level(Thruster.ThrustLevel.HIGH)
+		ThrusterState.DECELERATING:
+			_thruster_left.aim_bottom_right()
+			_thruster_right.aim_bottom_right()
+			_thruster_left.set_thrust_level(Thruster.ThrustLevel.HIGH)
+			_thruster_right.set_thrust_level(Thruster.ThrustLevel.HIGH)
+		ThrusterState.NEAR_STOPPED:
+			_thruster_left.set_thrust_level(Thruster.ThrustLevel.LOW)
+			_thruster_right.set_thrust_level(Thruster.ThrustLevel.HIGH)
+		_:
+			_thruster_left.aim_straight_down()
+			_thruster_right.aim_straight_down()
+			_thruster_left.set_thrust_level(Thruster.ThrustLevel.LOW)
+			_thruster_right.set_thrust_level(Thruster.ThrustLevel.LOW)
+
+
+func _update_near_stop_thruster_rotation(speed_ratio: float) -> void:
+	var stop_progress := 1.0 - clampf(speed_ratio / maxf(thruster_near_stop_speed_ratio_threshold, 0.001), 0.0, 1.0)
+	var left_completion_point := maxf(1.0 - thruster_near_stop_left_lead, 0.001)
+	var left_progress := clampf(stop_progress / left_completion_point, 0.0, 1.0)
+	var left_degrees := lerpf(_thruster_left.bottom_right_degrees, _thruster_left.straight_down_degrees, left_progress)
+	var right_degrees := lerpf(_thruster_right.bottom_right_degrees, _thruster_right.straight_down_degrees, stop_progress)
+	_thruster_left.set_aim_degrees(left_degrees)
+	_thruster_right.set_aim_degrees(right_degrees)
+
+
+func _get_level_speed() -> float:
+	var level := get_parent()
+	if level and "level_speed" in level:
+		return level.level_speed
 	return 0.0
 
 
