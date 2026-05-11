@@ -7,6 +7,18 @@ const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/item
 const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
 const DEBUG_EXTRA_SALVAGE_ITEM_3: SalvageItemData = preload("res://_project/items/resources/xray_machine.tres")
 const DEBUG_EXTRA_SALVAGE_ITEM_4: SalvageItemData = preload("res://_project/items/resources/portable_reactor.tres")
+const DEPARTURE_DECEL_SECONDS: float = 2.25
+const DEPARTURE_RISE_SECONDS: float = 3.0
+const DEPARTURE_BOOST_SECONDS: float = 1.35
+const DEPARTURE_FADE_SECONDS: float = 0.9
+const DEPARTURE_SHIELD_REVEAL_RATIO: float = 0.75
+const DEPARTURE_RISE_VIEWPORT_RATIO: float = 4.5
+const DEPARTURE_CAMERA_LEAD_VIEWPORT_RATIO: float = 0.35
+const DEPARTURE_BOOST_THRUST_START_RATIO: float = 0.9
+const DEPARTURE_BOOST_VIEWPORT_RATIO: float = 7.0
+const DEPARTURE_BOOST_CAMERA_RATIO: float = 0.22
+const DEPARTURE_LEVEL_SPEED_EPSILON: float = 1.0
+const DEPARTURE_PLAYER_WALK_SPEED: float = 180.0
 
 var _level_definition: LevelDefinition = null
 var _level: Node = null
@@ -81,16 +93,22 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 
 	_is_run_ending = true
 	_end_reason = reason
-	_shutdown_gameplay()
+	var departure_start_speed := _get_level_speed()
+	_shutdown_gameplay(reason != RunResult.EndReason.VOLUNTARY_DEPARTURE)
+	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
+		_set_level_speed(departure_start_speed)
 
 	var result := _build_result()
-	call_deferred("_finish_run", result)
+	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
+		call_deferred("_finish_run_after_departure_cutscene", result, departure_start_speed)
+	else:
+		call_deferred("_finish_run", result)
 
 
-func _shutdown_gameplay() -> void:
+func _shutdown_gameplay(stop_player: bool = true) -> void:
 	set_process(false)
 
-	if _player:
+	if _player and stop_player:
 		_player.stop_for_run_end()
 	if _magnet_minigame:
 		_magnet_minigame.stop_for_run_end()
@@ -144,6 +162,179 @@ func _build_result() -> RunResult:
 
 func _finish_run(result: RunResult) -> void:
 	run_finished.emit(result)
+
+
+func _finish_run_after_departure_cutscene(result: RunResult, departure_start_speed: float) -> void:
+	await _play_departure_cutscene(departure_start_speed)
+	_finish_run(result)
+
+
+func _play_departure_cutscene(departure_start_speed: float) -> void:
+	if _game_ui:
+		_game_ui.visible = false
+
+	var camera := _get_level_camera()
+	if camera:
+		camera.make_current()
+
+	if _player:
+		_player.start_walk_to_ship_center_for_cutscene(0.0, DEPARTURE_PLAYER_WALK_SPEED)
+
+	if departure_start_speed > DEPARTURE_LEVEL_SPEED_EPSILON:
+		await _tween_level_speed(departure_start_speed, 0.0, DEPARTURE_DECEL_SECONDS)
+	_set_level_speed(0.0)
+
+	if _player:
+		if _player.is_cinematic_walk_active():
+			await _player.cinematic_walk_finished
+		_player.stop_for_run_end()
+
+	if _ship:
+		_ship.lock_stored_items_for_departure()
+		_ship.set_departure_lift_thrusters(false)
+
+	var viewport_height := maxf(get_viewport().get_visible_rect().size.y, 1.0)
+	var rise_distance := viewport_height * DEPARTURE_RISE_VIEWPORT_RATIO
+	var camera_lead_distance := viewport_height * DEPARTURE_CAMERA_LEAD_VIEWPORT_RATIO
+	await _tween_ship_and_camera_with_shield_reveal(
+		-rise_distance,
+		-camera_lead_distance,
+		DEPARTURE_RISE_SECONDS
+	)
+
+	var boost_distance := viewport_height * DEPARTURE_BOOST_VIEWPORT_RATIO
+	await _tween_ship_and_camera(
+		-boost_distance,
+		-boost_distance * DEPARTURE_BOOST_CAMERA_RATIO,
+		DEPARTURE_BOOST_SECONDS
+	)
+	await _fade_departure_to_black()
+
+
+func _tween_level_speed(from_speed: float, to_speed: float, duration: float) -> void:
+	var tween := create_tween()
+	tween.tween_method(Callable(self, "_set_level_speed"), from_speed, to_speed, duration) \
+		.set_trans(Tween.TRANS_SINE) \
+		.set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+
+
+func _tween_ship_and_camera(ship_y_delta: float, camera_y_delta: float, duration: float) -> void:
+	var tween := create_tween()
+	tween.set_parallel(true)
+	var has_tweener := false
+
+	if _ship:
+		has_tweener = true
+		tween.tween_property(_ship, "global_position:y", _ship.global_position.y + ship_y_delta, duration) \
+			.set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_IN_OUT)
+
+	var camera := _get_level_camera()
+	if camera:
+		has_tweener = true
+		tween.tween_property(camera, "global_position:y", camera.global_position.y + camera_y_delta, duration) \
+			.set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_IN_OUT)
+
+	if has_tweener:
+		await tween.finished
+
+
+func _tween_ship_and_camera_with_shield_reveal(ship_y_delta: float, camera_lead_y_delta: float, duration: float) -> void:
+	var tween := create_tween()
+	tween.set_parallel(true)
+	var has_tweener := false
+	var camera := _get_level_camera()
+	var ship_start_y := _ship.global_position.y if _ship else 0.0
+	var camera_start_y := camera.global_position.y if camera else 0.0
+
+	if _ship or camera:
+		has_tweener = true
+		tween.tween_method(
+			Callable(self, "_update_departure_rise").bind(ship_start_y, camera_start_y, ship_y_delta, camera_lead_y_delta),
+			0.0,
+			1.0,
+			duration
+		) \
+			.set_trans(Tween.TRANS_SINE) \
+			.set_ease(Tween.EASE_IN_OUT)
+
+	if _ship:
+		tween.tween_callback(_ship.show_departure_shield) \
+			.set_delay(duration * DEPARTURE_SHIELD_REVEAL_RATIO)
+		tween.tween_callback(_ship.set_departure_lift_thrusters.bind(true)) \
+			.set_delay(duration * DEPARTURE_BOOST_THRUST_START_RATIO)
+
+	if has_tweener:
+		await tween.finished
+
+
+func _update_departure_rise(
+	progress: float,
+	ship_start_y: float,
+	camera_start_y: float,
+	ship_y_delta: float,
+	camera_lead_y_delta: float
+) -> void:
+	if _ship:
+		_ship.global_position.y = ship_start_y + ship_y_delta * progress
+
+	var camera := _get_level_camera()
+	if camera:
+		var lead_progress := clampf(progress, 0.0, 1.0)
+		var eased_lead := lead_progress * lead_progress * (3.0 - 2.0 * lead_progress)
+		camera.global_position.y = camera_start_y + ship_y_delta * progress + camera_lead_y_delta * eased_lead
+
+
+func _fade_departure_to_black() -> void:
+	var overlay := _create_departure_fade_overlay()
+	if overlay == null:
+		return
+
+	var tween := create_tween()
+	tween.tween_property(overlay, "color:a", 1.0, DEPARTURE_FADE_SECONDS) \
+		.set_trans(Tween.TRANS_SINE) \
+		.set_ease(Tween.EASE_IN_OUT)
+	await tween.finished
+
+
+func _create_departure_fade_overlay() -> ColorRect:
+	if _level == null or not is_instance_valid(_level):
+		return null
+
+	var canvas_layer := CanvasLayer.new()
+	canvas_layer.name = "DepartureFadeLayer"
+	canvas_layer.layer = 90
+	_level.add_child(canvas_layer)
+
+	var rect := ColorRect.new()
+	rect.name = "DepartureFade"
+	rect.color = Color(0.0, 0.0, 0.0, 0.0)
+	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	rect.anchor_right = 1.0
+	rect.anchor_bottom = 1.0
+	canvas_layer.add_child(rect)
+	return rect
+
+
+func _get_level_camera() -> Camera2D:
+	if _level == null or not is_instance_valid(_level):
+		return null
+	if "camera" in _level:
+		return _level.camera as Camera2D
+	return _level.get_node_or_null("Camera2D") as Camera2D
+
+
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0
+
+
+func _set_level_speed(speed: float) -> void:
+	if _level and "level_speed" in _level:
+		_level.level_speed = speed
 
 
 func _on_player_destroyed() -> void:

@@ -18,6 +18,91 @@
 [ext_resource type="Script" uid="uid://bgpa0y1q8s3n7" path="res://_project/level/threat/threat_level_data.gd" id="16_ig01q"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/level/enemies/enemy_spawner.gd" id="17_enemy_spawner"]
 [ext_resource type="Resource" uid="uid://biwc1i3625md3" path="res://_project/level/enemies/worm_enemy_spawner_profile.tres" id="18_enemy_spawner_profile"]
+[ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/level/decoration/sprites/star_particle.svg" id="19_star_particle"]
+[ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
+
+[sub_resource type="Gradient" id="Gradient_departure_sky"]
+colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
+
+[sub_resource type="GradientTexture2D" id="GradientTexture2D_departure_sky"]
+gradient = SubResource("Gradient_departure_sky")
+width = 2560
+height = 8192
+fill_from = Vector2(0.5, 0)
+fill_to = Vector2(0.5, 1)
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_departure_stars"]
+shader = ExtResource("20_star_fade_shader")
+shader_parameter/fade_start_y = -1200.0
+shader_parameter/fade_end_y = -5200.0
+shader_parameter/min_alpha = 0.0
+shader_parameter/max_alpha = 1.0
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 4096, 1)
+angular_velocity_min = -500.0
+angular_velocity_max = -300.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.25
+scale_max = 1.1
+color = Color(0.86, 0.9, 1, 0.85)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_positive"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 4096, 1)
+angular_velocity_min = 300.0
+angular_velocity_max = 500.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.25
+scale_max = 1.1
+color = Color(0.86, 0.9, 1, 0.85)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_mid"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 2600, 1)
+angular_velocity_min = -500.0
+angular_velocity_max = -300.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.2
+scale_max = 0.9
+color = Color(0.78, 0.84, 1, 0.65)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_mid_positive"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 2600, 1)
+angular_velocity_min = 300.0
+angular_velocity_max = 500.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.2
+scale_max = 0.9
+color = Color(0.78, 0.84, 1, 0.65)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_high"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 1700, 1)
+angular_velocity_min = -500.0
+angular_velocity_max = -300.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.15
+scale_max = 0.7
+color = Color(0.72, 0.8, 1, 0.55)
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_high_positive"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1280, 1700, 1)
+angular_velocity_min = 300.0
+angular_velocity_max = 500.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.15
+scale_max = 0.7
+color = Color(0.72, 0.8, 1, 0.55)
 
 [sub_resource type="Gradient" id="Gradient_bg"]
 colors = PackedColorArray(1, 0.482, 0.137, 1, 1, 0.894, 0.376, 1)
@@ -78,6 +163,88 @@ ship_y_ratio = 0.45
 [node name="CanvasLayer" type="CanvasLayer" parent="." unique_id=143395628]
 layer = -1000
 follow_viewport_enabled = true
+
+[node name="DepartureSkyGradient" type="TextureRect" parent="CanvasLayer" unique_id=1495364659]
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = -10054.0
+grow_horizontal = 2
+size_flags_horizontal = 3
+size_flags_vertical = 3
+mouse_filter = 2
+texture = SubResource("GradientTexture2D_departure_sky")
+
+[node name="DepartureStars" type="GPUParticles2D" parent="CanvasLayer" unique_id=2098359210]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -5951.81)
+amount = 120
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -4100, 2600, 9000)
+process_material = SubResource("ParticleProcessMaterial_stars")
+
+[node name="DepartureStarsPositive" type="GPUParticles2D" parent="CanvasLayer" unique_id=1092954838]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -5951.81)
+amount = 120
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -4100, 2600, 9000)
+process_material = SubResource("ParticleProcessMaterial_stars_positive")
+
+[node name="DepartureStarsMid" type="GPUParticles2D" parent="CanvasLayer" unique_id=782943120]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -6900)
+amount = 75
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -3000, 2600, 6200)
+process_material = SubResource("ParticleProcessMaterial_stars_mid")
+
+[node name="DepartureStarsMidPositive" type="GPUParticles2D" parent="CanvasLayer" unique_id=573125449]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -6900)
+amount = 75
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -3000, 2600, 6200)
+process_material = SubResource("ParticleProcessMaterial_stars_mid_positive")
+
+[node name="DepartureStarsHigh" type="GPUParticles2D" parent="CanvasLayer" unique_id=1196198856]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -8150)
+amount = 70
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -2100, 2600, 4500)
+process_material = SubResource("ParticleProcessMaterial_stars_high")
+
+[node name="DepartureStarsHighPositive" type="GPUParticles2D" parent="CanvasLayer" unique_id=554841368]
+material = SubResource("ShaderMaterial_departure_stars")
+position = Vector2(1280, -8150)
+amount = 70
+texture = ExtResource("19_star_particle")
+lifetime = 9999999999.0
+preprocess = 120.0
+explosiveness = 1.0
+fixed_fps = 0
+visibility_rect = Rect2(-1280, -2100, 2600, 4500)
+process_material = SubResource("ParticleProcessMaterial_stars_high_positive")
 
 [node name="GradientBackground" type="TextureRect" parent="CanvasLayer" unique_id=730537582]
 anchors_preset = -1

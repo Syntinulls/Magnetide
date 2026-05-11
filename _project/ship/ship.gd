@@ -90,6 +90,49 @@ func refresh_thrusters_from_level_speed() -> void:
 	_update_thrusters_from_level_speed()
 
 
+func set_departure_lift_thrusters(boosting: bool) -> void:
+	auto_update_thrusters = false
+	if _thruster_left == null or _thruster_right == null:
+		return
+
+	var thrust_level := Thruster.ThrustLevel.HIGH if boosting else Thruster.ThrustLevel.LOW
+	var speed_ratio := 1.0 if boosting else 0.45
+	var animation_name := &"loop_2" if boosting else &"loop_1"
+	_thruster_left.aim_straight_down()
+	_thruster_right.aim_straight_down()
+	_thruster_left.set_thrust_animation(animation_name)
+	_thruster_right.set_thrust_animation(animation_name)
+	_thruster_left.set_thrust_level(thrust_level)
+	_thruster_right.set_thrust_level(thrust_level)
+	_thruster_left.set_ship_speed_ratio(speed_ratio)
+	_thruster_right.set_ship_speed_ratio(speed_ratio)
+
+
+func lock_stored_items_for_departure() -> void:
+	var storage_root := _ensure_storage_items_root()
+	for item in _stored_items:
+		if is_instance_valid(item):
+			item.lock_for_departure_cutscene(storage_root)
+
+
+func show_departure_shield() -> void:
+	var shield := _find_departure_shield()
+	if shield:
+		shield.visible = true
+		if shield is AnimatedSprite2D:
+			(shield as AnimatedSprite2D).play()
+
+
+func _find_departure_shield() -> CanvasItem:
+	var shield := find_child("ShipShield", true, false) as CanvasItem
+	if shield:
+		return shield
+	shield = find_child("DepartureShield", true, false) as CanvasItem
+	if shield:
+		return shield
+	return find_child("Shield", true, false) as CanvasItem
+
+
 func _create_storage_zone() -> void:
 	_create_storage_floor_marker()
 	_create_storage_borders()

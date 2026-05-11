@@ -2,6 +2,7 @@ extends CharacterBody2D
 class_name Player
 
 signal destroyed
+signal cinematic_walk_finished
 
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
@@ -71,6 +72,10 @@ var _repel_bar: ColorRect = null
 var _repel_bar_bg: ColorRect = null
 var _repel_bar_container: Control = null
 var _hover_tooltip: Label = null
+var _cinematic_walk_active: bool = false
+var _cinematic_walk_target_x: float = 0.0
+var _cinematic_walk_speed: float = 160.0
+var _cinematic_walk_arrive_epsilon: float = 4.0
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var legs_sprite: AnimatedSprite2D = $LegsSprite
@@ -199,7 +204,9 @@ func _physics_process(delta: float) -> void:
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
 	_process_shield_recharge(delta)
-	if input_enabled:
+	if _cinematic_walk_active:
+		_process_cinematic_walk(delta)
+	elif input_enabled:
 		var mouse_pos := get_global_mouse_position()
 		
 		# Facing is purely based on mouse X vs player X
@@ -249,6 +256,45 @@ func _physics_process(delta: float) -> void:
 	
 	_update_leg_animation()
 	_update_hover_tooltip()
+
+
+func walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
+	start_walk_to_ship_center_for_cutscene(target_local_x, walk_speed)
+
+	while _cinematic_walk_active and is_inside_tree():
+		await get_tree().physics_frame
+
+
+func start_walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
+	input_enabled = false
+	stop_magnetize()
+	_cleanup_current_equipment()
+	_clear_magnet_gun_state()
+	_apply_facing(true)
+	arm_sprite.rotation = 0.0
+	_cinematic_walk_target_x = target_local_x
+	_cinematic_walk_speed = maxf(walk_speed, 1.0)
+	_cinematic_walk_active = true
+	set_process(true)
+	set_physics_process(true)
+
+
+func is_cinematic_walk_active() -> bool:
+	return _cinematic_walk_active
+
+
+func _process_cinematic_walk(_delta: float) -> void:
+	var to_target := _cinematic_walk_target_x - position.x
+	if absf(to_target) <= _cinematic_walk_arrive_epsilon:
+		position.x = _cinematic_walk_target_x
+		velocity.x = 0.0
+		_cinematic_walk_active = false
+		cinematic_walk_finished.emit()
+		return
+
+	var direction := signf(to_target)
+	velocity.x = direction * _cinematic_walk_speed
+	_apply_facing(direction > 0.0)
 
 
 func _update_leg_animation() -> void:

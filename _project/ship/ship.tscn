@@ -7,6 +7,7 @@
 [ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="4_magnet"]
 [ext_resource type="PackedScene" uid="uid://cbjj3u6hbmydw" path="res://_project/ship/departure_pylon.tscn" id="5_departure_pylon"]
 [ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/ship_ff_gens.png" id="5_my72g"]
+[ext_resource type="Texture2D" uid="uid://c64fldhe8gdig" path="res://_project/ship/sprites/ship_ff_anim.png" id="6_7id8t"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="6_dbcm7"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/enemies/enemy_target_point.gd" id="7_r6cvl"]
 [ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="10_dbkfd"]
@@ -20,6 +21,42 @@ animations = [{
 "loop": true,
 "name": &"default",
 "speed": 5.0
+}]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_6os2d"]
+atlas = ExtResource("6_7id8t")
+region = Rect2(0, 0, 920, 382)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_0vixk"]
+atlas = ExtResource("6_7id8t")
+region = Rect2(920, 0, 920, 382)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_lxska"]
+atlas = ExtResource("6_7id8t")
+region = Rect2(1840, 0, 920, 382)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_m0313"]
+atlas = ExtResource("6_7id8t")
+region = Rect2(2760, 0, 920, 382)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_cexdj"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_6os2d")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_0vixk")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_lxska")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_m0313")
+}],
+"loop": true,
+"name": &"activated",
+"speed": 15.0
 }]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_left"]
@@ -53,6 +90,13 @@ texture = ExtResource("2_fore")
 [node name="ShipGens" type="AnimatedSprite2D" parent="." unique_id=426583781]
 position = Vector2(0, -108)
 sprite_frames = SubResource("SpriteFrames_dbkfd")
+
+[node name="ShipShield" type="AnimatedSprite2D" parent="." unique_id=1734040730]
+visible = false
+position = Vector2(0, -270)
+sprite_frames = SubResource("SpriteFrames_cexdj")
+animation = &"activated"
+autoplay = "activated"
 
 [node name="Boundaries" type="StaticBody2D" parent="." unique_id=762309736]
 visible = false

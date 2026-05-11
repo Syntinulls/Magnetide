@@ -3,7 +3,7 @@ class_name Thruster
 
 enum ThrustLevel { OFF, LOW, HIGH }
 
-const THRUST_ANIMATION := &"loop_1"
+const DEFAULT_THRUST_ANIMATION := &"loop_1"
 
 @export var rotation_tween_duration: float = 0.6
 @export var straight_down_degrees: float = 0.0
@@ -13,6 +13,7 @@ const THRUST_ANIMATION := &"loop_1"
 @export var max_animation_fps: float = 24.0
 
 var _current_thrust_level: ThrustLevel = ThrustLevel.LOW
+var _thrust_animation: StringName = DEFAULT_THRUST_ANIMATION
 var _rotation_tween: Tween = null
 
 @onready var _plume_animation: AnimatedSprite2D = $PlumeAnimation
@@ -52,11 +53,17 @@ func set_thrust_level(level: ThrustLevel, _instant: bool = false) -> void:
 		return
 
 	_plume_animation.visible = true
-	_play_animation(THRUST_ANIMATION)
+	_play_animation(_thrust_animation)
+
+
+func set_thrust_animation(animation_name: StringName) -> void:
+	_thrust_animation = animation_name
+	if _current_thrust_level != ThrustLevel.OFF:
+		_play_animation(_thrust_animation)
 
 
 func set_ship_speed_ratio(speed_ratio: float) -> void:
-	var animation_speed := _get_animation_speed(THRUST_ANIMATION)
+	var animation_speed := _get_animation_speed(_thrust_animation)
 	if animation_speed <= 0.0:
 		_plume_animation.speed_scale = 1.0
 		return

@@ -609,6 +609,31 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	z_index = 0
 
 
+func lock_for_departure_cutscene(storage_parent: Node = null) -> void:
+	_clear_settled_magnet_state()
+	_is_held_by_gun = false
+	_is_in_storage = true
+	_is_repelled = false
+	_is_falling = false
+	_is_flying_to_gun = false
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
+	_gun_hold_velocity = Vector2.ZERO
+	_soft_velocity = Vector2.ZERO
+
+	if storage_parent and get_parent() != storage_parent:
+		var current_pos := global_position
+		reparent(storage_parent)
+		global_position = current_pos
+
+	freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
+	freeze = true
+	gravity_scale = 0.0
+	linear_velocity = Vector2.ZERO
+	angular_velocity = 0.0
+	set_physics_process(false)
+
+
 ## Repel item off the magnet gun with an impulse
 func repel_from_gun(impulse: Vector2) -> void:
 	_clear_settled_magnet_state()
