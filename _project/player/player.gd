@@ -19,7 +19,7 @@ signal scrap_metal_collected(amount: int)
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
-const ScrapMetalTexture: Texture2D = preload("res://_project/items/sprites/trash_small.png")
+const ScrapMetalTexture: Texture2D = preload("res://_project/ui/sprites/scrap_metal.png")
 
 var input_enabled: bool = true
 var facing_right: bool = false

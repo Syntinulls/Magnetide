@@ -58,6 +58,8 @@ var _run_summary_popup: SalvageResultsPopup = null
 var _did_begin_processing: bool = false
 var _storage_pulse_tween: Tween = null
 var _item_feedback_tween: Tween = null
+var _component_rest_skip_requested: bool = false
+var _between_items_skip_requested: bool = false
 
 @onready var _progress_label: Label = $TopHUD/VBoxContainer/ProgressLabel
 @onready var _item_name_label: Label = $TopHUD/VBoxContainer/ItemNameLabel
@@ -74,6 +76,19 @@ func _ready() -> void:
 	_update_header_labels()
 	if _run_result != null:
 		call_deferred("_begin_processing")
+
+
+func _input(event: InputEvent) -> void:
+	if _state != ScreenState.COMPONENTS_RESTING and _state != ScreenState.BETWEEN_ITEMS:
+		return
+	if event is InputEventMouseButton:
+		var mouse_event := event as InputEventMouseButton
+		if mouse_event.button_index == MOUSE_BUTTON_LEFT and mouse_event.pressed:
+			if _state == ScreenState.COMPONENTS_RESTING:
+				_component_rest_skip_requested = true
+			elif _state == ScreenState.BETWEEN_ITEMS:
+				_between_items_skip_requested = true
+			get_viewport().set_input_as_handled()
 
 
 func set_run_result(result: RunResult) -> void:
@@ -207,20 +222,47 @@ func _resolve_current_item() -> void:
 	var spawned_tokens := _spawn_component_tokens(_build_part_entries(item_data, item_count), source_center)
 	if spawned_tokens.is_empty():
 		_state = ScreenState.BETWEEN_ITEMS
-		await get_tree().create_timer(between_items_seconds).timeout
+		_between_items_skip_requested = false
+		_update_instruction_label()
+		await _wait_between_items_or_skip()
 		await _advance_to_next_item()
 		return
 
 	_state = ScreenState.COMPONENTS_RESTING
+	_component_rest_skip_requested = false
+	_update_instruction_label()
 	await _burst_tokens_to_rest_positions(spawned_tokens, source_center)
-	await get_tree().create_timer(component_rest_seconds).timeout
+	await _wait_for_component_rest_or_skip()
 
 	_state = ScreenState.COMPONENTS_FLYING
+	_update_instruction_label()
 	await _fly_tokens_to_storage(spawned_tokens, source_center)
 
 	_state = ScreenState.BETWEEN_ITEMS
-	await get_tree().create_timer(between_items_seconds).timeout
+	_between_items_skip_requested = false
+	_update_instruction_label()
+	await _wait_between_items_or_skip()
 	await _advance_to_next_item()
+
+
+func _wait_for_component_rest_or_skip() -> void:
+	var elapsed := 0.0
+	while elapsed < component_rest_seconds \
+		and not _component_rest_skip_requested \
+		and _state == ScreenState.COMPONENTS_RESTING:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	_component_rest_skip_requested = false
+
+
+func _wait_between_items_or_skip() -> void:
+	var elapsed := 0.0
+	while elapsed < between_items_seconds \
+		and not _between_items_skip_requested \
+		and _state == ScreenState.BETWEEN_ITEMS:
+		await get_tree().process_frame
+		elapsed += get_process_delta_time()
+	_between_items_skip_requested = false
 
 
 func _burst_tokens_to_rest_positions(tokens: Array[SalvageComponentToken], source_center: Vector2) -> void:
@@ -381,6 +423,7 @@ func _show_results_popup() -> void:
 		"time_elapsed": _run_result.elapsed_seconds if _run_result != null else 0.0,
 		"enemies_killed": _run_result.enemies_killed if _run_result != null else 0,
 		"collected_items": _run_result.salvage_items_collected if _run_result != null else 0,
+		"scrap_collected": _run_result.scrap_metal_collected if _run_result != null else 0,
 		"items_salvaged": _salvage_item_total_count,
 	}
 
@@ -436,11 +479,11 @@ func _update_instruction_label() -> void:
 			ScreenState.ITEM_POP:
 				_instruction_label.text = ""
 			ScreenState.COMPONENTS_RESTING:
-				_instruction_label.text = ""
+				_instruction_label.text = "Click to collect parts."
 			ScreenState.COMPONENTS_FLYING:
 				_instruction_label.text = ""
 			ScreenState.BETWEEN_ITEMS:
-				_instruction_label.text = ""
+				_instruction_label.text = "Click to continue."
 			ScreenState.RESULTS_POPUP:
 				_instruction_label.text = ""
 			_:

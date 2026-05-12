@@ -54,6 +54,7 @@ var _is_ready: bool = false
 @onready var _stats_title_label: Label = $SharedBottomArea/StatsPanel/TitleLabel
 @onready var _stats_body_label: Label = $SharedBottomArea/StatsPanel/BodyLabel
 @onready var _storage_grid: GridContainer = $SharedBottomArea/StoragePanel/StorageScroll/StorageGrid
+@onready var _storage_scrap_count_label: Label = $SharedBottomArea/StoragePanel/ScrapCounter/ScrapCountLabel
 @onready var _storage_detail_panel: Control = $SharedBottomArea/StorageDetailPanel
 @onready var _storage_detail_icon: TextureRect = $SharedBottomArea/StorageDetailPanel/ItemIcon
 @onready var _storage_detail_name: Label = $SharedBottomArea/StorageDetailPanel/NameLabel
@@ -241,6 +242,16 @@ func _clear_stats_panel() -> void:
 	_stats_body_label.text = ""
 
 
+func _refresh_storage_scrap_counter() -> void:
+	if not _storage_scrap_count_label:
+		return
+	var scrap_count := 0
+	var save_data := _save_data as AppSaveData
+	if save_data:
+		scrap_count = save_data.total_scrap_metal
+	_storage_scrap_count_label.text = str(scrap_count)
+
+
 func _toggle_weapon_popup() -> void:
 	var should_show := not _weapon_popup.visible
 	_weapon_popup.visible = should_show
@@ -344,6 +355,7 @@ func _refresh_loadout_ui() -> void:
 	_populate_storage_slots(_get_storage_entries())
 	_refresh_current_weapon_stats()
 	_refresh_stats_panel()
+	_refresh_storage_scrap_counter()
 
 
 func _update_equipment_buttons() -> void:

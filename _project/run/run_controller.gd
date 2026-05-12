@@ -2,6 +2,7 @@ extends Node
 class_name RunController
 
 signal run_finished(result: RunResult)
+signal scrap_metal_count_changed(count: int)
 
 const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/items/resources/tire.tres")
 const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
@@ -30,8 +31,13 @@ var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
 var _elapsed_seconds: float = 0.0
 var _enemies_killed: int = 0
+var _scrap_metal_collected: int = 0
 var _end_reason: RunResult.EndReason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 var _is_run_ending: bool = false
+
+var scrap_metal_collected: int:
+	get:
+		return _scrap_metal_collected
 
 
 func start_run(level_definition: LevelDefinition, level_node: Node) -> void:
@@ -39,6 +45,7 @@ func start_run(level_definition: LevelDefinition, level_node: Node) -> void:
 	_level = level_node
 	_elapsed_seconds = 0.0
 	_enemies_killed = 0
+	_scrap_metal_collected = 0
 	_end_reason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 	_is_run_ending = false
 	call_deferred("_bind_runtime")
@@ -61,12 +68,15 @@ func _bind_runtime() -> void:
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
 	_connect_runtime_signals()
+	_sync_game_ui_scrap_counter()
 	set_process(true)
 
 
 func _connect_runtime_signals() -> void:
 	if _player and not _player.destroyed.is_connected(_on_player_destroyed):
 		_player.destroyed.connect(_on_player_destroyed)
+	if _player and not _player.scrap_metal_collected.is_connected(record_scrap_metal_collected):
+		_player.scrap_metal_collected.connect(record_scrap_metal_collected)
 	if _ship and not _ship.destroyed.is_connected(_on_ship_destroyed):
 		_ship.destroyed.connect(_on_ship_destroyed)
 	if _enemy_spawner and not _enemy_spawner.enemy_killed.is_connected(_on_enemy_killed):
@@ -98,10 +108,10 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
 		_set_level_speed(departure_start_speed)
 
-	var result := _build_result()
 	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
-		call_deferred("_finish_run_after_departure_cutscene", result, departure_start_speed)
+		call_deferred("_finish_run_after_departure_cutscene", departure_start_speed)
 	else:
+		var result := _build_result()
 		call_deferred("_finish_run", result)
 
 
@@ -142,6 +152,7 @@ func _build_result() -> RunResult:
 	result.elapsed_seconds = _elapsed_seconds
 	result.end_reason = _end_reason
 	result.enemies_killed = _enemies_killed
+	result.scrap_metal_collected = _scrap_metal_collected
 
 	if _ship:
 		result.salvage_items_collected = _ship.get_stored_item_count()
@@ -164,8 +175,9 @@ func _finish_run(result: RunResult) -> void:
 	run_finished.emit(result)
 
 
-func _finish_run_after_departure_cutscene(result: RunResult, departure_start_speed: float) -> void:
+func _finish_run_after_departure_cutscene(departure_start_speed: float) -> void:
 	await _play_departure_cutscene(departure_start_speed)
+	var result := _build_result()
 	_finish_run(result)
 
 
@@ -347,6 +359,23 @@ func _on_ship_destroyed() -> void:
 
 func _on_enemy_killed(_enemy: Enemy) -> void:
 	_enemies_killed += 1
+
+
+func record_scrap_metal_collected(amount: int) -> void:
+	if amount <= 0:
+		return
+	_scrap_metal_collected += amount
+	scrap_metal_count_changed.emit(_scrap_metal_collected)
+	_sync_game_ui_scrap_counter()
+
+
+func _sync_game_ui_scrap_counter() -> void:
+	if not _game_ui:
+		return
+	if _game_ui.has_method("set_run_scrap_metal_count"):
+		_game_ui.call("set_run_scrap_metal_count", _scrap_metal_collected)
+	if _game_ui.has_method("bind_run_controller"):
+		_game_ui.call("bind_run_controller", self)
 
 
 func _on_departure_requested(_pylon: DeparturePylon) -> void:

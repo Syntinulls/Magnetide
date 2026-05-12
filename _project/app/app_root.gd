@@ -196,6 +196,8 @@ func _on_salvage_screen_main_menu_requested() -> void:
 
 
 func _on_run_finished(result: RunResult) -> void:
+	if _save_data and result and result.scrap_metal_collected > 0:
+		_save_data.add_scrap_metal(result.scrap_metal_collected)
 	_clear_run()
 	_show_salvage_process_screen(result)
 

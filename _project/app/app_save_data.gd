@@ -5,6 +5,7 @@ const SAVE_PATH := "user://magnetide_save.tres"
 
 @export var current_run_loadout: RunLoadout = null
 @export var storage_entries: Array[Dictionary] = []
+@export var total_scrap_metal: int = 0
 
 
 static func load_or_create(default_run_loadout: RunLoadout) -> AppSaveData:
@@ -20,6 +21,7 @@ static func load_or_create(default_run_loadout: RunLoadout) -> AppSaveData:
 func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:
 	if reset:
 		storage_entries.clear()
+		total_scrap_metal = 0
 		current_run_loadout = null
 	if current_run_loadout == null and default_run_loadout != null:
 		current_run_loadout = default_run_loadout.duplicate(true) as RunLoadout
@@ -44,6 +46,8 @@ func has_continue_data(default_run_loadout: RunLoadout) -> bool:
 
 func is_default(default_run_loadout: RunLoadout) -> bool:
 	if not storage_entries.is_empty():
+		return false
+	if total_scrap_metal != 0:
 		return false
 	if current_run_loadout == null:
 		return true
@@ -94,6 +98,13 @@ func add_storage_item(item_data: SalvageItemData, quantity: int = 1) -> void:
 		"item_data": item_data,
 		"quantity": quantity,
 	})
+	save_to_disk()
+
+
+func add_scrap_metal(amount: int) -> void:
+	if amount <= 0:
+		return
+	total_scrap_metal += amount
 	save_to_disk()
 
 

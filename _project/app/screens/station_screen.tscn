@@ -16,6 +16,7 @@
 [ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/ui/sprites/ui_icon_ship.png" id="12_4e5bg"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="12_rifle_data"]
 [ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/ui/sprites/ui_icon_player.png" id="14_h7pqf"]
+[ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="16_pln3h"]
 
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_equipment_catalog_entry")
@@ -578,6 +579,32 @@ offset_top = 18.0
 offset_right = 1130.0
 offset_bottom = 62.0
 text = "Storage"
+
+[node name="ScrapCounter" type="HBoxContainer" parent="SharedBottomArea/StoragePanel" unique_id=2041746630]
+layout_mode = 0
+offset_left = 960.0
+offset_top = 18.0
+offset_right = 1168.0
+offset_bottom = 62.0
+theme_override_constants/separation = 8
+alignment = 2
+
+[node name="ScrapIcon" type="TextureRect" parent="SharedBottomArea/StoragePanel/ScrapCounter" unique_id=1771361072]
+custom_minimum_size = Vector2(40, 40)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("16_pln3h")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScrapCountLabel" type="Label" parent="SharedBottomArea/StoragePanel/ScrapCounter" unique_id=217423451]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 40
+text = "0"
+vertical_alignment = 1
 
 [node name="StorageScroll" type="ScrollContainer" parent="SharedBottomArea/StoragePanel" unique_id=1721581439]
 layout_mode = 0

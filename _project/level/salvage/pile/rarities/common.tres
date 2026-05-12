@@ -10,6 +10,7 @@
 [ext_resource type="Resource" uid="uid://kwbg58d0vfv0" path="res://_project/items/resources/mattress.tres" id="8_ak8rg"]
 [ext_resource type="Resource" uid="uid://ckmde17nv4mch" path="res://_project/items/resources/trashcan.tres" id="9_lfhtj"]
 [ext_resource type="Resource" uid="uid://bx4loo0ct74qp" path="res://_project/items/resources/tire.tres" id="10_j5re4"]
+[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/sprites/trash_small.png" id="11_22cg2"]
 
 [sub_resource type="Resource" id="Resource_fhog6"]
 script = ExtResource("5_c2yb7")

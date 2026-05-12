@@ -19,6 +19,7 @@ var _hover_tooltip: Label = null
 @onready var _time_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow/Value
 @onready var _kills_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow/Value
 @onready var _collected_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow/Value
+@onready var _scrap_collected_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/ScrapCollectedRow/Value
 @onready var _salvaged_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow/Value
 @onready var _empty_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/EmptyLabel
 @onready var _list_container: VBoxContainer = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/ScrollContainer/ListContainer
@@ -58,6 +59,7 @@ func _apply_stats() -> void:
 	_time_value.text = _format_elapsed_time(float(_run_stats.get("time_elapsed", 0.0)))
 	_kills_value.text = str(int(_run_stats.get("enemies_killed", 0)))
 	_collected_value.text = str(int(_run_stats.get("collected_items", 0)))
+	_scrap_collected_value.text = str(int(_run_stats.get("scrap_collected", 0)))
 	_salvaged_value.text = str(int(_run_stats.get("items_salvaged", 0)))
 
 

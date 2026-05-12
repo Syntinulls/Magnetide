@@ -11,6 +11,7 @@ var level_id: StringName = &""
 var level_display_name: String = ""
 var elapsed_seconds: float = 0.0
 var salvage_items_collected: int = 0
+var scrap_metal_collected: int = 0
 var enemies_killed: int = 0
 var end_reason: EndReason = EndReason.VOLUNTARY_DEPARTURE
 var stored_loot: Array[SalvageItemData] = []

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://bg6n3xmpeudo1"]
 
 [ext_resource type="Script" uid="uid://b8kgxtf1uxydl" path="res://_project/app/screens/salvage_process_screen.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="3_storage_icon"]
+[ext_resource type="Texture2D" uid="uid://cb2kp4138chs5" path="res://_project/ui/sprites/ui_icon_crate.png" id="2_vsl4o"]
 
 [node name="SalvageProcessScreen" type="Control" unique_id=1895989213]
 layout_mode = 3
@@ -104,7 +104,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-texture = ExtResource("3_storage_icon")
+texture = ExtResource("2_vsl4o")
 expand_mode = 1
 stretch_mode = 3
 
