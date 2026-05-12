@@ -14,9 +14,17 @@ enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
 const SETTLE_TIME: float = 0.05
 const STORAGE_COLLISION_LAYER: int = 8
 const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
+const TRASH_RARITY_COLOR: Color = Color("b8b8b8")
+const TRASH_DISPLAY_NAME: String = "Trash"
+const TRASH_PARTICLE_COUNT_MIN: int = 8
+const TRASH_PARTICLE_COUNT_MAX: int = 12
 
 var item_data: SalvageItemData = null
 var rarity: int = SalvageItemData.ItemRarity.COMMON
+var _is_trash: bool = false
+var _trash_area: Vector2 = Vector2(64, 64)
+var _trash_hitbox_size: Vector2 = Vector2(36, 36)
+var _trash_weight: float = 0.75
 var _is_held_by_gun: bool = false
 var _is_in_storage: bool = false
 var _is_repelled: bool = false
@@ -112,6 +120,10 @@ var is_in_storage: bool:
 	get:
 		return _is_in_storage
 
+var is_trash: bool:
+	get:
+		return _is_trash
+
 ## Returns true if the item has reached the magnet gun anchor and is tethered
 var has_reached_anchor: bool:
 	get:
@@ -130,6 +142,8 @@ var can_be_grabbed: bool:
 ## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
 	get:
+		if _is_trash:
+			return _trash_hitbox_size
 		if item_data:
 			return item_data.actual_hitbox_size
 		return Vector2(40.0, 40.0)
@@ -176,26 +190,50 @@ func _ready() -> void:
 
 
 func setup(data: SalvageItemData) -> void:
+	_is_trash = false
 	item_data = data
 	rarity = int(data.rarity) if data else SalvageItemData.ItemRarity.COMMON
 	
 	if _sprite:
 		if data.sprite:
-			_sprite.texture = data.sprite
-			# Scale sprite to fit within the item's area
-			var tex_size := data.sprite.get_size()
-			if tex_size.x > 0 and tex_size.y > 0:
-				var scale_x := data.area.x / tex_size.x
-				var scale_y := data.area.y / tex_size.y
-				var uniform_scale := minf(scale_x, scale_y)
-				_sprite.scale = Vector2(uniform_scale, uniform_scale)
+			_apply_sprite_texture(data.sprite, data.actual_area)
 		else:
 			_create_placeholder_sprite()
 	
 	if _collision_shape and _collision_shape.shape is CircleShape2D:
 		var new_radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
 		(_collision_shape.shape as CircleShape2D).radius = new_radius
+
+
+func setup_trash(texture: Texture2D, area: Vector2 = Vector2(64, 64), hitbox: Vector2 = Vector2(36, 36), weight: float = 0.75) -> void:
+	_is_trash = true
+	item_data = null
+	rarity = SalvageItemData.ItemRarity.COMMON
+	_trash_area = area
+	_trash_hitbox_size = hitbox
+	_trash_weight = weight
 	
+	if _sprite:
+		if texture:
+			_apply_sprite_texture(texture, _trash_area)
+		else:
+			_create_trash_placeholder_sprite()
+	
+	if _collision_shape and _collision_shape.shape is CircleShape2D:
+		var new_radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
+		(_collision_shape.shape as CircleShape2D).radius = new_radius
+
+
+func _apply_sprite_texture(texture: Texture2D, area: Vector2) -> void:
+	if not _sprite or not texture:
+		return
+	_sprite.texture = texture
+	var tex_size := texture.get_size()
+	if tex_size.x > 0 and tex_size.y > 0:
+		var scale_x := area.x / tex_size.x
+		var scale_y := area.y / tex_size.y
+		var uniform_scale := minf(scale_x, scale_y)
+		_sprite.scale = Vector2(uniform_scale, uniform_scale)
 
 
 func _create_placeholder_sprite() -> void:
@@ -209,14 +247,34 @@ func _create_placeholder_sprite() -> void:
 	_sprite.texture = tex
 
 
+func _create_trash_placeholder_sprite() -> void:
+	var size := hitbox_size
+	var img := Image.create(int(size.x), int(size.y), false, Image.FORMAT_RGBA8)
+	img.fill(TRASH_RARITY_COLOR)
+	var tex := ImageTexture.create_from_image(img)
+	_sprite.texture = tex
+
+
 func get_display_name() -> String:
+	if _is_trash:
+		return TRASH_DISPLAY_NAME
 	if item_data and not item_data.item_name.is_empty():
 		return item_data.item_name
 	return "Unknown Salvage"
 
 
 func get_rarity_color() -> Color:
+	if _is_trash:
+		return TRASH_RARITY_COLOR
 	return SalvageItemData.get_color_for_rarity(rarity)
+
+
+func pop_trash() -> void:
+	if not _is_trash:
+		queue_free()
+		return
+	_spawn_trash_pop_particles()
+	queue_free()
 
 
 func start_magnet_pull(magnet: Node2D, direction: Vector2 = Vector2.UP) -> void:
@@ -756,9 +814,7 @@ func _check_phase_transition() -> void:
 
 ## Get weight-biased speed multiplier (lighter = faster)
 func _get_weight_factor() -> float:
-	if not item_data:
-		return 1.0
-	var item_weight := item_data.weight
+	var item_weight := _get_item_weight()
 	if item_weight <= 0.0:
 		return 1.0
 	return lerpf(1.0, REFERENCE_WEIGHT / item_weight, WEIGHT_INFLUENCE)
@@ -767,15 +823,53 @@ func _get_weight_factor() -> float:
 ## Get weight-biased dwell time multiplier (heavier = longer dwell, lighter = shorter)
 ## Returns multiplier where 1.0 = reference weight, >1.0 = heavier, <1.0 = lighter
 func _get_dwell_weight_factor() -> float:
-	if not item_data:
-		return 1.0
-	var item_weight := item_data.weight
+	var item_weight := _get_item_weight()
 	if item_weight <= 0.0:
 		return 1.0
 	# Heavier items take longer to break away (higher multiplier)
 	# Lighter items break away faster (lower multiplier)
 	# Using sqrt for gentler scaling
 	return sqrt(item_weight / REFERENCE_WEIGHT)
+
+
+func _get_item_weight() -> float:
+	if _is_trash:
+		return _trash_weight
+	if item_data:
+		return item_data.weight
+	return 1.0
+
+
+func _spawn_trash_pop_particles() -> void:
+	if not is_inside_tree():
+		return
+	var texture := _sprite.texture if _sprite else null
+	var parent_node := Magnetide.world_root
+	if not parent_node:
+		parent_node = get_parent()
+	if not parent_node:
+		return
+
+	var count := randi_range(TRASH_PARTICLE_COUNT_MIN, TRASH_PARTICLE_COUNT_MAX)
+	for i in count:
+		var fragment := Sprite2D.new()
+		fragment.texture = texture
+		fragment.centered = true
+		fragment.global_position = global_position
+		fragment.rotation = randf_range(0.0, TAU)
+		fragment.scale = (_sprite.scale if _sprite else Vector2.ONE) * randf_range(0.12, 0.24)
+		fragment.modulate = Color(1.0, 1.0, 1.0, randf_range(0.75, 1.0))
+		fragment.z_index = z_index + 1
+		parent_node.add_child(fragment)
+
+		var direction := Vector2.RIGHT.rotated(randf_range(0.0, TAU))
+		var target := global_position + direction * randf_range(24.0, 72.0) + Vector2(0.0, randf_range(-16.0, 24.0))
+		var tween := fragment.create_tween()
+		tween.set_parallel(true)
+		tween.tween_property(fragment, "global_position", target, randf_range(0.25, 0.45)).set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+		tween.tween_property(fragment, "rotation", fragment.rotation + randf_range(-PI * 2.0, PI * 2.0), randf_range(0.25, 0.45))
+		tween.tween_property(fragment, "modulate:a", 0.0, 0.22).set_delay(0.12)
+		tween.chain().tween_callback(fragment.queue_free)
 
 
 # ============================================================================

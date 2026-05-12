@@ -29,7 +29,7 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 
 @export_group("Magnet Looting")
 ## Duration of the departure timer in seconds (how long the player can loot).
-@export var departure_duration: float = 30.0
+@export var departure_duration: float = 60.0
 ## Last X seconds before departure when new salvage stops spawning.
 @export var spawn_cutoff_before_departure: float = 5.0
 ## Base speed items are pulled toward the magnet.

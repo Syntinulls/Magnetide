@@ -3,6 +3,7 @@ class_name Player
 
 signal destroyed
 signal cinematic_walk_finished
+signal scrap_metal_collected(amount: int)
 
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
@@ -18,6 +19,7 @@ signal cinematic_walk_finished
 
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
+const ScrapMetalTexture: Texture2D = preload("res://_project/items/sprites/trash_small.png")
 
 var input_enabled: bool = true
 var facing_right: bool = false
@@ -72,6 +74,7 @@ var _repel_bar: ColorRect = null
 var _repel_bar_bg: ColorRect = null
 var _repel_bar_container: Control = null
 var _hover_tooltip: Label = null
+var _active_scrap_labels: Array[Label] = []
 var _cinematic_walk_active: bool = false
 var _cinematic_walk_target_x: float = 0.0
 var _cinematic_walk_speed: float = 160.0
@@ -518,6 +521,10 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	var dependents := item.get_storage_contact_chain() if grabbed_from_storage else item.get_contact_chain()
 	var ship_node := _get_ship()
 
+	if item.is_trash:
+		_pop_trash_item(item, dependents)
+		return
+
 	if grabbed_from_storage and ship_node:
 		ship_node.remove_from_storage(item)
 	
@@ -539,6 +546,132 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 				dep.wake_for_storage_resettle()
 			else:
 				_unfreeze_item_for_resettle(dep)
+
+
+func _pop_trash_item(item: SalvageItem, dependents: Array[SalvageItem]) -> void:
+	var pop_position := item.global_position
+	var magnet := Magnetide.magnet
+	if magnet:
+		magnet.remove_item(item)
+	
+	_set_hovered_item(null)
+	item.pop_trash()
+	
+	for dep in dependents:
+		if is_instance_valid(dep) and dep != item:
+			_unfreeze_item_for_resettle(dep)
+	
+	var tool := current_magnet_tool
+	var scrap_chance := tool.trash_scrap_chance_percent if tool else 0.0
+	if randf() * 100.0 < scrap_chance:
+		_collect_scrap_metal_from(pop_position)
+
+
+func _collect_scrap_metal_from(start_position: Vector2) -> void:
+	if not is_inside_tree():
+		return
+	var parent_node := Magnetide.world_root
+	if not parent_node:
+		parent_node = get_parent()
+	if not parent_node:
+		return
+
+	var pickup := Sprite2D.new()
+	pickup.texture = ScrapMetalTexture
+	pickup.centered = true
+	pickup.global_position = start_position
+	pickup.z_index = 50
+	if pickup.texture:
+		var tex_size := pickup.texture.get_size()
+		if tex_size.x > 0.0 and tex_size.y > 0.0:
+			var uniform_scale := minf(28.0 / tex_size.x, 28.0 / tex_size.y)
+			pickup.scale = Vector2(uniform_scale, uniform_scale)
+	parent_node.add_child(pickup)
+
+	var pop_direction := (start_position - global_position).normalized()
+	if pop_direction == Vector2.ZERO:
+		pop_direction = Vector2.RIGHT.rotated(randf_range(0.0, TAU))
+	var pop_target := start_position + pop_direction * randf_range(28.0, 44.0) + Vector2(0.0, randf_range(-28.0, -12.0))
+	var collect_target := global_position + Vector2(0.0, -18.0)
+	var start_scale := pickup.scale
+	var tween := pickup.create_tween()
+	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	tween.tween_property(pickup, "global_position", pop_target, 0.16)
+	tween.parallel().tween_property(pickup, "scale", start_scale * 1.2, 0.16)
+	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	tween.tween_property(pickup, "global_position", collect_target, 0.42)
+	tween.parallel().tween_property(pickup, "scale", start_scale * 0.55, 0.42)
+	tween.parallel().tween_property(pickup, "modulate:a", 0.0, 0.16).set_delay(0.26)
+	tween.tween_callback(_on_scrap_pickup_arrived.bind(pickup))
+
+
+func _on_scrap_pickup_arrived(pickup: Sprite2D) -> void:
+	if pickup and is_instance_valid(pickup):
+		pickup.queue_free()
+	_show_scrap_loot_label()
+	scrap_metal_collected.emit(1)
+
+
+func _show_scrap_loot_label() -> void:
+	var game_ui := Magnetide.game_ui
+	if not game_ui:
+		return
+
+	var label := Label.new()
+	label.text = "+1 Scrap Metal"
+	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Magnetide.apply_label_font(label)
+	label.add_theme_font_size_override("font_size", 22)
+	label.add_theme_color_override("font_color", Color("d8d8d8"))
+	label.add_theme_color_override("font_outline_color", Color.BLACK)
+	label.add_theme_constant_override("outline_size", 4)
+	game_ui.add_child(label)
+	label.size = label.get_combined_minimum_size()
+	label.position = _get_scrap_loot_label_target_position(label, 0)
+	label.scale = Vector2(0.82, 0.82)
+	label.modulate = Color(1.0, 1.0, 1.0, 0.0)
+	_active_scrap_labels.append(label)
+	_reposition_scrap_loot_labels()
+
+	var pop_tween := label.create_tween()
+	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	pop_tween.tween_property(label, "scale", Vector2.ONE, SCRAP_LABEL_POP_DURATION)
+	pop_tween.parallel().tween_property(label, "modulate:a", 1.0, SCRAP_LABEL_POP_DURATION * 0.8)
+
+	var fade_tween := label.create_tween()
+	fade_tween.tween_interval(SCRAP_LABEL_LIFETIME_SECONDS)
+	fade_tween.tween_property(label, "position", label.position + Vector2(0.0, -SCRAP_LABEL_DRIFT_DISTANCE), SCRAP_LABEL_FADE_SECONDS)
+	fade_tween.parallel().tween_property(label, "modulate:a", 0.0, SCRAP_LABEL_FADE_SECONDS)
+	fade_tween.finished.connect(_on_scrap_loot_label_expired.bind(label))
+
+
+func _reposition_scrap_loot_labels() -> void:
+	for index in range(_active_scrap_labels.size()):
+		var label := _active_scrap_labels[index]
+		if label == null or not is_instance_valid(label):
+			continue
+
+		label.size = label.get_combined_minimum_size()
+		var reverse_index := (_active_scrap_labels.size() - 1) - index
+		var target_position := _get_scrap_loot_label_target_position(label, reverse_index)
+		var tween := label.create_tween()
+		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+		tween.tween_property(label, "position", target_position, 0.12)
+
+
+func _on_scrap_loot_label_expired(label: Label) -> void:
+	_active_scrap_labels.erase(label)
+	if label and is_instance_valid(label):
+		label.queue_free()
+	_reposition_scrap_loot_labels()
+
+
+func _get_scrap_loot_label_target_position(label: Label, stack_index_from_bottom: int) -> Vector2:
+	var base_position := get_viewport().get_canvas_transform() * (global_position + Vector2(0.0, SCRAP_LABEL_OFFSET_Y))
+	return Vector2(
+		base_position.x - (label.size.x * 0.5),
+		base_position.y - (stack_index_from_bottom * SCRAP_LABEL_SPACING) - label.size.y
+	)
 
 
 func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
@@ -626,6 +759,12 @@ const REPEL_BAR_WIDTH: float = 40.0
 const REPEL_BAR_HEIGHT: float = 6.0
 const REPEL_BAR_OFFSET_Y: float = -70.0
 const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
+const SCRAP_LABEL_OFFSET_Y: float = -86.0
+const SCRAP_LABEL_SPACING: float = 24.0
+const SCRAP_LABEL_POP_DURATION: float = 0.14
+const SCRAP_LABEL_LIFETIME_SECONDS: float = 0.75
+const SCRAP_LABEL_FADE_SECONDS: float = 0.35
+const SCRAP_LABEL_DRIFT_DISTANCE: float = 18.0
 
 func _create_repel_bar() -> void:
 	# Defer to ensure GameUI is ready

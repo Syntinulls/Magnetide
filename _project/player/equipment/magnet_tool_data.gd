@@ -15,6 +15,8 @@ class_name MagnetToolData
 @export var pull_max_speed: float = 1000.0
 ## Time for pull speed to ramp from base to max
 @export var pull_ramp_time: float = 0.6
+## Chance that popping a trash object creates a scrap metal pickup.
+@export_range(0.0, 100.0, 1.0) var trash_scrap_chance_percent: float = 25.0
 
 @export_group("Positioning")
 @export var weapon_offset: Vector2 = Vector2(-15.125, 0.0)

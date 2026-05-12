@@ -11,6 +11,7 @@ hold_distance = 50.0
 pull_base_speed = 600.0
 pull_max_speed = 2000.0
 pull_ramp_time = 0.4
+trash_scrap_chance_percent = 30.0
 weapon_rotation = 0.0
 muzzle_position = Vector2(-46.22568, -2.3631382)
 display_name = "Magnet Gun"

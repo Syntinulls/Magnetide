@@ -5,7 +5,6 @@
 [ext_resource type="Resource" uid="uid://dbwsf18itsq6q" path="res://_project/items/resources/gear.tres" id="2_22cg2"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/resources/hose.tres" id="3_jggux"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/resources/wires.tres" id="4_3cs1p"]
-[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/resources/scrap_metal.tres" id="4_jlnvb"]
 [ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="5_c2yb7"]
 [ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/resources/rubber.tres" id="5_fhog6"]
 [ext_resource type="Resource" uid="uid://kwbg58d0vfv0" path="res://_project/items/resources/mattress.tres" id="8_ak8rg"]
@@ -14,7 +13,7 @@
 
 [sub_resource type="Resource" id="Resource_fhog6"]
 script = ExtResource("5_c2yb7")
-entries = Array[ExtResource("1_item_data")]([ExtResource("2_22cg2"), ExtResource("3_jggux"), ExtResource("4_jlnvb"), ExtResource("5_fhog6"), ExtResource("4_3cs1p")])
+entries = Array[ExtResource("1_item_data")]([ExtResource("2_22cg2"), ExtResource("3_jggux"), ExtResource("5_fhog6"), ExtResource("4_3cs1p")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [sub_resource type="Resource" id="Resource_yptx6"]
@@ -28,4 +27,5 @@ salvageable_loot_table = SubResource("Resource_yptx6")
 non_salvageable_loot_table = SubResource("Resource_fhog6")
 salvageable_base_percent = 10.0
 salvageable_max_percent = 50.0
+trash_percent = 75.0
 metadata/_custom_type_script = "uid://elnbd45b0anw"

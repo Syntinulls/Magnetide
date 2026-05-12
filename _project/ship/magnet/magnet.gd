@@ -199,29 +199,29 @@ func _spawn_item_from_pile() -> void:
 	if not _pile_data or not _pile_node or not is_instance_valid(_pile_node):
 		return
 
-	# TODO: Use new roll system
-	# 1. Call _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
-	# 2. Check result["is_salvageable"] to update pity counter:
-	#    - If true: reset_pity_counter()
-	#    - If false: increment_pity_counter()
-	# 3. Use result["item"] as data
 	var result := _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
-	if not result or not result.has("item") or result["item"] == null:
-		return
-	
-	var is_salvageable: bool = result.get("is_salvageable", false)
-	if is_salvageable:
-		reset_pity_counter()
-	else:
-		increment_pity_counter()
-	
-	var data: SalvageItemData = result["item"]
-	if not data:
+	if not result:
 		return
 
 	# Check if adding this item would exceed capacity
 	if is_at_capacity:
 		return
+
+	var is_trash: bool = result.get("is_trash", false)
+	var data: SalvageItemData = null
+	if not is_trash:
+		if not result.has("item") or result["item"] == null:
+			return
+		
+		var is_salvageable: bool = result.get("is_salvageable", false)
+		if is_salvageable:
+			reset_pity_counter()
+		else:
+			increment_pity_counter()
+		
+		data = result["item"]
+		if not data:
+			return
 
 	var item := SalvageItem.new()
 	# Add to scene tree at a scope that persists
@@ -230,7 +230,15 @@ func _spawn_item_from_pile() -> void:
 		world_root.add_child(item)
 	else:
 		add_child(item)
-	item.setup(data)
+	if is_trash:
+		item.setup_trash(
+			result.get("trash_texture", null) as Texture2D,
+			result.get("trash_area", Vector2(64, 64)),
+			result.get("trash_hitbox_size", Vector2(36, 36)),
+			result.get("trash_weight", 0.75)
+		)
+	else:
+		item.setup(data)
 
 	# Spawn item at pile position (top of pile) with random x variance within pile width
 	var pile_top := _pile_node.global_position
