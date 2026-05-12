@@ -2,6 +2,7 @@ extends Node
 
 const DIGITAL_FONT: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
 const LABEL_FONT: Font = preload("res://_project/ui/fonts/Super Wonder.ttf")
+const SFX_PLAYER_SCRIPT: Script = preload("res://_project/audio/sfx_player.gd")
 
 var _active_app_root: Node = null
 var _active_run: Node = null
@@ -11,6 +12,13 @@ var _active_game_ui: Control = null
 var _active_ship: Node2D = null
 var _active_player: Node2D = null
 var _active_magnet: Magnet = null
+var _sfx = null
+
+
+func _ready() -> void:
+	_sfx = SFX_PLAYER_SCRIPT.new()
+	_sfx.name = "SfxPlayer"
+	add_child(_sfx)
 
 
 func register_app_root(app_root: Node) -> void:
@@ -71,6 +79,10 @@ var digital_font: Font:
 var label_font: Font:
 	get:
 		return LABEL_FONT
+
+var sfx:
+	get:
+		return _sfx
 
 var run: Node:
 	get:
