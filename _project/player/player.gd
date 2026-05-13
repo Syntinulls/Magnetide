@@ -20,6 +20,11 @@ signal scrap_metal_collected(amount: int)
 const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 const ScrapMetalTexture: Texture2D = preload("res://_project/ui/sprites/scrap_metal.png")
+const MACHINE_GUN_SHOOT_SFX: Array[String] = [
+	"machine_gun_shot_1.ogg",
+	"machine_gun_shot_2.ogg",
+	"machine_gun_shot_3.ogg"
+]
 
 var input_enabled: bool = true
 var facing_right: bool = false
@@ -406,6 +411,7 @@ func shoot() -> void:
 	_fire_cooldown = 1.0 / wpn.fire_rate
 	if muzzle_effect:
 		muzzle_effect.play_effect(_get_current_muzzle_effect_type())
+	_play_machine_gun_shoot_sfx()
 	var bullet := BulletScene.instantiate()
 	bullet.global_position = muzzle.global_position
 	bullet.direction = (get_global_mouse_position() - global_position).normalized()
@@ -416,6 +422,13 @@ func shoot() -> void:
 	var world_root := Magnetide.world_root
 	if world_root:
 		world_root.add_child(bullet)
+
+
+func _play_machine_gun_shoot_sfx() -> void:
+	if not Magnetide.sfx or MACHINE_GUN_SHOOT_SFX.is_empty():
+		return
+	var sound_name := MACHINE_GUN_SHOOT_SFX[randi() % MACHINE_GUN_SHOOT_SFX.size()]
+	Magnetide.sfx.play(sound_name)
 
 
 func magnetize() -> void:
