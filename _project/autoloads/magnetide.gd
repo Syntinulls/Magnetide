@@ -80,7 +80,7 @@ var label_font: Font:
 	get:
 		return LABEL_FONT
 
-var sfx:
+var sfx: SfxPlayer :
 	get:
 		return _sfx
 

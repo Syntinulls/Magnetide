@@ -10,6 +10,7 @@
 [ext_resource type="Texture2D" uid="uid://c64fldhe8gdig" path="res://_project/ship/sprites/ship_ff_anim.png" id="6_7id8t"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="6_dbcm7"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/enemies/enemy_target_point.gd" id="7_r6cvl"]
+[ext_resource type="PackedScene" uid="uid://ggn0tn42w7k4" path="res://_project/ship/research_station.tscn" id="8_6os2d"]
 [ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="10_dbkfd"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_dbkfd"]
@@ -120,6 +121,9 @@ shape = SubResource("RectangleShape2D_front")
 
 [node name="MagnetLever" parent="." unique_id=143007535 instance=ExtResource("3_lever")]
 position = Vector2(0, -77)
+
+[node name="ResearchStation" parent="." unique_id=229870124 instance=ExtResource("8_6os2d")]
+position = Vector2(-190, -113.35)
 
 [node name="DeparturePylonLeft" parent="." unique_id=1436115027 instance=ExtResource("5_departure_pylon")]
 visible = false

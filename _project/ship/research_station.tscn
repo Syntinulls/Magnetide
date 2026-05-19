@@ -1,0 +1,31 @@
+[gd_scene format=3 uid="uid://ggn0tn42w7k4"]
+
+[ext_resource type="Script" uid="uid://bppj8jyum8vmg" path="res://_project/ship/research_station.gd" id="1_n30xd"]
+[ext_resource type="Texture2D" uid="uid://cr8tps82oxgxq" path="res://_project/ship/sprites/ship_research_station.png" id="2_1ucmt"]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_s4r4w"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_1ucmt")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_y5p3a"]
+size = Vector2(147, 95)
+
+[node name="ResearchStation" type="Area2D" unique_id=229870124]
+script = ExtResource("1_n30xd")
+
+[node name="AnimatedSprite2D" type="AnimatedSprite2D" parent="." unique_id=1887484939]
+sprite_frames = SubResource("SpriteFrames_s4r4w")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=847621238]
+position = Vector2(-0.5, -11.5)
+shape = SubResource("RectangleShape2D_y5p3a")
+
+[node name="UIAnchor" type="Marker2D" parent="." unique_id=215837037]
+position = Vector2(0, -85)
