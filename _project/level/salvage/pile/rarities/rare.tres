@@ -14,6 +14,12 @@
 [ext_resource type="Resource" uid="uid://c4o6h7rcfvgsa" path="res://_project/items/resources/refrigerator.tres" id="12_aqj0n"]
 [ext_resource type="Resource" uid="uid://b4m4e377rt8fk" path="res://_project/items/resources/air_conditioner.tres" id="13_h6mpk"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/sprites/trash_small.png" id="14_o7p4a"]
+[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/resources/artifacts/unknown_artifact.tres" id="15_artifact"]
+
+[sub_resource type="Resource" id="Resource_artifact"]
+script = ExtResource("8_whg8k")
+entries = Array[ExtResource("1_item_data")]([ExtResource("15_artifact")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [sub_resource type="Resource" id="Resource_qf3a7"]
 script = ExtResource("8_whg8k")
@@ -30,8 +36,11 @@ script = ExtResource("1_hloxr")
 rarity = 1
 salvageable_loot_table = SubResource("Resource_re1s3")
 non_salvageable_loot_table = SubResource("Resource_qf3a7")
+normal_item_percent = 48.0
+trash_percent = 50.0
+artifact_percent = 2.0
 salvageable_base_percent = 10.0
 salvageable_increment_percent = 4.0
 salvageable_max_percent = 40.0
-trash_percent = 50.0
+artifact_loot_table = SubResource("Resource_artifact")
 metadata/_custom_type_script = "uid://elnbd45b0anw"

@@ -6,6 +6,8 @@ const SAVE_PATH := "user://magnetide_save.tres"
 @export var current_run_loadout: RunLoadout = null
 @export var storage_entries: Array[Dictionary] = []
 @export var total_scrap_metal: int = 0
+@export var research_points: int = 0
+@export var unlocked_research_ids: Array[StringName] = []
 
 
 static func load_or_create(default_run_loadout: RunLoadout) -> AppSaveData:
@@ -22,6 +24,8 @@ func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:
 	if reset:
 		storage_entries.clear()
 		total_scrap_metal = 0
+		research_points = 0
+		unlocked_research_ids.clear()
 		current_run_loadout = null
 	if current_run_loadout == null and default_run_loadout != null:
 		current_run_loadout = default_run_loadout.duplicate(true) as RunLoadout
@@ -48,6 +52,10 @@ func is_default(default_run_loadout: RunLoadout) -> bool:
 	if not storage_entries.is_empty():
 		return false
 	if total_scrap_metal != 0:
+		return false
+	if research_points != 0:
+		return false
+	if not unlocked_research_ids.is_empty():
 		return false
 	if current_run_loadout == null:
 		return true
@@ -105,6 +113,38 @@ func add_scrap_metal(amount: int) -> void:
 	if amount <= 0:
 		return
 	total_scrap_metal += amount
+	save_to_disk()
+
+
+func add_research_points(amount: int) -> void:
+	if amount <= 0:
+		return
+	research_points += amount
+	save_to_disk()
+
+
+func can_spend_research_points(amount: int) -> bool:
+	return amount >= 0 and research_points >= amount
+
+
+func spend_research_points(amount: int) -> bool:
+	if amount < 0:
+		return false
+	if not can_spend_research_points(amount):
+		return false
+	research_points -= amount
+	save_to_disk()
+	return true
+
+
+func is_research_unlocked(unlock_id: StringName) -> bool:
+	return unlock_id in unlocked_research_ids
+
+
+func unlock_research_id(unlock_id: StringName) -> void:
+	if unlock_id == &"" or unlock_id in unlocked_research_ids:
+		return
+	unlocked_research_ids.append(unlock_id)
 	save_to_disk()
 
 

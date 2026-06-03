@@ -29,3 +29,8 @@ shape = SubResource("RectangleShape2D_y5p3a")
 
 [node name="UIAnchor" type="Marker2D" parent="." unique_id=215837037]
 position = Vector2(0, -85)
+
+[node name="ArtifactAnchor" type="Marker2D" parent="." unique_id=1828159866]
+position = Vector2(0, -48)
+
+[node name="ResearchedItemsRoot" type="Node2D" parent="." unique_id=1877482218]

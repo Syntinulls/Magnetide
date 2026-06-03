@@ -27,6 +27,7 @@ var _trash_hitbox_size: Vector2 = Vector2(36, 36)
 var _trash_weight: float = 0.75
 var _is_held_by_gun: bool = false
 var _is_in_storage: bool = false
+var _is_locked_for_research: bool = false
 var _is_repelled: bool = false
 var _magnet_target: Node2D = null
 var _is_falling: bool = false
@@ -124,6 +125,14 @@ var is_trash: bool:
 	get:
 		return _is_trash
 
+var is_artifact: bool:
+	get:
+		return item_data != null and item_data.is_artifact
+
+var is_locked_for_research: bool:
+	get:
+		return _is_locked_for_research
+
 ## Returns true if the item has reached the magnet gun anchor and is tethered
 var has_reached_anchor: bool:
 	get:
@@ -137,7 +146,7 @@ var is_frozen_on_magnet: bool:
 ## Returns true if this item can be grabbed by the magnet gun.
 var can_be_grabbed: bool:
 	get:
-		return not _is_held_by_gun and not _is_falling and not _is_repelled and (is_frozen_on_magnet or _is_in_storage)
+		return not _is_locked_for_research and not _is_held_by_gun and not _is_falling and not _is_repelled and (is_frozen_on_magnet or _is_in_storage)
 
 ## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
@@ -191,6 +200,7 @@ func _ready() -> void:
 
 func setup(data: SalvageItemData) -> void:
 	_is_trash = false
+	_is_locked_for_research = false
 	item_data = data
 	rarity = int(data.rarity) if data else SalvageItemData.ItemRarity.COMMON
 	
@@ -207,6 +217,7 @@ func setup(data: SalvageItemData) -> void:
 
 func setup_trash(texture: Texture2D, area: Vector2 = Vector2(64, 64), hitbox: Vector2 = Vector2(36, 36), weight: float = 0.75) -> void:
 	_is_trash = true
+	_is_locked_for_research = false
 	item_data = null
 	rarity = SalvageItemData.ItemRarity.COMMON
 	_trash_area = area
@@ -266,6 +277,8 @@ func get_display_name() -> String:
 func get_rarity_color() -> Color:
 	if _is_trash:
 		return TRASH_RARITY_COLOR
+	if is_artifact:
+		return SalvageItemData.ARTIFACT_COLOR
 	return SalvageItemData.get_color_for_rarity(rarity)
 
 
@@ -566,6 +579,8 @@ func get_storage_contact_chain() -> Array[SalvageItem]:
 
 ## Grab from magnet onto magnet gun
 func grab_for_magnet_gun(puller: Node2D) -> void:
+	_is_locked_for_research = false
+
 	# Unfreeze all contacting frozen items so they can resettle
 	_unfreeze_contacting_items()
 	
@@ -633,6 +648,7 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = true
+	_is_locked_for_research = false
 	_is_repelled = false
 	_is_falling = false
 	_is_flying_to_gun = false
@@ -665,6 +681,41 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 	z_index = 0
+
+
+func lock_for_research(target_pos: Vector2, research_parent: Node = null) -> void:
+	_clear_settled_magnet_state()
+	_is_held_by_gun = false
+	_is_in_storage = false
+	_is_locked_for_research = true
+	_is_repelled = false
+	_is_falling = false
+	_is_flying_to_gun = false
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
+	_gun_hold_velocity = Vector2.ZERO
+	_soft_velocity = Vector2.ZERO
+	_is_frozen = true
+	set_outlined(false)
+
+	if research_parent and get_parent() != research_parent:
+		var current_pos := global_position
+		reparent(research_parent)
+		global_position = current_pos
+
+	global_position = target_pos
+
+	if _collision_shape:
+		_collision_shape.set_deferred("disabled", true)
+
+	collision_layer = 0
+	collision_mask = 0
+	freeze_mode = RigidBody2D.FREEZE_MODE_KINEMATIC
+	freeze = true
+	gravity_scale = 0.0
+	linear_velocity = Vector2.ZERO
+	angular_velocity = 0.0
+	z_index = 3
 
 
 func lock_for_departure_cutscene(storage_parent: Node = null) -> void:

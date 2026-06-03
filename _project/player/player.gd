@@ -73,6 +73,7 @@ var pull_ramp_time: float:
 # Magnet gun state
 var _held_item: SalvageItem = null
 var _hovered_item: SalvageItem = null
+var _hovered_research_station: ResearchStation = null
 var _repel_hold_elapsed: float = 0.0
 var _is_repel_holding: bool = false
 var _repel_bar: ColorRect = null
@@ -214,7 +215,7 @@ func _physics_process(delta: float) -> void:
 	_process_shield_recharge(delta)
 	if _cinematic_walk_active:
 		_process_cinematic_walk(delta)
-	elif input_enabled:
+	elif input_enabled and not Magnetide.research_ui_input_captured:
 		var mouse_pos := get_global_mouse_position()
 		
 		# Facing is purely based on mouse X vs player X
@@ -468,6 +469,9 @@ func _process_magnet_gun(delta: float) -> void:
 		
 		# Only allow repel/place once item has reached the anchor point
 		if _held_item.has_reached_anchor:
+			var mouse_pos := get_global_mouse_position()
+			_process_research_station_hover(mouse_pos)
+
 			# Right-click hold to repel
 			if Input.is_action_pressed("shoot_alt"):
 				_is_repel_holding = true
@@ -484,17 +488,24 @@ func _process_magnet_gun(delta: float) -> void:
 					_repel_hold_elapsed = 0.0
 					_update_repel_bar()
 			
-			# Left-click to place in storage
+			# Left-click to place on a station, then fall back to storage
 			if Input.is_action_just_pressed("shoot"):
-				var mouse_pos := get_global_mouse_position()
+				if _try_place_held_item_on_research_station():
+					return
 				var ship_node := _get_ship()
 				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
 					_place_item_in_storage(mouse_pos)
+		else:
+			_set_hovered_research_station(null)
 	else:
+		_set_hovered_research_station(null)
 		# No item held - hover detection and grab
 		_process_magnet_gun_hover()
+		_process_research_station_reopen_hover(get_global_mouse_position())
 		
 		if Input.is_action_just_pressed("shoot"):
+			if _try_open_hovered_research_station():
+				return
 			if _hovered_item and is_instance_valid(_hovered_item):
 				_grab_item_from_magnet(_hovered_item)
 
@@ -705,6 +716,8 @@ func _repel_held_item() -> void:
 	if not _held_item or not is_instance_valid(_held_item):
 		return
 	
+	_set_hovered_research_station(null)
+
 	# Calculate repel direction (away from gun, toward where gun is pointing)
 	var tool := current_magnet_tool
 	var repel_force := tool.repel_impulse_force if tool else 600.0
@@ -724,6 +737,8 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	if not _held_item or not is_instance_valid(_held_item):
 		return
 	
+	_set_hovered_research_station(null)
+
 	var ship_node := _get_ship()
 	if not ship_node:
 		return
@@ -743,6 +758,7 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 
 func _clear_magnet_gun_state() -> void:
 	_set_hovered_item(null)
+	_set_hovered_research_station(null)
 	_hide_hover_tooltip()
 	
 	# Force-release held item
@@ -762,6 +778,79 @@ func _get_ship() -> Node2D:
 	if parent and parent.has_method("is_point_in_storage_area"):
 		return parent as Node2D
 	return null
+
+
+func _process_research_station_hover(mouse_pos: Vector2) -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		_set_hovered_research_station(null)
+		return
+	if not _held_item.is_artifact:
+		_set_hovered_research_station(null)
+		return
+
+	var ship_node := _get_ship()
+	if ship_node == null or not ship_node.has_method("get_research_station_at_point"):
+		_set_hovered_research_station(null)
+		return
+
+	var station := ship_node.get_research_station_at_point(mouse_pos) as ResearchStation
+	if station and station.can_accept_item(_held_item):
+		_set_hovered_research_station(station)
+	else:
+		_set_hovered_research_station(null)
+
+
+func _process_research_station_reopen_hover(mouse_pos: Vector2) -> void:
+	var ship_node := _get_ship()
+	if ship_node == null or not ship_node.has_method("get_research_station_at_point"):
+		_set_hovered_research_station(null)
+		return
+
+	var station := ship_node.get_research_station_at_point(mouse_pos) as ResearchStation
+	if station and station.has_active_research():
+		_set_hovered_research_station(station)
+	else:
+		_set_hovered_research_station(null)
+
+
+func _try_open_hovered_research_station() -> bool:
+	if _hovered_research_station == null or not is_instance_valid(_hovered_research_station):
+		return false
+	if not _hovered_research_station.has_active_research():
+		return false
+	_hovered_research_station.open_research_ui()
+	return true
+
+
+func _try_place_held_item_on_research_station() -> bool:
+	if not _held_item or not is_instance_valid(_held_item):
+		return false
+	if _hovered_research_station == null or not is_instance_valid(_hovered_research_station):
+		return false
+	if not _hovered_research_station.place_artifact(_held_item):
+		return false
+
+	_held_item = null
+	_is_repel_holding = false
+	_repel_hold_elapsed = 0.0
+	_update_repel_bar()
+	_set_hovered_research_station(null)
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
+	return true
+
+
+func _set_hovered_research_station(station: ResearchStation) -> void:
+	if _hovered_research_station == station:
+		return
+
+	if _hovered_research_station and is_instance_valid(_hovered_research_station):
+		_hovered_research_station.set_highlighted(false)
+
+	_hovered_research_station = station
+
+	if _hovered_research_station and is_instance_valid(_hovered_research_station):
+		_hovered_research_station.set_highlighted(true)
 
 
 # =============================================================================

@@ -140,6 +140,7 @@ func _shutdown_gameplay(stop_player: bool = true) -> void:
 			enemy.stop_for_run_end()
 
 	if _ship:
+		_ship.stop_for_run_end()
 		for pylon in _ship.get_departure_pylons():
 			pylon.stop_for_run_end()
 

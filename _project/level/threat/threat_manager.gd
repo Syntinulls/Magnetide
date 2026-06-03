@@ -111,20 +111,21 @@ func _get_time_to_max_threat() -> float:
 
 static func _create_default_threat_level_factors() -> Array[ThreatLevelData]:
 	return [
-		_create_threat_level_data(95.0, 5.0, 0.0, 0.0),
-		_create_threat_level_data(85.0, 15.0, 0.0, 0.0),
-		_create_threat_level_data(70.0, 20.0, 10.0, 0.0),
-		_create_threat_level_data(60.0, 25.0, 13.0, 2.0),
-		_create_threat_level_data(0.0, 70.0, 22.0, 8.0),
+		_create_threat_level_data(95.0, 5.0, 0.0, 0.0, 1.0),
+		_create_threat_level_data(85.0, 15.0, 0.0, 0.0, 1.5),
+		_create_threat_level_data(70.0, 20.0, 10.0, 0.0, 2.0),
+		_create_threat_level_data(60.0, 25.0, 13.0, 2.0, 3.0),
+		_create_threat_level_data(0.0, 70.0, 22.0, 8.0, 4.0),
 	]
 
 
-static func _create_threat_level_data(common: float, rare: float, epic: float, legendary: float) -> ThreatLevelData:
+static func _create_threat_level_data(common: float, rare: float, epic: float, legendary: float, artifact: float) -> ThreatLevelData:
 	var data := ThreatLevelData.new()
 	data.common_weight = common
 	data.rare_weight = rare
 	data.epic_weight = epic
 	data.legendary_weight = legendary
+	data.artifact_weight = artifact
 	return data
 
 

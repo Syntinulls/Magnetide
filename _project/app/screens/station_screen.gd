@@ -25,9 +25,11 @@ var _current_page_index: int = 0
 var _is_panning: bool = false
 var _page_tween: Tween = null
 var _is_ready: bool = false
+var _research_points_label: Label = null
 
 @onready var _page_viewport: Control = $PageViewport
 @onready var _page_container: Control = $PageViewport/PageContainer
+@onready var _top_bar: Control = $TopBar
 @onready var _player_page: Control = $PageViewport/PageContainer/PlayerPage
 @onready var _ship_page: Control = $PageViewport/PageContainer/ShipPage
 @onready var _map_button: Button = $TopBar/MapButton
@@ -69,6 +71,7 @@ func _ready() -> void:
 		_run_loadout.prepare_for_run()
 
 	_configure_mouse_filters(self)
+	_ensure_research_points_display()
 	_apply_fonts(self)
 	_weapon_popup.visible = false
 	_weapon_popup_stats_panel.visible = false
@@ -252,6 +255,46 @@ func _refresh_storage_scrap_counter() -> void:
 	_storage_scrap_count_label.text = str(scrap_count)
 
 
+func _ensure_research_points_display() -> void:
+	if _research_points_label != null or _top_bar == null:
+		return
+
+	var panel := ColorRect.new()
+	panel.name = "ResearchPointsPanel"
+	panel.color = Color(0.09, 0.12, 0.17, 0.88)
+	panel.custom_minimum_size = Vector2(260.0, 60.0)
+	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
+	panel.offset_left = -292.0
+	panel.offset_top = 24.0
+	panel.offset_right = -24.0
+	panel.offset_bottom = 84.0
+	_top_bar.add_child(panel)
+
+	_research_points_label = Label.new()
+	_research_points_label.name = "ResearchPointsLabel"
+	_research_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_research_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	_research_points_label.add_theme_color_override("font_color", SalvageItemData.ARTIFACT_COLOR)
+	_research_points_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_research_points_label.add_theme_constant_override("outline_size", 4)
+	_research_points_label.add_theme_font_size_override("font_size", 34)
+	_research_points_label.set_anchors_preset(Control.PRESET_FULL_RECT)
+	_research_points_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	panel.add_child(_research_points_label)
+	_refresh_research_points_display()
+
+
+func _refresh_research_points_display() -> void:
+	if _research_points_label == null:
+		return
+	var points := 0
+	var save_data := _save_data as AppSaveData
+	if save_data:
+		points = save_data.research_points
+	_research_points_label.text = "RESEARCH: %d" % points
+
+
 func _toggle_weapon_popup() -> void:
 	var should_show := not _weapon_popup.visible
 	_weapon_popup.visible = should_show
@@ -356,6 +399,7 @@ func _refresh_loadout_ui() -> void:
 	_refresh_current_weapon_stats()
 	_refresh_stats_panel()
 	_refresh_storage_scrap_counter()
+	_refresh_research_points_display()
 
 
 func _update_equipment_buttons() -> void:
@@ -428,13 +472,18 @@ func _populate_weapon_list() -> void:
 		button.text = _get_weapon_entry_text(entry)
 		button.icon = _catalog_entry_icon(entry)
 		button.expand_icon = false
-		button.modulate = LOCKED_ENTRY_MODULATE if _catalog_entry_locked(entry) else UNLOCKED_ENTRY_MODULATE
+		var is_locked := _catalog_entry_locked(entry)
+		button.modulate = LOCKED_ENTRY_MODULATE if is_locked else UNLOCKED_ENTRY_MODULATE
+		button.disabled = is_locked and not _can_unlock_catalog_entry(entry)
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		Magnetide.apply_label_font(button)
 		_weapon_list.add_child(button)
 		button.mouse_entered.connect(_show_weapon_stats.bind(entry))
 		button.focus_entered.connect(_show_weapon_stats.bind(entry))
-		if not _catalog_entry_locked(entry):
+		if is_locked:
+			if _can_unlock_catalog_entry(entry):
+				button.pressed.connect(_unlock_weapon_entry.bind(entry))
+		else:
 			button.pressed.connect(_equip_weapon_from_popup.bind(entry))
 
 
@@ -456,6 +505,11 @@ func _get_weapon_catalog_entries() -> Array[Resource]:
 			equipped_entry.set("locked", false)
 			entries.insert(0, equipped_entry)
 
+	entries.sort_custom(func(a: Resource, b: Resource) -> bool:
+		var order_a := int(a.get("research_unlock_order")) if a != null else 0
+		var order_b := int(b.get("research_unlock_order")) if b != null else 0
+		return order_a < order_b
+	)
 	return entries
 
 
@@ -464,7 +518,7 @@ func _get_weapon_entry_text(entry: Resource) -> String:
 	if _run_loadout != null and _same_equipment_data(_catalog_entry_equipment(entry), _run_loadout.equipped_weapon):
 		parts.append("Equipped")
 	if _catalog_entry_locked(entry):
-		parts.append("Locked")
+		parts.append("Unlock %s" % _catalog_entry_unlock_cost_text(entry))
 	return "  ".join(parts)
 
 
@@ -475,7 +529,76 @@ func _catalog_entry_equipment(entry: Resource) -> EquipmentData:
 
 
 func _catalog_entry_locked(entry: Resource) -> bool:
-	return bool(entry.get("locked")) if entry != null else false
+	if entry == null or not bool(entry.get("locked")):
+		return false
+	var save_data := _save_data as AppSaveData
+	if save_data == null:
+		return true
+	var unlock_id := _catalog_entry_unlock_id(entry)
+	return not save_data.is_research_unlocked(unlock_id)
+
+
+func _can_unlock_catalog_entry(entry: Resource) -> bool:
+	if entry == null or not _catalog_entry_locked(entry):
+		return false
+	var save_data := _save_data as AppSaveData
+	if save_data == null:
+		return false
+	if not _is_next_locked_catalog_entry(entry):
+		return false
+	var cost := _catalog_entry_research_cost(entry)
+	return cost > 0 and save_data.can_spend_research_points(cost)
+
+
+func _unlock_weapon_entry(entry: Resource) -> void:
+	var save_data := _save_data as AppSaveData
+	if save_data == null or not _can_unlock_catalog_entry(entry):
+		return
+
+	var cost := _catalog_entry_research_cost(entry)
+	if not save_data.spend_research_points(cost):
+		return
+
+	save_data.unlock_research_id(_catalog_entry_unlock_id(entry))
+	_save_current_game()
+	_refresh_loadout_ui()
+	_show_weapon_stats(entry)
+
+
+func _is_next_locked_catalog_entry(entry: Resource) -> bool:
+	var group := _catalog_entry_unlock_group(entry)
+	for candidate in _get_weapon_catalog_entries():
+		if _catalog_entry_unlock_group(candidate) != group:
+			continue
+		if _catalog_entry_locked(candidate):
+			return candidate == entry
+	return false
+
+
+func _catalog_entry_unlock_id(entry: Resource) -> StringName:
+	if entry != null and entry.has_method("get_research_unlock_id"):
+		return entry.call("get_research_unlock_id")
+	if entry != null and _catalog_entry_equipment(entry) != null:
+		var equipment := _catalog_entry_equipment(entry)
+		if not equipment.resource_path.is_empty():
+			return StringName(equipment.resource_path)
+	return &""
+
+
+func _catalog_entry_unlock_group(entry: Resource) -> StringName:
+	if entry == null:
+		return &""
+	if not _has_property(entry, "research_unlock_group"):
+		return &""
+	return entry.get("research_unlock_group") as StringName
+
+
+func _catalog_entry_research_cost(entry: Resource) -> int:
+	if entry == null:
+		return 0
+	if not _has_property(entry, "research_point_cost"):
+		return 0
+	return maxi(int(entry.get("research_point_cost")), 0)
 
 
 func _catalog_entry_display_name(entry: Resource) -> String:

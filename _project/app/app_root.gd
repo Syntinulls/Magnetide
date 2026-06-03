@@ -216,6 +216,10 @@ func _get_current_run_loadout() -> RunLoadout:
 	return default_run_loadout
 
 
+func get_save_data() -> Resource:
+	return _save_data
+
+
 func _has_continue_save() -> bool:
 	if _save_data == null:
 		return false

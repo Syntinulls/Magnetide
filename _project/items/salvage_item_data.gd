@@ -7,6 +7,9 @@ const PART_HITBOX_SIZE: Vector2 = Vector2(40, 40)
 const PART_SPRITE_SIZE: Vector2 = Vector2(80, 80)
 
 enum ItemRarity { COMMON, RARE, EPIC, LEGENDARY }
+enum ItemKind { SALVAGE, ARTIFACT }
+
+const ARTIFACT_COLOR: Color = Color("4fffe8")
 
 const ITEM_RARITY_WEIGHTS := {
 	ItemRarity.COMMON: 20.0,
@@ -35,6 +38,15 @@ const ITEM_RARITY_COLORS := {
 ## Minimum threat level required for this item to appear in loot tables.
 ## 0 means always available.
 @export var min_threat_level: int = 0
+
+# =============================================================================
+# RESEARCH
+# =============================================================================
+@export_group("Research")
+## Broad gameplay category for special handling such as research artifacts.
+@export var item_kind: ItemKind = ItemKind.SALVAGE
+## Research points awarded when this artifact is successfully researched.
+@export var research_point_reward: int = 0
 
 # =============================================================================
 # VISUALS
@@ -73,7 +85,7 @@ const ITEM_RARITY_COLORS := {
 ## Salvageables: hitbox_size_override if use_hitbox_override, else half of area
 var actual_hitbox_size: Vector2:
 	get:
-		if parts.is_empty():
+		if parts.is_empty() and not is_artifact:
 			return PART_HITBOX_SIZE
 		if use_hitbox_override:
 			return hitbox_size_override
@@ -82,7 +94,11 @@ var actual_hitbox_size: Vector2:
 ## Actual area used for rendering. Terminal parts use constant size.
 var actual_area: Vector2:
 	get:
-		return PART_SPRITE_SIZE if parts.is_empty() else area
+		return PART_SPRITE_SIZE if parts.is_empty() and not is_artifact else area
+
+var is_artifact: bool:
+	get:
+		return item_kind == ItemKind.ARTIFACT
 
 
 func get_drop_weight() -> float:
@@ -90,6 +106,8 @@ func get_drop_weight() -> float:
 
 
 func get_rarity_color() -> Color:
+	if is_artifact:
+		return ARTIFACT_COLOR
 	return get_color_for_rarity(int(rarity))
 
 

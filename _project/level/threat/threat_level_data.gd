@@ -12,6 +12,7 @@ class_name ThreatLevelData
 @export var rare_weight: float = 0.0
 @export var epic_weight: float = 0.0
 @export var legendary_weight: float = 0.0
+@export var artifact_weight: float = 0.0
 
 @export_group("Weather")
 ## Placeholder until the weather system owns this data.
@@ -24,4 +25,5 @@ func get_pile_rarity_weights() -> Dictionary:
 		SalvagePile.Rarity.RARE: rare_weight,
 		SalvagePile.Rarity.EPIC: epic_weight,
 		SalvagePile.Rarity.LEGENDARY: legendary_weight,
+		SalvagePile.Rarity.ARTIFACT: artifact_weight,
 	}

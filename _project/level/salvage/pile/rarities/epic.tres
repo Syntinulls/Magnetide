@@ -17,6 +17,12 @@
 [ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/resources/transformer.tres" id="15_w8uai"]
 [ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/resources/xray_machine.tres" id="16_8re2k"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/sprites/trash_small.png" id="17_g4ue2"]
+[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/resources/artifacts/unknown_artifact.tres" id="18_artifact"]
+
+[sub_resource type="Resource" id="Resource_artifact"]
+script = ExtResource("9_qsc00")
+entries = Array[ExtResource("1_item_data")]([ExtResource("18_artifact")])
+metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [sub_resource type="Resource" id="Resource_jkfkd"]
 script = ExtResource("9_qsc00")
@@ -33,7 +39,10 @@ script = ExtResource("1_hloxr")
 rarity = 2
 salvageable_loot_table = SubResource("Resource_o77jj")
 non_salvageable_loot_table = SubResource("Resource_jkfkd")
+normal_item_percent = 76.5
+artifact_percent = 3.5
 salvageable_base_percent = 10.0
 salvageable_increment_percent = 3.0
 salvageable_max_percent = 30.0
+artifact_loot_table = SubResource("Resource_artifact")
 metadata/_custom_type_script = "uid://elnbd45b0anw"

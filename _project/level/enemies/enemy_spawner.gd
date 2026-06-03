@@ -97,6 +97,31 @@ func _spawn_batch(level_data: EnemySpawnThreatLevelData) -> void:
 			_track_enemy(enemy)
 
 
+func force_spawn_basic_enemy() -> void:
+	_cleanup_living_enemies()
+
+	var level_data := _get_current_level_data()
+	if level_data == null:
+		return
+
+	var valid_entries := _get_valid_pool_entries(level_data.get_pool(true), _get_current_threat_stage())
+	if valid_entries.is_empty():
+		return
+
+	var selected_entry := valid_entries[0]
+	if selected_entry == null or selected_entry.enemy == null:
+		return
+
+	var valid_zones := _resolve_valid_zones(selected_entry.enemy.allowed_spawn_zones)
+	if valid_zones.is_empty():
+		return
+
+	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
+	var enemy := _spawn_enemy(selected_entry.enemy, zone)
+	if enemy != null:
+		_track_enemy(enemy)
+
+
 func _spawn_enemy(spawn_definition: EnemySpawnDefinition, zone: Area2D) -> Enemy:
 	var enemy_scene := spawn_definition.enemy_scene if spawn_definition.enemy_scene != null else DEFAULT_ENEMY_SCENE
 	var enemy := enemy_scene.instantiate() as Enemy

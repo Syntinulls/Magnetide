@@ -39,10 +39,10 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 @export var green_threshold_ratio: float = 0.04
 ## Distance threshold for yellow (good) hit as ratio of bar width.
 @export var yellow_threshold_ratio: float = 0.08
-## Number of yellow markers allowed per rarity (COMMON, RARE, EPIC, LEGENDARY).
-@export var allowed_yellows: Array[int] = [2, 1, 1, 0]
-## Number of markers per rarity (COMMON, RARE, EPIC, LEGENDARY).
-@export var markers_per_rarity: Array[int] = [2, 3, 4, 5]
+## Number of yellow markers allowed per rarity (COMMON, RARE, EPIC, LEGENDARY, ARTIFACT).
+@export var allowed_yellows: Array[int] = [2, 1, 1, 0, 1]
+## Number of markers per rarity (COMMON, RARE, EPIC, LEGENDARY, ARTIFACT).
+@export var markers_per_rarity: Array[int] = [2, 3, 4, 5, 3]
 
 @export_group("Timing")
 ## Time to show result before closing.

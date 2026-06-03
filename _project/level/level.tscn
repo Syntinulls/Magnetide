@@ -11,6 +11,7 @@
 [ext_resource type="Resource" uid="uid://c3p7gak2lm8nb" path="res://_project/level/salvage/pile/rarities/epic.tres" id="8_v4meo"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="Resource" uid="uid://b5x2n8j4wq6mc" path="res://_project/level/salvage/pile/rarities/legendary.tres" id="9_uj1ub"]
+[ext_resource type="Resource" path="res://_project/level/salvage/pile/rarities/artifact.tres" id="10_artifact_pile"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
 [ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
@@ -117,6 +118,7 @@ script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
 common_weight = 95.0
 rare_weight = 5.0
+artifact_weight = 1.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_uj1ub"]
@@ -124,6 +126,7 @@ script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
 common_weight = 85.0
 rare_weight = 15.0
+artifact_weight = 1.5
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_17v6t"]
@@ -132,6 +135,7 @@ enemy_types = PackedStringArray()
 common_weight = 70.0
 rare_weight = 20.0
 epic_weight = 10.0
+artifact_weight = 2.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_x74ax"]
@@ -141,6 +145,7 @@ common_weight = 60.0
 rare_weight = 25.0
 epic_weight = 13.0
 legendary_weight = 2.0
+artifact_weight = 3.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_dx42g"]
@@ -149,6 +154,7 @@ enemy_types = PackedStringArray()
 rare_weight = 70.0
 epic_weight = 22.0
 legendary_weight = 8.0
+artifact_weight = 4.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pho3n"]
@@ -291,6 +297,7 @@ common_data = ExtResource("6_pho3n")
 rare_data = ExtResource("7_ig01q")
 epic_data = ExtResource("8_v4meo")
 legendary_data = ExtResource("9_uj1ub")
+artifact_data = ExtResource("10_artifact_pile")
 pile_height_ratio_min = 0.18
 pile_height_ratio_max = 0.2
 

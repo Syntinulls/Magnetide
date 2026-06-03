@@ -10,25 +10,13 @@ class_name LootTable
 func roll_item(threat_level: int = 0, max_item_rarity: int = SalvageItemData.ItemRarity.LEGENDARY) -> SalvageItemData:
 	# 1. Filter entries by threat level and the pile's allowed max item rarity.
 	var available_entries := _get_available_entries(threat_level, max_item_rarity)
+	return WeightedRandom.roll_weighted(available_entries, Callable(self, "_get_entry_weight")) as SalvageItemData
 
-	# 2. Sum total weight of filtered entries
-	var total := 0.0
-	for entry in available_entries:
-		total += entry.get_drop_weight()
-	if total <= 0.0:
-		return null
-	
-	# 3. Roll random [0, total_weight)
-	var roll := randf() * total
-	
-	# 4. Iterate entries, subtract chance until roll <= 0
-	for entry in available_entries:
-		roll -= entry.get_drop_weight()
-		if roll <= 0:
-			return entry
-	
-	# 5. Return selected item_data (or null if empty)
-	return null
+
+func _get_entry_weight(entry: SalvageItemData) -> float:
+	if entry == null:
+		return 0.0
+	return entry.get_drop_weight()
 
 ## Get all entries available at the given threat level and rarity cap.
 func _get_available_entries(threat_level: int, max_item_rarity: int) -> Array[SalvageItemData]:

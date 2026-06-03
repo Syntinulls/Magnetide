@@ -23,10 +23,14 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var thruster_near_stop_speed_ratio_threshold: float = 0.25
 @export var thruster_near_stop_left_lead: float = 0.35
 @export var thruster_speed_change_epsilon: float = 1.0
+@export_group("Debug")
+@export var spawn_debug_research_artifact_in_storage: bool = true
+@export var debug_research_artifact_storage_offset: Vector2 = Vector2(-140.0, -90.0)
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
+const DEBUG_RESEARCH_ARTIFACT_DATA: SalvageItemData = preload("res://_project/items/resources/artifacts/unknown_artifact.tres")
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
@@ -40,6 +44,7 @@ var _last_level_speed: float = -1.0
 @onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
 @onready var _thruster_right: Thruster = $ThrusterRight as Thruster
+@onready var _research_station: ResearchStation = get_node_or_null("ResearchStation") as ResearchStation
 
 var stored_items: Array[SalvageItem]:
 	get:
@@ -50,6 +55,7 @@ func _ready() -> void:
 	current_health = max_health
 	_ensure_storage_items_root()
 	_create_storage_zone()
+	_spawn_debug_research_artifact_in_storage()
 	call_deferred("_update_storage_weight_ui")
 	call_deferred("_initialize_thrusters")
 
@@ -272,6 +278,51 @@ func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
 	item.place_in_storage(target_pos, _ensure_storage_items_root())
 	add_to_storage(item)
 	return true
+
+
+func _spawn_debug_research_artifact_in_storage() -> void:
+	if not spawn_debug_research_artifact_in_storage:
+		return
+	if DEBUG_RESEARCH_ARTIFACT_DATA == null:
+		return
+
+	var storage_root := _ensure_storage_items_root()
+	var artifact := SalvageItem.new()
+	artifact.name = "DebugResearchArtifact"
+	storage_root.add_child(artifact)
+	artifact.setup(DEBUG_RESEARCH_ARTIFACT_DATA)
+
+	var target_pos := global_position + storage_area_position + debug_research_artifact_storage_offset
+	if not store_item(artifact, target_pos):
+		artifact.queue_free()
+
+
+func get_research_station_at_point(global_point: Vector2) -> ResearchStation:
+	if _research_station == null or not is_instance_valid(_research_station):
+		return null
+	if _research_station.is_point_in_placement_area(global_point):
+		return _research_station
+	return null
+
+
+func can_accept_research_item(item: SalvageItem) -> bool:
+	return _research_station != null and is_instance_valid(_research_station) and _research_station.can_accept_item(item)
+
+
+func place_research_item(item: SalvageItem) -> bool:
+	if _research_station == null or not is_instance_valid(_research_station):
+		return false
+	return _research_station.place_artifact(item)
+
+
+func clear_research_station_highlight() -> void:
+	if _research_station and is_instance_valid(_research_station):
+		_research_station.set_highlighted(false)
+
+
+func stop_for_run_end() -> void:
+	if _research_station and is_instance_valid(_research_station):
+		_research_station.stop_for_run_end()
 
 
 func _update_storage_weight_ui() -> void:

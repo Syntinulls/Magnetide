@@ -29,12 +29,17 @@ class_name SalvageSpawner
 @export_subgroup("Legendary")
 @export var legendary_data: SalvagePileData = null
 @export var legendary_weight: float = 2.0
+@export_subgroup("Artifact")
+@export var artifact_data: SalvagePileData = null
+@export var artifact_weight: float = 1.0
 
 @export_group("Salvage Properties")
 ## Minimum height of salvage pile as ratio of viewport height.
 @export var pile_height_ratio_min: float = 0.125
 ## Maximum height of salvage pile as ratio of viewport height.
 @export var pile_height_ratio_max: float = 0.15
+## Artifact piles are smaller than normal piles.
+@export var artifact_pile_height_multiplier: float = 0.62
 
 var _salvage_pile_scene: PackedScene
 var _spawn_timer: Timer
@@ -54,6 +59,8 @@ func _get_pile_data_for_rarity(rarity: SalvagePile.Rarity) -> SalvagePileData:
 			return epic_data
 		SalvagePile.Rarity.LEGENDARY:
 			return legendary_data
+		SalvagePile.Rarity.ARTIFACT:
+			return artifact_data
 	return common_data
 
 
@@ -145,27 +152,24 @@ func on_pile_acquired() -> void:
 
 func _pick_rarity() -> SalvagePile.Rarity:
 	var weights := _get_active_rarity_weights()
-	var active_common_weight := float(weights.get(SalvagePile.Rarity.COMMON, 0.0))
-	var active_rare_weight := float(weights.get(SalvagePile.Rarity.RARE, 0.0))
-	var active_epic_weight := float(weights.get(SalvagePile.Rarity.EPIC, 0.0))
-	var active_legendary_weight := float(weights.get(SalvagePile.Rarity.LEGENDARY, 0.0))
-	var total := active_common_weight + active_rare_weight + active_epic_weight + active_legendary_weight
-	if total <= 0.0:
-		return SalvagePile.Rarity.COMMON
-	var roll := randf() * total
+	var rarity_entries: Array = [
+		SalvagePile.Rarity.COMMON,
+		SalvagePile.Rarity.RARE,
+		SalvagePile.Rarity.EPIC,
+		SalvagePile.Rarity.LEGENDARY,
+		SalvagePile.Rarity.ARTIFACT,
+	]
+	var selected: Variant = WeightedRandom.roll_weighted(
+		rarity_entries,
+		Callable(self, "_get_rarity_roll_weight").bind(weights)
+	)
+	return int(selected) if selected != null else SalvagePile.Rarity.COMMON
 
-	if roll < active_common_weight:
-		return SalvagePile.Rarity.COMMON
-	roll -= active_common_weight
 
-	if roll < active_rare_weight:
-		return SalvagePile.Rarity.RARE
-	roll -= active_rare_weight
-
-	if roll < active_epic_weight:
-		return SalvagePile.Rarity.EPIC
-
-	return SalvagePile.Rarity.LEGENDARY
+func _get_rarity_roll_weight(rarity: int, weights: Dictionary) -> float:
+	if _get_pile_data_for_rarity(rarity) == null:
+		return 0.0
+	return float(weights.get(rarity, 0.0))
 
 
 func _get_active_rarity_weights() -> Dictionary:
@@ -178,6 +182,7 @@ func _get_active_rarity_weights() -> Dictionary:
 		SalvagePile.Rarity.RARE: rare_weight,
 		SalvagePile.Rarity.EPIC: epic_weight,
 		SalvagePile.Rarity.LEGENDARY: legendary_weight,
+		SalvagePile.Rarity.ARTIFACT: artifact_weight,
 	}
 
 
@@ -199,6 +204,8 @@ func _spawn_salvage() -> void:
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
 	var rarity := _pick_rarity()
+	if rarity == SalvagePile.Rarity.ARTIFACT:
+		target_height *= artifact_pile_height_multiplier
 
 	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
 	_current_pile.activate(rarity, Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
@@ -227,6 +234,8 @@ func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rari
 	var spawn_y := _get_screen_height()  # Bottom of screen
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
+	if rarity == SalvagePile.Rarity.ARTIFACT:
+		target_height *= artifact_pile_height_multiplier
 
 	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
 	_current_pile.activate(rarity, Vector2(spawn_x, spawn_y), _level, target_height, rot)

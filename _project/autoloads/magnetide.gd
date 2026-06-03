@@ -13,6 +13,7 @@ var _active_ship: Node2D = null
 var _active_player: Node2D = null
 var _active_magnet: Magnet = null
 var _sfx = null
+var research_ui_input_captured: bool = false
 
 
 func _ready() -> void:

@@ -1,13 +1,14 @@
 extends Node2D
 class_name SalvagePile
 
-enum Rarity { COMMON, RARE, EPIC, LEGENDARY }
+enum Rarity { COMMON, RARE, EPIC, LEGENDARY, ARTIFACT }
 
 const RARITY_COLORS: Dictionary = {
 	Rarity.COMMON: Color(0.0, 0.8, 0.0),      # Green
 	Rarity.RARE: Color(0.2, 0.4, 1.0),        # Blue
 	Rarity.EPIC: Color(0.6, 0.2, 0.8),        # Purple
 	Rarity.LEGENDARY: Color(1.0, 0.85, 0.0),  # Yellow/Gold
+	Rarity.ARTIFACT: Color("4fffe8"),
 }
 
 var _pile_textures: Array[Texture2D] = []
