@@ -89,8 +89,9 @@ func open_research_ui() -> void:
 		return
 	var ui := _ensure_research_ui()
 	if ui == null:
+		_start_debug_research()
 		return
-	ui.reopen()
+	ui.start_session(_current_artifact.item_data, _saved_stage_state)
 
 
 func stop_for_run_end() -> void:
@@ -105,11 +106,6 @@ func _start_research_session() -> void:
 	_is_researching = true
 	_saved_stage_state.clear()
 	research_started.emit(_current_artifact)
-	var ui := _ensure_research_ui()
-	if ui == null:
-		_start_debug_research()
-		return
-	ui.start_session(_current_artifact.item_data, _saved_stage_state)
 
 
 func _start_debug_research() -> void:

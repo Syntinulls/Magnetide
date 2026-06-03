@@ -11,11 +11,12 @@ signal state_changed(state: Dictionary)
 @export var base_drift_speed: float = 0.11
 @export var threat_drift_speed_scale: float = 0.025
 @export var base_drift_direction_change_interval: float = 3.0
-@export var threat_direction_change_scale: float = 0.18
 @export var input_speed: float = 0.62
 @export var max_laser_offset: float = 1.0
 @export var heat_build_rate: float = 0.28
 @export var heat_cool_rate: float = 0.2
+@export var base_heat_cool_delay: float = 0.6
+@export var threat_heat_cool_delay_scale: float = 0.25
 @export var red_heat_threshold: float = 0.8
 @export var red_heat_failure_duration: float = 2.5
 @export var resume_delay: float = 0.8
@@ -33,6 +34,8 @@ var left_heat: float = 0.0
 var right_heat: float = 0.0
 var left_red_heat_time: float = 0.0
 var right_red_heat_time: float = 0.0
+var left_heat_cool_delay_remaining: float = 0.0
+var right_heat_cool_delay_remaining: float = 0.0
 
 var _threat_level: int = 0
 var _active: bool = false
@@ -103,6 +106,8 @@ func save_state() -> Dictionary:
 		"right_heat": right_heat,
 		"left_red_heat_time": left_red_heat_time,
 		"right_red_heat_time": right_red_heat_time,
+		"left_heat_cool_delay_remaining": left_heat_cool_delay_remaining,
+		"right_heat_cool_delay_remaining": right_heat_cool_delay_remaining,
 		"left_direction_change_remaining": _left_direction_change_remaining,
 		"right_direction_change_remaining": _right_direction_change_remaining,
 		"rng_state": _rng.state,
@@ -122,6 +127,8 @@ func load_state(state: Dictionary) -> void:
 	right_heat = clampf(float(state.get("right_heat", right_heat)), 0.0, 1.0)
 	left_red_heat_time = maxf(float(state.get("left_red_heat_time", left_red_heat_time)), 0.0)
 	right_red_heat_time = maxf(float(state.get("right_red_heat_time", right_red_heat_time)), 0.0)
+	left_heat_cool_delay_remaining = maxf(float(state.get("left_heat_cool_delay_remaining", left_heat_cool_delay_remaining)), 0.0)
+	right_heat_cool_delay_remaining = maxf(float(state.get("right_heat_cool_delay_remaining", right_heat_cool_delay_remaining)), 0.0)
 	_left_direction_change_remaining = maxf(float(state.get("left_direction_change_remaining", _left_direction_change_remaining)), 0.2)
 	_right_direction_change_remaining = maxf(float(state.get("right_direction_change_remaining", _right_direction_change_remaining)), 0.2)
 	if state.has("rng_state"):
@@ -141,6 +148,8 @@ func reset_attempt() -> void:
 	right_heat = 0.0
 	left_red_heat_time = 0.0
 	right_red_heat_time = 0.0
+	left_heat_cool_delay_remaining = 0.0
+	right_heat_cool_delay_remaining = 0.0
 	_reset_drift_timers()
 	_resume_countdown = resume_delay
 	progress_changed.emit(progress)
@@ -344,13 +353,12 @@ func _process_laser_motion(delta: float) -> void:
 func _process_progress_and_heat(delta: float) -> void:
 	var left_aligned := _is_left_aligned()
 	var right_aligned := _is_right_aligned()
-	var aligned_count := (1 if left_aligned else 0) + (1 if right_aligned else 0)
-	if aligned_count > 0:
-		progress = clampf(progress + base_progress_rate * float(aligned_count) * delta, 0.0, 1.0)
+	if left_aligned and right_aligned:
+		progress = clampf(progress + base_progress_rate * delta, 0.0, 1.0)
 		progress_changed.emit(progress)
 
-	left_heat = _update_heat(left_heat, left_aligned, delta)
-	right_heat = _update_heat(right_heat, right_aligned, delta)
+	left_heat = _update_heat(left_heat, left_aligned, delta, true)
+	right_heat = _update_heat(right_heat, right_aligned, delta, false)
 	left_red_heat_time = _update_red_time(left_red_heat_time, left_heat, delta)
 	right_red_heat_time = _update_red_time(right_red_heat_time, right_heat, delta)
 	state_changed.emit(save_state())
@@ -366,10 +374,27 @@ func _process_progress_and_heat(delta: float) -> void:
 		attempt_failed.emit(&"right_laser_destroyed")
 
 
-func _update_heat(value: float, aligned: bool, delta: float) -> float:
+func _update_heat(value: float, aligned: bool, delta: float, is_left_laser: bool) -> float:
+	var delay_remaining := left_heat_cool_delay_remaining if is_left_laser else right_heat_cool_delay_remaining
 	if aligned:
+		delay_remaining = maxf(delay_remaining - delta, 0.0)
+		_set_heat_cool_delay(is_left_laser, delay_remaining)
+		if delay_remaining > 0.0:
+			return value
 		return clampf(value - heat_cool_rate * delta, 0.0, 1.0)
+	_set_heat_cool_delay(is_left_laser, _get_heat_cool_delay())
 	return clampf(value + heat_build_rate * delta, 0.0, 1.0)
+
+
+func _set_heat_cool_delay(is_left_laser: bool, value: float) -> void:
+	if is_left_laser:
+		left_heat_cool_delay_remaining = value
+	else:
+		right_heat_cool_delay_remaining = value
+
+
+func _get_heat_cool_delay() -> float:
+	return maxf(base_heat_cool_delay + float(maxi(_threat_level, 0)) * threat_heat_cool_delay_scale, 0.0)
 
 
 func _update_red_time(value: float, heat: float, delta: float) -> float:
@@ -379,14 +404,16 @@ func _update_red_time(value: float, heat: float, delta: float) -> float:
 
 
 func _update_drift_direction(delta: float) -> void:
-	_left_direction_change_remaining -= delta
-	_right_direction_change_remaining -= delta
-	if _left_direction_change_remaining <= 0.0:
-		left_drift_direction = _roll_direction(left_laser_offset)
-		_left_direction_change_remaining = _roll_direction_change_interval()
-	if _right_direction_change_remaining <= 0.0:
-		right_drift_direction = _roll_direction(right_laser_offset)
-		_right_direction_change_remaining = _roll_direction_change_interval()
+	if _is_left_aligned():
+		_left_direction_change_remaining -= delta
+		if _left_direction_change_remaining <= 0.0:
+			left_drift_direction = _roll_direction(left_laser_offset)
+			_left_direction_change_remaining = _roll_direction_change_interval()
+	if _is_right_aligned():
+		_right_direction_change_remaining -= delta
+		if _right_direction_change_remaining <= 0.0:
+			right_drift_direction = _roll_direction(right_laser_offset)
+			_right_direction_change_remaining = _roll_direction_change_interval()
 
 
 func _roll_direction(offset: float) -> float:
@@ -403,9 +430,7 @@ func _reset_drift_timers() -> void:
 
 
 func _roll_direction_change_interval() -> float:
-	var scale := 1.0 + float(maxi(_threat_level, 0)) * threat_direction_change_scale
-	var base_interval := base_drift_direction_change_interval / scale
-	return maxf(base_interval * _rng.randf_range(0.75, 1.25), 0.45)
+	return maxf(base_drift_direction_change_interval * _rng.randf_range(0.75, 1.25), 0.45)
 
 
 func _get_drift_speed() -> float:

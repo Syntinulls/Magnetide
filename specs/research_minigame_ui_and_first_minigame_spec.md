@@ -45,13 +45,15 @@ This spec extends:
 
 1. Player places an artifact on the research station.
 2. Research station starts a `ResearchSession`.
-3. Research station UI opens over the normal HUD.
-4. The first stage/minigame is loaded into the shell's inner minigame host.
-5. Player completes the active minigame.
-6. If all required stages are complete, research succeeds.
-7. On success, the artifact is consumed and awards its research points.
-8. If the player reaches `3` total fails before completion, research fails.
-9. On terminal failure, the artifact is destroyed and no research points are awarded.
+3. The artifact remains locked on the station.
+4. Player presses `E` while near/hovering the research station to open the station UI.
+5. Research station UI opens over the normal HUD.
+6. The first stage/minigame is loaded into the shell's inner minigame host.
+7. Player completes the active minigame.
+8. If all required stages are complete, research succeeds.
+9. On success, the artifact is consumed and awards its research points.
+10. If the player reaches `3` total fails before completion, research fails.
+11. On terminal failure, the artifact is destroyed and no research points are awarded.
 
 First pass:
 
@@ -238,6 +240,7 @@ Rules:
 - The saved state is stored on the active research session.
 - The artifact remains locked in the research station while the UI is closed.
 - Reopening the research UI reloads the saved minigame state.
+- Opening or reopening active research requires pressing `E` at the research station.
 - The minigame resumes after a short delay so the player has time to reorient before drift, timers, heat, or other pressure continues.
 - No progress is earned while the minigame is paused/closed.
 - No heat, drift, timers, or failure conditions advance while the minigame is paused/closed.
@@ -331,8 +334,11 @@ Rules:
 - Holding or pressing `S` moves the selected laser downward.
 - If a laser is not being actively moved by the player, it drifts at a constant linear speed.
 - Drift movement is linear, not eased or accelerated.
-- Drift direction changes over time according to difficulty settings.
-- Drift speed and drift-direction-change frequency scale with current threat level.
+- Drift direction changes over time at a fixed interval.
+- Drift direction may only change while that laser is currently aligned with the artifact.
+- Drift-direction-change countdown should advance only while that laser is aligned.
+- Drift speed scales with current threat level.
+- Drift-direction-change frequency does not scale with threat level or difficulty.
 - Each laser has a maximum allowed drift distance away from the artifact center.
 - Laser offset is clamped to that maximum distance.
 
@@ -348,13 +354,13 @@ var right_drift_direction: float = -1.0
 
 ### Progress
 
-Progress builds continuously while one or both lasers impact the artifact.
+Progress builds continuously only while both lasers impact the artifact.
 
 Rules:
 
 - If neither laser is aligned, progress does not increase.
-- If one laser is aligned, progress increases at the base progress rate.
-- If both lasers are aligned, progress increases at twice the base progress rate.
+- If exactly one laser is aligned, progress does not increase.
+- If both lasers are aligned, progress increases at the base progress rate.
 - Progress is normalized from `0.0` to `1.0`.
 - Completing the progress bar emits `completed()`.
 - Progress is reset to `0.0` when this minigame awards a failure.
@@ -363,8 +369,8 @@ Rules:
 Recommended formula:
 
 ```gdscript
-var aligned_count := int(left_is_aligned) + int(right_is_aligned)
-progress += base_progress_rate * float(aligned_count) * delta
+if left_is_aligned and right_is_aligned:
+	progress += base_progress_rate * delta
 ```
 
 ### Heat And Failure
@@ -374,7 +380,9 @@ Each laser has its own heat/temperature bar.
 Rules:
 
 - If a laser is not impacting the artifact, that laser builds heat.
-- If a laser is impacting the artifact, its heat can cool or hold steady according to tuning.
+- If a laser is impacting the artifact, its heat does not immediately cool.
+- Once a laser becomes aligned, a cooling delay must finish before that laser's heat starts decreasing.
+- The cooling delay scales longer with difficulty/current threat level.
 - Heat is evaluated independently for left and right lasers.
 - When a laser reaches the red temperature range, a danger timer starts for that laser.
 - If any one laser remains in red temperature for the configured danger duration, that laser is destroyed.
@@ -390,6 +398,8 @@ var left_heat: float = 0.0
 var right_heat: float = 0.0
 var left_red_heat_time: float = 0.0
 var right_red_heat_time: float = 0.0
+var left_heat_cool_delay_remaining: float = 0.0
+var right_heat_cool_delay_remaining: float = 0.0
 ```
 
 Heat values should be normalized from `0.0` to `1.0`.
@@ -425,11 +435,12 @@ Recommended tunables:
 @export var base_drift_speed: float = 0.08
 @export var threat_drift_speed_scale: float = 0.015
 @export var base_drift_direction_change_interval: float = 3.0
-@export var threat_direction_change_scale: float = 0.15
 @export var input_step: float = 0.05
 @export var max_laser_offset: float = 1.0
 @export var heat_build_rate: float = 0.2
 @export var heat_cool_rate: float = 0.12
+@export var base_heat_cool_delay: float = 0.6
+@export var threat_heat_cool_delay_scale: float = 0.25
 @export var red_heat_threshold: float = 0.8
 @export var red_heat_failure_duration: float = 2.5
 ```
@@ -437,14 +448,14 @@ Recommended tunables:
 Notes:
 
 - `alignment_tolerance` controls how close a laser must be to count as impacting the artifact.
-- `base_progress_rate` is the progress rate for one aligned laser.
-- Two aligned lasers use `base_progress_rate * 2.0`.
+- `base_progress_rate` is the progress rate when both lasers are aligned.
 - `base_drift_speed` is the linear drift speed before threat scaling.
 - `threat_drift_speed_scale` increases drift speed as threat rises.
-- `base_drift_direction_change_interval` controls how often drift direction changes at low threat.
-- `threat_direction_change_scale` reduces the direction-change interval as threat rises.
+- `base_drift_direction_change_interval` controls how often an aligned laser may change drift direction.
 - `input_step` can be interpreted as per-press movement or converted into input speed if held input feels better.
 - `max_laser_offset` clamps how far each laser can drift away from the artifact.
+- `base_heat_cool_delay` is the delay before heat starts decreasing after a laser becomes aligned.
+- `threat_heat_cool_delay_scale` adds extra cooling delay per threat level.
 
 ### Saved State
 
@@ -464,6 +475,8 @@ Minimum saved fields:
 	"right_heat": right_heat,
 	"left_red_heat_time": left_red_heat_time,
 	"right_red_heat_time": right_red_heat_time,
+	"left_heat_cool_delay_remaining": left_heat_cool_delay_remaining,
+	"right_heat_cool_delay_remaining": right_heat_cool_delay_remaining,
 	"rng_state": rng_state,
 }
 ```
@@ -529,7 +542,8 @@ Research station:
 
 - Should no longer auto-complete from `debug_research_duration` once this UI flow is enabled.
 - Should still lock the placed artifact at the station anchor.
-- Should open the station UI after `artifact_placed`.
+- Should keep the artifact locked after `artifact_placed`.
+- Should open the station UI when the player presses `E` at a station with active research.
 - Should listen for UI success/failure.
 - Should keep the artifact locked when the research UI is closed.
 - Should destroy the locked artifact if the current run ends before research succeeds.
@@ -554,7 +568,7 @@ Save/reward:
 1. Add the research station UI shell scene with static progress/fail placeholders.
 2. Add the shell script with session state, fail marker updates, and minigame host loading.
 3. Add the minigame contract and first minigame placeholder scene.
-4. Wire `ResearchStation` to open the shell instead of starting the debug timer.
+4. Wire `ResearchStation` to start active research after placement without opening the shell.
 5. Implement success path for one required minigame.
 6. Implement fail count and terminal artifact destruction.
 7. Implement research UI close/reopen pause and saved-state restore.
@@ -563,33 +577,36 @@ Save/reward:
 
 ## Acceptance Criteria
 
-1. Placing an artifact on the research station opens a centered research UI shell.
-2. The shell displays total research progress at the top.
-3. The shell displays three total fail markers at the bottom.
-4. The shell contains an inner host area for the active minigame.
-5. The first pass requires exactly one minigame to complete research.
-6. A minigame success completes research and awards the artifact's research points.
-7. A minigame failure increments the total fail count by one.
-8. Non-terminal failures allow the player to retry or continue the active stage according to the minigame's rules.
-9. Reaching three total failures ends research immediately.
-10. On terminal failure, the artifact is destroyed and awards no research points.
-11. The first minigame scene matches the sketch blockout: center artifact/signal, left/right calibration clusters, bottom hint, and WASD prompt.
-12. `A` selects the left laser and `D` selects the right laser.
-13. `W` and `S` move the selected laser vertically.
-14. Uncontrolled lasers drift linearly away from alignment, with threat-scaled speed and direction changes.
-15. One aligned laser increases progress at the base rate and two aligned lasers increase progress at twice the base rate.
-16. Misaligned lasers build heat independently.
-17. A laser that stays in red heat for the configured danger duration awards one failure and resets the current minigame.
-18. Closing the research UI saves and pauses the active minigame state.
-19. Reopening the research UI resumes the saved minigame state after a short delay.
-20. Closing the research UI restores normal gameplay/station input.
-21. The locked artifact remains in the research station until success, terminal failure, or current run end.
-22. Current run end destroys any artifact locked in the research station.
+1. Placing an artifact on the research station locks the artifact there without opening the research UI.
+2. Pressing `E` at a research station with active research opens a centered research UI shell.
+3. The shell displays total research progress at the top.
+4. The shell displays three total fail markers at the bottom.
+5. The shell contains an inner host area for the active minigame.
+6. The first pass requires exactly one minigame to complete research.
+7. A minigame success completes research and awards the artifact's research points.
+8. A minigame failure increments the total fail count by one.
+9. Non-terminal failures allow the player to retry or continue the active stage according to the minigame's rules.
+10. Reaching three total failures ends research immediately.
+11. On terminal failure, the artifact is destroyed and awards no research points.
+12. The first minigame scene matches the sketch blockout: center artifact/signal, left/right calibration clusters, bottom hint, and WASD prompt.
+13. `A` selects the left laser and `D` selects the right laser.
+14. `W` and `S` move the selected laser vertically.
+15. Uncontrolled lasers drift linearly away from alignment, with threat-scaled speed.
+16. Drift direction changes at a constant interval that does not scale with difficulty.
+17. Drift direction only changes while the laser is currently aligned with the artifact.
+18. Progress increases only when both lasers are aligned.
+19. Misaligned lasers build heat independently.
+20. Aligned lasers wait for a difficulty-scaled cooling delay before their heat decreases.
+21. A laser that stays in red heat for the configured danger duration awards one failure and resets the current minigame.
+22. Closing the research UI saves and pauses the active minigame state.
+23. Reopening the research UI resumes the saved minigame state after a short delay.
+24. Closing the research UI restores normal gameplay/station input.
+25. The locked artifact remains in the research station until success, terminal failure, or current run end.
+26. Current run end destroys any artifact locked in the research station.
 
 ## Open Questions
 
-1. Should aligned lasers cool immediately, cool after a delay, or simply stop building heat?
-2. Should laser movement use discrete `input_step` taps or continuous held-key movement?
-3. What is the exact resume delay after reopening the research UI?
-4. Should heat and laser offset reset fully after a non-terminal failure, or should difficulty-specific penalties carry forward inside the same stage?
-5. Should the selected laser be visually highlighted with a stronger outline, brighter emitter, or control cursor?
+1. Should laser movement use discrete `input_step` taps or continuous held-key movement?
+2. What is the exact resume delay after reopening the research UI?
+3. Should heat and laser offset reset fully after a non-terminal failure, or should difficulty-specific penalties carry forward inside the same stage?
+4. Should the selected laser be visually highlighted with a stronger outline, brighter emitter, or control cursor?

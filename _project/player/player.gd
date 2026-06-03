@@ -249,6 +249,11 @@ func _physics_process(delta: float) -> void:
 			_process_weapon_input(delta)
 		elif equip is MagnetToolData:
 			_process_magnet_tool_input(delta)
+
+		if _held_item == null or not is_instance_valid(_held_item):
+			_process_research_station_reopen_hover(mouse_pos)
+			if Input.is_action_just_pressed("interact"):
+				_try_open_hovered_research_station()
 		
 		if Input.is_action_just_pressed("move_jump") and is_on_floor():
 			velocity.y = jump_velocity
@@ -501,11 +506,8 @@ func _process_magnet_gun(delta: float) -> void:
 		_set_hovered_research_station(null)
 		# No item held - hover detection and grab
 		_process_magnet_gun_hover()
-		_process_research_station_reopen_hover(get_global_mouse_position())
 		
 		if Input.is_action_just_pressed("shoot"):
-			if _try_open_hovered_research_station():
-				return
 			if _hovered_item and is_instance_valid(_hovered_item):
 				_grab_item_from_magnet(_hovered_item)
 
@@ -818,7 +820,9 @@ func _try_open_hovered_research_station() -> bool:
 		return false
 	if not _hovered_research_station.has_active_research():
 		return false
-	_hovered_research_station.open_research_ui()
+	var station := _hovered_research_station
+	_set_hovered_research_station(null)
+	station.open_research_ui()
 	return true
 
 

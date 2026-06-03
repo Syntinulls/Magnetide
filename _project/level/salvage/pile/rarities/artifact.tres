@@ -1,4 +1,4 @@
-[gd_resource type="Resource" script_class="SalvagePileData" format=3]
+[gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://bih45ycehyrow"]
 
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_pile_data"]
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="2_item_data"]
@@ -18,10 +18,8 @@ normal_item_percent = 0.0
 trash_percent = 1.0
 artifact_percent = 0.0
 is_artifact_pile = true
-pre_artifact_trash_pulls = 4
 salvageable_base_percent = 0.0
 salvageable_increment_percent = 0.0
 salvageable_max_percent = 0.0
-trash_sprites = Array[Texture2D]([ExtResource("5_trash_small")])
 artifact_loot_table = SubResource("Resource_artifact_loot")
 metadata/_custom_type_script = "uid://elnbd45b0anw"
