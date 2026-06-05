@@ -4,7 +4,7 @@
 
 Artifact research should move from the current debug timer into an interactive research station UI. The research station UI is a centered overlay anchored conceptually to the ship's research station. It contains shared research information around the outside and a replaceable minigame viewport inside.
 
-The long-term research flow requires three minigames completed in sequence to successfully research one artifact. Eventually, the three stages will be selected from a larger random pool. The first implementation only requires one minigame, but the UI and controller should be shaped so additional ordered stages can be added without rewriting the station shell.
+The long-term research flow requires three minigames completed in sequence to successfully research one artifact. Eventually, the three stages will be selected from a larger random pool by choosing one variant from each minigame category. The first implementation only requires one minigame, but the UI and controller should be shaped so additional ordered stages can be added without rewriting the station shell.
 
 This spec extends:
 
@@ -64,7 +64,7 @@ First pass:
 Future pass:
 
 - Required stage count: `3`
-- Stage list is selected from a minigame pool
+- Stage list is selected by choosing one variant from each required minigame category
 - Stages run sequentially
 - Total progress is split into equal stage segments
 - Each active stage fills its own segment continuously using that minigame's internal progress
@@ -241,7 +241,9 @@ Rules:
 - The artifact remains locked in the research station while the UI is closed.
 - Reopening the research UI reloads the saved minigame state.
 - Opening or reopening active research requires pressing `E` at the research station.
-- The minigame resumes after a short delay so the player has time to reorient before drift, timers, heat, or other pressure continues.
+- The minigame starts or resumes after a short delay so the player has time to reorient before drift, timers, heat, or other pressure continues.
+- New/default minigame state should display `START IN`.
+- Previously started saved state should display `RESUME IN`.
 - No progress is earned while the minigame is paused/closed.
 - No heat, drift, timers, or failure conditions advance while the minigame is paused/closed.
 
@@ -266,11 +268,15 @@ var rng_seed: int = 0
 
 The first pass may use a dictionary if creating a resource class is unnecessary, but future minigame pooling will benefit from a typed context.
 
-## First Minigame: Resonance Alignment
+## First Minigame: Alignment A
 
 The first minigame is a balancing/calibration task represented by the sketch with a central artifact, left/right laser controls, vertical heat meters, directional arrows, and WASD prompts.
 
-Working name: `Resonance Alignment`.
+Name: `Alignment A`.
+
+Category: `Alignment`.
+
+`Alignment A` is the first variant in the alignment minigame category. Future research flow should be able to choose one alignment variant, such as `Alignment A`, from the alignment category when building the ordered research stage list.
 
 Design intent:
 
@@ -278,7 +284,7 @@ Design intent:
 - The artifact sits in the center of a horizontal signal/wave line.
 - The lasers slowly drift away from the artifact over time.
 - The player swaps between controlling the left laser and right laser, then nudges the selected laser up or down to keep it aligned.
-- The minigame should read as a physical calibration task inside the research station.
+- The minigame should read as a physical alignment/calibration task inside the research station.
 
 The minigame is successful when its internal progress reaches `1.0`.
 
@@ -294,7 +300,7 @@ Required visual regions inside the minigame host:
 
 Sketch mapping:
 
-- Center artifact shape: artifact resonance target.
+- Center artifact shape: artifact alignment target.
 - Horizontal wavy line: research signal line running through the artifact.
 - Left and right emitters/lines: lasers aimed toward the artifact.
 - Left and right vertical meters: laser temperature bars.
@@ -390,6 +396,8 @@ Rules:
 - The outer shell increments the total fail count by `1`.
 - If attempts remain, the minigame resets and starts over.
 - If the total fail count reaches `3`, the outer shell ends research and destroys the artifact.
+- Before reset, the failed laser should show a placeholder destruction result: overheat red, deactivate the beam, and shake the emitter once.
+- After the destruction placeholder, the UI should hesitate briefly before showing the reset countdown.
 
 Recommended fields:
 
@@ -443,6 +451,7 @@ Recommended tunables:
 @export var threat_heat_cool_delay_scale: float = 0.25
 @export var red_heat_threshold: float = 0.8
 @export var red_heat_failure_duration: float = 2.5
+@export var failure_result_hesitation_duration: float = 1.0
 ```
 
 Notes:
@@ -456,6 +465,33 @@ Notes:
 - `max_laser_offset` clamps how far each laser can drift away from the artifact.
 - `base_heat_cool_delay` is the delay before heat starts decreasing after a laser becomes aligned.
 - `threat_heat_cool_delay_scale` adds extra cooling delay per threat level.
+- `failure_result_hesitation_duration` controls the beat between laser destruction and reset countdown.
+
+### Result Presentation
+
+Failure result:
+
+- The destroyed laser turns red.
+- The destroyed laser's beam deactivates.
+- The destroyed laser emitter performs one short shake.
+- The result overlay hesitates briefly before the reset countdown starts.
+- If attempts remain, the current minigame resets after the countdown.
+- If this was the third failure, research fails after the countdown.
+
+Stage success result:
+
+- Both lasers stop moving.
+- Both lasers switch to a stable success color.
+- A centered `CALIBRATED` victory confirmation appears over the minigame.
+- The UI hesitates for a few seconds before advancing to the next minigame.
+- If this was the last minigame, the final research result screen appears only after this victory confirmation beat.
+
+Final research result:
+
+- After the last required minigame succeeds, the active minigame is cleared from the host.
+- The shell displays research results instead of closing automatically.
+- Results include research points awarded, failures accrued, and time taken.
+- The player manually closes the results using the top-right `X`, `Esc`, or clicking outside the UI panel.
 
 ### Saved State
 
@@ -477,6 +513,7 @@ Minimum saved fields:
 	"right_red_heat_time": right_red_heat_time,
 	"left_heat_cool_delay_remaining": left_heat_cool_delay_remaining,
 	"right_heat_cool_delay_remaining": right_heat_cool_delay_remaining,
+	"has_started": has_started,
 	"rng_state": rng_state,
 }
 ```
@@ -485,7 +522,8 @@ On resume:
 
 - Restore all saved values.
 - Show the UI immediately.
-- Wait for the shell's resume delay.
+- Wait for the shell's start/resume delay.
+- Use the saved `has_started` flag to choose `START IN` or `RESUME IN` countdown text.
 - Resume drift, heat, input, and progress updates after the delay.
 
 ## Research Success Behavior
@@ -531,8 +569,8 @@ Suggested first-pass files:
 | `_project/ui/research/research_station_ui.tscn` | Outer station shell scene. |
 | `_project/ui/research/research_station_ui.gd` | Shell controller: progress, fail markers, stage host. |
 | `_project/ui/research/research_minigame_context.gd` | Optional typed context for minigames. |
-| `_project/ui/research/minigames/resonance_alignment_minigame.tscn` | First minigame scene. |
-| `_project/ui/research/minigames/resonance_alignment_minigame.gd` | First minigame logic. |
+| `_project/ui/research/minigames/alignment_a_minigame.tscn` | First alignment minigame variant scene. |
+| `_project/ui/research/minigames/alignment_a_minigame.gd` | First alignment minigame variant logic. |
 
 The exact UI path can change if the project already has a stronger convention, but research UI should remain separate from the ship station world node.
 
@@ -572,7 +610,7 @@ Save/reward:
 5. Implement success path for one required minigame.
 6. Implement fail count and terminal artifact destruction.
 7. Implement research UI close/reopen pause and saved-state restore.
-8. Implement Resonance Alignment laser drift, progress, heat, and reset behavior.
+8. Implement Alignment A laser drift, progress, heat, and reset behavior.
 9. Smoke test artifact placement through success, single failure retry, pause/resume, and three-failure destruction.
 
 ## Acceptance Criteria
@@ -597,12 +635,15 @@ Save/reward:
 18. Progress increases only when both lasers are aligned.
 19. Misaligned lasers build heat independently.
 20. Aligned lasers wait for a difficulty-scaled cooling delay before their heat decreases.
-21. A laser that stays in red heat for the configured danger duration awards one failure and resets the current minigame.
-22. Closing the research UI saves and pauses the active minigame state.
-23. Reopening the research UI resumes the saved minigame state after a short delay.
-24. Closing the research UI restores normal gameplay/station input.
-25. The locked artifact remains in the research station until success, terminal failure, or current run end.
-26. Current run end destroys any artifact locked in the research station.
+21. A laser that stays in red heat for the configured danger duration awards one failure and shows a placeholder laser destruction result.
+22. The reset countdown starts after a short hesitation, not immediately at failure time.
+23. Stage success shows a centered `CALIBRATED` confirmation before advancing.
+24. Final research success displays a manual-close result screen with research points, failures, and time taken after the `CALIBRATED` confirmation beat.
+25. Closing the research UI saves and pauses the active minigame state.
+26. Reopening the research UI resumes the saved minigame state after a short delay.
+27. Closing the research UI restores normal gameplay/station input.
+28. The locked artifact remains in the research station until success, terminal failure, or current run end.
+29. Current run end destroys any artifact locked in the research station.
 
 ## Open Questions
 

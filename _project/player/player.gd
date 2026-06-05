@@ -74,6 +74,7 @@ var pull_ramp_time: float:
 var _held_item: SalvageItem = null
 var _hovered_item: SalvageItem = null
 var _hovered_research_station: ResearchStation = null
+var _interactable_research_station: ResearchStation = null
 var _repel_hold_elapsed: float = 0.0
 var _is_repel_holding: bool = false
 var _repel_bar: ColorRect = null
@@ -251,7 +252,7 @@ func _physics_process(delta: float) -> void:
 			_process_magnet_tool_input(delta)
 
 		if _held_item == null or not is_instance_valid(_held_item):
-			_process_research_station_reopen_hover(mouse_pos)
+			_process_research_station_reopen_range()
 			if Input.is_action_just_pressed("interact"):
 				_try_open_hovered_research_station()
 		
@@ -802,26 +803,26 @@ func _process_research_station_hover(mouse_pos: Vector2) -> void:
 		_set_hovered_research_station(null)
 
 
-func _process_research_station_reopen_hover(mouse_pos: Vector2) -> void:
+func _process_research_station_reopen_range() -> void:
 	var ship_node := _get_ship()
-	if ship_node == null or not ship_node.has_method("get_research_station_at_point"):
-		_set_hovered_research_station(null)
+	if ship_node == null or not ship_node.has_method("get_research_station_in_interaction_range"):
+		_interactable_research_station = null
 		return
 
-	var station := ship_node.get_research_station_at_point(mouse_pos) as ResearchStation
+	var station := ship_node.get_research_station_in_interaction_range(global_position) as ResearchStation
 	if station and station.has_active_research():
-		_set_hovered_research_station(station)
+		_interactable_research_station = station
 	else:
-		_set_hovered_research_station(null)
+		_interactable_research_station = null
 
 
 func _try_open_hovered_research_station() -> bool:
-	if _hovered_research_station == null or not is_instance_valid(_hovered_research_station):
+	if _interactable_research_station == null or not is_instance_valid(_interactable_research_station):
 		return false
-	if not _hovered_research_station.has_active_research():
+	if not _interactable_research_station.has_active_research():
 		return false
-	var station := _hovered_research_station
-	_set_hovered_research_station(null)
+	var station := _interactable_research_station
+	_interactable_research_station = null
 	station.open_research_ui()
 	return true
 

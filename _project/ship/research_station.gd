@@ -8,6 +8,7 @@ signal research_failed(item_data: SalvageItemData, reason: StringName)
 signal artifact_cleared(item_data: SalvageItemData)
 
 @export var debug_research_duration: float = 5.0
+@export var interaction_radius: float = 180.0
 
 const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
 const ResearchStationUIScene: PackedScene = preload("res://_project/ui/research/research_station_ui.tscn")
@@ -44,6 +45,10 @@ func is_point_in_placement_area(global_point: Vector2) -> bool:
 		var rect := Rect2(-rect_shape.size * 0.5, rect_shape.size)
 		return rect.has_point(local_point)
 	return false
+
+
+func is_point_in_interaction_range(global_point: Vector2) -> bool:
+	return global_position.distance_to(global_point) <= interaction_radius
 
 
 func can_accept_item(item: SalvageItem) -> bool:

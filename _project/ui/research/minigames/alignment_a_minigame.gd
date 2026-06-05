@@ -1,5 +1,5 @@
 extends Control
-class_name ResonanceAlignmentMinigame
+class_name AlignmentAMinigame
 
 signal progress_changed(progress: float)
 signal attempt_failed(reason: StringName)
@@ -47,6 +47,12 @@ var _rng := RandomNumberGenerator.new()
 var _hint_label: Label = null
 var _prompt_label: Label = null
 var _status_label: Label = null
+var _failure_result_laser: StringName = &""
+var _success_result_active: bool = false
+var _left_emitter_shake_offset: float = 0.0
+var _right_emitter_shake_offset: float = 0.0
+var _is_resuming_altered_state: bool = false
+var _has_started_state: bool = false
 
 
 func _ready() -> void:
@@ -69,6 +75,7 @@ func start_minigame(context) -> void:
 	_active = true
 	_paused = false
 	_resume_countdown = resume_delay
+	_has_started_state = true
 	grab_focus()
 	set_process(true)
 	_update_labels()
@@ -110,13 +117,18 @@ func save_state() -> Dictionary:
 		"right_heat_cool_delay_remaining": right_heat_cool_delay_remaining,
 		"left_direction_change_remaining": _left_direction_change_remaining,
 		"right_direction_change_remaining": _right_direction_change_remaining,
+		"has_started": _has_started_state,
 		"rng_state": _rng.state,
 	}
 
 
 func load_state(state: Dictionary) -> void:
 	if state.is_empty():
+		_is_resuming_altered_state = false
+		_has_started_state = false
 		return
+	_has_started_state = bool(state.get("has_started", _is_saved_state_altered(state)))
+	_is_resuming_altered_state = _has_started_state
 	progress = clampf(float(state.get("progress", progress)), 0.0, 1.0)
 	selected_laser = StringName(str(state.get("selected_laser", selected_laser)))
 	left_laser_offset = clampf(float(state.get("left_laser_offset", left_laser_offset)), -max_laser_offset, max_laser_offset)
@@ -142,6 +154,7 @@ func reset_attempt() -> void:
 	left_laser_offset = 0.0
 	right_laser_offset = 0.0
 	selected_laser = LEFT_LASER
+	clear_result_display()
 	left_drift_direction = 1.0
 	right_drift_direction = -1.0
 	left_heat = 0.0
@@ -150,6 +163,8 @@ func reset_attempt() -> void:
 	right_red_heat_time = 0.0
 	left_heat_cool_delay_remaining = 0.0
 	right_heat_cool_delay_remaining = 0.0
+	_is_resuming_altered_state = false
+	_has_started_state = false
 	_reset_drift_timers()
 	_resume_countdown = resume_delay
 	progress_changed.emit(progress)
@@ -191,14 +206,14 @@ func _draw() -> void:
 	draw_rect(rect, Color("252525"), false, 5.0)
 
 	var center := rect.get_center() + Vector2(0.0, -8.0)
-	var left_origin := Vector2(size.x * 0.12, center.y)
-	var right_origin := Vector2(size.x * 0.88, center.y)
+	var left_origin := Vector2(size.x * 0.12 + _left_emitter_shake_offset, center.y)
+	var right_origin := Vector2(size.x * 0.88 + _right_emitter_shake_offset, center.y)
 	var left_impact := center + Vector2(-42.0, _offset_to_pixels(left_laser_offset))
 	var right_impact := center + Vector2(42.0, _offset_to_pixels(right_laser_offset))
 
 	_draw_signal_line(center)
-	_draw_laser(left_origin, left_impact, _is_left_aligned(), selected_laser == LEFT_LASER)
-	_draw_laser(right_origin, right_impact, _is_right_aligned(), selected_laser == RIGHT_LASER)
+	_draw_laser(left_origin, left_impact, _is_left_aligned(), selected_laser == LEFT_LASER, LEFT_LASER)
+	_draw_laser(right_origin, right_impact, _is_right_aligned(), selected_laser == RIGHT_LASER, RIGHT_LASER)
 	_draw_artifact(center)
 	_draw_heat_meter(Vector2(size.x * 0.08, size.y * 0.12), left_heat, _is_left_aligned(), selected_laser == LEFT_LASER)
 	_draw_heat_meter(Vector2(size.x * 0.88, size.y * 0.12), right_heat, _is_right_aligned(), selected_laser == RIGHT_LASER)
@@ -220,13 +235,22 @@ func _draw_signal_line(center: Vector2) -> void:
 	draw_polyline(points, Color("626262"), 4.0)
 
 
-func _draw_laser(origin: Vector2, impact: Vector2, aligned: bool, selected: bool) -> void:
-	var color := Color("75ffe8") if aligned else Color("ff6f68")
+func _draw_laser(origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName) -> void:
+	var is_destroyed := _failure_result_laser == laser_id
+	var color := Color("5bff8e") if _success_result_active else Color("75ffe8")
+	if not aligned:
+		color = Color("ff6f68")
+	if is_destroyed:
+		color = Color("ff2424")
 	if selected:
 		draw_circle(origin, 24.0, Color("f7f1a3"))
-	draw_circle(origin, 16.0, Color("303030"))
-	draw_line(origin, impact, color, 5.0)
-	draw_circle(impact, 7.0, color)
+	draw_circle(origin, 16.0, Color("6b1515") if is_destroyed else Color("303030"))
+	if is_destroyed:
+		draw_line(origin, origin.lerp(impact, 0.22), color, 5.0)
+		draw_circle(origin + Vector2(0.0, -25.0), 9.0, Color("ff7b42"))
+	else:
+		draw_line(origin, impact, color, 5.0)
+		draw_circle(impact, 7.0, color)
 	if aligned:
 		_draw_check(impact + Vector2(18.0, -28.0), Color("5bff8e"))
 	else:
@@ -453,16 +477,86 @@ func _normalize_direction(value: float) -> float:
 	return -1.0 if value < 0.0 else 1.0
 
 
+func show_failure_result(reason: StringName) -> void:
+	_success_result_active = false
+	_failure_result_laser = LEFT_LASER if str(reason).contains("left") else RIGHT_LASER
+	_play_failure_emitter_shake()
+	_update_labels()
+	queue_redraw()
+
+
+func show_success_result() -> void:
+	_failure_result_laser = &""
+	_success_result_active = true
+	_left_emitter_shake_offset = 0.0
+	_right_emitter_shake_offset = 0.0
+	_update_labels()
+	queue_redraw()
+
+
+func clear_result_display() -> void:
+	_failure_result_laser = &""
+	_success_result_active = false
+	_left_emitter_shake_offset = 0.0
+	_right_emitter_shake_offset = 0.0
+	_update_labels()
+	queue_redraw()
+
+
+func _is_saved_state_altered(state: Dictionary) -> bool:
+	if absf(float(state.get("progress", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("left_laser_offset", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("right_laser_offset", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("left_heat", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("right_heat", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("left_red_heat_time", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("right_red_heat_time", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("left_heat_cool_delay_remaining", 0.0))) > 0.001:
+		return true
+	if absf(float(state.get("right_heat_cool_delay_remaining", 0.0))) > 0.001:
+		return true
+	return StringName(str(state.get("selected_laser", LEFT_LASER))) != LEFT_LASER
+
+
+func _play_failure_emitter_shake() -> void:
+	var tween := create_tween()
+	tween.tween_method(Callable(self, "_set_failed_emitter_shake_offset"), 0.0, -14.0, 0.045)
+	tween.tween_method(Callable(self, "_set_failed_emitter_shake_offset"), -14.0, 12.0, 0.06)
+	tween.tween_method(Callable(self, "_set_failed_emitter_shake_offset"), 12.0, -7.0, 0.05)
+	tween.tween_method(Callable(self, "_set_failed_emitter_shake_offset"), -7.0, 0.0, 0.07)
+
+
+func _set_failed_emitter_shake_offset(value: float) -> void:
+	if _failure_result_laser == LEFT_LASER:
+		_left_emitter_shake_offset = value
+	elif _failure_result_laser == RIGHT_LASER:
+		_right_emitter_shake_offset = value
+	queue_redraw()
+
+
 func _update_labels() -> void:
 	if _hint_label:
-		_hint_label.text = "ALIGN BOTH LASERS"
+		if _failure_result_laser != &"":
+			_hint_label.text = "LASER OVERHEATED"
+		elif _success_result_active:
+			_hint_label.text = "ARTIFACT STABLE"
+		else:
+			_hint_label.text = "ALIGN BOTH LASERS"
 	if _prompt_label:
 		_prompt_label.text = "A/D SELECT   W/S TUNE"
 	if _status_label:
 		if _paused:
 			_status_label.text = "PAUSED"
 		elif _resume_countdown > 0.0:
-			_status_label.text = "RESUME %.1f" % _resume_countdown
+			var countdown_action := "RESUME" if _is_resuming_altered_state else "START"
+			_status_label.text = "%s IN %.1f" % [countdown_action, _resume_countdown]
 		else:
 			var selected := "LEFT" if selected_laser == LEFT_LASER else "RIGHT"
 			_status_label.text = "%s LASER" % selected

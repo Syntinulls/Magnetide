@@ -305,6 +305,14 @@ func get_research_station_at_point(global_point: Vector2) -> ResearchStation:
 	return null
 
 
+func get_research_station_in_interaction_range(global_point: Vector2) -> ResearchStation:
+	if _research_station == null or not is_instance_valid(_research_station):
+		return null
+	if _research_station.is_point_in_interaction_range(global_point):
+		return _research_station
+	return null
+
+
 func can_accept_research_item(item: SalvageItem) -> bool:
 	return _research_station != null and is_instance_valid(_research_station) and _research_station.can_accept_item(item)
 
