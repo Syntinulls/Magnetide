@@ -26,6 +26,7 @@ signal state_changed(state: Dictionary)
 const LEFT_LASER := &"left"
 const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
+const SELECTED_LASER_COLOR := Color("f7f1a3")
 
 var progress: float = 0.0
 var left_laser_offset: float = 0.0
@@ -264,7 +265,8 @@ func _draw_laser(origin: Vector2, impact: Vector2, aligned: bool, selected: bool
 	if is_destroyed:
 		color = Color("ff2424")
 	if selected:
-		draw_circle(origin, 24.0, Color("f7f1a3"))
+		color = SELECTED_LASER_COLOR
+		draw_circle(origin, 24.0, SELECTED_LASER_COLOR)
 	draw_circle(origin, 16.0, Color("6b1515") if is_destroyed else Color("303030"))
 	if is_destroyed:
 		draw_line(origin, origin.lerp(impact, 0.22), color, 5.0)
@@ -394,7 +396,7 @@ func _draw_heat_meter(origin: Vector2, heat: float, aligned: bool, selected: boo
 		fill_color = Color("ffd166")
 	draw_rect(fill_rect, fill_color, true)
 	if selected:
-		draw_rect(rect.grow(7.0), Color("f7f1a3"), false, 4.0)
+		draw_rect(rect.grow(7.0), SELECTED_LASER_COLOR, false, 4.0)
 	if aligned:
 		_draw_check(origin + Vector2(54.0, meter_size.y - 18.0), Color("5bff8e"))
 	elif heat >= 0.55:

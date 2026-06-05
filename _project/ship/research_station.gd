@@ -33,6 +33,9 @@ func _ready() -> void:
 	add_child(_research_timer)
 
 	_setup_outline_material()
+	if _researched_items_root:
+		_researched_items_root.y_sort_enabled = true
+		_researched_items_root.z_index = -3
 	set_highlighted(false)
 
 

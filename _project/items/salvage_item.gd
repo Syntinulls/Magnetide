@@ -715,7 +715,7 @@ func lock_for_research(target_pos: Vector2, research_parent: Node = null) -> voi
 	gravity_scale = 0.0
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
-	z_index = 3
+	z_index = 0
 
 
 func lock_for_departure_cutscene(storage_parent: Node = null) -> void:
