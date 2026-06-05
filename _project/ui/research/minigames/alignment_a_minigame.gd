@@ -27,6 +27,8 @@ const LEFT_LASER := &"left"
 const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
 const SELECTED_LASER_COLOR := Color("f7f1a3")
+const LASER_BEAM_WIDTH: float = 5.0
+const SELECTED_LASER_OUTLINE_WIDTH: float = 15.0
 
 var progress: float = 0.0
 var left_laser_offset: float = 0.0
@@ -265,14 +267,17 @@ func _draw_laser(origin: Vector2, impact: Vector2, aligned: bool, selected: bool
 	if is_destroyed:
 		color = Color("ff2424")
 	if selected:
-		color = SELECTED_LASER_COLOR
 		draw_circle(origin, 24.0, SELECTED_LASER_COLOR)
 	draw_circle(origin, 16.0, Color("6b1515") if is_destroyed else Color("303030"))
 	if is_destroyed:
-		draw_line(origin, origin.lerp(impact, 0.22), color, 5.0)
+		if selected:
+			draw_line(origin, origin.lerp(impact, 0.22), SELECTED_LASER_COLOR, SELECTED_LASER_OUTLINE_WIDTH)
+		draw_line(origin, origin.lerp(impact, 0.22), color, LASER_BEAM_WIDTH)
 		draw_circle(origin + Vector2(0.0, -25.0), 9.0, Color("ff7b42"))
 	else:
-		draw_line(origin, impact, color, 5.0)
+		if selected:
+			draw_line(origin, impact, SELECTED_LASER_COLOR, SELECTED_LASER_OUTLINE_WIDTH)
+		draw_line(origin, impact, color, LASER_BEAM_WIDTH)
 		draw_circle(impact, 7.0, color)
 	if aligned:
 		_draw_check(impact + Vector2(18.0, -28.0), Color("5bff8e"))
