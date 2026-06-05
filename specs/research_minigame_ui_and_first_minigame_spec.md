@@ -301,6 +301,7 @@ Required visual regions inside the minigame host:
 Sketch mapping:
 
 - Center artifact shape: artifact alignment target.
+- Artifact hitbox: circular, slightly smaller than the visual artifact shape.
 - Horizontal wavy line: research signal line running through the artifact.
 - Left and right emitters/lines: lasers aimed toward the artifact.
 - Left and right vertical meters: laser temperature bars.
@@ -440,9 +441,9 @@ Recommended tunables:
 ```gdscript
 @export var alignment_tolerance: float = 0.08
 @export var base_progress_rate: float = 0.12
-@export var base_drift_speed: float = 0.08
+@export var base_drift_speed: float = 0.2
 @export var threat_drift_speed_scale: float = 0.015
-@export var base_drift_direction_change_interval: float = 3.0
+@export var base_drift_direction_change_interval: float = 4.5
 @export var input_step: float = 0.05
 @export var max_laser_offset: float = 1.0
 @export var heat_build_rate: float = 0.2

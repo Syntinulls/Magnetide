@@ -8,9 +8,9 @@ signal state_changed(state: Dictionary)
 
 @export var alignment_tolerance: float = 0.12
 @export var base_progress_rate: float = 0.11
-@export var base_drift_speed: float = 0.11
+@export var base_drift_speed: float = 0.2
 @export var threat_drift_speed_scale: float = 0.025
-@export var base_drift_direction_change_interval: float = 3.0
+@export var base_drift_direction_change_interval: float = 4.5
 @export var input_speed: float = 0.62
 @export var max_laser_offset: float = 1.0
 @export var heat_build_rate: float = 0.28
@@ -23,6 +23,7 @@ signal state_changed(state: Dictionary)
 
 const LEFT_LASER := &"left"
 const RIGHT_LASER := &"right"
+const ARTIFACT_HIT_RADIUS: float = 34.0
 
 var progress: float = 0.0
 var left_laser_offset: float = 0.0
@@ -208,8 +209,11 @@ func _draw() -> void:
 	var center := rect.get_center() + Vector2(0.0, -8.0)
 	var left_origin := Vector2(size.x * 0.12 + _left_emitter_shake_offset, center.y)
 	var right_origin := Vector2(size.x * 0.88 + _right_emitter_shake_offset, center.y)
-	var left_impact := center + Vector2(-42.0, _offset_to_pixels(left_laser_offset))
-	var right_impact := center + Vector2(42.0, _offset_to_pixels(right_laser_offset))
+	var artifact_hitbox := _get_artifact_hitbox(center)
+	var left_target := center + Vector2(0.0, _offset_to_pixels(left_laser_offset))
+	var right_target := center + Vector2(0.0, _offset_to_pixels(right_laser_offset))
+	var left_impact := _get_laser_impact_point(left_origin, left_target, artifact_hitbox, rect)
+	var right_impact := _get_laser_impact_point(right_origin, right_target, artifact_hitbox, rect)
 
 	_draw_signal_line(center)
 	_draw_laser(left_origin, left_impact, _is_left_aligned(), selected_laser == LEFT_LASER, LEFT_LASER)
@@ -277,6 +281,86 @@ func _draw_artifact(center: Vector2) -> void:
 	var outline := points.duplicate()
 	outline.append(points[0])
 	draw_polyline(outline, Color("222222"), 4.0)
+
+
+func _get_artifact_hitbox(center: Vector2) -> Dictionary:
+	return {
+		"center": center,
+		"radius": ARTIFACT_HIT_RADIUS,
+	}
+
+
+func _get_laser_impact_point(origin: Vector2, target: Vector2, artifact_hitbox: Dictionary, window_rect: Rect2) -> Vector2:
+	var direction := (target - origin).normalized()
+	if direction == Vector2.ZERO:
+		direction = Vector2.RIGHT
+
+	var artifact_hit := _raycast_circle(origin, direction, artifact_hitbox.get("center", Vector2.ZERO), float(artifact_hitbox.get("radius", ARTIFACT_HIT_RADIUS)))
+	if artifact_hit.get("hit", false):
+		return artifact_hit["point"] as Vector2
+
+	var window_hit := _raycast_rect(origin, direction, window_rect)
+	if window_hit.get("hit", false):
+		return window_hit["point"] as Vector2
+	return target
+
+
+func _raycast_circle(origin: Vector2, direction: Vector2, center: Vector2, radius: float) -> Dictionary:
+	var to_center := center - origin
+	var projection := to_center.dot(direction)
+	if projection < 0.0:
+		return { "hit": false }
+
+	var closest_point := origin + direction * projection
+	var distance_sq := closest_point.distance_squared_to(center)
+	var radius_sq := radius * radius
+	if distance_sq > radius_sq:
+		return { "hit": false }
+
+	var half_chord := sqrt(radius_sq - distance_sq)
+	var hit_distance := projection - half_chord
+	if hit_distance < 0.0:
+		hit_distance = projection + half_chord
+	if hit_distance < 0.0:
+		return { "hit": false }
+	return {
+		"hit": true,
+		"point": origin + direction * hit_distance,
+	}
+
+
+func _raycast_rect(origin: Vector2, direction: Vector2, rect: Rect2) -> Dictionary:
+	var t_min := -INF
+	var t_max := INF
+
+	if is_zero_approx(direction.x):
+		if origin.x < rect.position.x or origin.x > rect.end.x:
+			return { "hit": false }
+	else:
+		var tx1 := (rect.position.x - origin.x) / direction.x
+		var tx2 := (rect.end.x - origin.x) / direction.x
+		t_min = maxf(t_min, minf(tx1, tx2))
+		t_max = minf(t_max, maxf(tx1, tx2))
+
+	if is_zero_approx(direction.y):
+		if origin.y < rect.position.y or origin.y > rect.end.y:
+			return { "hit": false }
+	else:
+		var ty1 := (rect.position.y - origin.y) / direction.y
+		var ty2 := (rect.end.y - origin.y) / direction.y
+		t_min = maxf(t_min, minf(ty1, ty2))
+		t_max = minf(t_max, maxf(ty1, ty2))
+
+	if t_max < maxf(t_min, 0.0):
+		return { "hit": false }
+
+	var distance := t_min if t_min >= 0.0 else t_max
+	if distance < 0.0:
+		return { "hit": false }
+	return {
+		"hit": true,
+		"point": origin + direction * distance,
+	}
 
 
 func _draw_heat_meter(origin: Vector2, heat: float, aligned: bool, selected: bool) -> void:
@@ -466,11 +550,28 @@ func _offset_to_pixels(offset: float) -> float:
 
 
 func _is_left_aligned() -> bool:
-	return absf(left_laser_offset) <= alignment_tolerance
+	return _does_laser_hit_artifact(left_laser_offset, true)
 
 
 func _is_right_aligned() -> bool:
-	return absf(right_laser_offset) <= alignment_tolerance
+	return _does_laser_hit_artifact(right_laser_offset, false)
+
+
+func _does_laser_hit_artifact(laser_offset: float, is_left_laser: bool) -> bool:
+	if size.x <= 0.0 or size.y <= 0.0:
+		return absf(laser_offset) <= alignment_tolerance
+
+	var window_rect := Rect2(Vector2.ZERO, size)
+	var center := window_rect.get_center() + Vector2(0.0, -8.0)
+	var origin_x := size.x * 0.12 if is_left_laser else size.x * 0.88
+	var origin := Vector2(origin_x, center.y)
+	var target := center + Vector2(0.0, _offset_to_pixels(laser_offset))
+	var direction := (target - origin).normalized()
+	if direction == Vector2.ZERO:
+		return false
+
+	var hitbox := _get_artifact_hitbox(center)
+	return bool(_raycast_circle(origin, direction, hitbox.get("center", center), float(hitbox.get("radius", ARTIFACT_HIT_RADIUS))).get("hit", false))
 
 
 func _normalize_direction(value: float) -> float:
