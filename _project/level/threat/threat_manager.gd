@@ -2,6 +2,54 @@
 extends Node
 class_name ThreatManager
 
+const DEBUG_THREAT_ADD_AMOUNT: float = 20.0
+const DEBUG_MAX_THREAT_AMOUNT: float = 100.0
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if event is InputEventKey and event.pressed and not event.echo and event.keycode == KEY_T:
+		_debug_add_flat_threat()
+		get_viewport().set_input_as_handled()
+
+
+func _debug_add_flat_threat() -> void:
+	_debug_add_threat_amount(DEBUG_THREAT_ADD_AMOUNT)
+
+
+func _debug_add_threat_amount(amount: float) -> void:
+	for method_name in [
+		"add_threat",
+		"add_threat_points",
+		"increase_threat",
+		"increment_threat",
+	]:
+		if has_method(method_name):
+			call(method_name, amount)
+			return
+
+	var threat_property := _find_existing_property([
+		"threat",
+		"_threat",
+		"current_threat",
+		"_current_threat",
+		"threat_amount",
+		"_threat_amount",
+		"threat_points",
+		"_threat_points",
+	])
+	if threat_property.is_empty():
+		return
+
+	set(threat_property, minf(float(get(threat_property)) + amount, DEBUG_MAX_THREAT_AMOUNT))
+
+
+func _find_existing_property(possible_names: Array[String]) -> String:
+	for property in get_property_list():
+		var property_name := String(property.get("name", ""))
+		if possible_names.has(property_name):
+			return property_name
+	return ""
+
 signal threat_changed(new_value: float)
 signal threat_level_changed(new_level: int)
 

@@ -10,10 +10,12 @@ signal state_changed(state: Dictionary)
 @export var base_progress_rate: float = 0.11
 @export var base_drift_speed: float = 0.2
 @export var threat_drift_speed_scale: float = 0.025
+@export var max_random_drift_speed_bonus: float = 0.035
 @export var base_drift_direction_change_interval: float = 4.5
 @export var input_speed: float = 0.62
 @export var max_laser_offset: float = 1.0
 @export var heat_build_rate: float = 0.28
+@export var threat_heat_build_rate_scale: float = 0.025
 @export var heat_cool_rate: float = 0.2
 @export var base_heat_cool_delay: float = 0.6
 @export var threat_heat_cool_delay_scale: float = 0.25
@@ -44,6 +46,9 @@ var _paused: bool = true
 var _resume_countdown: float = 0.0
 var _left_direction_change_remaining: float = 0.0
 var _right_direction_change_remaining: float = 0.0
+var _left_drift_speed_bonus: float = 0.0
+var _right_drift_speed_bonus: float = 0.0
+var _drift_speed_bonuses_initialized: bool = false
 var _rng := RandomNumberGenerator.new()
 var _hint_label: Label = null
 var _prompt_label: Label = null
@@ -72,6 +77,8 @@ func start_minigame(context) -> void:
 		var seed := int(context.get("rng_seed", 0))
 		if seed != 0:
 			_rng.seed = seed
+	if not _drift_speed_bonuses_initialized:
+		_reset_drift_speed_bonuses()
 
 	_active = true
 	_paused = false
@@ -118,6 +125,8 @@ func save_state() -> Dictionary:
 		"right_heat_cool_delay_remaining": right_heat_cool_delay_remaining,
 		"left_direction_change_remaining": _left_direction_change_remaining,
 		"right_direction_change_remaining": _right_direction_change_remaining,
+		"left_drift_speed_bonus": _left_drift_speed_bonus,
+		"right_drift_speed_bonus": _right_drift_speed_bonus,
 		"has_started": _has_started_state,
 		"rng_state": _rng.state,
 	}
@@ -127,6 +136,7 @@ func load_state(state: Dictionary) -> void:
 	if state.is_empty():
 		_is_resuming_altered_state = false
 		_has_started_state = false
+		_drift_speed_bonuses_initialized = false
 		return
 	_has_started_state = bool(state.get("has_started", _is_saved_state_altered(state)))
 	_is_resuming_altered_state = _has_started_state
@@ -144,6 +154,12 @@ func load_state(state: Dictionary) -> void:
 	right_heat_cool_delay_remaining = maxf(float(state.get("right_heat_cool_delay_remaining", right_heat_cool_delay_remaining)), 0.0)
 	_left_direction_change_remaining = maxf(float(state.get("left_direction_change_remaining", _left_direction_change_remaining)), 0.2)
 	_right_direction_change_remaining = maxf(float(state.get("right_direction_change_remaining", _right_direction_change_remaining)), 0.2)
+	if state.has("left_drift_speed_bonus") and state.has("right_drift_speed_bonus"):
+		_left_drift_speed_bonus = _clamp_drift_speed_bonus(float(state["left_drift_speed_bonus"]))
+		_right_drift_speed_bonus = _clamp_drift_speed_bonus(float(state["right_drift_speed_bonus"]))
+		_drift_speed_bonuses_initialized = true
+	else:
+		_drift_speed_bonuses_initialized = false
 	if state.has("rng_state"):
 		_rng.state = int(state["rng_state"])
 	_update_labels()
@@ -167,6 +183,7 @@ func reset_attempt() -> void:
 	_is_resuming_altered_state = false
 	_has_started_state = false
 	_reset_drift_timers()
+	_reset_drift_speed_bonuses()
 	_resume_countdown = resume_delay
 	progress_changed.emit(progress)
 	state_changed.emit(save_state())
@@ -445,9 +462,8 @@ func _process_laser_motion(delta: float) -> void:
 	elif Input.is_key_pressed(KEY_S):
 		selected_motion += input_speed * delta
 
-	var drift_speed := _get_drift_speed()
-	var left_motion := left_drift_direction * drift_speed * delta
-	var right_motion := right_drift_direction * drift_speed * delta
+	var left_motion := left_drift_direction * _get_laser_drift_speed(true) * delta
+	var right_motion := right_drift_direction * _get_laser_drift_speed(false) * delta
 
 	if selected_laser == LEFT_LASER and not is_zero_approx(selected_motion):
 		left_motion = selected_motion
@@ -491,7 +507,7 @@ func _update_heat(value: float, aligned: bool, delta: float, is_left_laser: bool
 			return value
 		return clampf(value - heat_cool_rate * delta, 0.0, 1.0)
 	_set_heat_cool_delay(is_left_laser, _get_heat_cool_delay())
-	return clampf(value + heat_build_rate * delta, 0.0, 1.0)
+	return clampf(value + _get_heat_build_rate() * delta, 0.0, 1.0)
 
 
 func _set_heat_cool_delay(is_left_laser: bool, value: float) -> void:
@@ -503,6 +519,10 @@ func _set_heat_cool_delay(is_left_laser: bool, value: float) -> void:
 
 func _get_heat_cool_delay() -> float:
 	return maxf(base_heat_cool_delay + float(maxi(_threat_level, 0)) * threat_heat_cool_delay_scale, 0.0)
+
+
+func _get_heat_build_rate() -> float:
+	return maxf(heat_build_rate + float(maxi(_threat_level, 0)) * threat_heat_build_rate_scale, 0.0)
 
 
 func _update_red_time(value: float, heat: float, delta: float) -> float:
@@ -541,8 +561,27 @@ func _roll_direction_change_interval() -> float:
 	return maxf(base_drift_direction_change_interval * _rng.randf_range(0.75, 1.25), 0.45)
 
 
-func _get_drift_speed() -> float:
+func _reset_drift_speed_bonuses() -> void:
+	_left_drift_speed_bonus = _roll_drift_speed_bonus()
+	_right_drift_speed_bonus = _roll_drift_speed_bonus()
+	_drift_speed_bonuses_initialized = true
+
+
+func _roll_drift_speed_bonus() -> float:
+	return _rng.randf_range(0.0, maxf(max_random_drift_speed_bonus, 0.0))
+
+
+func _get_laser_drift_speed(is_left_laser: bool) -> float:
+	var bonus := _left_drift_speed_bonus if is_left_laser else _right_drift_speed_bonus
+	return _get_base_drift_speed() + bonus
+
+
+func _get_base_drift_speed() -> float:
 	return base_drift_speed + float(maxi(_threat_level, 0)) * threat_drift_speed_scale
+
+
+func _clamp_drift_speed_bonus(value: float) -> float:
+	return clampf(value, 0.0, maxf(max_random_drift_speed_bonus, 0.0))
 
 
 func _offset_to_pixels(offset: float) -> float:
