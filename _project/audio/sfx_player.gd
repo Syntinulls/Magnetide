@@ -41,11 +41,61 @@ func play(sound: Variant, volume_db: float = 0.0, pitch_scale: float = 1.0) -> A
 	return player
 
 
+func play_loop(sound: Variant, loop_key: Variant, volume_db: float = 0.0, pitch_scale: float = 1.0) -> AudioStreamPlayer:
+	if not _enabled:
+		return null
+
+	var sound_data := _resolve_sound(sound)
+	if sound_data.is_empty():
+		return null
+
+	var stream := sound_data.get("stream") as AudioStream
+	var sound_key := sound_data.get("key", "") as String
+	var playback_key := _get_loop_playback_key(sound_key, loop_key)
+	if stream == null or playback_key.is_empty():
+		return null
+
+	var player := _active_players_by_key.get(playback_key) as AudioStreamPlayer
+	if player and is_instance_valid(player):
+		player.volume_db = volume_db
+		player.pitch_scale = pitch_scale
+		if not player.playing:
+			player.play()
+		return player
+
+	if player == null or not is_instance_valid(player):
+		player = _take_idle_player()
+		_active_players_by_key[playback_key] = player
+
+	player.stop()
+	player.stream = stream
+	player.bus = SFX_BUS_NAME
+	player.volume_db = volume_db
+	player.pitch_scale = pitch_scale
+	player.set_meta("sfx_key", playback_key)
+	player.set_meta("sfx_loop", true)
+	player.play()
+	return player
+
+
 func stop(sound: Variant) -> void:
 	var key := _resolve_sound_key(sound)
 	if key.is_empty():
 		return
 
+	_stop_by_key(key)
+
+
+func stop_loop(sound: Variant, loop_key: Variant) -> void:
+	var sound_key := _resolve_sound_key(sound)
+	var playback_key := _get_loop_playback_key(sound_key, loop_key)
+	if playback_key.is_empty():
+		return
+
+	_stop_by_key(playback_key)
+
+
+func _stop_by_key(key: String) -> void:
 	var player := _active_players_by_key.get(key) as AudioStreamPlayer
 	if player == null or not is_instance_valid(player):
 		_active_players_by_key.erase(key)
@@ -156,6 +206,10 @@ func _on_player_finished(player: AudioStreamPlayer) -> void:
 	if key.is_empty():
 		return
 
+	if bool(player.get_meta("sfx_loop", false)) and _active_players_by_key.get(key) == player:
+		player.play()
+		return
+
 	_recycle_player(key, player)
 
 
@@ -164,10 +218,24 @@ func _recycle_player(key: String, player: AudioStreamPlayer) -> void:
 		_active_players_by_key.erase(key)
 
 	player.stream = null
-	player.remove_meta("sfx_key")
+	if player.has_meta("sfx_key"):
+		player.remove_meta("sfx_key")
+	if player.has_meta("sfx_loop"):
+		player.remove_meta("sfx_loop")
 
 	if not _idle_players.has(player):
 		_idle_players.append(player)
+
+
+func _get_loop_playback_key(sound_key: String, loop_key: Variant) -> String:
+	if sound_key.is_empty():
+		return ""
+
+	var suffix := String(loop_key).strip_edges()
+	if suffix.is_empty():
+		return ""
+
+	return "%s#loop:%s" % [sound_key, suffix]
 
 
 func _ensure_sfx_bus() -> void:
