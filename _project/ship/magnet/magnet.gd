@@ -75,6 +75,7 @@ var _left_wall: StaticBody2D = null
 var _right_wall: StaticBody2D = null
 var _is_pull_suspended_by_capacity: bool = false
 var _is_spawn_paused_for_departure: bool = false
+var _artifact_pile_final_spawned: bool = false
 var current_health: float = 0.0
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
@@ -150,6 +151,7 @@ func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int =
 	_items_in_field.clear()
 	_is_pull_suspended_by_capacity = false
 	_is_spawn_paused_for_departure = false
+	_artifact_pile_final_spawned = false
 	
 	# Resize magnetic field trapezoid based on pile
 	_update_field_shape_for_pile(pile)
@@ -195,6 +197,8 @@ func _process(delta: float) -> void:
 		return
 	if _is_spawn_paused_for_departure:
 		return
+	if _pile_data and _pile_data.is_artifact_pile and _artifact_pile_final_spawned:
+		return
 
 	_pull_timer += delta
 	if _pull_timer >= pull_frequency and not is_at_capacity:
@@ -202,21 +206,38 @@ func _process(delta: float) -> void:
 		_spawn_item_from_pile()
 
 
-func _spawn_item_from_pile() -> void:
+func spawn_artifact_pile_final_item() -> bool:
+	if not _is_active or _artifact_pile_final_spawned:
+		return false
+	if _pile_data == null or not _pile_data.is_artifact_pile:
+		return false
+	return _spawn_item_from_pile(true)
+
+
+func has_spawned_artifact_pile_final_item() -> bool:
+	return _artifact_pile_final_spawned
+
+
+func _spawn_item_from_pile(force_artifact_pile_final: bool = false) -> bool:
 	if not _pile_data or not _pile_node or not is_instance_valid(_pile_node):
-		return
+		return false
 
 	var result := {}
 	if _pile_data.is_artifact_pile:
-		result = _pile_data.roll_artifact_pile_item(_artifact_pile_pull_count, _current_threat_level)
+		if _artifact_pile_final_spawned:
+			return false
+		if force_artifact_pile_final:
+			result = _pile_data.roll_artifact_pile_final_item(_current_threat_level)
+		else:
+			result = _pile_data.roll_artifact_pile_item(_artifact_pile_pull_count, _current_threat_level)
 	else:
 		result = _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
 	if not result:
-		return
+		return false
 
 	# Check if adding this item would exceed capacity
 	if is_at_capacity:
-		return
+		return false
 
 	var is_trash: bool = result.get("is_trash", false)
 	var is_artifact: bool = result.get("is_artifact", false)
@@ -224,7 +245,7 @@ func _spawn_item_from_pile() -> void:
 	var data: SalvageItemData = null
 	if not is_trash:
 		if not result.has("item") or result["item"] == null:
-			return
+			return false
 		
 		var is_salvageable: bool = result.get("is_salvageable", false)
 		if not is_artifact:
@@ -235,7 +256,7 @@ func _spawn_item_from_pile() -> void:
 		
 		data = result["item"]
 		if not data:
-			return
+			return false
 
 	var item := SalvageItem.new()
 	# Add to scene tree at a scope that persists
@@ -259,6 +280,7 @@ func _spawn_item_from_pile() -> void:
 		if is_trash:
 			_spawn_artifact_pile_pressure_enemy()
 		elif is_artifact_pile_final:
+			_artifact_pile_final_spawned = true
 			_is_spawn_paused_for_departure = true
 			artifact_pile_final_item_spawned.emit(data)
 
@@ -289,6 +311,7 @@ func _spawn_item_from_pile() -> void:
 	var pull_direction := Vector2(horizontal_bias, -1.0).normalized()
 	item.start_magnet_pull(self, pull_direction)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
+	return true
 
 
 func _spawn_artifact_pile_pressure_enemy() -> void:

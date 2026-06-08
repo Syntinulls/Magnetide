@@ -16,7 +16,7 @@ const ACTIVE_TICK_COLOR := Color(0.82, 0.87, 0.95, 1.0)
 const INACTIVE_TICK_COLOR := Color(0.35, 0.4, 0.5, 1.0)
 const LOCKED_ENTRY_MODULATE := Color(0.58, 0.62, 0.68, 1.0)
 const UNLOCKED_ENTRY_MODULATE := Color.WHITE
-const WEAPON_STAT_PROPERTIES: Array[String] = ["damage", "fire_rate"]
+const WEAPON_STAT_PROPERTIES: Array[String] = ["damage", "fire_rate", "pierce"]
 const STORAGE_STAT_PROPERTIES: Array[String] = ["rarity", "weight", "value"]
 
 var _save_data: Resource = null

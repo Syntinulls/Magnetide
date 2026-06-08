@@ -18,6 +18,7 @@ normal_item_percent = 0.0
 trash_percent = 1.0
 artifact_percent = 0.0
 is_artifact_pile = true
+departure_duration_override = 20.0
 salvageable_base_percent = 0.0
 salvageable_increment_percent = 0.0
 salvageable_max_percent = 0.0

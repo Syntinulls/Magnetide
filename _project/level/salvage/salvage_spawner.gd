@@ -32,6 +32,9 @@ class_name SalvageSpawner
 @export_subgroup("Artifact")
 @export var artifact_data: SalvagePileData = null
 @export var artifact_weight: float = 1.0
+@export_subgroup("Pity")
+## Added to each eligible rarity that was not selected after every rarity roll.
+@export var rarity_pity_increment: float = 5.0
 
 @export_group("Salvage Properties")
 ## Minimum height of salvage pile as ratio of viewport height.
@@ -47,6 +50,8 @@ var _current_pile: SalvagePile = null
 var _level: Node = null
 var _threat_manager: ThreatManager = null
 var _viewport_anchor: ViewportAnchor = null
+var _rarity_pity_weights: Dictionary = {}
+var _rarity_pity_base_key: String = ""
 
 
 func _get_pile_data_for_rarity(rarity: SalvagePile.Rarity) -> SalvagePileData:
@@ -151,7 +156,8 @@ func on_pile_acquired() -> void:
 
 
 func _pick_rarity() -> SalvagePile.Rarity:
-	var weights := _get_active_rarity_weights()
+	var base_weights := _get_active_rarity_weights()
+	_sync_rarity_pity_weights(base_weights)
 	var rarity_entries: Array = [
 		SalvagePile.Rarity.COMMON,
 		SalvagePile.Rarity.RARE,
@@ -161,9 +167,11 @@ func _pick_rarity() -> SalvagePile.Rarity:
 	]
 	var selected: Variant = WeightedRandom.roll_weighted(
 		rarity_entries,
-		Callable(self, "_get_rarity_roll_weight").bind(weights)
+		Callable(self, "_get_rarity_roll_weight").bind(_rarity_pity_weights)
 	)
-	return int(selected) if selected != null else SalvagePile.Rarity.COMMON
+	var selected_rarity := int(selected) if selected != null else SalvagePile.Rarity.COMMON
+	_apply_rarity_pity_result(selected_rarity, base_weights)
+	return selected_rarity
 
 
 func _get_rarity_roll_weight(rarity: int, weights: Dictionary) -> float:
@@ -184,6 +192,46 @@ func _get_active_rarity_weights() -> Dictionary:
 		SalvagePile.Rarity.LEGENDARY: legendary_weight,
 		SalvagePile.Rarity.ARTIFACT: artifact_weight,
 	}
+
+
+func _sync_rarity_pity_weights(base_weights: Dictionary) -> void:
+	var base_key := _get_rarity_weight_key(base_weights)
+	if base_key == _rarity_pity_base_key and not _rarity_pity_weights.is_empty():
+		return
+
+	_rarity_pity_base_key = base_key
+	_rarity_pity_weights = base_weights.duplicate(true)
+
+
+func _apply_rarity_pity_result(selected_rarity: int, base_weights: Dictionary) -> void:
+	for rarity in _get_rarity_entries():
+		var base_weight := maxf(float(base_weights.get(rarity, 0.0)), 0.0)
+		if _get_pile_data_for_rarity(rarity) == null or base_weight <= 0.0:
+			_rarity_pity_weights[rarity] = base_weight
+			continue
+
+		if rarity == selected_rarity:
+			_rarity_pity_weights[rarity] = base_weight
+		else:
+			var current_weight := maxf(float(_rarity_pity_weights.get(rarity, base_weight)), base_weight)
+			_rarity_pity_weights[rarity] = current_weight + maxf(rarity_pity_increment, 0.0)
+
+
+func _get_rarity_entries() -> Array[int]:
+	return [
+		SalvagePile.Rarity.COMMON,
+		SalvagePile.Rarity.RARE,
+		SalvagePile.Rarity.EPIC,
+		SalvagePile.Rarity.LEGENDARY,
+		SalvagePile.Rarity.ARTIFACT,
+	]
+
+
+func _get_rarity_weight_key(weights: Dictionary) -> String:
+	var parts := PackedStringArray()
+	for rarity in _get_rarity_entries():
+		parts.append("%d:%s" % [rarity, str(float(weights.get(rarity, 0.0)))])
+	return "|".join(parts)
 
 
 func _resolve_threat_manager() -> void:

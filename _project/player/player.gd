@@ -470,6 +470,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 	bullet.set("direction", bullet_direction)
 	bullet.set("damage", weapon_data.damage)
 	bullet.set("speed", weapon_data.bullet_speed)
+	bullet.set("pierce", weapon_data.pierce)
 	if weapon_data.bullet_sprite:
 		var sprite := bullet.get_node_or_null("Sprite2D") as Sprite2D
 		if sprite:
