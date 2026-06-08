@@ -27,7 +27,7 @@ enum TargetPointSelectionMode {
 @export var attack_range: float = 50.0
 ## Seconds between each attack hit while in range.
 @export var attack_interval: float = 1.0
-## Seconds the corpse lingers after death before being freed.
+## Legacy cleanup time kept for compatibility with existing enemy resources.
 @export var death_linger_time: float = 1.5
 
 @export_group("Hitbox")
@@ -56,3 +56,15 @@ enum TargetPointSelectionMode {
 @export var death_spritesheet: Texture2D
 @export var death_frames: int = 1
 @export var death_fps: float = 1.0
+
+@export_group("Death Sequence")
+@export var death_shake_duration: float = 0.5
+@export var death_shake_distance: float = 8.0
+@export var death_shake_steps: int = 28
+@export var death_pause_duration: float = 0.5
+@export var death_pop_velocity_x_range: Vector2 = Vector2(-80.0, 80.0)
+@export var death_pop_up_velocity_range: Vector2 = Vector2(520.0, 760.0)
+@export var death_pop_gravity: float = 1400.0
+@export var death_pop_rotation_velocity_range: Vector2 = Vector2(-10.0, 10.0)
+@export var death_pop_despawn_margin: float = 128.0
+@export var death_pop_max_time: float = 4.0

@@ -4,6 +4,7 @@ class_name Enemy
 signal died
 
 enum State { ALIVE, ATTACKING, DEAD }
+enum DeathPhase { NONE, SHAKING, PAUSED, POPPING }
 const INVALID_TARGET_CATEGORY: int = -1
 
 @export var data: EnemyData
@@ -18,9 +19,14 @@ var has_triggered_health_threshold_retarget: bool = false
 
 var _attack_timer: float = 0.0
 var _death_timer: float = 0.0
+var _death_pop_elapsed: float = 0.0
+var _death_phase: DeathPhase = DeathPhase.NONE
+var _death_rotation_velocity: float = 0.0
+var _death_shake_origin: Vector2 = Vector2.ZERO
 var _anim_timer: float = 0.0
 var _anim_frame: int = 0
 var _flash_tween: Tween = null
+var _death_sequence_tween: Tween = null
 
 @onready var sprite: Sprite2D = $Sprite
 @onready var hitbox: Hitbox = $Hitbox
@@ -106,10 +112,19 @@ func _process_attacking(delta: float) -> void:
 
 
 func _process_dead(delta: float) -> void:
-	velocity = Vector2.ZERO
 	_death_timer += delta
 	_animate(delta, data.death_spritesheet, data.death_frames, data.death_fps)
-	if _death_timer >= data.death_linger_time:
+
+	if _death_phase != DeathPhase.POPPING:
+		velocity = Vector2.ZERO
+		return
+
+	_death_pop_elapsed += delta
+	velocity.y += data.death_pop_gravity * delta
+	rotation += _death_rotation_velocity * delta
+	move_and_slide()
+
+	if _death_pop_elapsed >= data.death_pop_max_time or _is_below_viewport():
 		queue_free()
 
 
@@ -122,8 +137,10 @@ func _enter_state(new_state: State) -> void:
 			_attack_timer = 0.0
 		State.DEAD:
 			_death_timer = 0.0
+			_death_pop_elapsed = 0.0
 			hitbox_collision_shape.set_deferred("disabled", true)
 			_set_animation(data.death_spritesheet, data.death_frames)
+			_start_death_sequence()
 			died.emit()
 
 
@@ -156,6 +173,70 @@ func _flash_white() -> void:
 		mat.set_shader_parameter("flash_intensity", 1.0)
 		_flash_tween = create_tween()
 		_flash_tween.tween_property(mat, "shader_parameter/flash_intensity", 0.0, 0.15)
+
+
+func _start_death_sequence() -> void:
+	if _death_sequence_tween:
+		_death_sequence_tween.kill()
+
+	_death_phase = DeathPhase.SHAKING
+	_death_shake_origin = position
+	_death_rotation_velocity = 0.0
+
+	var shake_duration := maxf(data.death_shake_duration, 0.0)
+	var pause_duration := maxf(data.death_pause_duration, 0.0)
+	_death_sequence_tween = create_tween()
+
+	if shake_duration > 0.0 and data.death_shake_distance > 0.0 and data.death_shake_steps > 0:
+		var steps := maxi(data.death_shake_steps, 1)
+		var step_duration := shake_duration / float(steps)
+		for i in steps:
+			var offset := Vector2(
+				randf_range(-data.death_shake_distance, data.death_shake_distance),
+				randf_range(-data.death_shake_distance, data.death_shake_distance)
+			)
+			_death_sequence_tween.tween_property(self, "position", _death_shake_origin + offset, step_duration)
+		_death_sequence_tween.tween_property(self, "position", _death_shake_origin, minf(step_duration, 0.06))
+	elif shake_duration > 0.0:
+		_death_sequence_tween.tween_interval(shake_duration)
+
+	_death_sequence_tween.tween_callback(_finish_death_shake)
+	if pause_duration > 0.0:
+		_death_sequence_tween.tween_interval(pause_duration)
+	_death_sequence_tween.tween_callback(_launch_death_pop)
+
+
+func _finish_death_shake() -> void:
+	if state != State.DEAD:
+		return
+	_death_phase = DeathPhase.PAUSED
+	position = _death_shake_origin
+	velocity = Vector2.ZERO
+
+
+func _launch_death_pop() -> void:
+	if state != State.DEAD:
+		return
+	_death_phase = DeathPhase.POPPING
+	_death_pop_elapsed = 0.0
+	position = _death_shake_origin
+	velocity = Vector2(
+		randf_range(data.death_pop_velocity_x_range.x, data.death_pop_velocity_x_range.y),
+		-randf_range(data.death_pop_up_velocity_range.x, data.death_pop_up_velocity_range.y)
+	)
+	_death_rotation_velocity = randf_range(
+		data.death_pop_rotation_velocity_range.x,
+		data.death_pop_rotation_velocity_range.y
+	)
+
+
+func _is_below_viewport() -> bool:
+	var viewport := get_viewport()
+	if not viewport:
+		return false
+	var screen_position := get_global_transform_with_canvas().origin
+	var viewport_height := viewport.get_visible_rect().size.y
+	return screen_position.y > viewport_height + data.death_pop_despawn_margin
 
 
 func _deal_damage() -> void:
