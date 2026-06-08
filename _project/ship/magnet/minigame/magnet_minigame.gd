@@ -378,7 +378,7 @@ func _start_looting() -> void:
 
 	# Start departure timer
 	if _departure_icon:
-		_departure_icon.start(departure_duration)
+		_departure_icon.start(_get_current_departure_duration())
 
 	# Make lever available so player can flip it back to abort
 	if _magnet_lever:
@@ -390,6 +390,14 @@ func _process_looting() -> void:
 		return
 
 	var spawn_cutoff := maxf(spawn_cutoff_before_departure, 0.0)
+	if _current_pile and _current_pile.pile_data and _current_pile.pile_data.is_artifact_pile:
+		if _departure_icon.time_remaining <= spawn_cutoff:
+			_magnet.spawn_artifact_pile_final_item()
+		var should_pause_artifact_spawning := _departure_icon.time_remaining <= spawn_cutoff \
+			or _magnet.has_spawned_artifact_pile_final_item()
+		_magnet.set_spawn_paused_for_departure(should_pause_artifact_spawning)
+		return
+
 	var should_pause_spawning := _departure_icon.time_remaining <= spawn_cutoff
 	_magnet.set_spawn_paused_for_departure(should_pause_spawning)
 
@@ -481,6 +489,12 @@ func _get_screen_width() -> float:
 	if _viewport_anchor:
 		return _viewport_anchor.size.x
 	return get_viewport().get_visible_rect().size.x
+
+
+func _get_current_departure_duration() -> float:
+	if _current_pile and _current_pile.pile_data:
+		return _current_pile.pile_data.get_departure_duration(departure_duration)
+	return departure_duration
 
 
 func _pick_rarity() -> SalvagePile.Rarity:

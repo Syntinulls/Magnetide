@@ -26,6 +26,8 @@ const DEFAULT_TRASH_SPRITES: Array[Texture2D] = [
 @export_group("Artifact Pile")
 @export var is_artifact_pile: bool = false
 @export_range(0, 50, 1) var pre_artifact_trash_pulls: int = 4
+## Optional looting duration for this pile. Values <= 0 use the minigame default.
+@export_range(0.0, 180.0, 0.5, "suffix:s") var departure_duration_override: float = 0.0
 
 @export_group("Threat")
 ## Additional threat cost applied on top of the magnet's base activation cost.
@@ -118,10 +120,11 @@ func roll_item(pull_count: int, threat_level: int = 0) -> Dictionary:
 	return { "item": null, "is_artifact": false, "is_trash": false, "is_salvageable": false }
 
 
-func roll_artifact_pile_item(sequence_pull_count: int, threat_level: int = 0) -> Dictionary:
-	if sequence_pull_count < pre_artifact_trash_pulls:
-		return get_trash_roll_result()
+func roll_artifact_pile_item(_sequence_pull_count: int, _threat_level: int = 0) -> Dictionary:
+	return get_trash_roll_result()
 
+
+func roll_artifact_pile_final_item(threat_level: int = 0) -> Dictionary:
 	var artifact_item := roll_artifact_item(threat_level)
 	return {
 		"item": artifact_item,
@@ -130,6 +133,12 @@ func roll_artifact_pile_item(sequence_pull_count: int, threat_level: int = 0) ->
 		"is_trash": false,
 		"is_salvageable": false,
 	}
+
+
+func get_departure_duration(default_duration: float) -> float:
+	if departure_duration_override > 0.0:
+		return departure_duration_override
+	return default_duration
 
 
 func roll_artifact_item(threat_level: int = 0) -> SalvageItemData:
