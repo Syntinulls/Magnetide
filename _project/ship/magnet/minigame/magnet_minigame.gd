@@ -3,6 +3,10 @@ class_name MagnetMinigame
 
 enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACCELERATING }
 
+const LEVER_PULL_GENERIC_SFX := "lever_generic.ogg"
+const LEVER_PULL_FINAL_SFX := "lever_pull1.ogg"
+const LEVER_RELEASE_SFX := "lever_release.ogg"
+
 @export_group("Cooldown")
 ## Minimum time between magnet windows in seconds.
 @export var cooldown_min: float = 20.0
@@ -411,6 +415,7 @@ func _end_looting() -> void:
 
 	# Flip lever back to starting position
 	if _magnet_lever:
+		_play_lever_sfx(LEVER_RELEASE_SFX)
 		_magnet_lever.set_available(false)
 		_magnet_lever.flip_back_with_tween()
 
@@ -506,8 +511,15 @@ func _position_player_at_lever() -> void:
 func _on_marker_hit_success(_marker_index: int, total_markers: int) -> void:
 	# Progress lever rotation by 1/total_markers of the full rotation
 	if _magnet_lever and total_markers > 0:
+		var is_final_pull := _marker_index >= total_markers - 1
+		_play_lever_sfx(LEVER_PULL_FINAL_SFX if is_final_pull else LEVER_PULL_GENERIC_SFX)
 		var rotation_per_marker := 1.0 / float(total_markers)
 		_magnet_lever.progress_rotation(rotation_per_marker)
+
+
+func _play_lever_sfx(sound_name: String) -> void:
+	if Magnetide.sfx and not sound_name.is_empty():
+		Magnetide.sfx.play(sound_name)
 
 
 func _set_player_input_enabled(enabled: bool) -> void:
