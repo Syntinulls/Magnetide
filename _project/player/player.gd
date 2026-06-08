@@ -25,12 +25,32 @@ const MACHINE_GUN_SHOOT_SFX: Array[String] = [
 	"machine_gun_shot_2.ogg",
 	"machine_gun_shot_3.ogg"
 ]
+const MAGNET_GUN_LOOP_SFX := "magnet_effect.ogg"
+const MAGNET_GUN_LOOP_VOLUME_DB := -12.0
+const MAGNET_GUN_LOOP_PITCH_SCALE := 1.35
+const JUMP_SFX := "jump_metal_1_1.ogg"
+const JUMP_SFX_VOLUME_DB := -10.0
+const LAND_SFX := "jump_metal_1_2.ogg"
+const LAND_SFX_VOLUME_DB := -10.0
+const FOOTSTEP_SFX: Array[String] = [
+	"metal_footstep_1.ogg",
+	"metal_footstep_2.ogg",
+	"metal_footstep_3.ogg",
+	"metal_footstep_4.ogg",
+	"metal_footstep_5.ogg"
+]
+const FOOTSTEP_SFX_VOLUME_DB := -10.0
+const FOOTSTEP_INTERVAL_SECONDS := 0.28
+const FOOTSTEP_MIN_SPEED := 8.0
 
 var input_enabled: bool = true
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
 var current_shield: float = 0.0
+var _has_floor_state: bool = false
+var _was_on_floor: bool = false
+var _footstep_timer: float = 0.0
 var _shield_recharge_cooldown_remaining: float = 0.0
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
@@ -211,6 +231,8 @@ func _get_current_muzzle_effect_type() -> MuzzleEffect.EffectType:
 
 
 func _physics_process(delta: float) -> void:
+	var was_on_floor := _was_on_floor if _has_floor_state else is_on_floor()
+
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
 	_process_shield_recharge(delta)
@@ -258,6 +280,7 @@ func _physics_process(delta: float) -> void:
 		
 		if Input.is_action_just_pressed("move_jump") and is_on_floor():
 			velocity.y = jump_velocity
+			_play_jump_sfx()
 		
 		var direction := Input.get_axis("move_left", "move_right")
 		velocity.x = direction * speed
@@ -268,6 +291,8 @@ func _physics_process(delta: float) -> void:
 		velocity.y += gravity * delta
 	
 	move_and_slide()
+	_update_floor_sfx_state(was_on_floor)
+	_process_footstep_sfx(delta)
 	
 	_update_leg_animation()
 	_update_hover_tooltip()
@@ -464,6 +489,48 @@ func _play_machine_gun_shoot_sfx() -> void:
 	Magnetide.sfx.play(sound_name)
 
 
+func _play_jump_sfx() -> void:
+	if Magnetide.sfx and not JUMP_SFX.is_empty():
+		Magnetide.sfx.play(JUMP_SFX, JUMP_SFX_VOLUME_DB)
+
+
+func _play_land_sfx() -> void:
+	if Magnetide.sfx and not LAND_SFX.is_empty():
+		Magnetide.sfx.play(LAND_SFX, LAND_SFX_VOLUME_DB)
+
+
+func _play_footstep_sfx() -> void:
+	if not Magnetide.sfx or FOOTSTEP_SFX.is_empty():
+		return
+
+	var sound_name := FOOTSTEP_SFX[randi() % FOOTSTEP_SFX.size()]
+	Magnetide.sfx.play(sound_name, FOOTSTEP_SFX_VOLUME_DB)
+
+
+func _process_footstep_sfx(delta: float) -> void:
+	var is_grounded_walking := is_on_floor() and absf(velocity.x) >= FOOTSTEP_MIN_SPEED
+	if not is_grounded_walking:
+		_footstep_timer = 0.0
+		return
+
+	_footstep_timer -= delta
+	if _footstep_timer > 0.0:
+		return
+
+	_play_footstep_sfx()
+	_footstep_timer = FOOTSTEP_INTERVAL_SECONDS
+
+
+func _update_floor_sfx_state(was_on_floor: bool) -> void:
+	var is_now_on_floor := is_on_floor()
+	if _has_floor_state and not was_on_floor and is_now_on_floor:
+		_play_land_sfx()
+		_footstep_timer = FOOTSTEP_INTERVAL_SECONDS * 0.5
+
+	_was_on_floor = is_now_on_floor
+	_has_floor_state = true
+
+
 func magnetize() -> void:
 	if magnet_effect != null:
 		return
@@ -477,6 +544,29 @@ func stop_magnetize() -> void:
 	if magnet_effect != null:
 		magnet_effect.queue_free()
 		magnet_effect = null
+
+
+func _play_magnet_gun_sfx() -> void:
+	if not Magnetide.sfx or MAGNET_GUN_LOOP_SFX.is_empty():
+		return
+
+	Magnetide.sfx.play_loop(
+		MAGNET_GUN_LOOP_SFX,
+		_get_magnet_gun_sfx_loop_key(),
+		MAGNET_GUN_LOOP_VOLUME_DB,
+		MAGNET_GUN_LOOP_PITCH_SCALE
+	)
+
+
+func _stop_magnet_gun_sfx() -> void:
+	if not Magnetide.sfx or MAGNET_GUN_LOOP_SFX.is_empty():
+		return
+
+	Magnetide.sfx.stop_loop(MAGNET_GUN_LOOP_SFX, _get_magnet_gun_sfx_loop_key())
+
+
+func _get_magnet_gun_sfx_loop_key() -> String:
+	return "player_magnet_gun:%s" % get_instance_id()
 
 
 # =============================================================================
@@ -531,6 +621,9 @@ func _process_magnet_gun(delta: float) -> void:
 			_set_hovered_research_station(null)
 	else:
 		_set_hovered_research_station(null)
+		if _held_item != null:
+			_held_item = null
+		_stop_magnet_gun_sfx()
 		# No item held - hover detection and grab
 		_process_magnet_gun_hover()
 		
@@ -591,6 +684,7 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	item.grab_for_magnet_gun(self)
 	item.update_gun_hold_position(_get_magnet_gun_hold_point())
 	_held_item = item
+	_play_magnet_gun_sfx()
 	
 	# Unfreeze dependent items so they can re-settle
 	for dep in dependents:
@@ -755,6 +849,7 @@ func _repel_held_item() -> void:
 	
 	_held_item.repel_from_gun(impulse)
 	_held_item = null
+	_stop_magnet_gun_sfx()
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()
@@ -778,6 +873,7 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 		return
 
 	_held_item = null
+	_stop_magnet_gun_sfx()
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()
@@ -794,6 +890,7 @@ func _clear_magnet_gun_state() -> void:
 	if _held_item and is_instance_valid(_held_item):
 		_held_item.force_release_from_gun()
 	_held_item = null
+	_stop_magnet_gun_sfx()
 	
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
@@ -862,6 +959,7 @@ func _try_place_held_item_on_research_station() -> bool:
 		return false
 
 	_held_item = null
+	_stop_magnet_gun_sfx()
 	_is_repel_holding = false
 	_repel_hold_elapsed = 0.0
 	_update_repel_bar()

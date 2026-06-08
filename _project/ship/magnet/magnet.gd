@@ -50,6 +50,10 @@ signal artifact_pile_final_item_spawned(item_data: SalvageItemData)
 		_update_magnet_visuals()
 @export_group("Combat")
 @export var max_health: float = 150.0
+@export_group("Audio")
+@export var running_sfx_filename: String = "magnet_effect.ogg"
+@export var running_sfx_volume_db: float = -12.0
+@export var running_sfx_pitch_scale: float = 1.0
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
@@ -408,22 +412,54 @@ func _update_magnet_visuals() -> void:
 func _update_pull_state() -> void:
 	var was_suspended := _is_pull_suspended_by_capacity
 	_is_pull_suspended_by_capacity = _is_active and is_at_capacity
+	var should_run_effect := _is_active and not _is_pull_suspended_by_capacity
 
 	if _area:
 		_area.monitoring = _is_active
 
 	if _effect_animation:
-		var should_show_effect := _is_active and not _is_pull_suspended_by_capacity
-		_effect_animation.visible = should_show_effect
-		if should_show_effect:
+		_effect_animation.visible = should_run_effect
+		if should_run_effect:
 			if not _effect_animation.is_playing():
 				_effect_animation.play("default")
 		else:
 			_effect_animation.stop()
 
+	_update_running_sfx(should_run_effect)
+
 	if _is_pull_suspended_by_capacity and not was_suspended:
 		_release_uncounted_tracked_items()
 		capacity_reached.emit()
+
+
+func _update_running_sfx(should_play: bool) -> void:
+	if should_play:
+		_play_running_sfx()
+	else:
+		_stop_running_sfx()
+
+
+func _play_running_sfx() -> void:
+	if running_sfx_filename.is_empty() or not Magnetide.sfx:
+		return
+
+	Magnetide.sfx.play_loop(
+		running_sfx_filename,
+		_get_running_sfx_loop_key(),
+		running_sfx_volume_db,
+		running_sfx_pitch_scale
+	)
+
+
+func _stop_running_sfx() -> void:
+	if running_sfx_filename.is_empty() or not Magnetide.sfx:
+		return
+
+	Magnetide.sfx.stop_loop(running_sfx_filename, _get_running_sfx_loop_key())
+
+
+func _get_running_sfx_loop_key() -> String:
+	return "ship_magnet:%s" % get_instance_id()
 
 
 func _on_tracked_item_frozen(item: SalvageItem) -> void:
