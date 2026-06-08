@@ -5,6 +5,7 @@ class_name WeaponData
 @export var bullet_speed: float = 1800.0
 @export var weapon_sprite: Texture2D
 @export var bullet_sprite: Texture2D
+@export var fire_behavior: Resource = null
 
 @export_group("Positioning")
 @export var weapon_offset: Vector2 = Vector2(-15.125, 0.0)

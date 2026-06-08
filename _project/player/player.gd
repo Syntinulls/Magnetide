@@ -415,20 +415,46 @@ func shoot() -> void:
 	var wpn := current_weapon_data
 	if not wpn:
 		return
-	_fire_cooldown = 1.0 / wpn.fire_rate
+	_fire_cooldown = 1.0 / maxf(wpn.fire_rate, 0.01)
 	if muzzle_effect:
 		muzzle_effect.play_effect(_get_current_muzzle_effect_type())
 	_play_machine_gun_shoot_sfx()
-	var bullet := BulletScene.instantiate()
+	if wpn.fire_behavior and wpn.fire_behavior.has_method("fire"):
+		wpn.fire_behavior.fire(self, wpn)
+	else:
+		fire_weapon_projectile(get_weapon_aim_direction(), wpn)
+
+
+func get_weapon_aim_direction() -> Vector2:
+	var aim_direction := get_global_mouse_position() - global_position
+	if aim_direction.length_squared() <= 0.0001:
+		aim_direction = Vector2.RIGHT * (-_facing_mult())
+	return aim_direction.normalized()
+
+
+func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node2D:
+	if weapon_data == null:
+		return null
+	var bullet := BulletScene.instantiate() as Node2D
+	if bullet == null:
+		return null
 	bullet.global_position = muzzle.global_position
-	bullet.direction = (get_global_mouse_position() - global_position).normalized()
-	bullet.damage = wpn.damage
-	bullet.speed = wpn.bullet_speed
-	if wpn.bullet_sprite:
-		bullet.get_node("Sprite2D").texture = wpn.bullet_sprite
+	var bullet_direction := direction.normalized()
+	if bullet_direction.length_squared() <= 0.0001:
+		bullet_direction = get_weapon_aim_direction()
+	bullet.set("direction", bullet_direction)
+	bullet.set("damage", weapon_data.damage)
+	bullet.set("speed", weapon_data.bullet_speed)
+	if weapon_data.bullet_sprite:
+		var sprite := bullet.get_node_or_null("Sprite2D") as Sprite2D
+		if sprite:
+			sprite.texture = weapon_data.bullet_sprite
 	var world_root := Magnetide.world_root
 	if world_root:
 		world_root.add_child(bullet)
+		return bullet
+	bullet.queue_free()
+	return null
 
 
 func _play_machine_gun_shoot_sfx() -> void:

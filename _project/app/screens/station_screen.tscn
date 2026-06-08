@@ -15,12 +15,21 @@
 [ext_resource type="Script" uid="uid://poj3ou2ycfhc" path="res://_project/player/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
 [ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/ui/sprites/ui_icon_ship.png" id="12_4e5bg"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="12_rifle_data"]
+[ext_resource type="Resource" path="res://_project/player/equipment/shotgun/shotgun.tres" id="13_shotgun_data"]
 [ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/ui/sprites/ui_icon_player.png" id="14_h7pqf"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="16_pln3h"]
 
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_equipment_catalog_entry")
 equipment_data = ExtResource("12_rifle_data")
+
+[sub_resource type="Resource" id="Resource_station_weapon_shotgun"]
+script = ExtResource("11_equipment_catalog_entry")
+equipment_data = ExtResource("13_shotgun_data")
+locked = true
+research_unlock_id = &"weapon_shotgun"
+research_unlock_order = 10
+research_point_cost = 1
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -30,7 +39,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
-weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_rifle")])
+weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_shotgun")])
 
 [node name="Backdrop" type="ColorRect" parent="." unique_id=1722779487]
 layout_mode = 1
