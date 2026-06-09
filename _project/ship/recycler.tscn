@@ -1,0 +1,55 @@
+[gd_scene format=3 uid="uid://bvaekv4vjhgyn"]
+
+[ext_resource type="Texture2D" uid="uid://dd3t631udp1pd" path="res://_project/ship/sprites/ship_recycler_back.png" id="1_1y8kl"]
+[ext_resource type="Script" uid="uid://n55jabnc68p0" path="res://_project/ship/recycler.gd" id="1_n2c4l"]
+[ext_resource type="Texture2D" uid="uid://djf3o74ml0c6f" path="res://_project/ship/sprites/ship_recycler_grinder.png" id="2_n2c4l"]
+[ext_resource type="Texture2D" uid="uid://i7bkoxg8rjbb" path="res://_project/ship/sprites/ship_recycler_front.png" id="3_2e4ic"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_hwkhw"]
+atlas = ExtResource("3_2e4ic")
+region = Rect2(0, 0, 128, 58)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_egl1m"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_hwkhw")
+}],
+"loop": true,
+"name": &"default",
+"speed": 5.0
+}]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_8vsmy"]
+size = Vector2(117, 79)
+
+[node name="Recycler" type="Area2D" unique_id=2041959714]
+script = ExtResource("1_n2c4l")
+
+[node name="SpriteBack" type="Sprite2D" parent="." unique_id=1204281421]
+texture = ExtResource("1_1y8kl")
+
+[node name="GrinderLeft" type="Node2D" parent="." unique_id=1620755758]
+position = Vector2(-20, -8)
+
+[node name="Sprite2D" type="Sprite2D" parent="GrinderLeft" unique_id=1630774301]
+texture = ExtResource("2_n2c4l")
+
+[node name="GrinderRight" type="Node2D" parent="." unique_id=2030244742]
+position = Vector2(20, -8)
+
+[node name="Sprite2D" type="Sprite2D" parent="GrinderRight" unique_id=812985965]
+texture = ExtResource("2_n2c4l")
+flip_h = true
+
+[node name="SpriteFront" type="AnimatedSprite2D" parent="." unique_id=228537708]
+sprite_frames = SubResource("SpriteFrames_egl1m")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=550718170]
+position = Vector2(0.5, -8.5)
+shape = SubResource("RectangleShape2D_8vsmy")
+
+[node name="TrashStart" type="Marker2D" parent="." unique_id=1366763316]
+position = Vector2(0, -45)
+
+[node name="TrashParticles" type="GPUParticles2D" parent="." unique_id=1427603565]

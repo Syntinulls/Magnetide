@@ -1,15 +1,13 @@
-[gd_resource type="Resource" script_class="WeaponData" format=3]
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bmsp4hjbiegi"]
 
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/player/equipment/weapon_data.gd" id="1_weapon_data"]
-[ext_resource type="Script" path="res://_project/player/equipment/shotgun/shotgun_fire_behavior.gd" id="2_fire_behavior"]
+[ext_resource type="Script" uid="uid://bwa44jt60lssd" path="res://_project/player/equipment/shotgun/shotgun_fire_behavior.gd" id="2_fire_behavior"]
 [ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/player/equipment/rifle/bullet_1.png" id="3_bullet"]
 [ext_resource type="Texture2D" uid="uid://brxpe4qiqvo" path="res://_project/ui/sprites/ui_player_itemslot_rifle.png" id="4_hotbar"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/player/equipment/rifle/player_item_rifle.png" id="5_weapon"]
 
 [sub_resource type="Resource" id="Resource_shotgun_fire_behavior"]
 script = ExtResource("2_fire_behavior")
-pellet_count = 3
-cone_degrees = 24.0
 
 [resource]
 script = ExtResource("1_weapon_data")

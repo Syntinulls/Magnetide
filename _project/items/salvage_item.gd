@@ -282,6 +282,10 @@ func get_rarity_color() -> Color:
 	return SalvageItemData.get_color_for_rarity(rarity)
 
 
+func get_weight() -> float:
+	return _get_item_weight()
+
+
 func pop_trash() -> void:
 	if not _is_trash:
 		queue_free()

@@ -30,11 +30,17 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
+const STORAGE_ITEMS_Z_INDEX: int = -5
 const DEBUG_RESEARCH_ARTIFACT_DATA: SalvageItemData = preload("res://_project/items/resources/artifacts/unknown_artifact.tres")
+const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/ship/storage_area_outline.gdshader")
+const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
+const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
+var _storage_outline_line: Line2D = null
+var _storage_outline_material: ShaderMaterial = null
 var _stored_salvage_items_root: Node2D = null
 var current_health: float = 0.0
 var _thruster_state: ThrusterState = ThrusterState.STOPPED
@@ -45,6 +51,7 @@ var _last_level_speed: float = -1.0
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
 @onready var _thruster_right: Thruster = $ThrusterRight as Thruster
 @onready var _research_station: ResearchStation = get_node_or_null("ResearchStation") as ResearchStation
+@onready var _recycler: Node = get_node_or_null("Recycler")
 
 var stored_items: Array[SalvageItem]:
 	get:
@@ -142,6 +149,7 @@ func _find_departure_shield() -> CanvasItem:
 func _create_storage_zone() -> void:
 	_create_storage_floor_marker()
 	_create_storage_borders()
+	_create_storage_area_outline()
 
 
 func _ensure_storage_items_root() -> Node2D:
@@ -159,7 +167,7 @@ func _ensure_storage_items_root() -> Node2D:
 		move_child(_stored_salvage_items_root, ship_back.get_index())
 
 	_stored_salvage_items_root.y_sort_enabled = true
-	_stored_salvage_items_root.z_index = -3
+	_stored_salvage_items_root.z_index = STORAGE_ITEMS_Z_INDEX
 	return _stored_salvage_items_root
 
 
@@ -227,6 +235,54 @@ func _create_storage_borders() -> void:
 		floor_y - storage_area_size.y * 0.5
 	)
 	_storage_borders.add_child(right_shape)
+
+
+func _create_storage_area_outline() -> void:
+	_storage_outline_line = Line2D.new()
+	_storage_outline_line.name = "StorageAreaOutline"
+	_storage_outline_line.width = 5.0
+	_storage_outline_line.default_color = Color.WHITE
+	_storage_outline_line.closed = true
+	_storage_outline_line.antialiased = true
+	_storage_outline_line.z_index = -1
+	_storage_outline_line.visible = false
+
+	_storage_outline_material = ShaderMaterial.new()
+	_storage_outline_material.shader = STORAGE_AREA_OUTLINE_SHADER
+	_storage_outline_line.material = _storage_outline_material
+	_update_storage_area_outline_geometry()
+	add_child(_storage_outline_line)
+
+
+func _update_storage_area_outline_geometry() -> void:
+	if _storage_outline_line == null or not is_instance_valid(_storage_outline_line):
+		return
+
+	var top_left := Vector2(
+		storage_area_position.x - storage_area_size.x * 0.5,
+		storage_area_position.y - storage_area_size.y
+	)
+	_storage_outline_line.points = PackedVector2Array([
+		top_left,
+		top_left + Vector2(storage_area_size.x, 0.0),
+		top_left + storage_area_size,
+		top_left + Vector2(0.0, storage_area_size.y)
+	])
+
+	if _storage_outline_material:
+		_storage_outline_material.set_shader_parameter("rect_top_left", top_left)
+		_storage_outline_material.set_shader_parameter("rect_size", storage_area_size)
+
+
+func set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> void:
+	if _storage_outline_line == null or not is_instance_valid(_storage_outline_line):
+		_create_storage_area_outline()
+
+	_update_storage_area_outline_geometry()
+	_storage_outline_line.visible = enabled
+	if _storage_outline_material:
+		var alpha := STORAGE_OUTLINE_HOVER_ALPHA if hovered else STORAGE_OUTLINE_IDLE_ALPHA
+		_storage_outline_material.set_shader_parameter("line_alpha", alpha)
 
 
 func get_storage_area_global_rect() -> Rect2:
@@ -328,6 +384,20 @@ func clear_research_station_highlight() -> void:
 		_research_station.set_highlighted(false)
 
 
+func get_recycler_at_point(global_point: Vector2) -> Node:
+	if _recycler == null or not is_instance_valid(_recycler):
+		return null
+	if _recycler.has_method("is_point_in_placement_area") and _recycler.call("is_point_in_placement_area", global_point):
+		return _recycler
+	return null
+
+
+func clear_recycler_highlight() -> void:
+	if _recycler and is_instance_valid(_recycler):
+		if _recycler.has_method("set_highlighted"):
+			_recycler.call("set_highlighted", false)
+
+
 func stop_for_run_end() -> void:
 	if _research_station and is_instance_valid(_research_station):
 		_research_station.stop_for_run_end()
@@ -343,8 +413,8 @@ func _update_storage_weight_ui() -> void:
 func get_storage_weight() -> float:
 	var total := 0.0
 	for item in _stored_items:
-		if is_instance_valid(item) and item.item_data:
-			total += item.item_data.weight
+		if is_instance_valid(item):
+			total += _get_item_weight(item)
 	return total
 
 
@@ -358,8 +428,8 @@ func get_storage_items_root() -> Node2D:
 
 
 func _get_item_weight(item: SalvageItem) -> float:
-	if item and item.item_data:
-		return item.item_data.weight
+	if item and item.has_method("get_weight"):
+		return item.get_weight()
 	return 0.0
 
 

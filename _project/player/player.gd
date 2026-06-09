@@ -94,9 +94,12 @@ var pull_ramp_time: float:
 var _held_item: SalvageItem = null
 var _hovered_item: SalvageItem = null
 var _hovered_research_station: ResearchStation = null
+var _hovered_recycler: Node = null
 var _interactable_research_station: ResearchStation = null
 var _repel_hold_elapsed: float = 0.0
 var _is_repel_holding: bool = false
+var _is_recycling_held_trash: bool = false
+var _pending_recycler_scrap_chance_percent: float = 0.0
 var _repel_bar: ColorRect = null
 var _repel_bar_bg: ColorRect = null
 var _repel_bar_container: Control = null
@@ -593,7 +596,9 @@ func _process_magnet_gun(delta: float) -> void:
 		# Only allow repel/place once item has reached the anchor point
 		if _held_item.has_reached_anchor:
 			var mouse_pos := get_global_mouse_position()
+			_update_storage_area_outline(mouse_pos)
 			_process_research_station_hover(mouse_pos)
+			_process_recycler_hover(mouse_pos)
 
 			# Right-click hold to repel
 			if Input.is_action_pressed("shoot_alt"):
@@ -613,15 +618,23 @@ func _process_magnet_gun(delta: float) -> void:
 			
 			# Left-click to place on a station, then fall back to storage
 			if Input.is_action_just_pressed("shoot"):
+				if _try_recycle_held_trash():
+					return
 				if _try_place_held_item_on_research_station():
 					return
 				var ship_node := _get_ship()
+				if _is_point_over_recycler(mouse_pos):
+					return
 				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
 					_place_item_in_storage(mouse_pos)
 		else:
+			_set_storage_area_outline_state(false)
 			_set_hovered_research_station(null)
+			_set_hovered_recycler(null)
 	else:
+		_set_storage_area_outline_state(false)
 		_set_hovered_research_station(null)
+		_set_hovered_recycler(null)
 		if _held_item != null:
 			_held_item = null
 		_stop_magnet_gun_sfx()
@@ -667,10 +680,6 @@ func _grab_item_from_magnet(item: SalvageItem) -> void:
 	var grabbed_from_storage := item.is_in_storage
 	var dependents := item.get_storage_contact_chain() if grabbed_from_storage else item.get_contact_chain()
 	var ship_node := _get_ship()
-
-	if item.is_trash:
-		_pop_trash_item(item, dependents)
-		return
 
 	if grabbed_from_storage and ship_node:
 		ship_node.remove_from_storage(item)
@@ -740,7 +749,7 @@ func _collect_scrap_metal_from(start_position: Vector2) -> void:
 	if pop_direction == Vector2.ZERO:
 		pop_direction = Vector2.RIGHT.rotated(randf_range(0.0, TAU))
 	var pop_target := start_position + pop_direction * randf_range(28.0, 44.0) + Vector2(0.0, randf_range(-28.0, -12.0))
-	var collect_target := global_position + Vector2(0.0, -18.0)
+	var collect_target := _get_scrap_collection_target_position()
 	var start_scale := pickup.scale
 	var tween := pickup.create_tween()
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
@@ -758,6 +767,14 @@ func _on_scrap_pickup_arrived(pickup: Sprite2D) -> void:
 		pickup.queue_free()
 	_show_scrap_loot_label()
 	scrap_metal_collected.emit(1)
+
+
+func _get_scrap_collection_target_position() -> Vector2:
+	var game_ui := Magnetide.game_ui
+	if game_ui and game_ui.has_method("get_scrap_icon_screen_center"):
+		var screen_position := game_ui.call("get_scrap_icon_screen_center") as Vector2
+		return get_viewport().get_canvas_transform().affine_inverse() * screen_position
+	return global_position + Vector2(0.0, -18.0)
 
 
 func _show_scrap_loot_label() -> void:
@@ -840,6 +857,7 @@ func _repel_held_item() -> void:
 	if not _held_item or not is_instance_valid(_held_item):
 		return
 	
+	_set_storage_area_outline_state(false)
 	_set_hovered_research_station(null)
 
 	# Calculate repel direction (away from gun, toward where gun is pointing)
@@ -862,6 +880,7 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	if not _held_item or not is_instance_valid(_held_item):
 		return
 	
+	_set_storage_area_outline_state(false)
 	_set_hovered_research_station(null)
 
 	var ship_node := _get_ship()
@@ -885,6 +904,8 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 func _clear_magnet_gun_state() -> void:
 	_set_hovered_item(null)
 	_set_hovered_research_station(null)
+	_set_hovered_recycler(null)
+	_set_storage_area_outline_state(false)
 	_hide_hover_tooltip()
 	
 	# Force-release held item
@@ -907,6 +928,25 @@ func _get_ship() -> Node2D:
 	return null
 
 
+func _update_storage_area_outline(mouse_pos: Vector2) -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		_set_storage_area_outline_state(false)
+		return
+
+	var ship_node := _get_ship()
+	if ship_node == null:
+		return
+
+	var is_hovered: bool = ship_node.is_point_in_storage_area(mouse_pos)
+	_set_storage_area_outline_state(true, is_hovered)
+
+
+func _set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> void:
+	var ship_node := _get_ship()
+	if ship_node and ship_node.has_method("set_storage_area_outline_state"):
+		ship_node.set_storage_area_outline_state(enabled, hovered)
+
+
 func _process_research_station_hover(mouse_pos: Vector2) -> void:
 	if not _held_item or not is_instance_valid(_held_item):
 		_set_hovered_research_station(null)
@@ -925,6 +965,26 @@ func _process_research_station_hover(mouse_pos: Vector2) -> void:
 		_set_hovered_research_station(station)
 	else:
 		_set_hovered_research_station(null)
+
+
+func _process_recycler_hover(mouse_pos: Vector2) -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		_set_hovered_recycler(null)
+		return
+	if not _held_item.is_trash:
+		_set_hovered_recycler(null)
+		return
+
+	var ship_node := _get_ship()
+	if ship_node == null or not ship_node.has_method("get_recycler_at_point"):
+		_set_hovered_recycler(null)
+		return
+
+	var recycler := ship_node.get_recycler_at_point(mouse_pos) as Node
+	if recycler and recycler.has_method("can_accept_item") and recycler.call("can_accept_item", _held_item):
+		_set_hovered_recycler(recycler)
+	else:
+		_set_hovered_recycler(null)
 
 
 func _process_research_station_reopen_range() -> void:
@@ -970,6 +1030,56 @@ func _try_place_held_item_on_research_station() -> bool:
 	return true
 
 
+func _try_recycle_held_trash() -> bool:
+	if _is_recycling_held_trash:
+		return false
+	if not _held_item or not is_instance_valid(_held_item):
+		return false
+	if not _held_item.is_trash:
+		return false
+	if _hovered_recycler == null or not is_instance_valid(_hovered_recycler):
+		return false
+
+	var recycler := _hovered_recycler
+	var item := _held_item
+	if not recycler.has_method("recycle_trash"):
+		return false
+	if not recycler.call("recycle_trash", item):
+		return false
+
+	var tool := current_magnet_tool
+	_pending_recycler_scrap_chance_percent = tool.trash_scrap_chance_percent if tool else 0.0
+	_is_recycling_held_trash = true
+	_held_item = null
+	_stop_magnet_gun_sfx()
+	_is_repel_holding = false
+	_repel_hold_elapsed = 0.0
+	_update_repel_bar()
+	_set_hovered_recycler(null)
+	if muzzle_effect:
+		muzzle_effect.stop_effect()
+
+	var recycled_callback := Callable(self, "_on_recycler_trash_recycled")
+	if recycler.has_signal("trash_recycled") and not recycler.is_connected("trash_recycled", recycled_callback):
+		recycler.connect("trash_recycled", recycled_callback, CONNECT_ONE_SHOT)
+	return true
+
+
+func _on_recycler_trash_recycled(scrap_origin: Vector2) -> void:
+	_is_recycling_held_trash = false
+	var scrap_chance := _pending_recycler_scrap_chance_percent
+	_pending_recycler_scrap_chance_percent = 0.0
+	if randf() * 100.0 < scrap_chance:
+		_collect_scrap_metal_from(scrap_origin)
+
+
+func _is_point_over_recycler(mouse_pos: Vector2) -> bool:
+	var ship_node := _get_ship()
+	if ship_node == null or not ship_node.has_method("get_recycler_at_point"):
+		return false
+	return ship_node.get_recycler_at_point(mouse_pos) != null
+
+
 func _set_hovered_research_station(station: ResearchStation) -> void:
 	if _hovered_research_station == station:
 		return
@@ -981,6 +1091,21 @@ func _set_hovered_research_station(station: ResearchStation) -> void:
 
 	if _hovered_research_station and is_instance_valid(_hovered_research_station):
 		_hovered_research_station.set_highlighted(true)
+
+
+func _set_hovered_recycler(recycler: Node) -> void:
+	if _hovered_recycler == recycler:
+		return
+
+	if _hovered_recycler and is_instance_valid(_hovered_recycler):
+		if _hovered_recycler.has_method("set_highlighted"):
+			_hovered_recycler.call("set_highlighted", false)
+
+	_hovered_recycler = recycler
+
+	if _hovered_recycler and is_instance_valid(_hovered_recycler):
+		if _hovered_recycler.has_method("set_highlighted"):
+			_hovered_recycler.call("set_highlighted", true)
 
 
 # =============================================================================

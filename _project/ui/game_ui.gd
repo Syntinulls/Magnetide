@@ -6,6 +6,8 @@ const DAMAGED_INTEGRITY_COLOR := Color("ff7c7c")
 @onready var _player_health_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/MarginContainer/PlayerHPBar
 @onready var _player_shield_container: Control = $PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer
 @onready var _player_shield_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer/PlayerShieldBar
+@onready var _scrap_counter: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter
+@onready var _scrap_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapIcon
 @onready var _scrap_count_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapCountLabel
 @onready var _ship_hull_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPHull
 @onready var _ship_magnet_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPMagnet
@@ -13,6 +15,8 @@ const DAMAGED_INTEGRITY_COLOR := Color("ff7c7c")
 @onready var _ship_magnet_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipMagnetIntegrityLabel
 
 var _bound_run_controller: RunController = null
+var _displayed_scrap_count: int = 0
+var _scrap_pulse_tween: Tween = null
 
 
 func _ready() -> void:
@@ -119,8 +123,36 @@ func bind_run_controller(run_controller: RunController) -> void:
 
 
 func set_run_scrap_metal_count(scrap_count: int) -> void:
+	var normalized_count := maxi(scrap_count, 0)
+	var should_pulse := normalized_count > _displayed_scrap_count
+	_displayed_scrap_count = normalized_count
 	if _scrap_count_label:
-		_scrap_count_label.text = str(maxi(scrap_count, 0))
+		_scrap_count_label.text = str(normalized_count)
+	if should_pulse:
+		pulse_scrap_counter()
+
+
+func get_scrap_icon_screen_center() -> Vector2:
+	if _scrap_icon:
+		return _scrap_icon.get_global_rect().get_center()
+	if _scrap_counter:
+		return _scrap_counter.get_global_rect().get_center()
+	return Vector2.ZERO
+
+
+func pulse_scrap_counter() -> void:
+	var target := _scrap_counter as Control
+	if target == null:
+		return
+	if _scrap_pulse_tween and _scrap_pulse_tween.is_valid():
+		_scrap_pulse_tween.kill()
+	target.pivot_offset = target.size * 0.5
+	target.scale = Vector2.ONE
+	_scrap_pulse_tween = target.create_tween()
+	_scrap_pulse_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	_scrap_pulse_tween.tween_property(target, "scale", Vector2(1.18, 1.18), 0.09)
+	_scrap_pulse_tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
+	_scrap_pulse_tween.tween_property(target, "scale", Vector2.ONE, 0.16)
 
 
 func _update_integrity_display(source: Node, rect: TextureRect, label: Label) -> void:
