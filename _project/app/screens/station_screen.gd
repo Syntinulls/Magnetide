@@ -682,7 +682,7 @@ func _get_upgrade_stat_name(upgrade: Resource) -> String:
 		"player_max_health":
 			return "Health"
 		"player_max_shield":
-			return "Shield"
+			return "Shield Hit"
 		"damage":
 			return "Damage"
 		"fire_rate":
@@ -730,7 +730,7 @@ func _build_player_stats_text() -> String:
 
 	var lines := PackedStringArray([
 		"HEALTH: %s" % _stringify_stat_value(_run_loadout.player_max_health),
-		"SHIELD: %s" % _stringify_stat_value(_run_loadout.player_max_shield),
+		"SHIELD HITS: %s" % _stringify_stat_value(_run_loadout.player_max_shield),
 		"EQUIPPED WEAPON: %s" % _get_equipment_name(_run_loadout.equipped_weapon),
 		"EQUIPPED TOOL: %s" % _get_equipment_name(_run_loadout.equipped_magnet_tool),
 	])

@@ -24,6 +24,7 @@
 [ext_resource type="Script" uid="uid://bsjye4vj3a1tp" path="res://_project/ui/countdown_timer.gd" id="23_timer"]
 [ext_resource type="Script" uid="uid://bfwl2ho2imvfr" path="res://_project/ui/game_ui.gd" id="24_game_ui"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="24_pqqpn"]
+[ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="25_shield_icon"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -300,11 +301,15 @@ stretch_mode = 2
 layout_mode = 2
 size_flags_horizontal = 3
 
-[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=2133808651]
+[node name="HealthShieldRow" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=1887190161]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=2133808651]
 layout_mode = 2
 theme_override_constants/margin_left = -32
 
-[node name="PlayerHPBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/MarginContainer" unique_id=884906908]
+[node name="PlayerHPBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/MarginContainer" unique_id=884906908]
 layout_mode = 2
 size_flags_horizontal = 0
 size_flags_vertical = 0
@@ -314,22 +319,38 @@ texture_over = ExtResource("18_s0nsh")
 texture_progress = ExtResource("19_a5bm7")
 texture_progress_offset = Vector2(12, 0)
 
-[node name="ShieldMarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=435510790]
-visible = false
+[node name="ShieldIcon" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=1207828494]
+custom_minimum_size = Vector2(60, 0)
 layout_mode = 2
-theme_override_constants/margin_left = -32
-theme_override_constants/margin_top = -10
+mouse_filter = 2
 
-[node name="PlayerShieldBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/ShieldMarginContainer" unique_id=1893354034]
+[node name="ShieldPulseMarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon" unique_id=7161352]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ShieldTexture" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer" unique_id=1588303475]
+custom_minimum_size = Vector2(60, 60)
 layout_mode = 2
-size_flags_horizontal = 0
-size_flags_vertical = 0
-value = 100.0
-texture_under = ExtResource("17_si552")
-texture_over = ExtResource("18_s0nsh")
-texture_progress = ExtResource("19_a5bm7")
-texture_progress_offset = Vector2(12, 0)
-tint_progress = Color(0.25, 0.62, 1, 1)
+mouse_filter = 2
+texture = ExtResource("25_shield_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShieldCountLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer" unique_id=467598105]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.917647, 0.964706, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 32
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="ItemSlotContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=526615491]
 layout_mode = 2
@@ -665,7 +686,7 @@ vertical_alignment = 1
 [node name="ScrapCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=846761521]
 layout_mode = 2
 theme_override_constants/margin_left = -105
-theme_override_constants/margin_top = -42
+theme_override_constants/margin_top = 0
 
 [node name="ScrapCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin" unique_id=364917313]
 layout_mode = 2

@@ -4,15 +4,17 @@ class_name Player
 signal destroyed
 signal cinematic_walk_finished
 signal scrap_metal_collected(amount: int)
+signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
 @export var gravity: float = 1600.0
 @export_group("Combat")
 @export var max_health: float = 100.0
-@export var max_shield: float = 0.0
+@export var max_shield: float = 2.0
 @export var shield_recharge_delay: float = 6.0
-@export var shield_recharge_duration: float = 4.0
+@export var shield_recharge_duration: float = 1.0
+@export var shield_break_recharge_delay: float = 10.0
 
 ## Equipment slots - indices match hotbar slots
 @export var equipment: Array[EquipmentData] = []
@@ -47,11 +49,13 @@ var input_enabled: bool = true
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
-var current_shield: float = 0.0
+var current_shield: int = 0
 var _has_floor_state: bool = false
 var _was_on_floor: bool = false
 var _footstep_timer: float = 0.0
 var _shield_recharge_cooldown_remaining: float = 0.0
+var _shield_recharge_progress: float = 0.0
+var _shield_broken: bool = false
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
 
@@ -120,7 +124,7 @@ var _cinematic_walk_arrive_epsilon: float = 4.0
 
 func _ready() -> void:
 	current_health = max_health
-	current_shield = max_shield
+	current_shield = _get_max_shield_hits()
 	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
@@ -148,6 +152,7 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	max_shield = loadout.player_max_shield
 	shield_recharge_delay = loadout.player_shield_recharge_delay
 	shield_recharge_duration = loadout.player_shield_recharge_duration
+	shield_break_recharge_delay = loadout.player_shield_break_recharge_delay
 	equipment = loadout.player_equipment.duplicate()
 
 	if equipment.is_empty():
@@ -161,13 +166,15 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 
 	if not is_runtime_reconfigure:
 		current_health = max_health
-		current_shield = max_shield
+		current_shield = _get_max_shield_hits()
 	else:
 		current_health = minf(current_health, max_health)
-		current_shield = minf(current_shield, max_shield)
-	if max_shield <= 0.0:
-		current_shield = 0.0
+		current_shield = mini(current_shield, _get_max_shield_hits())
+	if _get_max_shield_hits() <= 0:
+		current_shield = 0
 		_shield_recharge_cooldown_remaining = 0.0
+		_shield_recharge_progress = 0.0
+		_shield_broken = false
 
 	if is_runtime_reconfigure:
 		_apply_current_equipment()
@@ -239,6 +246,7 @@ func _physics_process(delta: float) -> void:
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
 	_process_shield_recharge(delta)
+
 	if _cinematic_walk_active:
 		_process_cinematic_walk(delta)
 	elif input_enabled and not Magnetide.research_ui_input_captured:
@@ -1244,14 +1252,18 @@ func take_damage(amount: float) -> void:
 	if amount <= 0.0:
 		return
 
-	if max_shield > 0.0:
-		_shield_recharge_cooldown_remaining = shield_recharge_delay
-	if current_shield > 0.0:
-		var shield_damage := minf(current_shield, amount)
-		current_shield -= shield_damage
-		amount -= shield_damage
-		if amount <= 0.0:
-			return
+	if current_shield > 0:
+		current_shield -= 1
+		_shield_recharge_progress = 0.0
+		if current_shield <= 0:
+			_shield_broken = true
+			_shield_recharge_cooldown_remaining = shield_break_recharge_delay
+		else:
+			_shield_broken = false
+			_shield_recharge_cooldown_remaining = shield_recharge_delay
+		_emit_shield_changed(-1)
+		return
+
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:
@@ -1259,20 +1271,42 @@ func take_damage(amount: float) -> void:
 
 
 func _process_shield_recharge(delta: float) -> void:
-	if max_shield <= 0.0 or current_health <= 0.0:
-		current_shield = 0.0
+	var max_shield_hits := _get_max_shield_hits()
+	if max_shield_hits <= 0 or current_health <= 0.0:
+		current_shield = 0
+		_shield_recharge_progress = 0.0
+		_shield_broken = false
 		return
-	if current_shield >= max_shield:
-		current_shield = max_shield
+	if current_shield >= max_shield_hits:
+		current_shield = max_shield_hits
 		_shield_recharge_cooldown_remaining = 0.0
+		_shield_recharge_progress = 0.0
+		_shield_broken = false
 		return
 	if _shield_recharge_cooldown_remaining > 0.0:
 		_shield_recharge_cooldown_remaining = maxf(_shield_recharge_cooldown_remaining - delta, 0.0)
 		return
 
-	var recharge_duration := maxf(shield_recharge_duration, 0.01)
-	var recharge_rate := max_shield / recharge_duration
-	current_shield = minf(current_shield + recharge_rate * delta, max_shield)
+	var seconds_per_hit := maxf(shield_recharge_duration, 0.01)
+	_shield_recharge_progress += delta
+	if _shield_recharge_progress >= seconds_per_hit and current_shield < max_shield_hits:
+		_shield_recharge_progress -= seconds_per_hit
+		current_shield += 1
+		_shield_broken = current_shield <= 0
+		_emit_shield_changed(1)
+	_shield_broken = current_shield <= 0
+
+
+func is_shield_broken() -> bool:
+	return _shield_broken
+
+
+func _get_max_shield_hits() -> int:
+	return maxi(roundi(max_shield), 0)
+
+
+func _emit_shield_changed(delta: int) -> void:
+	shield_changed.emit(current_shield, _get_max_shield_hits(), _shield_broken, delta)
 
 
 func stop_for_run_end() -> void:

@@ -37,6 +37,7 @@ var surface_y: float:
 @onready var ui_root: Control = $UICanvas/UIRoot
 @onready var camera: Camera2D = $Camera2D
 @onready var threat: ThreatManager = $ThreatManager
+@onready var _enemy_spawner: EnemySpawner = $EnemySpawner
 
 
 func _enter_tree() -> void:
@@ -50,6 +51,18 @@ func _ready() -> void:
 	call_deferred("_update_parallax_viewport_size")
 	call_deferred("_create_fog_overlay")
 	call_deferred("_update_positions")
+
+
+func _unhandled_input(event: InputEvent) -> void:
+	if not event.is_action_pressed("debug_spawn_enemy"):
+		return
+	if event is InputEventKey and event.echo:
+		return
+	if Magnetide.research_ui_input_captured:
+		return
+	if _enemy_spawner:
+		_enemy_spawner.force_spawn_basic_enemy()
+		get_viewport().set_input_as_handled()
 
 
 func _on_viewport_changed(_size: Vector2) -> void:

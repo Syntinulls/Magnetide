@@ -13,6 +13,8 @@ const CostSpringData := preload("res://_project/items/resources/spring.tres")
 const CostProcessorData := preload("res://_project/items/resources/processor.tres")
 const CostCircuitryData := preload("res://_project/items/resources/circuitry.tres")
 const CostPowerCoreData := preload("res://_project/items/resources/power_core.tres")
+const DEFAULT_PLAYER_MAX_SHIELD_HITS := 2.0
+const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 
 @export_group("Ship")
 @export var ship_storage_area_size: Vector2 = Vector2(400, 250)
@@ -41,9 +43,10 @@ const CostPowerCoreData := preload("res://_project/items/resources/power_core.tr
 @export var player_jump_velocity: float = -600.0
 @export var player_gravity: float = 1600.0
 @export var player_max_health: float = 100.0
-@export var player_max_shield: float = 0.0
+@export var player_max_shield: float = 2.0
 @export var player_shield_recharge_delay: float = 6.0
-@export var player_shield_recharge_duration: float = 4.0
+@export var player_shield_recharge_duration: float = 1.0
+@export var player_shield_break_recharge_delay: float = 10.0
 
 @export_group("Equipment")
 @export var equipped_weapon: WeaponData = null
@@ -98,6 +101,7 @@ func prepare_for_run() -> void:
 
 func ensure_upgrade_state() -> void:
 	_ensure_equipped_defaults()
+	_migrate_player_shield_defaults()
 	_ensure_upgrade(equipment_upgrades, _create_upgrade(
 		&"weapon_damage",
 		"Weapon Damage",
@@ -130,10 +134,10 @@ func ensure_upgrade_state() -> void:
 		"Player Shield",
 		RunUpgradeScript.TargetScope.LOADOUT,
 		&"player_max_shield",
-		25.0,
+		1.0,
 		RunUpgradeScript.IncreaseMode.FLAT,
 		_create_default_level_costs(CostBatteryData, CostPowerCoreData),
-		[25.0, 25.0, 25.0, 25.0, 25.0]
+		[1.0, 1.0, 1.0, 1.0, 1.0]
 	))
 	_ensure_upgrade(ship_upgrades, _create_upgrade(
 		&"ship_hull",
@@ -231,6 +235,17 @@ func _ensure_equipped_defaults() -> void:
 				break
 	if equipped_magnet_tool == null:
 		equipped_magnet_tool = DefaultMagnetToolData
+
+
+func _migrate_player_shield_defaults() -> void:
+	if player_max_shield <= 0.0 or player_max_shield > 10.0:
+		player_max_shield = DEFAULT_PLAYER_MAX_SHIELD_HITS
+	if upgrade_base_values.has("player_max_shield"):
+		var shield_base := float(upgrade_base_values["player_max_shield"])
+		if shield_base <= 0.0 or shield_base > 10.0:
+			upgrade_base_values["player_max_shield"] = DEFAULT_PLAYER_MAX_SHIELD_HITS
+	if is_equal_approx(player_shield_recharge_duration, 4.0):
+		player_shield_recharge_duration = DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT
 
 
 func _build_runtime_equipment() -> Array[EquipmentData]:
