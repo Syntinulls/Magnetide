@@ -124,10 +124,10 @@ shape = SubResource("RectangleShape2D_front")
 position = Vector2(0, -77)
 
 [node name="ResearchStation" parent="." unique_id=229870124 instance=ExtResource("8_6os2d")]
-position = Vector2(-190, -113.35)
+position = Vector2(-235, -113.35)
 
 [node name="Recycler" parent="." unique_id=2041959714 instance=ExtResource("9_0vixk")]
-position = Vector2(190, -107)
+position = Vector2(235, -107)
 
 [node name="DeparturePylonLeft" parent="." unique_id=1436115027 instance=ExtResource("5_departure_pylon")]
 visible = false
