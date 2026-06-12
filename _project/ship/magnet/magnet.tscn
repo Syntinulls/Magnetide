@@ -82,6 +82,8 @@ size = Vector2(132, 44)
 [node name="Magnet" type="Node2D" unique_id=1946411833]
 script = ExtResource("1_script")
 magnet_width = 264.0
+hitbox_path = NodePath("Hitbox")
+enemy_target_point_paths = Array[NodePath]([NodePath("EnemyTargetPoint")])
 
 [node name="MagnetSprite" type="Sprite2D" parent="." unique_id=1103544616]
 material = SubResource("ShaderMaterial_mljxl")

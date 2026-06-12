@@ -20,6 +20,8 @@ func get_target_root() -> Node:
 
 func get_damage_receiver() -> Hitbox:
 	var target_root := get_target_root()
+	if target_root and target_root.has_method("get_damage_receiver_for_target_point"):
+		return target_root.get_damage_receiver_for_target_point(self) as Hitbox
 	if target_root and target_root.has_method("get_hitbox"):
 		return target_root.get_hitbox() as Hitbox
 	return null

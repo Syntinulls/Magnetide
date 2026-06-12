@@ -9,5 +9,5 @@ script = ExtResource("1_script")
 id = &"worm"
 enemy_scene = ExtResource("2_enemy_scene")
 enemy_data = ExtResource("3_enemy_data")
-allowed_spawn_zones = PackedStringArray("SpawnN", "SpawnNNE", "SpawnNE", "SpawnENE", "SpawnE", "SpawnESE", "SpawnSE", "SpawnSSE", "SpawnS", "SpawnSSW", "SpawnSW", "SpawnWSW", "SpawnW", "SpawnWNW", "SpawnNW", "SpawnNNW")
+allowed_spawn_zones = PackedStringArray("SpawnSSE", "SpawnS", "SpawnSSW")
 max_batch_sizes_by_threat = PackedInt32Array(1, 2, 3, 4, 5)

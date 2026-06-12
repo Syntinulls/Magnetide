@@ -16,6 +16,8 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var storage_max_weight: float = 100.0
 @export_group("Combat")
 @export var max_health: float = 250.0
+@export var hitbox_path: NodePath = NodePath("Hitbox")
+@export var enemy_target_point_paths: Array[NodePath] = []
 @export var ship_status_ui_path: NodePath
 @export_group("Thrusters")
 @export var auto_update_thrusters: bool = true
@@ -522,19 +524,29 @@ func take_damage(amount: float) -> void:
 
 
 func get_hitbox() -> Hitbox:
-	var hitboxes := find_children("*", "Hitbox", true, false)
-	if hitboxes.is_empty():
+	return get_node_or_null(hitbox_path) as Hitbox
+
+
+func get_damage_receiver_for_target_point(point: EnemyTargetPoint) -> Hitbox:
+	if point == null or not _has_configured_target_point(point):
 		return null
-	return hitboxes[0] as Hitbox
+	return get_hitbox()
 
 
 func get_enemy_target_points() -> Array[EnemyTargetPoint]:
 	var points: Array[EnemyTargetPoint] = []
-	for child in find_children("*", "EnemyTargetPoint", true, false):
-		var point := child as EnemyTargetPoint
+	for target_point_path in enemy_target_point_paths:
+		var point := get_node_or_null(target_point_path) as EnemyTargetPoint
 		if point and point.category == EnemyData.TargetCategory.SHIP and point.is_target_enabled():
 			points.append(point)
 	return points
+
+
+func _has_configured_target_point(point: EnemyTargetPoint) -> bool:
+	for target_point_path in enemy_target_point_paths:
+		if get_node_or_null(target_point_path) == point:
+			return true
+	return false
 
 
 func get_stored_item_count() -> int:

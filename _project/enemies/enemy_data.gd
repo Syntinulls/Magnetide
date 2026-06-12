@@ -12,6 +12,12 @@ enum TargetPointSelectionMode {
 	CLOSEST,
 }
 
+enum TargetPrioritySelectionMode {
+	ORDERED,
+	RANDOM,
+	CLOSEST,
+}
+
 @export var enemy_name: String = ""
 
 @export_group("Stats")
@@ -36,6 +42,7 @@ enum TargetPointSelectionMode {
 
 @export_group("Targeting")
 @export var initial_target_priorities: Array[TargetCategory] = [TargetCategory.PLAYER]
+@export var initial_target_priority_selection_mode: TargetPrioritySelectionMode = TargetPrioritySelectionMode.ORDERED
 @export var damaged_target_priorities: Array[TargetCategory] = []
 @export var retarget_on_damage: bool = false
 @export var retarget_on_health_threshold: bool = false

@@ -256,7 +256,10 @@ func _evaluate_target() -> bool:
 	var previous_category := current_target_category
 	var previous_point := current_target_point
 	var previous_damage_target := current_damage_target
-	var resolved_target := _resolve_target_from_priorities(_get_active_priorities())
+	var resolved_target := _resolve_target_from_priorities(
+		_get_active_priorities(),
+		_get_active_priority_selection_mode()
+	)
 
 	current_target_category = int(resolved_target.get("category", INVALID_TARGET_CATEGORY))
 	current_target_point = resolved_target.get("path_target", null) as Node2D
@@ -275,13 +278,63 @@ func _get_active_priorities() -> Array:
 	return data.initial_target_priorities
 
 
-func _resolve_target_from_priorities(priorities: Array) -> Dictionary:
+func _get_active_priority_selection_mode() -> int:
+	if has_taken_damage and data.retarget_on_damage and not data.damaged_target_priorities.is_empty():
+		return EnemyData.TargetPrioritySelectionMode.ORDERED
+	return data.initial_target_priority_selection_mode
+
+
+func _resolve_target_from_priorities(priorities: Array, selection_mode: int) -> Dictionary:
+	match selection_mode:
+		EnemyData.TargetPrioritySelectionMode.RANDOM:
+			return _resolve_random_target_from_priorities(priorities)
+		EnemyData.TargetPrioritySelectionMode.CLOSEST:
+			return _resolve_closest_target_from_priorities(priorities)
+		_:
+			return _resolve_ordered_target_from_priorities(priorities)
+
+
+func _resolve_ordered_target_from_priorities(priorities: Array) -> Dictionary:
 	for category in priorities:
 		var resolved := _resolve_target_for_category(int(category))
 		if not resolved.is_empty():
 			resolved["category"] = int(category)
 			return resolved
 	return {}
+
+
+func _resolve_random_target_from_priorities(priorities: Array) -> Dictionary:
+	var resolved_targets: Array[Dictionary] = []
+	for category in priorities:
+		var resolved := _resolve_target_for_category(int(category))
+		if not resolved.is_empty():
+			resolved["category"] = int(category)
+			resolved_targets.append(resolved)
+
+	if resolved_targets.is_empty():
+		return {}
+	return resolved_targets.pick_random()
+
+
+func _resolve_closest_target_from_priorities(priorities: Array) -> Dictionary:
+	var closest_target: Dictionary = {}
+	var closest_distance := INF
+	for category in priorities:
+		var resolved := _resolve_target_for_category(int(category))
+		if resolved.is_empty():
+			continue
+
+		var path_target := resolved.get("path_target", null) as Node2D
+		if path_target == null:
+			continue
+
+		var distance := global_position.distance_to(path_target.global_position)
+		if distance < closest_distance:
+			closest_distance = distance
+			resolved["category"] = int(category)
+			closest_target = resolved
+
+	return closest_target
 
 
 func _resolve_target_for_category(category: int) -> Dictionary:
