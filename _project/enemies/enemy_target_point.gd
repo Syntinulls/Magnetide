@@ -1,7 +1,7 @@
 extends Marker2D
 class_name EnemyTargetPoint
 
-@export var category: EnemyData.TargetCategory = EnemyData.TargetCategory.SHIP
+@export var target_group: String = EnemyData.GROUP_SHIP
 @export var target_root_path: NodePath
 @export var enabled: bool = true
 

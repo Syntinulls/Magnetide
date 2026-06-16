@@ -61,6 +61,7 @@ var stored_items: Array[SalvageItem]:
 
 
 func _ready() -> void:
+	add_to_group("ship")
 	current_health = max_health
 	_ensure_storage_items_root()
 	_create_storage_zone()
@@ -514,7 +515,7 @@ func _get_level_speed() -> float:
 	return 0.0
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source: Node = null) -> void:
 	if current_health <= 0.0:
 		return
 	var previous_health := current_health
@@ -537,7 +538,7 @@ func get_enemy_target_points() -> Array[EnemyTargetPoint]:
 	var points: Array[EnemyTargetPoint] = []
 	for target_point_path in enemy_target_point_paths:
 		var point := get_node_or_null(target_point_path) as EnemyTargetPoint
-		if point and point.category == EnemyData.TargetCategory.SHIP and point.is_target_enabled():
+		if point and point.target_group == EnemyData.GROUP_SHIP and point.is_target_enabled():
 			points.append(point)
 	return points
 

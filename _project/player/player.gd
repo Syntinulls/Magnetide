@@ -19,8 +19,8 @@ signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 ## Equipment slots - indices match hotbar slots
 @export var equipment: Array[EquipmentData] = []
 
-const BulletScene: PackedScene = preload("res://_project/player/bullet.tscn")
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
+const ProjectileScript: Script = preload("res://_project/utils/projectile.gd")
 const ScrapMetalTexture: Texture2D = preload("res://_project/ui/sprites/scrap_metal.png")
 const MACHINE_GUN_SHOOT_SFX: Array[String] = [
 	"machine_gun_shot_1.ogg",
@@ -123,6 +123,7 @@ var _cinematic_walk_arrive_epsilon: float = 4.0
 
 
 func _ready() -> void:
+	add_to_group("player")
 	current_health = max_health
 	current_shield = _get_max_shield_hits()
 	# Initialize facing based on current mouse position
@@ -471,26 +472,25 @@ func get_weapon_aim_direction() -> Vector2:
 func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node2D:
 	if weapon_data == null:
 		return null
-	var bullet := BulletScene.instantiate() as Node2D
-	if bullet == null:
-		return null
-	bullet.global_position = muzzle.global_position
+
 	var bullet_direction := direction.normalized()
 	if bullet_direction.length_squared() <= 0.0001:
 		bullet_direction = get_weapon_aim_direction()
-	bullet.set("direction", bullet_direction)
-	bullet.set("damage", weapon_data.damage)
-	bullet.set("speed", weapon_data.bullet_speed)
-	bullet.set("pierce", weapon_data.pierce)
-	if weapon_data.bullet_sprite:
-		var sprite := bullet.get_node_or_null("Sprite2D") as Sprite2D
-		if sprite:
-			sprite.texture = weapon_data.bullet_sprite
+
 	var world_root := Magnetide.world_root
 	if world_root:
-		world_root.add_child(bullet)
-		return bullet
-	bullet.queue_free()
+		return ProjectileScript.spawn(world_root, {
+			&"global_position": muzzle.global_position,
+			&"direction": bullet_direction,
+			&"sprite": weapon_data.bullet_sprite if weapon_data.bullet_sprite else MagnetEffectTexture,
+			&"damage": weapon_data.damage,
+			&"speed": weapon_data.bullet_speed,
+			&"lifetime": 3.0,
+			&"collision_layer": 2,
+			&"collision_mask": 4,
+			&"source": self,
+			&"pierce": weapon_data.pierce,
+		})
 	return null
 
 
@@ -1246,7 +1246,7 @@ func on_looting_ended() -> void:
 	_hide_hover_tooltip()
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source: Node = null) -> void:
 	if current_health <= 0.0:
 		return
 	if amount <= 0.0:

@@ -98,6 +98,7 @@ var is_active: bool:
 
 
 func _ready() -> void:
+	add_to_group("magnet")
 	current_health = max_health
 	set_process(false)
 	_area = get_node_or_null("MagnetPullArea") as Area2D
@@ -677,7 +678,7 @@ func get_surface_line() -> Line2D:
 	return null
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, _source: Node = null) -> void:
 	current_health = maxf(current_health - amount, 0.0)
 
 
@@ -695,7 +696,7 @@ func get_enemy_target_points() -> Array[EnemyTargetPoint]:
 	var points: Array[EnemyTargetPoint] = []
 	for target_point_path in enemy_target_point_paths:
 		var point := get_node_or_null(target_point_path) as EnemyTargetPoint
-		if point and point.category == EnemyData.TargetCategory.MAGNET and point.is_target_enabled():
+		if point and point.target_group == EnemyData.GROUP_MAGNET and point.is_target_enabled():
 			points.append(point)
 	return points
 

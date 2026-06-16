@@ -128,6 +128,6 @@ shape = SubResource("RectangleShape2D_2c23r")
 
 [node name="EnemyTargetPoint" type="Marker2D" parent="." unique_id=924912494]
 script = ExtResource("7_2c23r")
-category = 1
+target_group = "magnet"
 target_root_path = NodePath("..")
 metadata/_custom_type_script = "uid://bqv3p643kd7me"

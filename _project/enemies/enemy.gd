@@ -3,32 +3,38 @@ class_name Enemy
 
 signal died
 
-enum State { ALIVE, ATTACKING, DEAD }
+enum State { IDLE, MOVE, ATTACK, DEATH }
 enum DeathPhase { NONE, SHAKING, PAUSED, POPPING }
-const INVALID_TARGET_CATEGORY: int = -1
+
+const INVALID_TARGET_GROUP: StringName = &""
+const ANIM_IDLE: StringName = &"idle"
+const ANIM_MOVE: StringName = &"move"
+const ANIM_ATTACK: StringName = &"attack"
+const ANIM_DEATH: StringName = &"death"
+const DefaultMoveBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_move.gd")
+const DefaultAttackBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_attack.gd")
 
 @export var data: EnemyData
 
-var state: State = State.ALIVE
-var current_target_category: int = INVALID_TARGET_CATEGORY
+var state: State = State.IDLE
+var current_target_group: StringName = INVALID_TARGET_GROUP
+var current_target_root: Node2D = null
 var current_target_point: Node2D = null
 var current_damage_target: Node2D = null
 var current_health: float = 0.0
-var has_taken_damage: bool = false
-var has_triggered_health_threshold_retarget: bool = false
 
-var _attack_timer: float = 0.0
+var _move_behavior: Resource = null
+var _attack_behavior: Resource = null
+var _target_acquire_timer: float = 0.0
 var _death_timer: float = 0.0
 var _death_pop_elapsed: float = 0.0
 var _death_phase: DeathPhase = DeathPhase.NONE
 var _death_rotation_velocity: float = 0.0
 var _death_shake_origin: Vector2 = Vector2.ZERO
-var _anim_timer: float = 0.0
-var _anim_frame: int = 0
 var _flash_tween: Tween = null
 var _death_sequence_tween: Tween = null
 
-@onready var sprite: Sprite2D = $Sprite
+@onready var sprite: AnimatedSprite2D = $Sprite
 @onready var hitbox: Hitbox = $Hitbox
 @onready var hitbox_collision_shape: CollisionShape2D = $Hitbox/CollisionShape2D
 
@@ -38,21 +44,22 @@ func _ready() -> void:
 	if not data:
 		push_warning("Enemy has no EnemyData assigned.")
 		return
+
 	current_health = data.max_health
 	_apply_data()
-	_evaluate_target()
+	_setup_behaviors()
+	_acquire_target(false)
+	_enter_state(_select_base_state())
 
 
 func _physics_process(delta: float) -> void:
 	if not data:
 		return
-	match state:
-		State.ALIVE:
-			_process_alive(delta)
-		State.ATTACKING:
-			_process_attacking(delta)
-		State.DEAD:
-			_process_dead(delta)
+	if state == State.DEATH:
+		_process_death(delta)
+		return
+
+	_process_active(delta)
 
 
 func _apply_data() -> void:
@@ -61,60 +68,54 @@ func _apply_data() -> void:
 		hitbox_shape = hitbox_shape.duplicate()
 		hitbox_shape.size = data.hitbox_size
 		hitbox_collision_shape.shape = hitbox_shape
+
 	var sprite_material := sprite.material as ShaderMaterial
 	if sprite_material:
 		sprite.material = sprite_material.duplicate()
-	_set_animation(data.move_spritesheet, data.move_frames)
+
+	if data.sprite_frames:
+		sprite.sprite_frames = data.sprite_frames
+	play_enemy_animation(ANIM_IDLE)
 
 
-# -- State Processing --------------------------------------------------------
-
-func _process_alive(delta: float) -> void:
-	_maybe_trigger_health_threshold_retarget()
-	if not _has_valid_target():
-		_evaluate_target()
-
-	if _has_valid_target():
-		var dist := global_position.distance_to(current_target_point.global_position)
-		if dist <= data.attack_range:
-			_enter_state(State.ATTACKING)
-			return
-		var direction := (current_target_point.global_position - global_position).normalized()
-		velocity = direction * data.movement_speed
-		_rotate_toward_target()
+func _setup_behaviors() -> void:
+	if data.move_behavior:
+		_move_behavior = data.move_behavior.duplicate(true)
 	else:
-		velocity = Vector2.ZERO
-	_animate(delta, data.move_spritesheet, data.move_frames, data.move_fps)
+		_move_behavior = DefaultMoveBehaviorScript.new()
+	if data.attack_behavior:
+		_attack_behavior = data.attack_behavior.duplicate(true)
+	else:
+		_attack_behavior = DefaultAttackBehaviorScript.new()
+	if _move_behavior:
+		_move_behavior.setup(self)
+	if _attack_behavior:
+		_attack_behavior.setup(self)
+
+
+func _process_active(delta: float) -> void:
+	_update_targeting(delta)
+
+	var next_state := _select_base_state()
+	if next_state != state:
+		_enter_state(next_state)
+
+	match state:
+		State.IDLE:
+			velocity = Vector2.ZERO
+			play_enemy_animation(ANIM_IDLE)
+		State.MOVE:
+			if _move_behavior:
+				_move_behavior.physics_tick(self, delta)
+		State.ATTACK:
+			if _attack_behavior:
+				_attack_behavior.physics_tick(self, delta)
+
 	move_and_slide()
 
 
-func _process_attacking(delta: float) -> void:
-	velocity = Vector2.ZERO
-	_maybe_trigger_health_threshold_retarget()
-	if not _has_valid_target():
-		_evaluate_target()
-	if not _has_valid_target():
-		_enter_state(State.ALIVE)
-		return
-
-	# Chase again if target left attack range (with small buffer)
-	var dist := global_position.distance_to(current_target_point.global_position)
-	if dist > data.attack_range * 1.5:
-		_enter_state(State.ALIVE)
-		return
-
-	_rotate_toward_target()
-	_attack_timer += delta
-	if _attack_timer >= data.attack_interval:
-		_attack_timer -= data.attack_interval
-		_deal_damage()
-	_animate(delta, data.attack_spritesheet, data.attack_frames, data.attack_fps)
-
-
-func _process_dead(delta: float) -> void:
+func _process_death(delta: float) -> void:
 	_death_timer += delta
-	_animate(delta, data.death_spritesheet, data.death_frames, data.death_fps)
-
 	if _death_phase != DeathPhase.POPPING:
 		velocity = Vector2.ZERO
 		return
@@ -128,42 +129,465 @@ func _process_dead(delta: float) -> void:
 		queue_free()
 
 
+func _select_base_state() -> State:
+	if not has_valid_target():
+		return State.IDLE
+	if _attack_behavior and _attack_behavior.can_attack(self):
+		return State.ATTACK
+	return State.MOVE
+
+
 func _enter_state(new_state: State) -> void:
-	state = new_state
-	_anim_frame = 0
-	_anim_timer = 0.0
-	match new_state:
-		State.ATTACKING:
-			_attack_timer = 0.0
-		State.DEAD:
-			_death_timer = 0.0
-			_death_pop_elapsed = 0.0
-			hitbox_collision_shape.set_deferred("disabled", true)
-			_set_animation(data.death_spritesheet, data.death_frames)
-			_start_death_sequence()
-			died.emit()
-
-
-# -- Damage -------------------------------------------------------------------
-
-func take_damage(amount: float) -> void:
-	if state == State.DEAD:
+	if state == new_state:
 		return
+
+	if state == State.MOVE and _move_behavior:
+		_move_behavior.on_exit_move(self)
+	elif state == State.ATTACK and _attack_behavior:
+		_attack_behavior.on_exit_attack(self)
+
+	state = new_state
+
+	match new_state:
+		State.IDLE:
+			velocity = Vector2.ZERO
+			play_enemy_animation(ANIM_IDLE)
+		State.MOVE:
+			if _move_behavior:
+				_move_behavior.on_enter_move(self)
+			play_enemy_animation(ANIM_MOVE)
+		State.ATTACK:
+			if _attack_behavior:
+				_attack_behavior.on_enter_attack(self)
+		State.DEATH:
+			_enter_death_state()
+
+
+func _enter_death_state() -> void:
+	velocity = Vector2.ZERO
+	current_target_group = INVALID_TARGET_GROUP
+	current_target_root = null
+	current_target_point = null
+	current_damage_target = null
+	_death_timer = 0.0
+	_death_pop_elapsed = 0.0
+	if _move_behavior:
+		_move_behavior.teardown(self)
+	if _attack_behavior:
+		_attack_behavior.teardown(self)
+	hitbox_collision_shape.set_deferred("disabled", true)
+	play_enemy_animation(ANIM_DEATH)
+	_start_death_sequence()
+	died.emit()
+
+
+# -- Shared Enemy API --------------------------------------------------------
+
+func take_damage(amount: float, source: Node = null) -> void:
+	if state == State.DEATH:
+		return
+
 	current_health -= amount
 	_flash_white()
-	Magnetide.sfx.play("enemy_hit.ogg", -6)
+	if Magnetide.sfx:
+		Magnetide.sfx.play("enemy_hit.ogg", -6)
+
 	if current_health <= 0.0:
-		_enter_state(State.DEAD)
+		_enter_state(State.DEATH)
 		return
-	if not has_taken_damage:
-		has_taken_damage = true
-		if data.retarget_on_damage:
-			_retarget()
+
+	if data.target_switching_mode == EnemyData.TargetSwitchingMode.RECEIVED_DAMAGE:
+		_switch_target_to_damage_source(source)
 
 
 func get_hitbox() -> Hitbox:
 	return hitbox
 
+
+func get_current_target_group() -> StringName:
+	return current_target_group
+
+
+func has_valid_target() -> bool:
+	if not current_target_point or not is_instance_valid(current_target_point):
+		return false
+	if current_target_point.has_method("is_target_enabled") and not current_target_point.is_target_enabled():
+		return false
+	if not _is_damage_target_valid(current_damage_target):
+		return false
+	if data.target_range > 0.0 and global_position.distance_to(current_target_point.global_position) > data.target_range:
+		return false
+	return true
+
+
+func get_current_target_root() -> Node2D:
+	return current_target_root
+
+
+func get_current_target_point() -> Node2D:
+	return current_target_point
+
+
+func get_current_damage_target() -> Node2D:
+	return current_damage_target
+
+
+func get_direction_to_target() -> Vector2:
+	if not has_valid_target():
+		return Vector2.ZERO
+	return (current_target_point.global_position - global_position).normalized()
+
+
+func get_distance_to_target() -> float:
+	if not has_valid_target():
+		return INF
+	return global_position.distance_to(current_target_point.global_position)
+
+
+func get_movement_speed() -> float:
+	return data.movement_speed if data else 0.0
+
+
+func get_attack_range() -> float:
+	return data.attack_range if data else 0.0
+
+
+func get_attack_interval() -> float:
+	return data.attack_interval if data else 0.0
+
+
+func set_desired_velocity(next_velocity: Vector2) -> void:
+	velocity = next_velocity
+
+
+func face_current_target() -> void:
+	if current_target_point and is_instance_valid(current_target_point):
+		var angle := global_position.angle_to_point(current_target_point.global_position)
+		rotation = angle + PI / 2.0
+
+
+func deal_damage_to_current_target(amount: float = -1.0) -> void:
+	if not current_damage_target or not current_damage_target.has_method("take_damage"):
+		return
+	var damage_amount := data.damage if amount < 0.0 else amount
+	current_damage_target.take_damage(damage_amount, self)
+
+
+func get_projectile_parent() -> Node:
+	if Magnetide.world_root:
+		return Magnetide.world_root
+	return get_parent()
+
+
+func play_enemy_animation(animation_name: StringName) -> void:
+	if not sprite.sprite_frames:
+		return
+	if not sprite.sprite_frames.has_animation(animation_name):
+		return
+	if sprite.animation != animation_name:
+		sprite.play(animation_name)
+	elif not sprite.is_playing():
+		sprite.play()
+
+
+func stop_for_run_end() -> void:
+	velocity = Vector2.ZERO
+	set_process(false)
+	set_physics_process(false)
+
+
+# -- Targeting ---------------------------------------------------------------
+
+func _update_targeting(delta: float) -> void:
+	if not has_valid_target():
+		_clear_target()
+		_target_acquire_timer -= delta
+		if _target_acquire_timer <= 0.0:
+			_acquire_target(false)
+			_target_acquire_timer = _get_target_acquire_interval()
+		return
+
+	_target_acquire_timer -= delta
+	if _target_acquire_timer > 0.0:
+		return
+
+	if data.target_switching_mode == EnemyData.TargetSwitchingMode.PROXIMITY:
+		_acquire_target(true)
+		_target_acquire_timer = _get_proximity_switch_interval()
+	else:
+		_target_acquire_timer = _get_target_acquire_interval()
+
+
+func _acquire_target(allow_switch: bool) -> bool:
+	var previous_group := current_target_group
+	var previous_root := current_target_root
+	var previous_point := current_target_point
+	var previous_damage_target := current_damage_target
+
+	if has_valid_target() and not allow_switch:
+		return false
+
+	var resolved_target := _select_target_from_candidates(
+		_collect_target_candidates(_get_active_target_groups()),
+		data.target_priority_mode
+	)
+
+	current_target_group = resolved_target.get("group", INVALID_TARGET_GROUP)
+	current_target_root = resolved_target.get("target_root", null) as Node2D
+	current_target_point = resolved_target.get("path_target", null) as Node2D
+	current_damage_target = resolved_target.get("damage_target", null) as Node2D
+
+	return (
+		previous_group != current_target_group
+		or previous_root != current_target_root
+		or previous_point != current_target_point
+		or previous_damage_target != current_damage_target
+	)
+
+
+func _clear_target() -> void:
+	current_target_group = INVALID_TARGET_GROUP
+	current_target_root = null
+	current_target_point = null
+	current_damage_target = null
+
+
+func _switch_target_to_damage_source(source: Node) -> bool:
+	var source_root := _get_damage_source_target_root(source)
+	if source_root == null:
+		return false
+
+	var source_group := _get_target_group_for_node(source_root)
+	if source_group == INVALID_TARGET_GROUP:
+		return false
+	if not data.get_target_priority_groups_including_random_excludes().has(String(source_group)):
+		return false
+
+	var resolved := _resolve_node_target(source_root)
+	if resolved.is_empty():
+		return false
+
+	current_target_group = source_group
+	current_target_root = resolved.get("target_root", null) as Node2D
+	current_target_point = resolved.get("path_target", null) as Node2D
+	current_damage_target = resolved.get("damage_target", null) as Node2D
+	_target_acquire_timer = _get_target_acquire_interval()
+	return true
+
+
+func _get_damage_source_target_root(source: Node) -> Node2D:
+	if source == null or not is_instance_valid(source):
+		return null
+	if source.has_method("get_target_owner"):
+		var owner := source.get_target_owner() as Node2D
+		if owner:
+			return owner
+	var node := source
+	while node:
+		var node_2d := node as Node2D
+		if node_2d and _get_target_group_for_node(node_2d) != INVALID_TARGET_GROUP:
+			return node_2d
+		node = node.get_parent()
+	return source as Node2D
+
+
+func _get_target_group_for_node(node: Node) -> StringName:
+	if node == null:
+		return INVALID_TARGET_GROUP
+	for group_name in data.valid_targets:
+		if node.is_in_group(group_name):
+			return StringName(group_name)
+	return INVALID_TARGET_GROUP
+
+
+func _get_active_target_groups() -> Array[String]:
+	return data.get_target_priority_groups()
+
+
+func _collect_target_candidates(groups: Array[String]) -> Array[Dictionary]:
+	var candidates: Array[Dictionary] = []
+	for i in groups.size():
+		var group_name := groups[i]
+		if group_name.is_empty():
+			continue
+
+		for node in get_tree().get_nodes_in_group(group_name):
+			var resolved := _resolve_node_target(node)
+			if resolved.is_empty():
+				continue
+			resolved["group"] = StringName(group_name)
+			resolved["priority_index"] = i
+			candidates.append(resolved)
+	return candidates
+
+
+func _select_target_from_candidates(candidates: Array[Dictionary], selection_mode: EnemyData.TargetSelectionMode) -> Dictionary:
+	if candidates.is_empty():
+		return {}
+
+	match selection_mode:
+		EnemyData.TargetSelectionMode.RANDOM:
+			return _select_random_target(candidates)
+		EnemyData.TargetSelectionMode.CLOSEST:
+			return _select_closest_target(candidates)
+		_:
+			return _select_ordered_target(candidates)
+
+
+func _select_random_target(candidates: Array[Dictionary]) -> Dictionary:
+	var filtered_candidates: Array[Dictionary] = []
+	for candidate in candidates:
+		var group_name := String(candidate.get("group", ""))
+		if data.target_priority_random_excludes.has(group_name):
+			continue
+		filtered_candidates.append(candidate)
+
+	if filtered_candidates.is_empty():
+		return {}
+	return filtered_candidates.pick_random()
+
+
+func _select_ordered_target(candidates: Array[Dictionary]) -> Dictionary:
+	var best_priority_index := INF
+	var same_priority_candidates: Array[Dictionary] = []
+	for candidate in candidates:
+		var priority_index := int(candidate.get("priority_index", 0))
+		if priority_index < best_priority_index:
+			best_priority_index = priority_index
+			same_priority_candidates.clear()
+			same_priority_candidates.append(candidate)
+		elif priority_index == best_priority_index:
+			same_priority_candidates.append(candidate)
+	return _select_closest_target(same_priority_candidates)
+
+
+func _select_closest_target(candidates: Array[Dictionary]) -> Dictionary:
+	var closest_target: Dictionary = {}
+	var closest_distance := INF
+	for candidate in candidates:
+		var path_target := candidate.get("path_target", null) as Node2D
+		if path_target == null:
+			continue
+
+		var distance := global_position.distance_to(path_target.global_position)
+		if distance < closest_distance:
+			closest_distance = distance
+			closest_target = candidate
+	return closest_target
+
+
+func _resolve_node_target(root: Node) -> Dictionary:
+	var root_2d := root as Node2D
+	if not root_2d:
+		return {}
+
+	var target_points := _get_target_points(root)
+	if not target_points.is_empty():
+		var point := _select_target_point(target_points)
+		if not point:
+			return {}
+		var damage_receiver := _get_damage_receiver_for_target_point(root, point)
+		if not _is_damage_target_valid(damage_receiver):
+			return {}
+		if not _is_point_in_target_range(point.global_position):
+			return {}
+		return {
+			"target_root": root_2d,
+			"path_target": point,
+			"damage_target": damage_receiver,
+		}
+
+	var damage_target := _get_default_damage_receiver(root)
+	if not _is_damage_target_valid(damage_target):
+		return {}
+	if not _is_point_in_target_range(root_2d.global_position):
+		return {}
+	return {
+		"target_root": root_2d,
+		"path_target": root_2d,
+		"damage_target": damage_target,
+	}
+
+
+func _get_target_points(root: Node) -> Array[Node2D]:
+	var points: Array[Node2D] = []
+	if root.has_method("get_enemy_target_points"):
+		for point in root.get_enemy_target_points():
+			var point_2d := point as Node2D
+			if point_2d and _is_target_point_enabled(point_2d):
+				points.append(point_2d)
+		return points
+
+	var exposed_points: Variant = root.get("enemy_target_points")
+	if exposed_points is Array:
+		for point in exposed_points:
+			var point_2d := point as Node2D
+			if point_2d and _is_target_point_enabled(point_2d):
+				points.append(point_2d)
+	return points
+
+
+func _select_target_point(points: Array[Node2D]) -> Node2D:
+	if points.is_empty():
+		return null
+
+	match data.target_point_selection_mode:
+		EnemyData.TargetSelectionMode.ORDER:
+			return points.front()
+		EnemyData.TargetSelectionMode.CLOSEST:
+			var closest_point: Node2D = null
+			var closest_distance := INF
+			for point in points:
+				var distance := global_position.distance_to(point.global_position)
+				if distance < closest_distance:
+					closest_distance = distance
+					closest_point = point
+			return closest_point
+		_:
+			return points.pick_random()
+
+
+func _get_damage_receiver_for_target_point(root: Node, point: Node2D) -> Node2D:
+	if point.has_method("get_damage_receiver"):
+		return point.get_damage_receiver() as Node2D
+	if root.has_method("get_damage_receiver_for_target_point"):
+		return root.get_damage_receiver_for_target_point(point) as Node2D
+	return _get_default_damage_receiver(root)
+
+
+func _get_default_damage_receiver(root: Node) -> Node2D:
+	if root.has_method("get_hitbox"):
+		return root.get_hitbox() as Node2D
+	return root as Node2D
+
+
+func _is_target_point_enabled(point: Node2D) -> bool:
+	if point.has_method("is_target_enabled"):
+		return point.is_target_enabled()
+	return is_instance_valid(point)
+
+
+func _is_damage_target_valid(target: Node2D) -> bool:
+	if not target or not is_instance_valid(target):
+		return false
+	if target.has_method("is_valid_target"):
+		return target.is_valid_target()
+	return true
+
+
+func _is_point_in_target_range(point_global_position: Vector2) -> bool:
+	return data.target_range <= 0.0 or global_position.distance_to(point_global_position) <= data.target_range
+
+
+func _get_target_acquire_interval() -> float:
+	return maxf(data.target_acquire_interval, 0.05)
+
+
+func _get_proximity_switch_interval() -> float:
+	return maxf(data.proximity_switch_interval, 0.05)
+
+
+# -- Death -------------------------------------------------------------------
 
 func _flash_white() -> void:
 	if _flash_tween:
@@ -207,7 +631,7 @@ func _start_death_sequence() -> void:
 
 
 func _finish_death_shake() -> void:
-	if state != State.DEAD:
+	if state != State.DEATH:
 		return
 	_death_phase = DeathPhase.PAUSED
 	position = _death_shake_origin
@@ -215,7 +639,7 @@ func _finish_death_shake() -> void:
 
 
 func _launch_death_pop() -> void:
-	if state != State.DEAD:
+	if state != State.DEATH:
 		return
 	_death_phase = DeathPhase.POPPING
 	_death_pop_elapsed = 0.0
@@ -237,232 +661,3 @@ func _is_below_viewport() -> bool:
 	var screen_position := get_global_transform_with_canvas().origin
 	var viewport_height := viewport.get_visible_rect().size.y
 	return screen_position.y > viewport_height + data.death_pop_despawn_margin
-
-
-func _deal_damage() -> void:
-	if current_damage_target and current_damage_target.has_method("take_damage"):
-		current_damage_target.take_damage(data.damage)
-
-
-# -- Targeting ----------------------------------------------------------------
-
-func _retarget() -> void:
-	var changed := _evaluate_target()
-	if changed and state == State.ATTACKING:
-		_enter_state(State.ALIVE)
-
-
-func _evaluate_target() -> bool:
-	var previous_category := current_target_category
-	var previous_point := current_target_point
-	var previous_damage_target := current_damage_target
-	var resolved_target := _resolve_target_from_priorities(
-		_get_active_priorities(),
-		_get_active_priority_selection_mode()
-	)
-
-	current_target_category = int(resolved_target.get("category", INVALID_TARGET_CATEGORY))
-	current_target_point = resolved_target.get("path_target", null) as Node2D
-	current_damage_target = resolved_target.get("damage_target", null) as Node2D
-
-	return (
-		previous_category != current_target_category
-		or previous_point != current_target_point
-		or previous_damage_target != current_damage_target
-	)
-
-
-func _get_active_priorities() -> Array:
-	if has_taken_damage and data.retarget_on_damage and not data.damaged_target_priorities.is_empty():
-		return data.damaged_target_priorities
-	return data.initial_target_priorities
-
-
-func _get_active_priority_selection_mode() -> int:
-	if has_taken_damage and data.retarget_on_damage and not data.damaged_target_priorities.is_empty():
-		return EnemyData.TargetPrioritySelectionMode.ORDERED
-	return data.initial_target_priority_selection_mode
-
-
-func _resolve_target_from_priorities(priorities: Array, selection_mode: int) -> Dictionary:
-	match selection_mode:
-		EnemyData.TargetPrioritySelectionMode.RANDOM:
-			return _resolve_random_target_from_priorities(priorities)
-		EnemyData.TargetPrioritySelectionMode.CLOSEST:
-			return _resolve_closest_target_from_priorities(priorities)
-		_:
-			return _resolve_ordered_target_from_priorities(priorities)
-
-
-func _resolve_ordered_target_from_priorities(priorities: Array) -> Dictionary:
-	for category in priorities:
-		var resolved := _resolve_target_for_category(int(category))
-		if not resolved.is_empty():
-			resolved["category"] = int(category)
-			return resolved
-	return {}
-
-
-func _resolve_random_target_from_priorities(priorities: Array) -> Dictionary:
-	var resolved_targets: Array[Dictionary] = []
-	for category in priorities:
-		var resolved := _resolve_target_for_category(int(category))
-		if not resolved.is_empty():
-			resolved["category"] = int(category)
-			resolved_targets.append(resolved)
-
-	if resolved_targets.is_empty():
-		return {}
-	return resolved_targets.pick_random()
-
-
-func _resolve_closest_target_from_priorities(priorities: Array) -> Dictionary:
-	var closest_target: Dictionary = {}
-	var closest_distance := INF
-	for category in priorities:
-		var resolved := _resolve_target_for_category(int(category))
-		if resolved.is_empty():
-			continue
-
-		var path_target := resolved.get("path_target", null) as Node2D
-		if path_target == null:
-			continue
-
-		var distance := global_position.distance_to(path_target.global_position)
-		if distance < closest_distance:
-			closest_distance = distance
-			resolved["category"] = int(category)
-			closest_target = resolved
-
-	return closest_target
-
-
-func _resolve_target_for_category(category: int) -> Dictionary:
-	match category:
-		EnemyData.TargetCategory.PLAYER:
-			return _resolve_player_target()
-		EnemyData.TargetCategory.MAGNET:
-			return _resolve_structure_target(Magnetide.magnet)
-		EnemyData.TargetCategory.SHIP:
-			return _resolve_structure_target(Magnetide.ship)
-	return {}
-
-
-func _resolve_player_target() -> Dictionary:
-	var player := Magnetide.player
-	if not player or not player.has_method("get_hitbox"):
-		return {}
-
-	var hitbox := player.get_hitbox() as Node2D
-	if not _is_damage_target_valid(hitbox):
-		return {}
-
-	return {
-		"path_target": hitbox,
-		"damage_target": hitbox,
-	}
-
-
-func _resolve_structure_target(structure: Node) -> Dictionary:
-	if not structure or not structure.has_method("get_enemy_target_points"):
-		return {}
-
-	var points: Array[EnemyTargetPoint] = structure.get_enemy_target_points()
-	if points.is_empty():
-		return {}
-
-	var point := _select_structure_point(points)
-	if not point:
-		return {}
-
-	var damage_receiver := point.get_damage_receiver() as Node2D
-	if not _is_damage_target_valid(damage_receiver):
-		return {}
-
-	return {
-		"path_target": point,
-		"damage_target": damage_receiver,
-	}
-
-
-func _select_structure_point(points: Array[EnemyTargetPoint]) -> EnemyTargetPoint:
-	if points.is_empty():
-		return null
-
-	match data.structure_point_selection_mode:
-		EnemyData.TargetPointSelectionMode.CLOSEST:
-			var closest_point: EnemyTargetPoint = null
-			var closest_distance := INF
-			for point in points:
-				var distance := global_position.distance_to(point.global_position)
-				if distance < closest_distance:
-					closest_distance = distance
-					closest_point = point
-			return closest_point
-		_:
-			return points.pick_random() as EnemyTargetPoint
-
-
-func _has_valid_target() -> bool:
-	if not current_target_point or not is_instance_valid(current_target_point):
-		return false
-	if current_target_point.has_method("is_target_enabled") and not current_target_point.is_target_enabled():
-		return false
-	return _is_damage_target_valid(current_damage_target)
-
-
-func _is_damage_target_valid(target: Node2D) -> bool:
-	if not target or not is_instance_valid(target):
-		return false
-	if target.has_method("is_valid_target"):
-		return target.is_valid_target()
-	return true
-
-
-func _maybe_trigger_health_threshold_retarget() -> void:
-	if not data.retarget_on_health_threshold:
-		return
-	if has_triggered_health_threshold_retarget:
-		return
-	if data.max_health <= 0.0:
-		return
-	if current_health / data.max_health > data.retarget_health_threshold:
-		return
-
-	has_triggered_health_threshold_retarget = true
-	_retarget()
-
-
-# -- Animation ----------------------------------------------------------------
-
-func _set_animation(spritesheet: Texture2D, frames: int) -> void:
-	sprite.texture = spritesheet
-	sprite.hframes = frames
-	sprite.frame = 0
-	_anim_frame = 0
-	_anim_timer = 0.0
-
-
-func _animate(delta: float, spritesheet: Texture2D, frames: int, fps: float) -> void:
-	if sprite.texture != spritesheet:
-		_set_animation(spritesheet, frames)
-	if frames <= 1 or fps <= 0.0:
-		return
-	_anim_timer += delta
-	var frame_duration := 1.0 / fps
-	while _anim_timer >= frame_duration:
-		_anim_timer -= frame_duration
-		_anim_frame = (_anim_frame + 1) % frames
-	sprite.frame = _anim_frame
-
-
-func _rotate_toward_target() -> void:
-	if current_target_point and is_instance_valid(current_target_point):
-		var angle := global_position.angle_to_point(current_target_point.global_position)
-		rotation = angle + PI / 2.0
-
-
-func stop_for_run_end() -> void:
-	velocity = Vector2.ZERO
-	set_process(false)
-	set_physics_process(false)

@@ -21,7 +21,7 @@ func is_valid_target() -> bool:
 	return enabled and is_inside_tree() and get_target_owner() != null
 
 
-func take_damage(amount: float) -> void:
+func take_damage(amount: float, source: Node = null) -> void:
 	var owner := get_target_owner()
 	if owner and owner.has_method("take_damage"):
-		owner.take_damage(amount)
+		owner.take_damage(amount, source)
