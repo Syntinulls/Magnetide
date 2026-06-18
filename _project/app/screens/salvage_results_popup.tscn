@@ -51,6 +51,12 @@ theme_override_font_sizes/font_size = 30
 text = "Run Summary"
 horizontal_alignment = 1
 
+[node name="EndReasonLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 20
+text = "Ended by ship departure."
+horizontal_alignment = 1
+
 [node name="BodyColumns" type="HBoxContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=1985736872]
 layout_mode = 2
 size_flags_vertical = 3
@@ -160,6 +166,13 @@ size_flags_horizontal = 4
 theme_override_font_sizes/font_size = 22
 text = "Recovered Items"
 
+[node name="EmptyLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=1599433966]
+layout_mode = 2
+theme_override_font_sizes/font_size = 18
+text = "No materials recovered"
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="ScrollContainer" type="ScrollContainer" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=762304841]
 custom_minimum_size = Vector2(0, 360)
 layout_mode = 2
@@ -171,13 +184,6 @@ horizontal_scroll_mode = 0
 layout_mode = 2
 size_flags_horizontal = 3
 theme_override_constants/separation = 10
-
-[node name="EmptyLabel" type="Label" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn" unique_id=1599433966]
-layout_mode = 2
-theme_override_font_sizes/font_size = 18
-text = "No materials recovered"
-horizontal_alignment = 1
-vertical_alignment = 1
 
 [node name="MenuButton" type="Button" parent="CenterContainer/PanelContainer/MarginContainer/VBoxContainer" unique_id=288758738]
 custom_minimum_size = Vector2(0, 46)

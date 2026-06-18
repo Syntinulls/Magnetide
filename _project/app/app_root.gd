@@ -3,6 +3,7 @@ class_name AppRoot
 
 const RunControllerScript := preload("res://_project/run/run_controller.gd")
 const AppSaveDataScript := preload("res://_project/app/app_save_data.gd")
+const RunSummaryPopupScene := preload("res://_project/app/screens/salvage_results_popup.tscn")
 
 @export var default_level: LevelDefinition
 @export var default_run_loadout: RunLoadout
@@ -118,6 +119,20 @@ func _show_salvage_process_screen(result: RunResult) -> void:
 		screen.main_menu_requested.connect(_on_salvage_screen_main_menu_requested)
 
 
+func _show_death_summary_screen(result: RunResult) -> void:
+	_clear_screen()
+
+	var popup := RunSummaryPopupScene.instantiate() as SalvageResultsPopup
+	if popup == null:
+		_show_station_screen()
+		return
+
+	_active_screen = popup
+	_screen_root.add_child(_active_screen)
+	popup.setup(result, [], _build_run_stats(result, 0))
+	popup.station_requested.connect(_on_death_summary_station_requested)
+
+
 func _show_screen(scene: PackedScene) -> Control:
 	if scene == null:
 		return null
@@ -196,10 +211,22 @@ func _on_salvage_screen_main_menu_requested() -> void:
 
 
 func _on_run_finished(result: RunResult) -> void:
+	if result == null:
+		_show_station_screen()
+		return
+
+	if result.end_reason != RunResult.EndReason.VOLUNTARY_DEPARTURE:
+		_show_death_summary_screen(result)
+		return
+
 	if _save_data and result and result.scrap_metal_collected > 0:
 		_save_data.add_scrap_metal(result.scrap_metal_collected)
 	_clear_run()
 	_show_salvage_process_screen(result)
+
+
+func _on_death_summary_station_requested() -> void:
+	_show_station_screen()
 
 
 func _collect_salvage_screen_storage() -> void:
@@ -214,6 +241,16 @@ func _get_current_run_loadout() -> RunLoadout:
 	if _save_data != null:
 		return _save_data.get("current_run_loadout") as RunLoadout
 	return default_run_loadout
+
+
+func _build_run_stats(result: RunResult, items_salvaged: int = 0) -> Dictionary:
+	return {
+		"time_elapsed": result.elapsed_seconds if result != null else 0.0,
+		"enemies_killed": result.enemies_killed if result != null else 0,
+		"collected_items": result.salvage_items_collected if result != null else 0,
+		"scrap_collected": result.scrap_metal_collected if result != null else 0,
+		"items_salvaged": items_salvaged,
+	}
 
 
 func get_save_data() -> Resource:

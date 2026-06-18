@@ -157,12 +157,14 @@ func _build_result() -> RunResult:
 
 	if _ship:
 		result.salvage_items_collected = _ship.get_stored_item_count()
-		result.stored_loot = _ship.get_stored_loot_payload()
+		if _end_reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
+			result.stored_loot = _ship.get_stored_loot_payload()
 
-	if DEBUG_EXTRA_SALVAGE_ITEM_1 != null and \
-		DEBUG_EXTRA_SALVAGE_ITEM_2 != null and \
-		DEBUG_EXTRA_SALVAGE_ITEM_3 != null and \
-		DEBUG_EXTRA_SALVAGE_ITEM_4 != null:
+	if _end_reason == RunResult.EndReason.VOLUNTARY_DEPARTURE \
+		and DEBUG_EXTRA_SALVAGE_ITEM_1 != null \
+		and DEBUG_EXTRA_SALVAGE_ITEM_2 != null \
+		and DEBUG_EXTRA_SALVAGE_ITEM_3 != null \
+		and DEBUG_EXTRA_SALVAGE_ITEM_4 != null:
 		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_1)
 		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_2)
 		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_3)
