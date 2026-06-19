@@ -4,10 +4,6 @@ class_name RunController
 signal run_finished(result: RunResult)
 signal scrap_metal_count_changed(count: int)
 
-const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/items/salvage/resources/tire.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/salvage/resources/air_conditioner.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_3: SalvageItemData = preload("res://_project/items/salvage/resources/xray_machine.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_4: SalvageItemData = preload("res://_project/items/salvage/resources/portable_reactor.tres")
 const DEPARTURE_DECEL_SECONDS: float = 2.25
 const DEPARTURE_RISE_SECONDS: float = 3.0
 const DEPARTURE_BOOST_SECONDS: float = 1.35
@@ -171,17 +167,6 @@ func _build_result() -> RunResult:
 		result.salvage_items_collected = _ship.get_stored_item_count()
 		if _end_reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
 			result.stored_loot = _ship.get_stored_loot_payload()
-
-	if _end_reason == RunResult.EndReason.VOLUNTARY_DEPARTURE \
-		and DEBUG_EXTRA_SALVAGE_ITEM_1 != null \
-		and DEBUG_EXTRA_SALVAGE_ITEM_2 != null \
-		and DEBUG_EXTRA_SALVAGE_ITEM_3 != null \
-		and DEBUG_EXTRA_SALVAGE_ITEM_4 != null:
-		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_1)
-		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_2)
-		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_3)
-		result.stored_loot.append(DEBUG_EXTRA_SALVAGE_ITEM_4)
-		result.salvage_items_collected += 4
 
 	return result
 
