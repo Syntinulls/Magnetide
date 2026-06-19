@@ -13,11 +13,42 @@ const SAVE_PATH := "user://magnetide_save.tres"
 static func load_or_create(default_run_loadout: RunLoadout) -> AppSaveData:
 	var save_data: AppSaveData = null
 	if ResourceLoader.exists(SAVE_PATH):
+		_migrate_legacy_resource_paths()
 		save_data = ResourceLoader.load(SAVE_PATH) as AppSaveData
 	if save_data == null:
 		save_data = AppSaveData.new()
 	save_data.setup(default_run_loadout)
 	return save_data
+
+
+static func _migrate_legacy_resource_paths() -> void:
+	if not FileAccess.file_exists(SAVE_PATH):
+		return
+
+	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
+	if file == null:
+		return
+	var text := file.get_as_text()
+	file.close()
+
+	var migrated := text
+	migrated = migrated.replace("res://_project/player/equipment/", "res://_project/items/equipment/")
+	migrated = migrated.replace("res://_project/items/resources/", "res://_project/items/salvage/resources/")
+	migrated = migrated.replace("res://_project/items/sprites/", "res://_project/items/salvage/sprites/")
+	migrated = migrated.replace("res://_project/items/salvage_item", "res://_project/items/salvage/salvage_item")
+	migrated = migrated.replace("res://_project/items/salvage_part", "res://_project/items/salvage/salvage_part")
+	migrated = migrated.replace("res://_project/items/salvage/salvage/salvage_", "res://_project/items/salvage/salvage_")
+	migrated = migrated.replace("res://_project/items/salvage/salvage/resources/", "res://_project/items/salvage/resources/")
+	migrated = migrated.replace("res://_project/items/salvage/salvage/sprites/", "res://_project/items/salvage/sprites/")
+	migrated = migrated.replace("res://_project/items/salvage/equipment/", "res://_project/items/equipment/")
+	if migrated == text:
+		return
+
+	file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
+	if file == null:
+		return
+	file.store_string(migrated)
+	file.close()
 
 
 func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:

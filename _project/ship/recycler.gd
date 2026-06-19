@@ -10,7 +10,7 @@ signal trash_recycled(scrap_origin: Vector2)
 @export var recycle_blade_pass_duration: float = 0.85
 @export var blade_spin_speed: float = 6.0
 
-const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
+const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage/salvage_item_outline.gdshader")
 const RENDER_Z_MAX: int = 0
 const RENDER_Z_BACK: int = -3
 const RENDER_Z_TRASH: int = -4

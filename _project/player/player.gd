@@ -5,6 +5,7 @@ signal destroyed
 signal cinematic_walk_finished
 signal scrap_metal_collected(amount: int)
 signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
+signal damaged(amount: float, source: Node)
 
 @export var speed: float = 400.0
 @export var jump_velocity: float = -600.0
@@ -1246,12 +1247,13 @@ func on_looting_ended() -> void:
 	_hide_hover_tooltip()
 
 
-func take_damage(amount: float, _source: Node = null) -> void:
+func take_damage(amount: float, source: Node = null) -> void:
 	if current_health <= 0.0:
 		return
 	if amount <= 0.0:
 		return
 
+	damaged.emit(amount, source)
 	if current_shield > 0:
 		current_shield -= 1
 		_shield_recharge_progress = 0.0
@@ -1268,6 +1270,12 @@ func take_damage(amount: float, _source: Node = null) -> void:
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
+
+
+func heal(amount: float) -> void:
+	if amount <= 0.0 or current_health <= 0.0:
+		return
+	current_health = minf(current_health + amount, max_health)
 
 
 func _process_shield_recharge(delta: float) -> void:

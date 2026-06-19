@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://unknownartifact001"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_artifact_data"]
+[ext_resource type="Texture2D" uid="uid://dlquyf20mxvwb" path="res://_project/items/salvage/sprites/part_powercore.png" id="2_powercore"]
+
+[resource]
+script = ExtResource("1_artifact_data")
+item_name = "Unknown Artifact"
+rarity = 2
+item_kind = 1
+research_point_reward = 1
+sprite = ExtResource("2_powercore")
+area = Vector2(96, 96)
+weight = 1.25
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

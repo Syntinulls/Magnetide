@@ -4,10 +4,10 @@ class_name RunController
 signal run_finished(result: RunResult)
 signal scrap_metal_count_changed(count: int)
 
-const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/items/resources/tire.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/resources/air_conditioner.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_3: SalvageItemData = preload("res://_project/items/resources/xray_machine.tres")
-const DEBUG_EXTRA_SALVAGE_ITEM_4: SalvageItemData = preload("res://_project/items/resources/portable_reactor.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_1: SalvageItemData = preload("res://_project/items/salvage/resources/tire.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_2: SalvageItemData = preload("res://_project/items/salvage/resources/air_conditioner.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_3: SalvageItemData = preload("res://_project/items/salvage/resources/xray_machine.tres")
+const DEBUG_EXTRA_SALVAGE_ITEM_4: SalvageItemData = preload("res://_project/items/salvage/resources/portable_reactor.tres")
 const DEPARTURE_DECEL_SECONDS: float = 2.25
 const DEPARTURE_RISE_SECONDS: float = 3.0
 const DEPARTURE_BOOST_SECONDS: float = 1.35
@@ -29,6 +29,8 @@ var _player: Player = null
 var _magnet: Magnet = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
+var _run_loadout: RunLoadout = null
+var _active_augment_behaviors: Array[AugmentBehavior] = []
 var _elapsed_seconds: float = 0.0
 var _enemies_killed: int = 0
 var _scrap_metal_collected: int = 0
@@ -40,9 +42,14 @@ var scrap_metal_collected: int:
 		return _scrap_metal_collected
 
 
-func start_run(level_definition: LevelDefinition, level_node: Node) -> void:
+func get_run_loadout() -> RunLoadout:
+	return _run_loadout
+
+
+func start_run(level_definition: LevelDefinition, level_node: Node, run_loadout: RunLoadout = null) -> void:
 	_level_definition = level_definition
 	_level = level_node
+	_run_loadout = run_loadout
 	_elapsed_seconds = 0.0
 	_enemies_killed = 0
 	_scrap_metal_collected = 0
@@ -68,6 +75,7 @@ func _bind_runtime() -> void:
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
 	_connect_runtime_signals()
+	_initialize_augments()
 	_sync_game_ui_scrap_counter()
 	set_process(true)
 
@@ -91,6 +99,9 @@ func _process(delta: float) -> void:
 	if _is_run_ending:
 		return
 	_elapsed_seconds += delta
+	for behavior in _active_augment_behaviors:
+		if behavior != null and behavior.has_method("tick"):
+			behavior.call("tick", delta)
 
 
 func can_accept_departure_request() -> bool:
@@ -117,6 +128,7 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 
 func _shutdown_gameplay(stop_player: bool = true) -> void:
 	set_process(false)
+	_cleanup_augments()
 
 	if _player and stop_player:
 		_player.stop_for_run_end()
@@ -175,6 +187,7 @@ func _build_result() -> RunResult:
 
 
 func _finish_run(result: RunResult) -> void:
+	_cleanup_augments()
 	run_finished.emit(result)
 
 
@@ -388,4 +401,35 @@ func _on_departure_requested(_pylon: DeparturePylon) -> void:
 
 
 func _exit_tree() -> void:
+	_cleanup_augments()
 	Magnetide.clear_run_context(self)
+
+
+func _initialize_augments() -> void:
+	_cleanup_augments()
+	if _run_loadout == null:
+		return
+
+	var context := {
+		"run_loadout": _run_loadout,
+		"level": _level,
+		"ship": _ship,
+		"player": _player,
+		"magnet": _magnet,
+		"run_controller": self,
+	}
+	for augment in _run_loadout.get_equipped_augments():
+		if augment == null or augment.behavior == null:
+			continue
+		var behavior := augment.behavior.duplicate(true) as AugmentBehavior
+		if behavior == null:
+			continue
+		behavior.initialize_for_run(context, _run_loadout.get_item_level(augment))
+		_active_augment_behaviors.append(behavior)
+
+
+func _cleanup_augments() -> void:
+	for behavior in _active_augment_behaviors:
+		if behavior != null:
+			behavior.cleanup_after_run()
+	_active_augment_behaviors.clear()

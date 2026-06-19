@@ -75,7 +75,7 @@ Suggested values:
 - `item_name = "Unknown Artifact"`
 - `item_kind = ARTIFACT`
 - `rarity = RARE` or `EPIC`
-- `sprite = res://_project/items/sprites/part_powercore.png`
+- `sprite = res://_project/items/salvage/sprites/part_powercore.png`
 - `area = Vector2(96, 96)`
 - `weight = 1.25`
 - `parts = []`

@@ -4,7 +4,7 @@ class_name SalvagePileData
 enum PullCategory { NORMAL_ITEM, TRASH, ARTIFACT }
 
 const DEFAULT_TRASH_SPRITES: Array[Texture2D] = [
-	preload("res://_project/items/sprites/trash_small.png"),
+	preload("res://_project/items/salvage/sprites/trash_small.png"),
 ]
 
 ## Highest salvage item rarity this pile is allowed to roll.

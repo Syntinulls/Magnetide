@@ -6,9 +6,9 @@
 [ext_resource type="PackedScene" path="res://_project/app/screens/main_menu.tscn" id="4_main_menu"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/salvage_process_screen.tscn" id="5_salvage_screen"]
 [ext_resource type="Script" path="res://_project/run/run_loadout.gd" id="6_run_loadout"]
-[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/player/equipment/equipment_data.gd" id="7_equipment_data"]
-[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/player/equipment/rifle/rifle.tres" id="8_rifle"]
-[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/player/equipment/magnet_gun.tres" id="9_magnet_gun"]
+[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/equipment/equipment_data.gd" id="7_equipment_data"]
+[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/equipment/rifle/rifle.tres" id="8_rifle"]
+[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/equipment/magnet_gun.tres" id="9_magnet_gun"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/station_screen.tscn" id="10_station_screen"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/map_screen.tscn" id="11_map_screen"]
 
@@ -42,7 +42,7 @@ player_speed = 400.0
 player_jump_velocity = -600.0
 player_gravity = 1600.0
 player_max_health = 100.0
-player_max_shield = 2.0
+player_max_shield = 0.0
 player_shield_recharge_delay = 6.0
 player_shield_recharge_duration = 1.0
 player_shield_break_recharge_delay = 10.0

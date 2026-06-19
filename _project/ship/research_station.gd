@@ -10,7 +10,7 @@ signal artifact_cleared(item_data: SalvageItemData)
 @export var debug_research_duration: float = 5.0
 @export var interaction_radius: float = 180.0
 
-const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage_item_outline.gdshader")
+const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage/salvage_item_outline.gdshader")
 const ResearchStationUIScene: PackedScene = preload("res://_project/ui/research/research_station_ui.tscn")
 
 var _current_artifact: SalvageItem = null

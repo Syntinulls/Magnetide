@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://co1xjhanrxvpj"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_ojuvv"]
+[ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/salvage/resources/cathode_ray_tube.tres" id="2_rd0rs"]
+[ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/salvage/resources/circuitry.tres" id="3_wpksi"]
+[ext_resource type="Texture2D" uid="uid://bnprpf767mhmp" path="res://_project/items/salvage/sprites/salvage_xray.png" id="4_rd0rs"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_rd0rs")
+
+[sub_resource type="Resource" id="PartEntry_2"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("3_wpksi")
+
+[resource]
+script = ExtResource("1_ojuvv")
+item_name = "X-Ray Machine"
+rarity = 2
+sprite = ExtResource("4_rd0rs")
+area = Vector2(160, 160)
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

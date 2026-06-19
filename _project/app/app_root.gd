@@ -63,7 +63,7 @@ func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout
 	_run_root.add_child(_active_level)
 	_run_root.add_child(_active_run_controller)
 	_active_run_controller.run_finished.connect(_on_run_finished)
-	_active_run_controller.start_run(level_definition, _active_level)
+	_active_run_controller.start_run(level_definition, _active_level, run_loadout)
 
 
 func _show_main_menu() -> void:

@@ -1,20 +1,24 @@
 extends Resource
 class_name RunLoadout
 
-const DefaultWeaponData := preload("res://_project/player/equipment/rifle/rifle.tres")
-const DefaultMagnetToolData := preload("res://_project/player/equipment/magnet_gun.tres")
+const DefaultWeaponData := preload("res://_project/items/equipment/rifle/rifle.tres")
+const DefaultMagnetToolData := preload("res://_project/items/equipment/magnet_gun.tres")
 const RunUpgradeScript := preload("res://_project/run/run_upgrade.gd")
 const RunUpgradeLevelCostScript := preload("res://_project/run/run_upgrade_level_cost.gd")
-const SalvageItemCostScript := preload("res://_project/items/salvage_item_cost.gd")
-const CostGearData := preload("res://_project/items/resources/gear.tres")
-const CostMagnetData := preload("res://_project/items/resources/magnet.tres")
-const CostBatteryData := preload("res://_project/items/resources/battery.tres")
-const CostSpringData := preload("res://_project/items/resources/spring.tres")
-const CostProcessorData := preload("res://_project/items/resources/processor.tres")
-const CostCircuitryData := preload("res://_project/items/resources/circuitry.tres")
-const CostPowerCoreData := preload("res://_project/items/resources/power_core.tres")
-const DEFAULT_PLAYER_MAX_SHIELD_HITS := 2.0
+const UpgradeableItemStateScript := preload("res://_project/run/upgradeable_item_state.gd")
+const UpgradeSlotStateScript := preload("res://_project/run/upgrade_slot_state.gd")
+const SalvageItemCostScript := preload("res://_project/items/salvage/salvage_item_cost.gd")
+const CostGearData := preload("res://_project/items/salvage/resources/gear.tres")
+const CostMagnetData := preload("res://_project/items/salvage/resources/magnet.tres")
+const CostBatteryData := preload("res://_project/items/salvage/resources/battery.tres")
+const CostSpringData := preload("res://_project/items/salvage/resources/spring.tres")
+const CostProcessorData := preload("res://_project/items/salvage/resources/processor.tres")
+const CostCircuitryData := preload("res://_project/items/salvage/resources/circuitry.tres")
+const CostPowerCoreData := preload("res://_project/items/salvage/resources/power_core.tres")
+const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
+const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
 const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
+const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 
 @export_group("Ship")
 @export var ship_storage_area_size: Vector2 = Vector2(400, 250)
@@ -43,7 +47,7 @@ const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 @export var player_jump_velocity: float = -600.0
 @export var player_gravity: float = 1600.0
 @export var player_max_health: float = 100.0
-@export var player_max_shield: float = 2.0
+@export var player_max_shield: float = 0.0
 @export var player_shield_recharge_delay: float = 6.0
 @export var player_shield_recharge_duration: float = 1.0
 @export var player_shield_break_recharge_delay: float = 10.0
@@ -53,6 +57,9 @@ const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 @export var equipped_magnet_tool: MagnetToolData = null
 @export var player_equipment: Array[EquipmentData] = []
 @export var player_selected_equipment_index: int = 0
+@export var player_augments: Array[AugmentData] = []
+@export var ship_augments: Array[AugmentData] = []
+@export var magnet_augments: Array[AugmentData] = []
 
 @export_group("Upgrade State")
 @export var equipment_upgrades: Array[Resource] = []
@@ -60,6 +67,8 @@ const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 @export var ship_upgrades: Array[Resource] = []
 @export var magnet_upgrades: Array[Resource] = []
 @export var upgrade_base_values: Dictionary = {}
+@export var item_states: Array[Resource] = []
+@export var slot_states: Array[Resource] = []
 
 
 func equip_weapon(weapon_data: WeaponData) -> void:
@@ -92,6 +101,7 @@ func get_upgrade(upgrade_id: StringName) -> Resource:
 func prepare_for_run() -> void:
 	ensure_upgrade_state()
 	_apply_loadout_upgrades()
+	_apply_augment_loadout_modifiers()
 	player_equipment = _build_runtime_equipment()
 	if player_equipment.is_empty():
 		player_selected_equipment_index = 0
@@ -175,6 +185,7 @@ func ensure_upgrade_state() -> void:
 		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
 		_create_default_level_costs(CostBatteryData, CostCircuitryData)
 	))
+	_migrate_player_shield_defaults()
 
 
 func get_upgraded_weapon_preview(weapon_data: WeaponData = null) -> WeaponData:
@@ -219,6 +230,128 @@ func apply_to_level(level: Node) -> void:
 		player.apply_run_loadout(self)
 
 
+func get_equipped_augments() -> Array[AugmentData]:
+	var augments: Array[AugmentData] = []
+	for augment in player_augments:
+		if augment != null:
+			augments.append(augment)
+	for augment in ship_augments:
+		if augment != null:
+			augments.append(augment)
+	for augment in magnet_augments:
+		if augment != null:
+			augments.append(augment)
+	return augments
+
+
+func get_item_state(item_id: StringName) -> Resource:
+	for state in item_states:
+		if state != null and state.get("item_id") == item_id:
+			return state
+	return null
+
+
+func get_or_create_item_state(item_id: StringName) -> Resource:
+	if item_id == &"":
+		return null
+	var state := get_item_state(item_id)
+	if state != null:
+		return state
+	state = UpgradeableItemStateScript.new()
+	state.set("item_id", item_id)
+	state.set("current_level", 0)
+	state.set("unlocked", false)
+	item_states.append(state)
+	return state
+
+
+func get_item_level(item_data: Resource) -> int:
+	if item_data == null or not _has_property(item_data, "item_id"):
+		return 0
+	var item_id := item_data.get("item_id") as StringName
+	var state := get_item_state(item_id)
+	if state != null and _has_property(state, "current_level"):
+		return int(state.get("current_level"))
+	return 0
+
+
+func is_item_unlocked(item_data: Resource, default_unlocked: bool = false) -> bool:
+	if item_data == null or not _has_property(item_data, "item_id"):
+		return default_unlocked
+	var item_id := item_data.get("item_id") as StringName
+	var state := get_item_state(item_id)
+	if state == null or not _has_property(state, "unlocked"):
+		return default_unlocked
+	return bool(state.get("unlocked"))
+
+
+func set_item_unlocked(item_data: Resource, unlocked: bool = true) -> void:
+	if item_data == null or not _has_property(item_data, "item_id"):
+		return
+	var item_id := item_data.get("item_id") as StringName
+	var state := get_or_create_item_state(item_id)
+	if state != null and _has_property(state, "unlocked"):
+		state.set("unlocked", unlocked)
+
+
+func get_slot_state(slot_id: StringName) -> Resource:
+	for state in slot_states:
+		if state != null and state.get("slot_id") == slot_id:
+			return state
+	return null
+
+
+func get_or_create_slot_state(slot_id: StringName) -> Resource:
+	if slot_id == &"":
+		return null
+	var state := get_slot_state(slot_id)
+	if state != null:
+		return state
+	state = UpgradeSlotStateScript.new()
+	state.set("slot_id", slot_id)
+	state.set("equipped_item_id", &"")
+	state.set("unlocked", false)
+	slot_states.append(state)
+	return state
+
+
+func is_slot_unlocked(slot_id: StringName, default_unlocked: bool = false) -> bool:
+	var state := get_slot_state(slot_id)
+	if state == null or not _has_property(state, "unlocked"):
+		return default_unlocked
+	return bool(state.get("unlocked"))
+
+
+func set_slot_unlocked(slot_id: StringName, unlocked: bool = true) -> void:
+	var state := get_or_create_slot_state(slot_id)
+	if state != null and _has_property(state, "unlocked"):
+		state.set("unlocked", unlocked)
+
+
+func equip_player_augment(slot_index: int, augment_data: AugmentData) -> void:
+	if slot_index < 0:
+		return
+	while player_augments.size() <= slot_index:
+		player_augments.append(null)
+
+	if augment_data != null:
+		for index in player_augments.size():
+			if index != slot_index and _same_upgradeable_item(player_augments[index], augment_data):
+				player_augments[index] = null
+
+	player_augments[slot_index] = augment_data
+
+
+func _same_upgradeable_item(left: Resource, right: Resource) -> bool:
+	if left == null or right == null:
+		return false
+	if left == right:
+		return true
+	if _has_property(left, "item_id") and _has_property(right, "item_id"):
+		return left.get("item_id") == right.get("item_id")
+	return false
+
+
 func _ensure_equipped_defaults() -> void:
 	if equipped_weapon == null:
 		for equipment_data in player_equipment:
@@ -238,12 +371,16 @@ func _ensure_equipped_defaults() -> void:
 
 
 func _migrate_player_shield_defaults() -> void:
-	if player_max_shield <= 0.0 or player_max_shield > 10.0:
+	if player_max_shield < 0.0 or player_max_shield > 10.0:
 		player_max_shield = DEFAULT_PLAYER_MAX_SHIELD_HITS
 	if upgrade_base_values.has("player_max_shield"):
 		var shield_base := float(upgrade_base_values["player_max_shield"])
-		if shield_base <= 0.0 or shield_base > 10.0:
+		if shield_base < 0.0 or shield_base > 10.0:
 			upgrade_base_values["player_max_shield"] = DEFAULT_PLAYER_MAX_SHIELD_HITS
+	var shield_unlocked := is_slot_unlocked(PLAYER_SHIELD_SLOT_ID, false)
+	var shield_base := UNLOCKED_PLAYER_BASE_SHIELD_HITS if shield_unlocked else DEFAULT_PLAYER_MAX_SHIELD_HITS
+	player_max_shield = shield_base
+	upgrade_base_values["player_max_shield"] = shield_base
 	if is_equal_approx(player_shield_recharge_duration, 4.0):
 		player_shield_recharge_duration = DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT
 
@@ -257,6 +394,13 @@ func _build_runtime_equipment() -> Array[EquipmentData]:
 	if magnet_tool:
 		runtime_equipment.append(magnet_tool)
 	return runtime_equipment
+
+
+func _apply_augment_loadout_modifiers() -> void:
+	for augment in get_equipped_augments():
+		if augment == null or augment.behavior == null:
+			continue
+		augment.behavior.apply_to_loadout(self, get_item_level(augment))
 
 
 func _apply_loadout_upgrades() -> void:

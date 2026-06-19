@@ -1,0 +1,20 @@
+[gd_resource type="Resource" script_class="MagnetToolData" format=3 uid="uid://7ub1wx666yjn"]
+
+[ext_resource type="Script" uid="uid://luveqohme7eo" path="res://_project/items/equipment/magnet_tool_data.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://doac0cpl4qehu" path="res://_project/ui/sprites/ui_player_itemslot_magnet.png" id="1_x47ok"]
+[ext_resource type="Texture2D" uid="uid://d1ly2sv5d6n6q" path="res://_project/items/equipment/player_item_magnet.png" id="3_x47ok"]
+
+[resource]
+script = ExtResource("1_script")
+weapon_sprite = ExtResource("3_x47ok")
+hold_distance = 50.0
+pull_base_speed = 600.0
+pull_max_speed = 2000.0
+pull_ramp_time = 0.4
+trash_scrap_chance_percent = 30.0
+weapon_rotation = 0.0
+muzzle_position = Vector2(-46.22568, -2.3631382)
+display_name = "Magnet Gun"
+hotbar_icon = ExtResource("1_x47ok")
+muzzle_effect_type = 1
+muzzle_effect_offset = Vector2(-13.25, 0)

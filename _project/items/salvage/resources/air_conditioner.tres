@@ -1,0 +1,34 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://b4m4e377rt8fk"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_25sn2"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/salvage/resources/hose.tres" id="2_bnmka"]
+[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/salvage/resources/fan.tres" id="3_wl67t"]
+[ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/salvage/resources/motor.tres" id="4_fe8h1"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/salvage/resources/wires.tres" id="5_ryfei"]
+[ext_resource type="Texture2D" uid="uid://dk0i60uayffj7" path="res://_project/items/salvage/sprites/salvage_airconditioner.png" id="6_bnmka"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage/salvage_part_entry.gd" id="part_entry_script"]
+
+[sub_resource type="Resource" id="PartEntry_1"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("2_bnmka")
+
+[sub_resource type="Resource" id="PartEntry_2"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("3_wl67t")
+
+[sub_resource type="Resource" id="PartEntry_3"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("4_fe8h1")
+
+[sub_resource type="Resource" id="PartEntry_4"]
+script = ExtResource("part_entry_script")
+item_data = ExtResource("5_ryfei")
+
+[resource]
+script = ExtResource("1_25sn2")
+item_name = "Air Conditioner"
+rarity = 1
+sprite = ExtResource("6_bnmka")
+area = Vector2(160, 160)
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2"), SubResource("PartEntry_3"), SubResource("PartEntry_4")])
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -1,14 +1,11 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://bih45ycehyrow"]
 
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_pile_data"]
-[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="2_item_data"]
 [ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="3_loot_table"]
-[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/resources/artifacts/unknown_artifact.tres" id="4_unknown_artifact"]
-[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/sprites/trash_small.png" id="5_trash_small"]
+[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="5_trash_small"]
 
 [sub_resource type="Resource" id="Resource_artifact_loot"]
 script = ExtResource("3_loot_table")
-entries = Array[ExtResource("2_item_data")]([ExtResource("4_unknown_artifact")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]

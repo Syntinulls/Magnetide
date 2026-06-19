@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bfheki3dmj8e8"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_iprpb"]
+[ext_resource type="Texture2D" uid="uid://lh73acavqjl5" path="res://_project/items/salvage/sprites/part_lens.png" id="2_ne2a7"]
+
+[resource]
+script = ExtResource("1_iprpb")
+item_name = "Lens"
+rarity = 2
+sprite = ExtResource("2_ne2a7")
+metadata/_custom_type_script = "uid://qly6kt6v6em3"

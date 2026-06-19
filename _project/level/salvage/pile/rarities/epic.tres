@@ -1,37 +1,19 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://c3p7gak2lm8nb"]
 
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
-[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage_item_data.gd" id="1_item_data"]
-[ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/resources/circuitry.tres" id="2_bdkc8"]
-[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/resources/battery.tres" id="3_y5qmb"]
-[ext_resource type="Resource" uid="uid://dsb0n6bwvbavo" path="res://_project/items/resources/piston.tres" id="4_fb0tn"]
-[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/resources/fan.tres" id="5_g4ue2"]
-[ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/resources/spring.tres" id="7_xidhj"]
-[ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/resources/magnet.tres" id="8_73dk3"]
 [ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="9_qsc00"]
-[ext_resource type="Resource" uid="uid://rae48gakgn73" path="res://_project/items/resources/camera.tres" id="10_kynpi"]
-[ext_resource type="Resource" uid="uid://bttnr7vrdd8iv" path="res://_project/items/resources/engine_block.tres" id="11_h1x5e"]
-[ext_resource type="Resource" uid="uid://c7qk78j84w3wx" path="res://_project/items/resources/generator.tres" id="12_axxjw"]
-[ext_resource type="Resource" uid="uid://b7p22gr4ie6ud" path="res://_project/items/resources/microscope.tres" id="13_o4cq0"]
-[ext_resource type="Resource" uid="uid://wq1mcd7dr0cm" path="res://_project/items/resources/server_rack.tres" id="14_s15i5"]
-[ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/resources/transformer.tres" id="15_w8uai"]
-[ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/resources/xray_machine.tres" id="16_8re2k"]
-[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/sprites/trash_small.png" id="17_g4ue2"]
-[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/resources/artifacts/unknown_artifact.tres" id="18_artifact"]
+[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="17_g4ue2"]
 
 [sub_resource type="Resource" id="Resource_artifact"]
 script = ExtResource("9_qsc00")
-entries = Array[ExtResource("1_item_data")]([ExtResource("18_artifact")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [sub_resource type="Resource" id="Resource_jkfkd"]
 script = ExtResource("9_qsc00")
-entries = Array[ExtResource("1_item_data")]([ExtResource("2_bdkc8"), ExtResource("3_y5qmb"), ExtResource("4_fb0tn"), ExtResource("5_g4ue2"), ExtResource("7_xidhj"), ExtResource("8_73dk3")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [sub_resource type="Resource" id="Resource_o77jj"]
 script = ExtResource("9_qsc00")
-entries = Array[ExtResource("1_item_data")]([ExtResource("10_kynpi"), ExtResource("11_h1x5e"), ExtResource("12_axxjw"), ExtResource("13_o4cq0"), ExtResource("14_s15i5"), ExtResource("15_w8uai"), ExtResource("16_8re2k")])
 metadata/_custom_type_script = "uid://cg1wxg020pqy2"
 
 [resource]

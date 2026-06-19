@@ -1,0 +1,96 @@
+[gd_scene format=3 uid="uid://b6k44pcvew4j2"]
+
+[ext_resource type="Script" uid="uid://v1urv4hlsc8t" path="res://_project/app/screens/station_upgrade_slot.gd" id="1_script"]
+
+[node name="StationUpgradeSlot" type="VBoxContainer" unique_id=874205888]
+custom_minimum_size = Vector2(0, 112)
+offset_right = 232.0
+offset_bottom = 112.0
+theme_override_constants/separation = 2
+script = ExtResource("1_script")
+
+[node name="HeaderRow" type="HBoxContainer" parent="." unique_id=430350381]
+custom_minimum_size = Vector2(0, 42)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="HeaderRow" unique_id=956887844]
+custom_minimum_size = Vector2(152, 34)
+layout_mode = 2
+theme_override_font_sizes/font_size = 24
+text = "Item"
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="LevelLabel" type="Label" parent="HeaderRow" unique_id=534355683]
+custom_minimum_size = Vector2(72, 30)
+layout_mode = 2
+theme_override_colors/font_color = Color(0.68, 0.75, 0.84, 1)
+theme_override_font_sizes/font_size = 18
+text = "Lv 0/5"
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="BodyRow" type="HBoxContainer" parent="." unique_id=250281592]
+custom_minimum_size = Vector2(0, 66)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SelectButton" type="Button" parent="BodyRow" unique_id=65071791]
+custom_minimum_size = Vector2(76, 66)
+layout_mode = 2
+expand_icon = true
+
+[node name="StaticIcon" type="TextureRect" parent="BodyRow" unique_id=471989657]
+visible = false
+custom_minimum_size = Vector2(76, 66)
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TickContainer" type="HBoxContainer" parent="BodyRow" unique_id=1970838491]
+custom_minimum_size = Vector2(88, 34)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 4
+
+[node name="Tick1" type="ColorRect" parent="BodyRow/TickContainer" unique_id=1994678184]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.35, 0.4, 0.5, 1)
+
+[node name="Tick2" type="ColorRect" parent="BodyRow/TickContainer" unique_id=2067600257]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.35, 0.4, 0.5, 1)
+
+[node name="Tick3" type="ColorRect" parent="BodyRow/TickContainer" unique_id=874714960]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.35, 0.4, 0.5, 1)
+
+[node name="Tick4" type="ColorRect" parent="BodyRow/TickContainer" unique_id=1313474833]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.35, 0.4, 0.5, 1)
+
+[node name="Tick5" type="ColorRect" parent="BodyRow/TickContainer" unique_id=617788009]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+color = Color(0.35, 0.4, 0.5, 1)
+
+[node name="UpgradeButton" type="Button" parent="BodyRow" unique_id=1126755995]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+size_flags_vertical = 4
+expand_icon = true
