@@ -32,11 +32,6 @@ var _slot_rects: Dictionary = {}
 @onready var _next_button: Button = $Carousel/NextButton
 @onready var _deploy_button: Button = $DeployButton
 @onready var _banner_frame: ColorRect = $Carousel/BannerFrame
-@onready var _banner_texture: TextureRect = $Carousel/BannerFrame/BannerTexture
-@onready var _level_name_label: Label = $Carousel/BannerFrame/LevelNameLabel
-@onready var _threat_icons: HBoxContainer = $Carousel/BannerFrame/ThreatBlock/ThreatIcons
-@onready var _locked_overlay: ColorRect = $Carousel/BannerFrame/LockedOverlay
-@onready var _locked_label: Label = $Carousel/BannerFrame/LockedOverlay/LockedLabel
 
 
 func _ready() -> void:

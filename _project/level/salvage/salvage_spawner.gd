@@ -169,9 +169,9 @@ func _pick_rarity() -> SalvagePile.Rarity:
 		rarity_entries,
 		Callable(self, "_get_rarity_roll_weight").bind(_rarity_pity_weights)
 	)
-	var selected_rarity := int(selected) if selected != null else SalvagePile.Rarity.COMMON
+	var selected_rarity := int(selected) if selected != null else int(SalvagePile.Rarity.COMMON)
 	_apply_rarity_pity_result(selected_rarity, base_weights)
-	return selected_rarity
+	return selected_rarity as SalvagePile.Rarity
 
 
 func _get_rarity_roll_weight(rarity: int, weights: Dictionary) -> float:

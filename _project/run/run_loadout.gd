@@ -85,10 +85,10 @@ func increase_upgrade(upgrade_id: StringName, amount: int = 1) -> bool:
 	if upgrade == null:
 		return false
 
-	var changed := bool(upgrade.call("increase_level", amount))
-	if changed:
+	var level_changed := bool(upgrade.call("increase_level", amount))
+	if level_changed:
 		prepare_for_run()
-	return changed
+	return level_changed
 
 
 func get_upgrade(upgrade_id: StringName) -> Resource:
@@ -374,8 +374,8 @@ func _migrate_player_shield_defaults() -> void:
 	if player_max_shield < 0.0 or player_max_shield > 10.0:
 		player_max_shield = DEFAULT_PLAYER_MAX_SHIELD_HITS
 	if upgrade_base_values.has("player_max_shield"):
-		var shield_base := float(upgrade_base_values["player_max_shield"])
-		if shield_base < 0.0 or shield_base > 10.0:
+		var existing_shield_base := float(upgrade_base_values["player_max_shield"])
+		if existing_shield_base < 0.0 or existing_shield_base > 10.0:
 			upgrade_base_values["player_max_shield"] = DEFAULT_PLAYER_MAX_SHIELD_HITS
 	var shield_unlocked := is_slot_unlocked(PLAYER_SHIELD_SLOT_ID, false)
 	var shield_base := UNLOCKED_PLAYER_BASE_SHIELD_HITS if shield_unlocked else DEFAULT_PLAYER_MAX_SHIELD_HITS
@@ -507,11 +507,11 @@ func _create_upgrade(
 	var upgrade := RunUpgradeScript.new()
 	upgrade.upgrade_id = upgrade_id
 	upgrade.display_name = display_name
-	upgrade.target_scope = target_scope
+	upgrade.target_scope = target_scope as RunUpgrade.TargetScope
 	upgrade.target_property = target_property
 	upgrade.amount_per_level = amount_per_level
 	upgrade.level_amounts = level_amounts.duplicate()
-	upgrade.increase_mode = increase_mode
+	upgrade.increase_mode = increase_mode as RunUpgrade.IncreaseMode
 	upgrade.max_level = 5
 	upgrade.upgrade_costs = upgrade_costs.duplicate()
 	return upgrade

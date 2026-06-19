@@ -1,7 +1,9 @@
 extends Control
 class_name SalvageProcessScreen
 
+@warning_ignore("unused_signal")
 signal start_requested
+@warning_ignore("unused_signal")
 signal main_menu_requested
 signal station_requested
 signal component_arrivals_completed
@@ -65,9 +67,7 @@ var _between_items_skip_requested: bool = false
 @onready var _item_name_label: Label = $TopHUD/VBoxContainer/ItemNameLabel
 @onready var _instruction_label: Label = $TopHUD/VBoxContainer/InstructionLabel
 @onready var _stage_layer: Control = $StageLayer
-@onready var _storage_anchor: Control = $StorageAnchor
 @onready var _storage_icon_pivot: Control = $StorageAnchor/StorageIconPivot
-@onready var _storage_icon: TextureRect = $StorageAnchor/StorageIconPivot/StorageIcon
 @onready var _loot_label_layer: Control = $StorageAnchor/LootLabelLayer
 @onready var _results_layer: Control = $ResultsLayer
 

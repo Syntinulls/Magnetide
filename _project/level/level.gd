@@ -76,13 +76,11 @@ func _update_parallax_viewport_size() -> void:
 	if screen_size.x <= 0 or screen_size.y <= 0:
 		return
 	
-	# Manually set container size since it's a child of Node2D, not a Control
+	# Manually set container size since it's a child of Node2D, not a Control.
+	# With SubViewportContainer.stretch = true, this also auto-resizes the
+	# child SubViewport, so we must not set _parallax_viewport.size directly.
 	if _parallax_container:
 		_parallax_container.size = screen_size
-	
-	# SubViewport should auto-resize with stretch=true, but set it explicitly too
-	if _parallax_viewport:
-		_parallax_viewport.size = Vector2i(int(screen_size.x), int(screen_size.y))
 
 
 func _create_fog_overlay() -> void:

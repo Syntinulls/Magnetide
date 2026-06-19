@@ -69,7 +69,6 @@ var _active_detail_entry: Resource = null
 @onready var _page_container: Control = $PageViewport/PageContainer
 @onready var _top_bar: Control = $TopBar
 @onready var _player_page: Control = $PageViewport/PageContainer/PlayerPage
-@onready var _ship_page: Control = $PageViewport/PageContainer/ShipPage
 @onready var _map_button: Button = $TopBar/MapButton
 @onready var _menu_button: Button = $TopBar/MenuButton
 @onready var _pan_to_ship_button: Button = $PageViewport/PageContainer/PlayerPage/PanToShipButton
@@ -1092,7 +1091,7 @@ func _get_dynamic_entry_icon_max_width(icon: Texture2D) -> int:
 	return clampi(width_for_height, 1, WEAPON_LIST_ENTRY_ICON_MAX_WIDTH)
 
 
-func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, can_unlock: bool) -> void:
+func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, _can_unlock: bool) -> void:
 	button.text = ""
 	button.icon = null
 	button.expand_icon = false

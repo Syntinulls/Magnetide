@@ -77,9 +77,9 @@ func start_minigame(context) -> void:
 	_threat_level = 0
 	if context is Dictionary:
 		_threat_level = int(context.get("threat_level", 0))
-		var seed := int(context.get("rng_seed", 0))
-		if seed != 0:
-			_rng.seed = seed
+		var seed_value := int(context.get("rng_seed", 0))
+		if seed_value != 0:
+			_rng.seed = seed_value
 	if not _drift_speed_bonuses_initialized:
 		_reset_drift_speed_bonuses()
 
@@ -408,14 +408,14 @@ func _draw_heat_meter(origin: Vector2, heat: float, aligned: bool, selected: boo
 		_draw_warning(origin + Vector2(54.0, 28.0), Color("ffe066"))
 
 
-func _draw_check(position: Vector2, color: Color) -> void:
-	draw_line(position + Vector2(-10.0, 0.0), position + Vector2(-2.0, 8.0), color, 5.0)
-	draw_line(position + Vector2(-2.0, 8.0), position + Vector2(12.0, -12.0), color, 5.0)
+func _draw_check(pos: Vector2, color: Color) -> void:
+	draw_line(pos + Vector2(-10.0, 0.0), pos + Vector2(-2.0, 8.0), color, 5.0)
+	draw_line(pos + Vector2(-2.0, 8.0), pos + Vector2(12.0, -12.0), color, 5.0)
 
 
-func _draw_warning(position: Vector2, color: Color) -> void:
-	draw_line(position, position + Vector2(0.0, 20.0), color, 5.0)
-	draw_circle(position + Vector2(0.0, 30.0), 4.0, color)
+func _draw_warning(pos: Vector2, color: Color) -> void:
+	draw_line(pos, pos + Vector2(0.0, 20.0), color, 5.0)
+	draw_circle(pos + Vector2(0.0, 30.0), 4.0, color)
 
 
 func _build_labels() -> void:

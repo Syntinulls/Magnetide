@@ -12,7 +12,7 @@ class_name EquipmentData
 
 
 func get_muzzle_effect_type() -> MuzzleEffect.EffectType:
-	return muzzle_effect_type
+	return muzzle_effect_type as MuzzleEffect.EffectType
 
 
 func get_muzzle_effect_offset(is_facing_right: bool) -> Vector2:
