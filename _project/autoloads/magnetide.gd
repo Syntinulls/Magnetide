@@ -22,12 +22,12 @@ func _ready() -> void:
 	add_child(_sfx)
 
 
-func register_app_root(app_root: Node) -> void:
-	_active_app_root = app_root
+func register_app_root(app_root_node: Node) -> void:
+	_active_app_root = app_root_node
 
 
 func register_run_context(
-	run: Node,
+	run_node: Node,
 	level_node: Node,
 	world_root_node: Node,
 	game_ui_node: Control,
@@ -35,7 +35,7 @@ func register_run_context(
 	player_node: Node2D,
 	magnet_node: Magnet
 ) -> void:
-	_active_run = run
+	_active_run = run_node
 	_active_level = level_node
 	_active_world_root = world_root_node
 	_active_game_ui = game_ui_node
@@ -44,8 +44,8 @@ func register_run_context(
 	_active_magnet = magnet_node
 
 
-func clear_run_context(run: Node = null) -> void:
-	if run != null and _active_run != null and run != _active_run:
+func clear_run_context(run_node: Node = null) -> void:
+	if run_node != null and _active_run != null and run_node != _active_run:
 		return
 
 	_active_run = null

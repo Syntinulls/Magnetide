@@ -140,22 +140,22 @@ func _setup_particles() -> void:
 	if _trash_particles == null:
 		return
 
-	var material := ParticleProcessMaterial.new()
-	material.direction = Vector3(0.0, -1.0, 0.0)
-	material.spread = 56.0
-	material.initial_velocity_min = 40.0
-	material.initial_velocity_max = 84.0
-	material.radial_accel_min = 82.0
-	material.radial_accel_max = 135.0
-	material.damping_min = 18.0
-	material.damping_max = 32.0
-	material.gravity = Vector3(0.0, 55.0, 0.0)
-	material.scale_min = 0.16
-	material.scale_max = 0.28
-	material.color_ramp = _create_particle_alpha_ramp()
-	material.scale_curve = _create_particle_scale_curve()
+	var process_mat := ParticleProcessMaterial.new()
+	process_mat.direction = Vector3(0.0, -1.0, 0.0)
+	process_mat.spread = 56.0
+	process_mat.initial_velocity_min = 40.0
+	process_mat.initial_velocity_max = 84.0
+	process_mat.radial_accel_min = 82.0
+	process_mat.radial_accel_max = 135.0
+	process_mat.damping_min = 18.0
+	process_mat.damping_max = 32.0
+	process_mat.gravity = Vector3(0.0, 55.0, 0.0)
+	process_mat.scale_min = 0.16
+	process_mat.scale_max = 0.28
+	process_mat.color_ramp = _create_particle_alpha_ramp()
+	process_mat.scale_curve = _create_particle_scale_curve()
 
-	_trash_particles.process_material = material
+	_trash_particles.process_material = process_mat
 	_trash_particles.amount = 22
 	_trash_particles.lifetime = 0.85
 	_trash_particles.one_shot = true
@@ -173,13 +173,13 @@ func _configure_particles_for_item(item: SalvageItem) -> void:
 		return
 
 	_trash_particles.texture = sprite.texture
-	var material := _trash_particles.process_material as ParticleProcessMaterial
-	if material == null:
+	var process_mat := _trash_particles.process_material as ParticleProcessMaterial
+	if process_mat == null:
 		return
 
 	var item_visual_scale := maxf(sprite.scale.x, sprite.scale.y)
-	material.scale_min = maxf(0.08, item_visual_scale * 0.32)
-	material.scale_max = maxf(material.scale_min + 0.04, item_visual_scale * 0.52)
+	process_mat.scale_min = maxf(0.08, item_visual_scale * 0.32)
+	process_mat.scale_max = maxf(process_mat.scale_min + 0.04, item_visual_scale * 0.52)
 
 
 func _get_item_sprite(item: SalvageItem) -> Sprite2D:

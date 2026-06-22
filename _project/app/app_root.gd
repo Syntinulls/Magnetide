@@ -133,6 +133,72 @@ func _show_death_summary_screen(result: RunResult) -> void:
 	popup.station_requested.connect(_on_death_summary_station_requested)
 
 
+func _show_run_summary_screen(result: RunResult) -> void:
+	# Reached when the run has no salvageables. Any non-salvageable parts still
+	# need to be banked and listed here, since we are bypassing the salvage
+	# screen that would normally do that.
+	var entries := _build_collected_entries(result)
+	if _save_data != null and not entries.is_empty():
+		var storage_entries: Array[Dictionary] = []
+		for entry in entries:
+			storage_entries.append({
+				"item_data": entry["item_data"],
+				"quantity": entry["count"],
+			})
+		_save_data.add_storage_entries(storage_entries)
+
+	_clear_screen()
+
+	var popup := RunSummaryPopupScene.instantiate() as SalvageResultsPopup
+	if popup == null:
+		_show_station_screen()
+		return
+
+	_active_screen = popup
+	_screen_root.add_child(_active_screen)
+	popup.setup(result, entries, _build_run_stats(result, 0))
+	popup.station_requested.connect(_show_station_screen)
+
+
+func _run_has_salvageables(result: RunResult) -> bool:
+	if result == null:
+		return false
+	for item_data in result.stored_loot:
+		if item_data != null and not item_data.parts.is_empty():
+			return true
+	return false
+
+
+## Groups a run's stored loot into result-popup entries (one per item type,
+## counted). Used only on the no-salvageables path; every item is a terminal
+## part, so each is flagged collected (not salvaged).
+func _build_collected_entries(result: RunResult) -> Array[Dictionary]:
+	var entries: Array[Dictionary] = []
+	if result == null:
+		return entries
+
+	var index_by_key: Dictionary = {}
+	for item_data in result.stored_loot:
+		if item_data == null:
+			continue
+		var key := item_data.resource_path
+		if key.is_empty():
+			key = item_data.item_name
+		if index_by_key.has(key):
+			var existing := entries[index_by_key[key]]
+			existing["count"] = int(existing["count"]) + 1
+		else:
+			index_by_key[key] = entries.size()
+			entries.append({
+				"item_data": item_data,
+				"name": item_data.item_name if not item_data.item_name.is_empty() else "Unknown Material",
+				"count": 1,
+				"from_collection": true,
+				"from_salvage": false,
+			})
+	return entries
+
+
 func _show_screen(scene: PackedScene) -> Control:
 	if scene == null:
 		return null
@@ -222,7 +288,15 @@ func _on_run_finished(result: RunResult) -> void:
 	if _save_data and result and result.scrap_metal_collected > 0:
 		_save_data.add_scrap_metal(result.scrap_metal_collected)
 	_clear_run()
-	_show_salvage_process_screen(result)
+
+	# The salvage screen only has anything to do when at least one salvageable
+	# item (one that breaks down into parts) was hauled back. If everything is a
+	# terminal part (or nothing was collected), skip the otherwise-empty screen
+	# and go straight to the run summary.
+	if _run_has_salvageables(result):
+		_show_salvage_process_screen(result)
+	else:
+		_show_run_summary_screen(result)
 
 
 func _on_death_summary_station_requested() -> void:

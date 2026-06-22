@@ -157,9 +157,9 @@ func start_minigame(context) -> void:
 	_threat_level = 0
 	if context is Dictionary:
 		_threat_level = int(context.get("threat_level", 0))
-		var seed := int(context.get("rng_seed", 0))
-		if seed != 0:
-			_rng.seed = seed
+		var seed_value := int(context.get("rng_seed", 0))
+		if seed_value != 0:
+			_rng.seed = seed_value
 	if not _drift_speed_bonuses_initialized:
 		_reset_drift_speed_bonuses()
 

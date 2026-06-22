@@ -35,6 +35,7 @@ func _process(delta: float) -> void:
 
 
 func _update_display() -> void:
+	@warning_ignore("integer_division")
 	var minutes := int(_time_remaining) / 60
 	var seconds := int(_time_remaining) % 60
 	text = "%d:%02d" % [minutes, seconds]

@@ -620,11 +620,11 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 
 
 func _create_edge_wall_material() -> PhysicsMaterial:
-	var material := PhysicsMaterial.new()
-	material.friction = EDGE_WALL_FRICTION
-	material.bounce = EDGE_WALL_BOUNCE
-	material.rough = true
-	return material
+	var phys_material := PhysicsMaterial.new()
+	phys_material.friction = EDGE_WALL_FRICTION
+	phys_material.bounce = EDGE_WALL_BOUNCE
+	phys_material.rough = true
+	return phys_material
 
 
 # ============================================================================

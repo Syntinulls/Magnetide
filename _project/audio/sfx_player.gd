@@ -187,9 +187,9 @@ func _resolve_filename(filename: String) -> String:
 
 func _take_idle_player() -> AudioStreamPlayer:
 	while not _idle_players.is_empty():
-		var player := _idle_players.pop_back() as AudioStreamPlayer
-		if player and is_instance_valid(player):
-			return player
+		var idle_player := _idle_players.pop_back() as AudioStreamPlayer
+		if idle_player and is_instance_valid(idle_player):
+			return idle_player
 
 	var player := AudioStreamPlayer.new()
 	player.bus = SFX_BUS_NAME

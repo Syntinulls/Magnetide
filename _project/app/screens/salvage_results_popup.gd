@@ -101,10 +101,6 @@ func _rebuild_list() -> void:
 	for child in _list_container.get_children():
 		child.queue_free()
 
-	var total_items := 0
-	for entry in _result_entries:
-		total_items += int(entry.get("count", 0))
-
 	var is_empty := _result_entries.is_empty()
 	_empty_label.visible = is_empty
 	if _scroll_container:
@@ -163,6 +159,7 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 
 func _format_elapsed_time(total_seconds: float) -> String:
 	var seconds := maxi(int(round(total_seconds)), 0)
+	@warning_ignore("integer_division")
 	var minutes := seconds / 60
 	var remainder := seconds % 60
 	return "%d:%02d" % [minutes, remainder]
@@ -256,13 +253,13 @@ func _create_placeholder_texture(item_data: SalvageItemData) -> Texture2D:
 	return ImageTexture.create_from_image(image)
 
 
-func _build_source_icon(is_active: bool, tex: Texture2D, tooltip_text: String) -> Control:
+func _build_source_icon(is_active: bool, tex: Texture2D, tooltip: String) -> Control:
 	var holder := CenterContainer.new()
 	holder.custom_minimum_size = SOURCE_ICON_SIZE
 	holder.mouse_filter = Control.MOUSE_FILTER_STOP if is_active else Control.MOUSE_FILTER_IGNORE
 	holder.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if is_active else Control.CURSOR_ARROW
 	if is_active:
-		holder.mouse_entered.connect(_show_hover_tooltip.bind(tooltip_text))
+		holder.mouse_entered.connect(_show_hover_tooltip.bind(tooltip))
 		holder.mouse_exited.connect(_hide_hover_tooltip)
 
 	var icon := TextureRect.new()

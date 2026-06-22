@@ -22,6 +22,6 @@ func is_valid_target() -> bool:
 
 
 func take_damage(amount: float, source: Node = null) -> void:
-	var owner := get_target_owner()
-	if owner and owner.has_method("take_damage"):
-		owner.take_damage(amount, source)
+	var target_owner := get_target_owner()
+	if target_owner and target_owner.has_method("take_damage"):
+		target_owner.take_damage(amount, source)

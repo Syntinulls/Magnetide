@@ -379,9 +379,9 @@ func _get_damage_source_target_root(source: Node) -> Node2D:
 	if source == null or not is_instance_valid(source):
 		return null
 	if source.has_method("get_target_owner"):
-		var owner := source.get_target_owner() as Node2D
-		if owner:
-			return owner
+		var target_owner := source.get_target_owner() as Node2D
+		if target_owner:
+			return target_owner
 	var node := source
 	while node:
 		var node_2d := node as Node2D

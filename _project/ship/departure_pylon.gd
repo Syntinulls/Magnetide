@@ -86,7 +86,7 @@ func _cancel_hold() -> void:
 		_progress_popup.hide_progress()
 
 
-func _set_highlight(active: bool) -> void:
+func _set_highlight(_active: bool) -> void:
 	pass
 
 

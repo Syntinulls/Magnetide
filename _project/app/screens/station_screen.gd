@@ -55,10 +55,10 @@ var _is_ready: bool = false
 var _research_points_label: Label = null
 var _station_slots: Dictionary = {}
 var _static_slot_icons: Dictionary = {}
-var _left_augment_row: HBoxContainer = null
-var _right_augment_row: HBoxContainer = null
-var _left_augment_button: Button = null
-var _right_augment_button: Button = null
+var _player_augment_1_row: HBoxContainer = null
+var _player_augment_2_row: HBoxContainer = null
+var _player_augment_1_button: Button = null
+var _player_augment_2_button: Button = null
 var _active_dynamic_slot_id: StringName = &""
 var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
@@ -69,23 +69,22 @@ var _active_detail_entry: Resource = null
 @onready var _page_container: Control = $PageViewport/PageContainer
 @onready var _top_bar: Control = $TopBar
 @onready var _player_page: Control = $PageViewport/PageContainer/PlayerPage
-@onready var _ship_page: Control = $PageViewport/PageContainer/ShipPage
 @onready var _map_button: Button = $TopBar/MapButton
 @onready var _menu_button: Button = $TopBar/MenuButton
 @onready var _pan_to_ship_button: Button = $PageViewport/PageContainer/PlayerPage/PanToShipButton
 @onready var _pan_to_player_button: Button = $PageViewport/PageContainer/ShipPage/PanToPlayerButton
-@onready var _weapon_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow/EquipmentButton") as Button
-@onready var _magnet_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow/EquipmentButton") as Button
-@onready var _weapon_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow
-@onready var _magnet_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow
-@onready var _health_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow
-@onready var _shield_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow
-@onready var _left_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack
-@onready var _right_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup
-@onready var _weapon_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/WeaponRow/UpgradeButton") as Button
-@onready var _magnet_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/LeftUpgradeGroup/RowStack/MagnetRow/UpgradeButton") as Button
-@onready var _health_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/HealthRow/UpgradeButton") as Button
-@onready var _shield_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/RightUpgradeGroup/ShieldRow/UpgradeButton") as Button
+@onready var _weapon_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow/EquipmentButton") as Button
+@onready var _magnet_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/EquipmentButton") as Button
+@onready var _weapon_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow
+@onready var _magnet_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow
+@onready var _health_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow
+@onready var _shield_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow
+@onready var _left_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn
+@onready var _right_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair
+@onready var _weapon_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow/UpgradeButton") as Button
+@onready var _magnet_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/UpgradeButton") as Button
+@onready var _health_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow/UpgradeButton") as Button
+@onready var _shield_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow/UpgradeButton") as Button
 @onready var _weapon_popup: Control = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup
 @onready var _weapon_popup_current_cutout: ColorRect = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/CurrentItemPanel/CurrentIconFrame
 @onready var _weapon_popup_current_stats: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/CurrentItemPanel/CurrentStatsLabel
@@ -140,10 +139,10 @@ func _ready() -> void:
 		_weapon_button.pressed.connect(_toggle_weapon_popup)
 	if _magnet_button != null:
 		_magnet_button.pressed.connect(_close_weapon_popup)
-	if _left_augment_button != null:
-		_left_augment_button.pressed.connect(_toggle_player_augment_popup.bind(&"player_augment_left", 0))
-	if _right_augment_button != null:
-		_right_augment_button.pressed.connect(_toggle_player_augment_popup.bind(&"player_augment_right", 1))
+	if _player_augment_1_button != null:
+		_player_augment_1_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment1", 0))
+	if _player_augment_2_button != null:
+		_player_augment_2_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment2", 1))
 
 	_connect_upgrade_button(_weapon_upgrade_button, &"weapon_damage")
 	_connect_upgrade_button(_magnet_upgrade_button, &"magnet_tool_pull")
@@ -202,18 +201,15 @@ func _layout_pages() -> void:
 	if _page_viewport == null or _page_container == null:
 		return
 
-	var page_size := size
-	if page_size.x <= 0.0 or page_size.y <= 0.0:
-		return
-
-	_page_viewport.size = page_size
-	_page_container.size = Vector2(page_size.x * 2.0, page_size.y)
-	_player_page.size = page_size
-	_ship_page.size = page_size
-	_ship_page.position = Vector2(page_size.x, 0.0)
-	_page_container.position = Vector2(-page_size.x * _current_page_index, 0.0)
+	_page_container.position = Vector2(-_get_page_width() * _current_page_index, 0.0)
 	if _weapon_popup != null and _weapon_popup.visible:
 		_position_weapon_popup()
+
+
+func _get_page_width() -> float:
+	if _player_page != null and _player_page.size.x > 0.0:
+		return _player_page.size.x
+	return size.x
 
 
 func _install_compact_slot_rows() -> void:
@@ -227,20 +223,20 @@ func _install_compact_slot_rows() -> void:
 	_static_slot_icons[&"player_health"] = DEFAULT_HEALTH_ICON
 	_static_slot_icons[&"player_shield"] = DEFAULT_SHIELD_ICON
 
-	_left_augment_row = _create_compact_row(_left_slot_stack, "PlayerAugmentLeftRow")
-	_right_augment_row = _create_compact_row(_right_slot_stack, "PlayerAugmentRightRow")
+	_player_augment_1_row = _create_compact_row(_right_slot_stack, "PlayerAugment1Row")
+	_player_augment_2_row = _create_compact_row(_right_slot_stack, "PlayerAugment2Row")
 
 	_install_compact_slot_row(_weapon_row, &"weapon", true)
 	_install_compact_slot_row(_magnet_row, &"magnet_tool", false)
-	_install_compact_slot_row(_left_augment_row, &"player_augment_left", true)
 	_install_compact_slot_row(_health_row, &"player_health", false)
 	_install_compact_slot_row(_shield_row, &"player_shield", false)
-	_install_compact_slot_row(_right_augment_row, &"player_augment_right", true)
+	_install_compact_slot_row(_player_augment_1_row, &"PlayerAugment1", true)
+	_install_compact_slot_row(_player_augment_2_row, &"PlayerAugment2", true)
 
 	_weapon_button = _get_compact_slot_select_button(&"weapon")
 	_magnet_button = _get_compact_slot_select_button(&"magnet_tool")
-	_left_augment_button = _get_compact_slot_select_button(&"player_augment_left")
-	_right_augment_button = _get_compact_slot_select_button(&"player_augment_right")
+	_player_augment_1_button = _get_compact_slot_select_button(&"PlayerAugment1")
+	_player_augment_2_button = _get_compact_slot_select_button(&"PlayerAugment2")
 	_weapon_upgrade_button = _get_compact_slot_upgrade_button(&"weapon")
 	_magnet_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_tool")
 	_health_upgrade_button = _get_compact_slot_upgrade_button(&"player_health")
@@ -256,7 +252,7 @@ func _create_compact_row(parent: VBoxContainer, row_name: String) -> HBoxContain
 
 	var row := HBoxContainer.new()
 	row.name = row_name
-	row.custom_minimum_size = Vector2(430.0, 112.0)
+	row.custom_minimum_size = Vector2(0.0, 112.0)
 	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	row.add_theme_constant_override("separation", 0)
 	parent.add_child(row)
@@ -404,7 +400,7 @@ func _install_compact_slot_row(row: HBoxContainer, slot_id: StringName, can_sele
 	if row == null:
 		return
 
-	row.custom_minimum_size = Vector2(430.0, 112.0)
+	row.custom_minimum_size = Vector2(0.0, 112.0)
 	row.add_theme_constant_override("separation", 0)
 	var slot := _get_compact_slot_for_row(row)
 	if slot == null:
@@ -652,7 +648,7 @@ func _pan_to_page(page_index: int) -> void:
 	if _page_tween != null:
 		_page_tween.kill()
 
-	var target_position := Vector2(-size.x * _current_page_index, 0.0)
+	var target_position := Vector2(-_get_page_width() * _current_page_index, 0.0)
 	_page_tween = create_tween()
 	_page_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_IN_OUT)
 	_page_tween.tween_property(_page_container, "position", target_position, page_pan_duration)
@@ -943,8 +939,8 @@ func _update_equipment_buttons() -> void:
 
 
 func _update_augment_slots() -> void:
-	_refresh_player_augment_slot(&"player_augment_left", 0)
-	_refresh_player_augment_slot(&"player_augment_right", 1)
+	_refresh_player_augment_slot(&"PlayerAugment1", 0)
+	_refresh_player_augment_slot(&"PlayerAugment2", 1)
 
 
 func _refresh_player_augment_slot(slot_id: StringName, augment_index: int) -> void:
@@ -954,7 +950,7 @@ func _refresh_player_augment_slot(slot_id: StringName, augment_index: int) -> vo
 		return
 
 	if augment == null:
-		slot.setup(slot_id, "Augment", DEFAULT_AUGMENT_ICON, 0, 0, true, _get_upgrade_icon())
+		slot.setup(slot_id, _get_player_augment_slot_name(augment_index), DEFAULT_AUGMENT_ICON, 0, 0, true, _get_upgrade_icon())
 		slot.set_level_text("None")
 		return
 
@@ -970,17 +966,21 @@ func _refresh_player_augment_slot(slot_id: StringName, augment_index: int) -> vo
 	)
 
 
+func _get_player_augment_slot_name(augment_index: int) -> String:
+	return "Augment %d" % (augment_index + 1)
+
+
 func _update_upgrade_rows() -> void:
 	_refresh_compact_slot(
 		&"player_health",
-		_get_upgrade_display_name(_get_upgrade(&"player_health")),
+		"Health",
 		_static_slot_icons.get(&"player_health", null) as Texture2D,
 		_get_upgrade(&"player_health"),
 		false
 	)
 	_refresh_compact_slot(
 		&"player_shield",
-		_get_upgrade_display_name(_get_upgrade(&"player_shield")),
+		"Shield",
 		_static_slot_icons.get(&"player_shield", null) as Texture2D,
 		_get_upgrade(&"player_shield"),
 		false
@@ -1091,7 +1091,7 @@ func _get_dynamic_entry_icon_max_width(icon: Texture2D) -> int:
 	return clampi(width_for_height, 1, WEAPON_LIST_ENTRY_ICON_MAX_WIDTH)
 
 
-func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, can_unlock: bool) -> void:
+func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, _can_unlock: bool) -> void:
 	button.text = ""
 	button.icon = null
 	button.expand_icon = false

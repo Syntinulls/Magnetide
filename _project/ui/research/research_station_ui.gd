@@ -483,6 +483,7 @@ func _build_final_result_text() -> String:
 
 func _format_elapsed_time(seconds: float) -> String:
 	var total_seconds := maxi(roundi(seconds), 0)
+	@warning_ignore("integer_division")
 	var minutes := total_seconds / 60
 	var remaining_seconds := total_seconds % 60
 	return "%02d:%02d" % [minutes, remaining_seconds]
