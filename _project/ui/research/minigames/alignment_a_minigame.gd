@@ -58,7 +58,6 @@ const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
 const SELECTED_LASER_COLOR := Color("f7f1a3")
 
-const BEAM_COLOR_NORMAL := Color("75ffe8")
 const BEAM_COLOR_SUCCESS := Color("5bff8e")
 const BEAM_COLOR_MISALIGNED := Color("ff6f68")
 const BEAM_COLOR_DESTROYED := Color("ff2424")
@@ -367,7 +366,8 @@ func _advance_beam_animation(delta: float) -> void:
 
 func _update_beam(beam: Line2D, glow: Line2D, origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName) -> void:
 	var is_destroyed := _failure_result_laser == laser_id
-	var color := BEAM_COLOR_SUCCESS if _success_result_active else BEAM_COLOR_NORMAL
+	# Aligned beams render the texture untinted (white); only misalignment tints.
+	var color := BEAM_COLOR_SUCCESS if _success_result_active else Color.WHITE
 	if not aligned:
 		color = BEAM_COLOR_MISALIGNED
 	if is_destroyed:
