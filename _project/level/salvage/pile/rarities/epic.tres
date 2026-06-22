@@ -1,5 +1,6 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://c3p7gak2lm8nb"]
 
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_3gsqs"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
 [ext_resource type="Script" uid="uid://cg1wxg020pqy2" path="res://_project/ship/magnet/loot_table.gd" id="9_qsc00"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="17_g4ue2"]

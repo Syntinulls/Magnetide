@@ -1,13 +1,213 @@
-[gd_scene load_steps=2 format=3]
+[gd_scene format=3 uid="uid://uyaj1fkbdsto"]
 
-[ext_resource type="Script" path="res://_project/ui/research/minigames/alignment_a_minigame.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://dw6fuqou4gt6p" path="res://_project/ui/research/minigames/alignment_a_minigame.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://d30bi53l0boih" path="res://_project/ui/research/minigames/sprites/artifact_1.png" id="tex_artifact"]
+[ext_resource type="Texture2D" uid="uid://deokso20fep40" path="res://_project/ui/research/minigames/sprites/minigame_laser_barrel.png" id="tex_barrel"]
+[ext_resource type="Texture2D" uid="uid://mhpknbl1y8gr" path="res://_project/ui/research/minigames/sprites/minigame_laser_body.png" id="tex_body"]
+[ext_resource type="Texture2D" uid="uid://o3xjjxle3fh6" path="res://_project/ui/research/minigames/sprites/minigame_laser_1_frame_1.png" id="tex_frame1"]
+[ext_resource type="Texture2D" uid="uid://bu3wm042af5ic" path="res://_project/ui/research/minigames/sprites/minigame_laser_gear.png" id="tex_gear"]
+[ext_resource type="Texture2D" uid="uid://n047vboph778" path="res://_project/ui/research/minigames/sprites/minigame_temperature_bar.png" id="tex_tbar"]
+[ext_resource type="Texture2D" uid="uid://b7w82xa2ccrlp" path="res://_project/ui/research/minigames/sprites/minigame_temperature_bg.png" id="tex_tbg"]
+[ext_resource type="Texture2D" uid="uid://dy10pgsjs5t6v" path="res://_project/ui/research/minigames/sprites/minigame_ticker_color.png" id="tex_tcolor"]
+[ext_resource type="Texture2D" uid="uid://lof2lrdcna7p" path="res://_project/ui/research/minigames/sprites/minigame_temperature_progress.png" id="tex_tprog"]
+[ext_resource type="Texture2D" uid="uid://bu56ep7lab2sc" path="res://_project/ui/research/minigames/sprites/minigame_ticker_shape.png" id="tex_tshape"]
 
-[node name="AlignmentAMinigame" type="Control"]
+[sub_resource type="StyleBoxFlat" id="sb_bg"]
+bg_color = Color(0.682353, 0.690196, 0.690196, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.145098, 0.145098, 0.145098, 1)
+
+[node name="AlignmentAMinigame" type="Control" unique_id=891026119]
+clip_contents = true
+custom_minimum_size = Vector2(980, 590)
 layout_mode = 3
+anchors_preset = 0
+offset_right = 980.0
+offset_bottom = 590.0
+mouse_filter = 2
+script = ExtResource("1_script")
+window_border_inset = null
+
+[node name="Background" type="Panel" parent="." unique_id=649758343]
+unique_name_in_owner = true
+layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
-script = ExtResource("1_script")
+theme_override_styles/panel = SubResource("sb_bg")
+
+[node name="SignalLine" type="Line2D" parent="." unique_id=621852116]
+unique_name_in_owner = true
+points = PackedVector2Array(176.4, 295, 186.2, 298.17197, 196, 299.90393, 205.8, 299.4096, 215.6, 296.91342, 225.4, 293.54858, 235.2, 290.84265, 245, 290.02408, 254.8, 291.46448, 264.6, 294.50992, 274.4, 297.77786, 284.2, 299.7847, 294, 299.6194, 303.8, 297.357, 313.6, 294.02454, 323.4, 291.13495, 333.2, 290, 343, 291.13495, 352.8, 294.02454, 362.6, 297.357, 372.4, 299.6194, 382.2, 299.7847, 392, 297.77786, 401.8, 294.50992, 411.6, 291.46448, 421.4, 290.02408, 431.2, 290.84265, 441, 293.54858, 450.8, 296.91342, 460.6, 299.4096, 470.4, 299.90393, 480.2, 298.17197, 490, 295, 499.8, 291.82803, 509.6, 290.09607, 519.4, 290.5904, 529.2, 293.08658, 539, 296.45142, 548.8, 299.15735, 558.6, 299.97592, 568.4, 298.53552, 578.2, 295.49008, 588, 292.22214, 597.8, 290.2153, 607.6, 290.3806, 617.4, 292.643, 627.2, 295.97546, 637, 298.86505, 646.8, 300, 656.6, 298.86505, 666.4, 295.97546, 676.2, 292.643, 686, 290.3806, 695.8, 290.2153, 705.6, 292.22214, 715.4, 295.49008, 725.2, 298.53552, 735, 299.97592, 744.8, 299.15735, 754.6, 296.45142, 764.4, 293.08658, 774.2, 290.5904, 784, 290.09607, 793.8, 291.82803, 803.6, 295)
+width = 4.0
+default_color = Color(0.384314, 0.384314, 0.384314, 1)
+
+[node name="Artifact" type="Sprite2D" parent="." unique_id=1221605801]
+unique_name_in_owner = true
+position = Vector2(490, 295)
+scale = Vector2(0.58, 0.58)
+texture = ExtResource("tex_artifact")
+
+[node name="LeftBeamGlow" type="Line2D" parent="." unique_id=1602397088]
+unique_name_in_owner = true
+points = PackedVector2Array(51, 295, 456, 295)
+width = 34.0
+default_color = Color(0.968627, 0.945098, 0.639216, 0.45)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="RightBeamGlow" type="Line2D" parent="." unique_id=38755706]
+unique_name_in_owner = true
+visible = false
+points = PackedVector2Array(924, 295, 524, 295)
+width = 34.0
+default_color = Color(0.968627, 0.945098, 0.639216, 0.45)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="LeftBeam" type="Line2D" parent="." unique_id=1132620629]
+unique_name_in_owner = true
+texture_repeat = 2
+points = PackedVector2Array(51, 295, 456, 295)
+width = 32.0
+default_color = Color(0.45882353, 1, 0.9098039, 1)
+texture = ExtResource("tex_frame1")
+texture_mode = 1
+end_cap_mode = 2
+
+[node name="RightBeam" type="Line2D" parent="." unique_id=1192287932]
+unique_name_in_owner = true
+texture_repeat = 2
+points = PackedVector2Array(924, 295, 524, 295)
+width = 32.0
+default_color = Color(0.45882353, 1, 0.9098039, 1)
+texture = ExtResource("tex_frame1")
+texture_mode = 1
+end_cap_mode = 2
+
+[node name="LeftEmitter" type="Node2D" parent="." unique_id=1840176533]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+position = Vector2(5, 295)
+
+[node name="Barrel" type="Sprite2D" parent="LeftEmitter" unique_id=882988884]
+position = Vector2(12, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_barrel")
+
+[node name="Body" type="Sprite2D" parent="LeftEmitter" unique_id=1655300626]
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("tex_body")
+
+[node name="LeftGear" type="Sprite2D" parent="LeftEmitter" unique_id=1711544275]
+unique_name_in_owner = true
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("tex_gear")
+
+[node name="LeftMuzzle" type="Marker2D" parent="LeftEmitter" unique_id=1715239889]
+unique_name_in_owner = true
+position = Vector2(46, 0)
+
+[node name="RightEmitter" type="Node2D" parent="." unique_id=91620970]
+unique_name_in_owner = true
+position = Vector2(975, 295)
+
+[node name="Barrel" type="Sprite2D" parent="RightEmitter" unique_id=1724633610]
+position = Vector2(-12, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_barrel")
+flip_h = true
+
+[node name="Body" type="Sprite2D" parent="RightEmitter" unique_id=1771994782]
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("tex_body")
+
+[node name="RightGear" type="Sprite2D" parent="RightEmitter" unique_id=481003988]
+unique_name_in_owner = true
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("tex_gear")
+
+[node name="RightMuzzle" type="Marker2D" parent="RightEmitter" unique_id=613752868]
+unique_name_in_owner = true
+position = Vector2(-51, 0)
+
+[node name="LeftHeat" type="TextureProgressBar" parent="." unique_id=653025645]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+layout_mode = 0
+offset_left = 30.0
+offset_top = 15.0
+offset_right = 72.0
+offset_bottom = 207.0
+scale = Vector2(0.5, 0.5)
+max_value = 1.0
+step = 0.0
+fill_mode = 3
+texture_under = ExtResource("tex_tbg")
+texture_over = ExtResource("tex_tbar")
+texture_progress = ExtResource("tex_tprog")
+tint_progress = Color(0.41960785, 0.8627451, 1, 1)
+
+[node name="RightHeat" type="TextureProgressBar" parent="." unique_id=1329383625]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 929.0
+offset_top = 15.0
+offset_right = 971.0
+offset_bottom = 207.0
+scale = Vector2(0.5, 0.5)
+max_value = 1.0
+step = 0.0
+fill_mode = 3
+texture_under = ExtResource("tex_tbg")
+texture_over = ExtResource("tex_tbar")
+texture_progress = ExtResource("tex_tprog")
+tint_progress = Color(0.41960785, 0.8627451, 1, 1)
+
+[node name="LeftTicker" type="Node2D" parent="." unique_id=330398814]
+unique_name_in_owner = true
+modulate = Color(0.41960785, 0.8627451, 1, 1)
+position = Vector2(44, 111)
+
+[node name="Color" type="Sprite2D" parent="LeftTicker" unique_id=851535596]
+texture = ExtResource("tex_tcolor")
+offset = Vector2(-12, 0)
+flip_h = true
+
+[node name="Shape" type="Sprite2D" parent="LeftTicker" unique_id=1248409296]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_tshape")
+offset = Vector2(-24, 0)
+flip_h = true
+
+[node name="RightTicker" type="Node2D" parent="." unique_id=1495373013]
+unique_name_in_owner = true
+modulate = Color(0.41960785, 0.8627451, 1, 1)
+position = Vector2(936, 111)
+
+[node name="Color" type="Sprite2D" parent="RightTicker" unique_id=717222846]
+texture = ExtResource("tex_tcolor")
+offset = Vector2(12, 0)
+
+[node name="Shape" type="Sprite2D" parent="RightTicker" unique_id=1904418367]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_tshape")
+offset = Vector2(24, 0)
+
+[node name="DimOverlay" type="ColorRect" parent="." unique_id=2136396125]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.28)

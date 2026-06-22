@@ -5,7 +5,14 @@ signal research_completed(item_data: SalvageItemData)
 signal research_failed(item_data: SalvageItemData, reason: StringName)
 signal ui_closed()
 
-const AlignmentAScene: PackedScene = preload("res://_project/ui/research/minigames/alignment_a_minigame.tscn")
+const DEFAULT_MINIGAME_SCENE: PackedScene = preload("res://_project/ui/research/minigames/alignment_a_minigame.tscn")
+const OVERALL_BG: Texture2D = preload("res://_project/ui/research/minigames/sprites/minigame_overall_bg.png")
+const OVERALL_PROGRESS: Texture2D = preload("res://_project/ui/research/minigames/sprites/minigame_overall_progress.png")
+const OVERALL_BAR: Texture2D = preload("res://_project/ui/research/minigames/sprites/minigame_overall_bar.png")
+
+## Pool of minigame scenes the station can present. A random one is selected per
+## research stage. Empty falls back to DEFAULT_MINIGAME_SCENE.
+@export var minigame_scenes: Array[PackedScene] = []
 
 @export var max_fail_count: int = 3
 @export var required_stage_count: int = 1
@@ -37,8 +44,8 @@ var _result_hesitation_remaining: float = 0.0
 var _pending_failure_reason: StringName = &""
 var _pending_failure_is_terminal: bool = false
 var _panel: PanelContainer = null
-var _progress_fill: ColorRect = null
-var _stage_host: Control = null
+var _progress_bar: TextureProgressBar = null
+var _stage_host: MinigameDocker = null
 var _fail_labels: Array[Label] = []
 var _status_label: Label = null
 var _close_button: Button = null
@@ -126,8 +133,8 @@ func _show_and_resume() -> void:
 	if _active_minigame and _display_state == DisplayState.ACTIVE:
 		if _active_minigame.has_method("load_state") and not current_stage_state.is_empty():
 			_active_minigame.call("load_state", current_stage_state)
-		if _active_minigame is AlignmentAMinigame:
-			(_active_minigame as AlignmentAMinigame).resume_delay = resume_delay
+		if "resume_delay" in _active_minigame:
+			_active_minigame.set("resume_delay", resume_delay)
 		if _active_minigame.has_method("start_minigame"):
 			_active_minigame.call("start_minigame", _build_context())
 
@@ -156,9 +163,9 @@ func _ensure_minigame() -> void:
 	if _stage_host == null:
 		return
 
-	_active_minigame = AlignmentAScene.instantiate() as Control
-	_active_minigame.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_stage_host.add_child(_active_minigame)
+	_active_minigame = _stage_host.mount(_select_minigame_scene())
+	if _active_minigame == null:
+		return
 	if _active_minigame.has_signal("progress_changed"):
 		_active_minigame.connect("progress_changed", Callable(self, "_on_minigame_progress_changed"))
 	if _active_minigame.has_signal("attempt_failed"):
@@ -167,6 +174,13 @@ func _ensure_minigame() -> void:
 		_active_minigame.connect("completed", Callable(self, "_on_minigame_completed"))
 	if _active_minigame.has_signal("state_changed"):
 		_active_minigame.connect("state_changed", Callable(self, "_on_minigame_state_changed"))
+
+
+func _select_minigame_scene() -> PackedScene:
+	var pool := minigame_scenes.filter(func(scene): return scene != null)
+	if pool.is_empty():
+		return DEFAULT_MINIGAME_SCENE
+	return pool[randi() % pool.size()]
 
 
 func _build_context() -> Dictionary:
@@ -221,18 +235,22 @@ func _build_shell() -> void:
 	top_row.add_theme_constant_override("separation", 14)
 	vbox.add_child(top_row)
 
-	var progress_back := ColorRect.new()
-	progress_back.custom_minimum_size = Vector2(860.0, 42.0)
-	progress_back.color = Color("494949")
-	progress_back.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	top_row.add_child(progress_back)
-
-	_progress_fill = ColorRect.new()
-	_progress_fill.color = Color("73f7cf")
-	_progress_fill.anchor_left = 0.0
-	_progress_fill.anchor_top = 0.0
-	_progress_fill.anchor_bottom = 1.0
-	progress_back.add_child(_progress_fill)
+	_progress_bar = TextureProgressBar.new()
+	_progress_bar.custom_minimum_size = Vector2(860.0, 46.0)
+	_progress_bar.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	_progress_bar.size_flags_vertical = Control.SIZE_SHRINK_CENTER
+	_progress_bar.min_value = 0.0
+	_progress_bar.max_value = 1.0
+	_progress_bar.step = 0.0
+	_progress_bar.value = 0.0
+	_progress_bar.fill_mode = TextureProgressBar.FILL_LEFT_TO_RIGHT
+	_progress_bar.nine_patch_stretch = true
+	_progress_bar.stretch_margin_left = 22
+	_progress_bar.stretch_margin_right = 22
+	_progress_bar.texture_under = OVERALL_BG
+	_progress_bar.texture_progress = OVERALL_PROGRESS
+	_progress_bar.texture_over = OVERALL_BAR
+	top_row.add_child(_progress_bar)
 
 	_status_label = Label.new()
 	_status_label.custom_minimum_size = Vector2(150.0, 42.0)
@@ -252,7 +270,7 @@ func _build_shell() -> void:
 	_close_button.pressed.connect(close_and_pause)
 	top_row.add_child(_close_button)
 
-	_stage_host = Control.new()
+	_stage_host = MinigameDocker.new()
 	_stage_host.name = "MinigameHost"
 	_stage_host.custom_minimum_size = Vector2(980.0, 590.0)
 	_stage_host.size_flags_vertical = Control.SIZE_EXPAND_FILL
@@ -471,8 +489,8 @@ func _format_elapsed_time(seconds: float) -> String:
 
 
 func _clear_active_minigame() -> void:
-	if _active_minigame and is_instance_valid(_active_minigame):
-		_active_minigame.queue_free()
+	if _stage_host:
+		_stage_host.clear()
 	_active_minigame = null
 
 
@@ -481,9 +499,8 @@ func _refresh_shell() -> void:
 	if _display_state == DisplayState.ACTIVE and _active_minigame and _active_minigame.has_method("get_progress"):
 		stage_progress = float(_active_minigame.call("get_progress"))
 	var total_progress := (float(completed_stage_count) + clampf(stage_progress, 0.0, 1.0)) / float(maxi(required_stage_count, 1))
-	if _progress_fill:
-		_progress_fill.anchor_right = clampf(total_progress, 0.0, 1.0)
-		_progress_fill.offset_right = 0.0
+	if _progress_bar:
+		_progress_bar.value = clampf(total_progress, 0.0, 1.0)
 	if _status_label:
 		var display_stage := mini(completed_stage_count + 1, required_stage_count)
 		_status_label.text = "%d/%d" % [display_stage, required_stage_count]

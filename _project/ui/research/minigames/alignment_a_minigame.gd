@@ -1,3 +1,4 @@
+@tool
 extends Control
 class_name AlignmentAMinigame
 
@@ -5,6 +6,10 @@ signal progress_changed(progress: float)
 signal attempt_failed(reason: StringName)
 signal completed()
 signal state_changed(state: Dictionary)
+
+## Fixed reference size the scene is authored at. The docker scales the whole
+## node to fit the host window, so internally everything works in this space.
+const REFERENCE_SIZE := Vector2(980.0, 590.0)
 
 @export var alignment_tolerance: float = 0.12
 @export var base_progress_rate: float = 0.11
@@ -22,13 +27,45 @@ signal state_changed(state: Dictionary)
 @export var red_heat_threshold: float = 0.8
 @export var red_heat_failure_duration: float = 2.5
 @export var resume_delay: float = 0.8
+## How far (radians) the emitter rotates to aim at offset = ±1. The beam fires
+## along the emitter's facing direction, so this rotation aims the laser.
+@export var max_aim_angle: float = 0.3
+## Standalone per-frame textures for the animated beam. They must be individual
+## textures, not AtlasTexture regions — Line2D ignores atlas regions and would
+## draw the whole sheet. Cycled at beam_anim_fps and tiled along the beam.
+@export var beam_frames: Array[Texture2D] = [
+	preload("res://_project/ui/research/minigames/sprites/minigame_laser_1_frame_0.png"),
+	preload("res://_project/ui/research/minigames/sprites/minigame_laser_1_frame_1.png"),
+	preload("res://_project/ui/research/minigames/sprites/minigame_laser_1_frame_2.png"),
+	preload("res://_project/ui/research/minigames/sprites/minigame_laser_1_frame_3.png"),
+]
+@export var beam_anim_fps: float = 8.0
+## Base gear spin speed as a multiple of the emitter's aim speed (~2x = the gear
+## spins about twice as fast as the laser rotates), in whatever direction the
+## emitter base is currently turning. It flips direction the instant the emitter
+## reverses, keeping the same speed.
+@export var gear_speed_multiplier: float = 10.0
+## Extra speed multiple added on top while the player is actively rotating that
+## laser with W/S, so the gear visibly spins up in the aimed direction.
+@export var gear_input_boost: float = 10.0
+## Inset (reference px) from the window edge that bounds the beam, matching the
+## frame border so the laser stops at the inner edge rather than under it. The
+## root node also clips its contents, so nothing renders past the window.
+@export var window_border_inset: float = 5.0
 
 const LEFT_LASER := &"left"
 const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
 const SELECTED_LASER_COLOR := Color("f7f1a3")
-const LASER_BEAM_WIDTH: float = 5.0
-const SELECTED_LASER_OUTLINE_WIDTH: float = 15.0
+
+const BEAM_COLOR_NORMAL := Color("75ffe8")
+const BEAM_COLOR_SUCCESS := Color("5bff8e")
+const BEAM_COLOR_MISALIGNED := Color("ff6f68")
+const BEAM_COLOR_DESTROYED := Color("ff2424")
+const HEAT_COLOR_COOL := Color("6bdcff")
+const HEAT_COLOR_WARM := Color("ffd166")
+const HEAT_COLOR_HOT := Color("ff4f4f")
+const HEAT_WARM_THRESHOLD: float = 0.55
 
 var progress: float = 0.0
 var left_laser_offset: float = 0.0
@@ -62,15 +99,58 @@ var _left_emitter_shake_offset: float = 0.0
 var _right_emitter_shake_offset: float = 0.0
 var _is_resuming_altered_state: bool = false
 var _has_started_state: bool = false
+var _left_emitter_base_x: float = 0.0
+var _right_emitter_base_x: float = 0.0
+var _left_emitter_base_rotation: float = 0.0
+var _right_emitter_base_rotation: float = 0.0
+var _left_prev_emitter_rotation: float = 0.0
+var _right_prev_emitter_rotation: float = 0.0
+var _left_gear_dir: float = 1.0
+var _right_gear_dir: float = 1.0
+var _beam_anim_time: float = 0.0
+
+@onready var _background: Panel = %Background
+@onready var _signal_line: Line2D = %SignalLine
+@onready var _artifact: Sprite2D = %Artifact
+@onready var _left_emitter: Node2D = %LeftEmitter
+@onready var _right_emitter: Node2D = %RightEmitter
+@onready var _left_muzzle: Marker2D = %LeftMuzzle
+@onready var _right_muzzle: Marker2D = %RightMuzzle
+@onready var _left_gear: Sprite2D = %LeftGear
+@onready var _right_gear: Sprite2D = %RightGear
+@onready var _left_beam: Line2D = %LeftBeam
+@onready var _right_beam: Line2D = %RightBeam
+@onready var _left_beam_glow: Line2D = %LeftBeamGlow
+@onready var _right_beam_glow: Line2D = %RightBeamGlow
+@onready var _left_heat_bar: TextureProgressBar = %LeftHeat
+@onready var _right_heat_bar: TextureProgressBar = %RightHeat
+@onready var _left_ticker: Node2D = %LeftTicker
+@onready var _right_ticker: Node2D = %RightTicker
+@onready var _dim_overlay: ColorRect = %DimOverlay
 
 
 func _ready() -> void:
+	_left_emitter_base_x = _left_emitter.position.x
+	_right_emitter_base_x = _right_emitter.position.x
+	_left_emitter_base_rotation = _left_emitter.rotation
+	_right_emitter_base_rotation = _right_emitter.rotation
+	_left_prev_emitter_rotation = _left_emitter.rotation
+	_right_prev_emitter_rotation = _right_emitter.rotation
+	_build_signal_line()
+	if Engine.is_editor_hint():
+		# Run a passive refresh loop so the visuals track node edits live.
+		set_process(true)
+		_update_visuals()
+		return
 	mouse_filter = Control.MOUSE_FILTER_IGNORE
 	focus_mode = Control.FOCUS_ALL
+	custom_minimum_size = REFERENCE_SIZE
+	size = REFERENCE_SIZE
 	_rng.randomize()
 	_build_labels()
 	_reset_drift_timers()
 	set_process(false)
+	_update_visuals()
 
 
 func start_minigame(context) -> void:
@@ -90,7 +170,7 @@ func start_minigame(context) -> void:
 	grab_focus()
 	set_process(true)
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func stop_minigame() -> void:
@@ -105,7 +185,7 @@ func pause_minigame(paused: bool) -> void:
 		_resume_countdown = resume_delay
 	set_process(_active)
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func get_progress() -> float:
@@ -166,7 +246,7 @@ func load_state(state: Dictionary) -> void:
 	if state.has("rng_state"):
 		_rng.state = int(state["rng_state"])
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func reset_attempt() -> void:
@@ -191,23 +271,26 @@ func reset_attempt() -> void:
 	progress_changed.emit(progress)
 	state_changed.emit(save_state())
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func _process(delta: float) -> void:
+	if Engine.is_editor_hint():
+		_update_visuals(delta)
+		return
 	if not _active or _paused:
 		return
 	if _resume_countdown > 0.0:
 		_resume_countdown = maxf(_resume_countdown - delta, 0.0)
 		_update_labels()
-		queue_redraw()
+		_update_visuals(delta)
 		return
 
 	_process_selection_input()
 	_process_laser_motion(delta)
 	_process_progress_and_heat(delta)
 	_update_labels()
-	queue_redraw()
+	_update_visuals(delta)
 
 
 func _unhandled_input(event: InputEvent) -> void:
@@ -221,90 +304,208 @@ func _unhandled_input(event: InputEvent) -> void:
 					get_viewport().set_input_as_handled()
 
 
-func _draw() -> void:
-	var rect := Rect2(Vector2.ZERO, size)
-	draw_rect(rect, Color("aeb0b0"), true)
-	draw_rect(rect, Color("252525"), false, 5.0)
+# ---------------------------------------------------------------------------
+# Visual updates (drive placed scene nodes; no imperative drawing).
+# ---------------------------------------------------------------------------
 
-	var center := rect.get_center() + Vector2(0.0, -8.0)
-	var left_origin := Vector2(size.x * 0.12 + _left_emitter_shake_offset, center.y)
-	var right_origin := Vector2(size.x * 0.88 + _right_emitter_shake_offset, center.y)
-	var artifact_hitbox := _get_artifact_hitbox(center)
-	var left_target := center + Vector2(0.0, _offset_to_pixels(left_laser_offset))
-	var right_target := center + Vector2(0.0, _offset_to_pixels(right_laser_offset))
-	var left_impact := _get_laser_impact_point(left_origin, left_target, artifact_hitbox, rect)
-	var right_impact := _get_laser_impact_point(right_origin, right_target, artifact_hitbox, rect)
+func _update_visuals(delta: float = 0.0) -> void:
+	if _left_beam == null:
+		return
 
-	_draw_signal_line(center)
-	_draw_laser(left_origin, left_impact, _is_left_aligned(), selected_laser == LEFT_LASER, LEFT_LASER)
-	_draw_laser(right_origin, right_impact, _is_right_aligned(), selected_laser == RIGHT_LASER, RIGHT_LASER)
-	_draw_artifact(center)
-	_draw_heat_meter(Vector2(size.x * 0.08, size.y * 0.12), left_heat, _is_left_aligned(), selected_laser == LEFT_LASER)
-	_draw_heat_meter(Vector2(size.x * 0.88, size.y * 0.12), right_heat, _is_right_aligned(), selected_laser == RIGHT_LASER)
+	_advance_beam_animation(delta)
 
-	if _resume_countdown > 0.0 and not _paused and _active:
-		draw_rect(rect, Color(0.0, 0.0, 0.0, 0.28), true)
+	# At runtime the emitters carry the failure-shake offset and aim rotation;
+	# in the editor we leave their transforms alone so manual placement and
+	# rotation aren't fought — the beam follows whatever rotation is authored.
+	if not Engine.is_editor_hint():
+		_left_emitter.position.x = _left_emitter_base_x + _left_emitter_shake_offset
+		_right_emitter.position.x = _right_emitter_base_x + _right_emitter_shake_offset
+		_left_emitter.rotation = _left_aim_angle()
+		_right_emitter.rotation = _right_aim_angle()
+
+	var left_origin := _left_origin()
+	var right_origin := _right_origin()
+	var left_impact := _beam_impact(left_origin, _left_forward())
+	var right_impact := _beam_impact(right_origin, _right_forward())
+
+	var left_aligned := _is_left_aligned()
+	var right_aligned := _is_right_aligned()
+	_update_beam(_left_beam, _left_beam_glow, left_origin, left_impact, left_aligned, selected_laser == LEFT_LASER, LEFT_LASER)
+	_update_beam(_right_beam, _right_beam_glow, right_origin, right_impact, right_aligned, selected_laser == RIGHT_LASER, RIGHT_LASER)
+	_update_emitter(_left_emitter, selected_laser == LEFT_LASER, _failure_result_laser == LEFT_LASER)
+	_update_emitter(_right_emitter, selected_laser == RIGHT_LASER, _failure_result_laser == RIGHT_LASER)
+	# Defensive: hot-reloading the script onto an already-open editor instance
+	# can leave newly-added member vars uninitialized (null); heal them here.
+	if not (_left_gear_dir is float):
+		_left_gear_dir = 1.0
+	if not (_right_gear_dir is float):
+		_right_gear_dir = 1.0
+	var aiming := not Engine.is_editor_hint() and _active and not _paused and _resume_countdown <= 0.0 and (Input.is_key_pressed(KEY_W) or Input.is_key_pressed(KEY_S))
+	_left_gear_dir = _spin_gear(_left_gear, _left_emitter.rotation, _left_prev_emitter_rotation, _left_gear_dir, aiming and selected_laser == LEFT_LASER, delta)
+	_right_gear_dir = _spin_gear(_right_gear, _right_emitter.rotation, _right_prev_emitter_rotation, _right_gear_dir, aiming and selected_laser == RIGHT_LASER, delta)
+	_left_prev_emitter_rotation = _left_emitter.rotation
+	_right_prev_emitter_rotation = _right_emitter.rotation
+	_update_heat_bar(_left_heat_bar, _left_ticker, left_heat, selected_laser == LEFT_LASER)
+	_update_heat_bar(_right_heat_bar, _right_ticker, right_heat, selected_laser == RIGHT_LASER)
+
+	_dim_overlay.visible = _resume_countdown > 0.0 and not _paused and _active
 
 
-func _draw_signal_line(center: Vector2) -> void:
+func _advance_beam_animation(delta: float) -> void:
+	if beam_frames.is_empty() or beam_anim_fps <= 0.0:
+		return
+	_beam_anim_time += delta
+	var frame_index := int(_beam_anim_time * beam_anim_fps) % beam_frames.size()
+	var frame_texture: Texture2D = beam_frames[frame_index]
+	if frame_texture == null:
+		return
+	if _left_beam.texture != frame_texture:
+		_left_beam.texture = frame_texture
+	if _right_beam.texture != frame_texture:
+		_right_beam.texture = frame_texture
+
+
+func _update_beam(beam: Line2D, glow: Line2D, origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName) -> void:
+	var is_destroyed := _failure_result_laser == laser_id
+	var color := BEAM_COLOR_SUCCESS if _success_result_active else BEAM_COLOR_NORMAL
+	if not aligned:
+		color = BEAM_COLOR_MISALIGNED
+	if is_destroyed:
+		color = BEAM_COLOR_DESTROYED
+	var end_point := origin.lerp(impact, 0.22) if is_destroyed else impact
+	var points := PackedVector2Array([origin, end_point])
+	beam.points = points
+	beam.default_color = color
+	glow.points = points
+	glow.visible = selected and not is_destroyed
+
+
+func _update_emitter(emitter: Node2D, selected: bool, destroyed: bool) -> void:
+	if destroyed:
+		emitter.modulate = BEAM_COLOR_MISALIGNED
+	elif selected:
+		emitter.modulate = SELECTED_LASER_COLOR
+	else:
+		emitter.modulate = Color.WHITE
+
+
+# Spins the gear at a constant speed (gear_speed_multiplier x the emitter's aim
+# speed) in whatever direction the emitter base is currently turning. The
+# direction flips the instant the emitter reverses while the speed stays
+# constant; the last direction is held while the emitter is momentarily still.
+# Returns the (possibly updated) spin direction to store for next frame.
+func _spin_gear(gear: Sprite2D, emitter_rotation: float, prev_rotation: float, direction: float, input_active: bool, delta: float) -> float:
+	if gear == null:
+		return direction
+	var velocity := emitter_rotation - prev_rotation
+	if absf(velocity) > 0.00001:
+		direction = signf(velocity)
+	var spinning := absf(velocity) > 0.00001 if Engine.is_editor_hint() else (_active and not _paused and _resume_countdown <= 0.0)
+	if spinning:
+		var multiplier := gear_speed_multiplier + (gear_input_boost if input_active else 0.0)
+		var speed := input_speed * max_aim_angle * multiplier
+		gear.rotation += direction * speed * delta
+	return direction
+
+
+func _update_heat_bar(bar: TextureProgressBar, ticker: Node2D, heat: float, selected: bool) -> void:
+	var clamped := clampf(heat, 0.0, 1.0)
+	bar.value = clamped
+	var color := HEAT_COLOR_COOL
+	if heat >= red_heat_threshold:
+		color = HEAT_COLOR_HOT
+	elif heat >= HEAT_WARM_THRESHOLD:
+		color = HEAT_COLOR_WARM
+	bar.tint_progress = color
+	bar.modulate = SELECTED_LASER_COLOR if selected else Color.WHITE
+	if ticker:
+		# The bar fills bottom-to-top within size.y, then is scaled, so the
+		# visible fill height is size.y * scale.y. Track the top of the fill.
+		var fill_height := bar.size.y * bar.scale.y
+		var bottom := bar.position.y + fill_height
+		ticker.position.y = lerpf(bottom, bar.position.y, clamped)
+		ticker.modulate = color
+
+
+func _build_signal_line() -> void:
+	if _signal_line == null:
+		return
 	var points := PackedVector2Array()
-	var start_x := size.x * 0.18
-	var end_x := size.x * 0.82
+	var start_x := REFERENCE_SIZE.x * 0.18
+	var end_x := REFERENCE_SIZE.x * 0.82
+	var center_y := _artifact_center().y
 	var steps := 64
 	for index in range(steps + 1):
 		var ratio := float(index) / float(steps)
 		var x := lerpf(start_x, end_x, ratio)
-		var y := center.y + sin(ratio * TAU * 7.0) * 5.0
+		var y := center_y + sin(ratio * TAU * 7.0) * 5.0
 		points.append(Vector2(x, y))
-	draw_polyline(points, Color("626262"), 4.0)
+	_signal_line.points = points
 
 
-func _draw_laser(origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName) -> void:
-	var is_destroyed := _failure_result_laser == laser_id
-	var color := Color("5bff8e") if _success_result_active else Color("75ffe8")
-	if not aligned:
-		color = Color("ff6f68")
-	if is_destroyed:
-		color = Color("ff2424")
-	if selected:
-		draw_circle(origin, 24.0, SELECTED_LASER_COLOR)
-	draw_circle(origin, 16.0, Color("6b1515") if is_destroyed else Color("303030"))
-	if is_destroyed:
-		if selected:
-			draw_line(origin, origin.lerp(impact, 0.22), SELECTED_LASER_COLOR, SELECTED_LASER_OUTLINE_WIDTH)
-		draw_line(origin, origin.lerp(impact, 0.22), color, LASER_BEAM_WIDTH)
-		draw_circle(origin + Vector2(0.0, -25.0), 9.0, Color("ff7b42"))
-	else:
-		if selected:
-			draw_line(origin, impact, SELECTED_LASER_COLOR, SELECTED_LASER_OUTLINE_WIDTH)
-		draw_line(origin, impact, color, LASER_BEAM_WIDTH)
-		draw_circle(impact, 7.0, color)
-	if aligned:
-		_draw_check(impact + Vector2(18.0, -28.0), Color("5bff8e"))
-	else:
-		_draw_warning(impact + Vector2(18.0, -28.0), Color("ffe066"))
+# ---------------------------------------------------------------------------
+# Geometry (derived from placed nodes so editor layout is authoritative).
+# ---------------------------------------------------------------------------
+
+# Aim angle = the live emitter rotation in the editor (so manual rotation drives
+# the beam), or the offset-derived angle at runtime (so the aim input does).
+func _left_aim_angle() -> float:
+	if Engine.is_editor_hint():
+		return _left_emitter.rotation
+	return _left_emitter_base_rotation + left_laser_offset * max_aim_angle
 
 
-func _draw_artifact(center: Vector2) -> void:
-	var artifact_color := SalvageItemData.ARTIFACT_COLOR
-	var points := PackedVector2Array([
-		center + Vector2(-34, -28),
-		center + Vector2(-8, -22),
-		center + Vector2(5, -42),
-		center + Vector2(18, -20),
-		center + Vector2(40, -28),
-		center + Vector2(28, -4),
-		center + Vector2(42, 16),
-		center + Vector2(12, 18),
-		center + Vector2(2, 38),
-		center + Vector2(-12, 18),
-		center + Vector2(-38, 24),
-		center + Vector2(-28, -4),
-	])
-	draw_colored_polygon(points, artifact_color.darkened(0.35))
-	var outline := points.duplicate()
-	outline.append(points[0])
-	draw_polyline(outline, Color("222222"), 4.0)
+func _right_aim_angle() -> float:
+	if Engine.is_editor_hint():
+		return _right_emitter.rotation
+	# Mirrored sign: the right muzzle faces -X, so a given offset deflects the
+	# beam vertically the opposite way. Negate it so W=up / S=down matches the
+	# left laser (the aim input means the same thing for both lasers).
+	return _right_emitter_base_rotation - right_laser_offset * max_aim_angle
+
+
+func _left_origin() -> Vector2:
+	if _left_emitter == null or _left_muzzle == null:
+		return Vector2(REFERENCE_SIZE.x * 0.12, REFERENCE_SIZE.y * 0.5 - 8.0)
+	return _left_emitter.position + _left_muzzle.position.rotated(_left_aim_angle())
+
+
+func _right_origin() -> Vector2:
+	if _right_emitter == null or _right_muzzle == null:
+		return Vector2(REFERENCE_SIZE.x * 0.88, REFERENCE_SIZE.y * 0.5 - 8.0)
+	return _right_emitter.position + _right_muzzle.position.rotated(_right_aim_angle())
+
+
+# The beam fires from the muzzle along the emitter's facing direction.
+func _left_forward() -> Vector2:
+	if _left_muzzle == null:
+		return Vector2.RIGHT
+	var dir := _left_muzzle.position.rotated(_left_aim_angle())
+	return dir.normalized() if dir != Vector2.ZERO else Vector2.RIGHT
+
+
+func _right_forward() -> Vector2:
+	if _right_muzzle == null:
+		return Vector2.LEFT
+	var dir := _right_muzzle.position.rotated(_right_aim_angle())
+	return dir.normalized() if dir != Vector2.ZERO else Vector2.LEFT
+
+
+func _beam_impact(origin: Vector2, direction: Vector2) -> Vector2:
+	if direction == Vector2.ZERO:
+		return origin
+	var center := _artifact_center()
+	var hitbox := _get_artifact_hitbox(center)
+	var inset := maxf(window_border_inset, 0.0)
+	var window_rect := Rect2(Vector2(inset, inset), REFERENCE_SIZE - Vector2(inset, inset) * 2.0)
+	var far_target := origin + direction * (REFERENCE_SIZE.length() + 200.0)
+	return _get_laser_impact_point(origin, far_target, hitbox, window_rect)
+
+
+func _artifact_center() -> Vector2:
+	if _artifact == null:
+		return REFERENCE_SIZE * 0.5 + Vector2(0.0, -8.0)
+	return _artifact.position
 
 
 func _get_artifact_hitbox(center: Vector2) -> Dictionary:
@@ -387,36 +588,9 @@ func _raycast_rect(origin: Vector2, direction: Vector2, rect: Rect2) -> Dictiona
 	}
 
 
-func _draw_heat_meter(origin: Vector2, heat: float, aligned: bool, selected: bool) -> void:
-	var meter_size := Vector2(38.0, 150.0)
-	var rect := Rect2(origin, meter_size)
-	draw_rect(rect, Color("d4d4d4"), true)
-	draw_rect(rect, Color("565656"), false, 4.0)
-	var fill_height := meter_size.y * clampf(heat, 0.0, 1.0)
-	var fill_rect := Rect2(origin + Vector2(5.0, meter_size.y - fill_height + 5.0), Vector2(meter_size.x - 10.0, maxf(fill_height - 10.0, 0.0)))
-	var fill_color := Color("6bdcff")
-	if heat >= red_heat_threshold:
-		fill_color = Color("ff4f4f")
-	elif heat >= 0.55:
-		fill_color = Color("ffd166")
-	draw_rect(fill_rect, fill_color, true)
-	if selected:
-		draw_rect(rect.grow(7.0), SELECTED_LASER_COLOR, false, 4.0)
-	if aligned:
-		_draw_check(origin + Vector2(54.0, meter_size.y - 18.0), Color("5bff8e"))
-	elif heat >= 0.55:
-		_draw_warning(origin + Vector2(54.0, 28.0), Color("ffe066"))
-
-
-func _draw_check(position: Vector2, color: Color) -> void:
-	draw_line(position + Vector2(-10.0, 0.0), position + Vector2(-2.0, 8.0), color, 5.0)
-	draw_line(position + Vector2(-2.0, 8.0), position + Vector2(12.0, -12.0), color, 5.0)
-
-
-func _draw_warning(position: Vector2, color: Color) -> void:
-	draw_line(position, position + Vector2(0.0, 20.0), color, 5.0)
-	draw_circle(position + Vector2(0.0, 30.0), 4.0, color)
-
+# ---------------------------------------------------------------------------
+# Labels (still built in code; anchored within the reference rect).
+# ---------------------------------------------------------------------------
 
 func _build_labels() -> void:
 	_hint_label = _create_label("KEEP LASERS ON THE ARTIFACT", 28, HORIZONTAL_ALIGNMENT_LEFT)
@@ -453,6 +627,10 @@ func _create_label(text_value: String, font_size: int, alignment: HorizontalAlig
 	add_child(label)
 	return label
 
+
+# ---------------------------------------------------------------------------
+# Gameplay logic (unchanged).
+# ---------------------------------------------------------------------------
 
 func _process_selection_input() -> void:
 	if Input.is_key_pressed(KEY_A):
@@ -591,31 +769,20 @@ func _clamp_drift_speed_bonus(value: float) -> float:
 	return clampf(value, 0.0, maxf(max_random_drift_speed_bonus, 0.0))
 
 
-func _offset_to_pixels(offset: float) -> float:
-	return offset * size.y * 0.22
-
-
 func _is_left_aligned() -> bool:
-	return _does_laser_hit_artifact(left_laser_offset, true)
+	return _does_laser_hit_artifact(true)
 
 
 func _is_right_aligned() -> bool:
-	return _does_laser_hit_artifact(right_laser_offset, false)
+	return _does_laser_hit_artifact(false)
 
 
-func _does_laser_hit_artifact(laser_offset: float, is_left_laser: bool) -> bool:
-	if size.x <= 0.0 or size.y <= 0.0:
-		return absf(laser_offset) <= alignment_tolerance
-
-	var window_rect := Rect2(Vector2.ZERO, size)
-	var center := window_rect.get_center() + Vector2(0.0, -8.0)
-	var origin_x := size.x * 0.12 if is_left_laser else size.x * 0.88
-	var origin := Vector2(origin_x, center.y)
-	var target := center + Vector2(0.0, _offset_to_pixels(laser_offset))
-	var direction := (target - origin).normalized()
+func _does_laser_hit_artifact(is_left_laser: bool) -> bool:
+	var origin := _left_origin() if is_left_laser else _right_origin()
+	var direction := _left_forward() if is_left_laser else _right_forward()
 	if direction == Vector2.ZERO:
 		return false
-
+	var center := _artifact_center()
 	var hitbox := _get_artifact_hitbox(center)
 	return bool(_raycast_circle(origin, direction, hitbox.get("center", center), float(hitbox.get("radius", ARTIFACT_HIT_RADIUS))).get("hit", false))
 
@@ -629,7 +796,7 @@ func show_failure_result(reason: StringName) -> void:
 	_failure_result_laser = LEFT_LASER if str(reason).contains("left") else RIGHT_LASER
 	_play_failure_emitter_shake()
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func show_success_result() -> void:
@@ -638,7 +805,7 @@ func show_success_result() -> void:
 	_left_emitter_shake_offset = 0.0
 	_right_emitter_shake_offset = 0.0
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func clear_result_display() -> void:
@@ -647,7 +814,7 @@ func clear_result_display() -> void:
 	_left_emitter_shake_offset = 0.0
 	_right_emitter_shake_offset = 0.0
 	_update_labels()
-	queue_redraw()
+	_update_visuals()
 
 
 func _is_saved_state_altered(state: Dictionary) -> bool:
@@ -685,7 +852,7 @@ func _set_failed_emitter_shake_offset(value: float) -> void:
 		_left_emitter_shake_offset = value
 	elif _failure_result_laser == RIGHT_LASER:
 		_right_emitter_shake_offset = value
-	queue_redraw()
+	_update_visuals()
 
 
 func _update_labels() -> void:
