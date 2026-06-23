@@ -1,4 +1,4 @@
-extends Area2D
+extends InteractionHitbox
 class_name DeparturePylon
 
 signal departure_requested(pylon: DeparturePylon)
@@ -7,7 +7,6 @@ const HoldProgressPopupScene := preload("res://_project/ui/hold_progress_popup.t
 
 @export var hold_duration: float = 1.0
 
-var _player_in_range: bool = false
 var _hold_elapsed: float = 0.0
 var _progress_popup: HoldProgressPopup = null
 
@@ -15,8 +14,8 @@ var _progress_popup: HoldProgressPopup = null
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	super._ready()
+	player_exited.connect(_cancel_hold)
 	set_process(true)
 	call_deferred("_ensure_progress_popup")
 
@@ -25,12 +24,14 @@ func _process(delta: float) -> void:
 	if _progress_popup == null:
 		_ensure_progress_popup()
 
-	if not _can_interact():
-		_cancel_hold()
-		_set_highlight(false)
-		return
+	var can_interact := _can_interact()
+	# The ship coordinates the shared prompt + generator-sprite highlight, OR-ing
+	# both pylons so either one triggers them.
+	_notify_ship_departure(can_interact)
 
-	_set_highlight(true)
+	if not can_interact:
+		_cancel_hold()
+		return
 
 	if Input.is_action_pressed("interact"):
 		_hold_elapsed += delta
@@ -47,7 +48,13 @@ func stop_for_run_end() -> void:
 	_cancel_hold()
 	set_process(false)
 	monitoring = false
-	_set_highlight(false)
+	_notify_ship_departure(false)
+
+
+func _notify_ship_departure(active: bool) -> void:
+	var ship := get_parent() as Ship
+	if ship and ship.has_method("set_departure_pylon_active"):
+		ship.set_departure_pylon_active(self, active)
 
 
 func _ensure_progress_popup() -> void:
@@ -64,7 +71,7 @@ func _ensure_progress_popup() -> void:
 
 
 func _can_interact() -> bool:
-	if not _player_in_range:
+	if not is_player_in_range:
 		return false
 
 	var player := Magnetide.player as Player
@@ -84,18 +91,3 @@ func _cancel_hold() -> void:
 	_hold_elapsed = 0.0
 	if _progress_popup:
 		_progress_popup.hide_progress()
-
-
-func _set_highlight(_active: bool) -> void:
-	pass
-
-
-func _on_body_entered(body: Node2D) -> void:
-	if body is Player:
-		_player_in_range = true
-
-
-func _on_body_exited(body: Node2D) -> void:
-	if body is Player:
-		_player_in_range = false
-		_cancel_hold()

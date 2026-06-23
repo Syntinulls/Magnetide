@@ -13,7 +13,9 @@ var _viewport_anchor: ViewportAnchor = null
 
 
 func _ready() -> void:
-	layer = 10
+	# Above the world but below the storm vignette (5) and the game UI (10), so
+	# the foreground ground is still covered by the acid-storm overlay.
+	layer = 4
 	_ground_textures = [
 		preload("res://_project/level/decoration/sprites/ground_1.png"),
 		preload("res://_project/level/decoration/sprites/ground_2.png"),

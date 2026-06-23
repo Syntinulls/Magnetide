@@ -16,11 +16,13 @@
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
 [ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
+[ext_resource type="Script" path="res://_project/level/threat/storm_controller.gd" id="13_storm"]
 [ext_resource type="Script" uid="uid://bgpa0y1q8s3n7" path="res://_project/level/threat/threat_level_data.gd" id="16_ig01q"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/level/enemies/enemy_spawner.gd" id="17_enemy_spawner"]
-[ext_resource type="Resource" uid="uid://biwc1i3625md3" path="res://_project/level/enemies/worm_enemy_spawner_profile.tres" id="18_enemy_spawner_profile"]
 [ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/level/decoration/sprites/star_particle.svg" id="19_star_particle"]
+[ext_resource type="Script" path="res://_project/level/enemies/enemy_spawn_profile.gd" id="20_enemy_profile"]
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
+[ext_resource type="Resource" path="res://_project/level/enemies/worm_enemy_profile.tres" id="22_x74ax"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
@@ -155,6 +157,55 @@ rare_weight = 70.0
 epic_weight = 22.0
 legendary_weight = 8.0
 artifact_weight = 4.0
+weather_conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_ivsrf"]
+script = ExtResource("16_ig01q")
+enemy_types = PackedStringArray()
+common_weight = 62.0
+rare_weight = 23.0
+epic_weight = 13.0
+legendary_weight = 2.0
+artifact_weight = 2.5
+weather_conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_08aus"]
+script = ExtResource("16_ig01q")
+enemy_types = PackedStringArray()
+common_weight = 50.0
+rare_weight = 30.0
+epic_weight = 16.0
+legendary_weight = 4.0
+artifact_weight = 3.0
+weather_conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_5o0it"]
+script = ExtResource("16_ig01q")
+enemy_types = PackedStringArray()
+common_weight = 35.0
+rare_weight = 38.0
+epic_weight = 20.0
+legendary_weight = 7.0
+artifact_weight = 3.5
+weather_conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_1uybg"]
+script = ExtResource("16_ig01q")
+enemy_types = PackedStringArray()
+common_weight = 15.0
+rare_weight = 50.0
+epic_weight = 25.0
+legendary_weight = 10.0
+artifact_weight = 4.0
+weather_conditions = PackedStringArray()
+
+[sub_resource type="Resource" id="Resource_mxlpc"]
+script = ExtResource("16_ig01q")
+enemy_types = PackedStringArray()
+rare_weight = 60.0
+epic_weight = 28.0
+legendary_weight = 12.0
+artifact_weight = 5.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pho3n"]
@@ -327,7 +378,6 @@ magnet_path = NodePath("../Ship/Magnet")
 camera_path = NodePath("../Camera2D")
 warning_icon_path = NodePath("../UICanvas/UIRoot/GameUI/WarningIconAnchor/WarningIcon")
 activation_minigame_path = NodePath("../UICanvas/UIRoot/GameUI/ActivationMinigame")
-departure_icon_path = NodePath("../UICanvas/UIRoot/GameUI/DepartureIconAnchor/DepartureIcon")
 ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/TopRight_UI/VBoxContainer/ShipStatusUI")
 activation_anchor_path = NodePath("../Ship/ActivationMinigameAnchor")
 
@@ -350,12 +400,15 @@ layout_mode = 1
 
 [node name="ThreatManager" type="Node" parent="." unique_id=1026313138]
 script = ExtResource("13_threat")
-threat_level_factors = Array[ExtResource("16_ig01q")]([SubResource("Resource_v4meo"), SubResource("Resource_uj1ub"), SubResource("Resource_17v6t"), SubResource("Resource_x74ax"), SubResource("Resource_dx42g")])
+threat_level_factors = Array[ExtResource("16_ig01q")]([SubResource("Resource_v4meo"), SubResource("Resource_uj1ub"), SubResource("Resource_17v6t"), SubResource("Resource_x74ax"), SubResource("Resource_dx42g"), SubResource("Resource_ivsrf"), SubResource("Resource_08aus"), SubResource("Resource_5o0it"), SubResource("Resource_1uybg"), SubResource("Resource_mxlpc")])
+
+[node name="StormController" type="Node" parent="." unique_id=1026313139]
+script = ExtResource("13_storm")
 
 [node name="EnemySpawner" type="Node2D" parent="." unique_id=45131909]
 script = ExtResource("17_enemy_spawner")
 spawn_zones = Array[NodePath]([NodePath("../SpawnZones/SpawnN"), NodePath("../SpawnZones/SpawnNNE"), NodePath("../SpawnZones/SpawnNE"), NodePath("../SpawnZones/SpawnENE"), NodePath("../SpawnZones/SpawnE"), NodePath("../SpawnZones/SpawnESE"), NodePath("../SpawnZones/SpawnSE"), NodePath("../SpawnZones/SpawnSSE"), NodePath("../SpawnZones/SpawnESE/SpawnS"), NodePath("../SpawnZones/SpawnSSW"), NodePath("../SpawnZones/SpawnSW"), NodePath("../SpawnZones/SpawnWSW"), NodePath("../SpawnZones/SpawnW"), NodePath("../SpawnZones/SpawnWNW"), NodePath("../SpawnZones/SpawnNW"), NodePath("../SpawnZones/SpawnNNW")])
-profile = ExtResource("18_enemy_spawner_profile")
+enemy_profiles = Array[ExtResource("20_enemy_profile")]([ExtResource("22_x74ax")])
 
 [node name="SpawnZones" type="Node2D" parent="." unique_id=736015592]
 

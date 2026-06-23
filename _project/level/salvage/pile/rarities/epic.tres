@@ -1,6 +1,5 @@
 [gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://c3p7gak2lm8nb"]
 
-[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_3gsqs"]
 [ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_hloxr"]
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_item_data"]
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/salvage/resources/circuitry.tres" id="2_bdkc8"]
@@ -18,7 +17,7 @@
 [ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/salvage/resources/transformer.tres" id="15_w8uai"]
 [ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/salvage/resources/xray_machine.tres" id="16_8re2k"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="17_g4ue2"]
-[ext_resource type="Resource" uid="uid://unknownartifact001" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="18_artifact"]
+[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="18_artifact"]
 
 [sub_resource type="Resource" id="Resource_artifact"]
 script = ExtResource("9_qsc00")

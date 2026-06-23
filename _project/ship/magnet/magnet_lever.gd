@@ -1,8 +1,11 @@
-extends Area2D
+extends InteractionHitbox
 class_name MagnetLever
 
 signal lever_flipped()
 signal lever_flipped_back()
+## Emitted when the player confirms advancing to the next threat level (second
+## interact press while the "CONTINUE RUN?" prompt is shown).
+signal advance_confirmed()
 
 ## Start rotation in radians (45 degrees clockwise).
 @export var start_rotation: float = 0.785398
@@ -13,31 +16,66 @@ signal lever_flipped_back()
 
 var _is_available: bool = false
 var _is_flipped: bool = false
-var _player_in_range: bool = false
 var _current_rotation_progress: float = 0.0  # 0.0 = start, 1.0 = end
 var _target_rotation_progress: float = 0.0
 var _is_tweening: bool = false
 var _tween_elapsed: float = 0.0
 var _tween_start_progress: float = 0.0
+# Advance ("continue to next threat") mode, active while the threat cap is reached.
+var _advance_mode: bool = false
+var _advance_confirm_pending: bool = false
+
+const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
+
+var _outline_material: ShaderMaterial = null
 
 @onready var _handle_pivot: Node2D = $HandlePivot
+@onready var _handle_sprite: Sprite2D = $HandlePivot/Handle
+@onready var _base_sprite: Sprite2D = $Base
+@onready var _continue_prompt: Label = $ContinuePrompt
 
 
 func _ready() -> void:
-	body_entered.connect(_on_body_entered)
-	body_exited.connect(_on_body_exited)
+	super._ready()
+	player_exited.connect(_on_player_exited)
 	set_available(false)
 	reset_rotation()
 	# Lever is always visible
 	set_handle_visible(true)
+	if _continue_prompt:
+		_continue_prompt.visible = false
+	_setup_highlight()
+
+
+func _setup_highlight() -> void:
+	_outline_material = ShaderMaterial.new()
+	_outline_material.shader = OUTLINE_SHADER
+	_outline_material.set_shader_parameter("outline_enabled", false)
+	_outline_material.set_shader_parameter("outline_width", 3.0)
+	# Share one material so the handle and base outline together.
+	if _handle_sprite:
+		_handle_sprite.material = _outline_material
+	if _base_sprite:
+		_base_sprite.material = _outline_material
+
+
+func _set_highlight(active: bool) -> void:
+	if _outline_material:
+		_outline_material.set_shader_parameter("outline_enabled", active)
 
 
 func _process(delta: float) -> void:
 	# Handle tweening with timescale compensation
 	if _is_tweening:
 		_process_rotation_tween(delta)
-	
-	if not _is_available or not _player_in_range:
+
+	_update_prompt_and_highlight()
+
+	if _advance_mode:
+		_process_advance_input()
+		return
+
+	if not _is_available or not is_player_in_range:
 		return
 
 	if Input.is_action_just_pressed("interact"):
@@ -51,6 +89,63 @@ func _process(delta: float) -> void:
 			flip_back_with_tween()
 			lever_flipped_back.emit()
 			set_available(false)
+
+
+## Switch the lever between normal looting use and "continue to next threat"
+## advance use. Entered when the threat cap is reached, reverted after advancing.
+func set_advance_mode(enabled: bool) -> void:
+	_advance_mode = enabled
+	if not enabled:
+		_advance_confirm_pending = false
+		_set_continue_prompt_visible(false)
+
+
+## Two-press confirmation: first interact shows "CONTINUE RUN?", second confirms.
+func _process_advance_input() -> void:
+	if not is_player_in_range:
+		if _advance_confirm_pending:
+			_advance_confirm_pending = false
+			_set_continue_prompt_visible(false)
+		return
+
+	if not Input.is_action_just_pressed("interact"):
+		return
+
+	if not _advance_confirm_pending:
+		_advance_confirm_pending = true
+		_set_continue_prompt_visible(true)
+	else:
+		_advance_confirm_pending = false
+		_set_continue_prompt_visible(false)
+		# Consume advance mode so the cutscene isn't re-triggered.
+		_advance_mode = false
+		advance_confirmed.emit()
+
+
+func _set_continue_prompt_visible(value: bool) -> void:
+	if _continue_prompt:
+		_continue_prompt.visible = value
+
+
+## Highlight the lever and register its control prompt while it can be used.
+## The prompt reflects the lever's current function ([E] BRAKE vs [E] CONTINUE).
+func _update_prompt_and_highlight() -> void:
+	var usable := is_player_in_range and (_advance_mode or _is_available)
+	_set_highlight(usable)
+
+	var prompts := Magnetide.control_prompts
+	if prompts == null:
+		return
+	if usable:
+		var action := "BRAKE"
+		if _advance_mode:
+			action = "CONTINUE"
+		elif Magnetide.magnet and Magnetide.magnet.is_active:
+			# Magnet is looting; flipping the lever departs the salvage pile.
+			action = "DEPART"
+		prompts.set_prompt(&"lever", "E", action, false, 5)
+	else:
+		prompts.clear_prompt(&"lever")
 
 
 func _process_rotation_tween(delta: float) -> void:
@@ -81,14 +176,11 @@ func set_handle_visible(handle_visible: bool) -> void:
 		_handle_pivot.visible = handle_visible
 
 
-func _on_body_entered(body: Node2D) -> void:
-	if body is CharacterBody2D:
-		_player_in_range = true
-
-
-func _on_body_exited(body: Node2D) -> void:
-	if body is CharacterBody2D:
-		_player_in_range = false
+func _on_player_exited() -> void:
+	# Leaving range resets the advance confirmation (requires two presses again).
+	if _advance_confirm_pending:
+		_advance_confirm_pending = false
+		_set_continue_prompt_visible(false)
 
 
 ## Reset lever to start rotation position (immediate, no tween).

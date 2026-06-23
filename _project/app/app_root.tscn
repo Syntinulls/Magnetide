@@ -35,7 +35,6 @@ magnet_surface_slow_speed = 15.0
 magnet_surface_dwell_time = 1.2
 magnet_breakaway_ramp_time = 0.3
 magnet_breakaway_max_speed = 2000.0
-magnet_threat_penalty = 10.0
 magnet_width = 264.0
 magnet_max_health = 150.0
 player_speed = 400.0

@@ -32,9 +32,11 @@ const PLAYER_AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
 @onready var _ship_magnet_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPMagnet
 @onready var _ship_hull_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHullIntegrityLabel
 @onready var _ship_magnet_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipMagnetIntegrityLabel
+@onready var _event_text: EventTextDisplay = $EventTextDisplay
 
 var _bound_run_controller: RunController = null
 var _bound_player: Player = null
+var _bound_threat: ThreatManager = null
 var _displayed_scrap_count: int = 0
 var _scrap_pulse_tween: Tween = null
 var _shield_was_broken: bool = false
@@ -62,9 +64,53 @@ func _ready() -> void:
 func _process(_delta: float) -> void:
 	_bind_to_active_run_controller()
 	_bind_to_active_player()
+	_bind_to_threat()
 	_update_scrap_counter()
 	_update_health_ui()
 	_refresh_player_augment_icons()
+
+
+func _bind_to_threat() -> void:
+	var threat := _get_active_threat()
+	if threat == _bound_threat:
+		return
+
+	if _bound_threat and is_instance_valid(_bound_threat):
+		if _bound_threat.storm_countdown_started.is_connected(_on_storm_countdown_started):
+			_bound_threat.storm_countdown_started.disconnect(_on_storm_countdown_started)
+		if _bound_threat.storm_arrived.is_connected(_on_storm_arrived):
+			_bound_threat.storm_arrived.disconnect(_on_storm_arrived)
+		if _bound_threat.cap_raised.is_connected(_on_threat_cap_raised):
+			_bound_threat.cap_raised.disconnect(_on_threat_cap_raised)
+
+	_bound_threat = threat
+	if _bound_threat:
+		_bound_threat.storm_countdown_started.connect(_on_storm_countdown_started)
+		_bound_threat.storm_arrived.connect(_on_storm_arrived)
+		_bound_threat.cap_raised.connect(_on_threat_cap_raised)
+
+
+func _get_active_threat() -> ThreatManager:
+	if Magnetide and Magnetide.level and "threat" in Magnetide.level:
+		return Magnetide.level.threat as ThreatManager
+	return null
+
+
+func _on_storm_countdown_started(seconds: float) -> void:
+	if _event_text:
+		_event_text.start_countdown(
+			&"storm", "STORM IMMINENT IN", seconds, 100, EventTextDisplay.Style.CRITICAL
+		)
+
+
+func _on_storm_arrived() -> void:
+	if _event_text:
+		_event_text.show_message(&"storm", "ACID STORM", 100, EventTextDisplay.Style.CRITICAL)
+
+
+func _on_threat_cap_raised(_new_cap: int) -> void:
+	if _event_text:
+		_event_text.clear(&"storm")
 
 
 func _update_health_ui() -> void:

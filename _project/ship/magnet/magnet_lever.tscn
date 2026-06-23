@@ -5,7 +5,7 @@
 [ext_resource type="Script" uid="uid://djf0uwoikdhxk" path="res://_project/ship/magnet/magnet_lever.gd" id="3_script"]
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_lever"]
-size = Vector2(200, 84)
+size = Vector2(117, 84)
 
 [node name="MagnetLever" type="Area2D" unique_id=732799241]
 script = ExtResource("3_script")
@@ -23,6 +23,19 @@ texture = ExtResource("3_nbw55")
 offset = Vector2(0, -16)
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=1306363612]
-visible = false
 position = Vector2(0, -42)
 shape = SubResource("RectangleShape2D_lever")
+
+[node name="ContinuePrompt" type="Label" parent="." unique_id=1306363613]
+visible = false
+offset_left = -130.0
+offset_top = -150.0
+offset_right = 130.0
+offset_bottom = -110.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 32
+text = "CONTINUE RUN?"
+horizontal_alignment = 1
+vertical_alignment = 1

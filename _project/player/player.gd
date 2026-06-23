@@ -101,6 +101,7 @@ var _hovered_item: SalvageItem = null
 var _hovered_research_station: ResearchStation = null
 var _hovered_recycler: Node = null
 var _interactable_research_station: ResearchStation = null
+var _proximity_highlighted_station: ResearchStation = null
 var _repel_hold_elapsed: float = 0.0
 var _is_repel_holding: bool = false
 var _is_recycling_held_trash: bool = false
@@ -598,7 +599,10 @@ func _process_magnet_gun(delta: float) -> void:
 		# Show magnet gun effect while holding item
 		if muzzle_effect:
 			muzzle_effect.play_effect(_get_current_muzzle_effect_type())
-		
+		# RESEARCH is a not-carrying interaction; clear it while holding an item.
+		_interactable_research_station = null
+		_update_research_prompt()
+
 		# Update held item position to follow gun
 		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
 		
@@ -608,6 +612,7 @@ func _process_magnet_gun(delta: float) -> void:
 			_update_storage_area_outline(mouse_pos)
 			_process_research_station_hover(mouse_pos)
 			_process_recycler_hover(mouse_pos)
+			_update_held_item_prompts(mouse_pos)
 
 			# Right-click hold to repel
 			if Input.is_action_pressed("shoot_alt"):
@@ -640,10 +645,12 @@ func _process_magnet_gun(delta: float) -> void:
 			_set_storage_area_outline_state(false)
 			_set_hovered_research_station(null)
 			_set_hovered_recycler(null)
+			_clear_held_item_prompts()
 	else:
 		_set_storage_area_outline_state(false)
 		_set_hovered_research_station(null)
 		_set_hovered_recycler(null)
+		_clear_held_item_prompts()
 		if _held_item != null:
 			_held_item = null
 		_stop_magnet_gun_sfx()
@@ -915,6 +922,7 @@ func _clear_magnet_gun_state() -> void:
 	_set_hovered_research_station(null)
 	_set_hovered_recycler(null)
 	_set_storage_area_outline_state(false)
+	_clear_held_item_prompts()
 	_hide_hover_tooltip()
 	
 	# Force-release held item
@@ -1000,6 +1008,7 @@ func _process_research_station_reopen_range() -> void:
 	var ship_node := _get_ship()
 	if ship_node == null or not ship_node.has_method("get_research_station_in_interaction_range"):
 		_interactable_research_station = null
+		_update_research_prompt()
 		return
 
 	var station := ship_node.get_research_station_in_interaction_range(global_position) as ResearchStation
@@ -1007,6 +1016,33 @@ func _process_research_station_reopen_range() -> void:
 		_interactable_research_station = station
 	else:
 		_interactable_research_station = null
+	_update_research_prompt()
+
+
+## "[E] RESEARCH" prompt + station outline while in range of a station with
+## active research (and not carrying an item, which the held-item branch enforces
+## by clearing it).
+func _update_research_prompt() -> void:
+	var station: ResearchStation = null
+	if _interactable_research_station != null and is_instance_valid(_interactable_research_station):
+		station = _interactable_research_station
+
+	# Toggle the proximity highlight on change (mirrors the mouse-hover highlight
+	# so the two sources don't fight — they're mutually exclusive states).
+	if station != _proximity_highlighted_station:
+		if _proximity_highlighted_station and is_instance_valid(_proximity_highlighted_station):
+			_proximity_highlighted_station.set_highlighted(false)
+		_proximity_highlighted_station = station
+		if station:
+			station.set_highlighted(true)
+
+	var prompts := Magnetide.control_prompts
+	if prompts == null:
+		return
+	if station:
+		prompts.set_prompt(&"research", "E", "RESEARCH", false, 3)
+	else:
+		prompts.clear_prompt(&"research")
 
 
 func _try_open_hovered_research_station() -> bool:
@@ -1221,8 +1257,42 @@ func _set_hovered_item(item: SalvageItem) -> void:
 
 	_hovered_item = item
 
+	var prompts := Magnetide.control_prompts
 	if _hovered_item and is_instance_valid(_hovered_item):
 		_hovered_item.set_outlined(true)
+		if prompts:
+			prompts.set_prompt(&"pickup", "LMB", "PICK UP", false, 1)
+	elif prompts:
+		prompts.clear_prompt(&"pickup")
+
+
+## Prompts shown while carrying an item with the magnet gun: repel always, plus a
+## single LMB action reflecting what a left-click would do at the cursor (matching
+## the shoot-handler order: recycle > place artifact > place in storage).
+func _update_held_item_prompts(mouse_pos: Vector2) -> void:
+	var prompts := Magnetide.control_prompts
+	if prompts == null:
+		return
+	prompts.set_prompt(&"repel", "RMB", "REPEL", true, 1)
+
+	if _hovered_recycler != null and is_instance_valid(_hovered_recycler):
+		prompts.set_prompt(&"place", "LMB", "RECYCLE", false, 2)
+	elif _hovered_research_station != null and is_instance_valid(_hovered_research_station):
+		prompts.set_prompt(&"place", "LMB", "PLACE ARTIFACT", false, 2)
+	else:
+		var ship_node := _get_ship()
+		if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
+			prompts.set_prompt(&"place", "LMB", "PLACE", false, 2)
+		else:
+			prompts.clear_prompt(&"place")
+
+
+func _clear_held_item_prompts() -> void:
+	var prompts := Magnetide.control_prompts
+	if prompts == null:
+		return
+	prompts.clear_prompt(&"repel")
+	prompts.clear_prompt(&"place")
 
 
 func _update_repel_bar() -> void:
@@ -1266,6 +1336,17 @@ func take_damage(amount: float, source: Node = null) -> void:
 		_emit_shield_changed(-1)
 		return
 
+	var previous_health := current_health
+	current_health = maxf(current_health - amount, 0.0)
+	if previous_health > 0.0 and current_health <= 0.0:
+		destroyed.emit()
+
+
+## Environmental acid-storm drain. Bypasses the kinetic shield and reduces
+## health directly (a continuous DoT, not a discrete hit).
+func apply_storm_damage(amount: float) -> void:
+	if amount <= 0.0 or current_health <= 0.0:
+		return
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:

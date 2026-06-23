@@ -146,3 +146,10 @@ var hotbar: Hotbar:
 		if ui:
 			return ui.get_node_or_null("PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar") as Hotbar
 		return null
+
+var control_prompts: ControlPromptStack:
+	get:
+		var ui := game_ui
+		if ui:
+			return ui.get_node_or_null("ControlPromptStack") as ControlPromptStack
+		return null

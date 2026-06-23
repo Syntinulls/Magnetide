@@ -38,7 +38,6 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 @export var magnet_surface_dwell_time: float = 1.2
 @export var magnet_breakaway_ramp_time: float = 0.3
 @export var magnet_breakaway_max_speed: float = 2000.0
-@export var magnet_threat_penalty: float = 10.0
 @export var magnet_width: float = 264.0
 @export var magnet_max_health: float = 150.0
 

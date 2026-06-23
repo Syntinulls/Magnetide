@@ -34,9 +34,15 @@ const STORAGE_BORDER_THICKNESS: float = 8.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 const STORAGE_ITEMS_Z_INDEX: int = -5
 const DEBUG_RESEARCH_ARTIFACT_DATA: SalvageItemData = preload("res://_project/items/salvage/resources/artifacts/unknown_artifact.tres")
-const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/ship/storage_area_outline.gdshader")
+const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/shaders/border_outline.gdshader")
 const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
 const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
+## Outline highlight for the shared pylon/generator sprite, driven by either
+## departure pylon being in range.
+const PYLON_OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
+
+var _pylon_outline_material: ShaderMaterial = null
+var _active_departure_pylons: Dictionary = {}
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
@@ -50,6 +56,7 @@ var _thruster_reference_speed: float = 0.0
 var _last_level_speed: float = -1.0
 
 @onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
+@onready var _ship_gens: AnimatedSprite2D = $ShipGens as AnimatedSprite2D
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
 @onready var _thruster_right: Thruster = $ThrusterRight as Thruster
 @onready var _research_station: ResearchStation = get_node_or_null("ResearchStation") as ResearchStation
@@ -68,6 +75,7 @@ func _ready() -> void:
 	_spawn_debug_research_artifact_in_storage()
 	call_deferred("_update_storage_weight_ui")
 	call_deferred("_initialize_thrusters")
+	_setup_pylon_highlight()
 
 
 func _process(_delta: float) -> void:
@@ -122,6 +130,25 @@ func set_departure_lift_thrusters(boosting: bool) -> void:
 	_thruster_right.set_thrust_level(thrust_level)
 	_thruster_left.set_ship_speed_ratio(speed_ratio)
 	_thruster_right.set_ship_speed_ratio(speed_ratio)
+
+
+## Turbo boost plume used during the threat-advance cutscene. When disabled,
+## thrusters return to following the level speed automatically.
+func set_turbo_thrusters(enabled: bool) -> void:
+	auto_update_thrusters = not enabled
+	if _thruster_left == null or _thruster_right == null:
+		return
+	if enabled:
+		_thruster_left.set_thrust_animation(&"loop_2")
+		_thruster_right.set_thrust_animation(&"loop_2")
+		_thruster_left.set_thrust_level(Thruster.ThrustLevel.HIGH)
+		_thruster_right.set_thrust_level(Thruster.ThrustLevel.HIGH)
+		_thruster_left.set_ship_speed_ratio(1.0)
+		_thruster_right.set_ship_speed_ratio(1.0)
+	else:
+		_thruster_left.set_thrust_animation(Thruster.DEFAULT_THRUST_ANIMATION)
+		_thruster_right.set_thrust_animation(Thruster.DEFAULT_THRUST_ANIMATION)
+		refresh_thrusters_from_level_speed()
 
 
 func lock_stored_items_for_departure() -> void:
@@ -285,7 +312,7 @@ func set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> voi
 	_storage_outline_line.visible = enabled
 	if _storage_outline_material:
 		var alpha := STORAGE_OUTLINE_HOVER_ALPHA if hovered else STORAGE_OUTLINE_IDLE_ALPHA
-		_storage_outline_material.set_shader_parameter("line_alpha", alpha)
+		_storage_outline_material.set_shader_parameter("opacity", alpha)
 
 
 func get_storage_area_global_rect() -> Rect2:
@@ -364,10 +391,10 @@ func get_research_station_at_point(global_point: Vector2) -> ResearchStation:
 	return null
 
 
-func get_research_station_in_interaction_range(global_point: Vector2) -> ResearchStation:
+func get_research_station_in_interaction_range(_global_point: Vector2) -> ResearchStation:
 	if _research_station == null or not is_instance_valid(_research_station):
 		return null
-	if _research_station.is_point_in_interaction_range(global_point):
+	if _research_station.is_player_in_range:
 		return _research_station
 	return null
 
@@ -524,6 +551,11 @@ func take_damage(amount: float, _source: Node = null) -> void:
 		destroyed.emit()
 
 
+## Environmental acid-storm drain (continuous DoT on hull integrity).
+func apply_storm_damage(amount: float) -> void:
+	take_damage(amount)
+
+
 func get_hitbox() -> Hitbox:
 	return get_node_or_null(hitbox_path) as Hitbox
 
@@ -573,3 +605,34 @@ func get_departure_pylons() -> Array[DeparturePylon]:
 		if pylon:
 			pylons.append(pylon)
 	return pylons
+
+
+func _setup_pylon_highlight() -> void:
+	if _ship_gens == null:
+		return
+	_pylon_outline_material = ShaderMaterial.new()
+	_pylon_outline_material.shader = PYLON_OUTLINE_SHADER
+	_pylon_outline_material.set_shader_parameter("outline_enabled", false)
+	_pylon_outline_material.set_shader_parameter("outline_width", 3.0)
+	_ship_gens.material = _pylon_outline_material
+
+
+## Called by each departure pylon as it enters/leaves interaction range. The
+## shared generator-sprite highlight and the depart control prompt are driven by
+## whether *any* pylon is currently active, so either pylon triggers them.
+func set_departure_pylon_active(pylon: Node, active: bool) -> void:
+	if active:
+		_active_departure_pylons[pylon] = true
+	else:
+		_active_departure_pylons.erase(pylon)
+
+	var any_active := not _active_departure_pylons.is_empty()
+	if _pylon_outline_material:
+		_pylon_outline_material.set_shader_parameter("outline_enabled", any_active)
+
+	var prompts := Magnetide.control_prompts
+	if prompts:
+		if any_active:
+			prompts.set_prompt(&"depart", "E", "DEPART", true, 10)
+		else:
+			prompts.clear_prompt(&"depart")

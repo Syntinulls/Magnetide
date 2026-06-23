@@ -241,7 +241,16 @@ func _resolve_threat_manager() -> void:
 		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 
+## No new salvage piles while the run is in the threat-cap (storm) decision state.
+func _is_cap_reached() -> bool:
+	if not _threat_manager:
+		_resolve_threat_manager()
+	return _threat_manager != null and _threat_manager.is_cap_reached
+
+
 func _spawn_salvage() -> void:
+	if _is_cap_reached():
+		return
 	if _current_pile and _current_pile.is_active:
 		return
 
@@ -270,6 +279,8 @@ func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
 ## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
 ## default off-screen location.  Returns the new SalvagePile instance.
 func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rarity) -> SalvagePile:
+	if _is_cap_reached():
+		return null
 	if _current_pile and _current_pile.is_active:
 		_current_pile.deactivate()
 		_current_pile.queue_free()

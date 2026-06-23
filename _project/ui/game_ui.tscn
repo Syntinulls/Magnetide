@@ -7,10 +7,9 @@
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
-[ext_resource type="Script" uid="uid://ec0hkbrs4sq" path="res://_project/ui/departure_icon.gd" id="6_departure"]
+[ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/ui/event_text_display.tscn" id="26_event_text"]
 [ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="7_pqqpn"]
 [ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/ship_status_ui.gd" id="7_ship_status"]
-[ext_resource type="Texture2D" uid="uid://c0mo2wu2y4q1n" path="res://_project/ui/sprites/alert_departure_y.png" id="8_departure_y"]
 [ext_resource type="Texture2D" uid="uid://dwkrun3rqdmap" path="res://_project/ui/sprites/ui_ship_storage_bg.png" id="10_ship_bg"]
 [ext_resource type="Texture2D" uid="uid://cdc62yjilkyfo" path="res://_project/ui/sprites/ui_ship_icon_crate.png" id="11_crate"]
 [ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/ui/sprites/ui_ship_icon_magnet.png" id="12_magnet"]
@@ -21,10 +20,10 @@
 [ext_resource type="Script" uid="uid://b8fg0vsqnib1y" path="res://_project/ui/hotbar.gd" id="20_hotbar"]
 [ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/ui/sprites/ui_player_itemslot.png" id="21_a5bm7"]
 [ext_resource type="Shader" uid="uid://dc4veltos4jti" path="res://_project/ui/hotbar_gradient.gdshader" id="22_gradient"]
-[ext_resource type="Script" uid="uid://bsjye4vj3a1tp" path="res://_project/ui/countdown_timer.gd" id="23_timer"]
 [ext_resource type="Script" uid="uid://bfwl2ho2imvfr" path="res://_project/ui/game_ui.gd" id="24_game_ui"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="24_pqqpn"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="25_shield_icon"]
+[ext_resource type="Script" path="res://_project/ui/control_prompt_stack.gd" id="27_prompts"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -38,26 +37,6 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 script = ExtResource("24_game_ui")
-
-[node name="CountdownTimer" type="Label" parent="." unique_id=1211342197]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -60.0
-offset_top = 10.0
-offset_right = 60.0
-offset_bottom = 50.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_fonts/font = ExtResource("7_pqqpn")
-theme_override_font_sizes/font_size = 48
-text = "10:00"
-horizontal_alignment = 1
-vertical_alignment = 1
-script = ExtResource("23_timer")
 
 [node name="TopRight_UI" type="MarginContainer" parent="." unique_id=1147719616]
 layout_mode = 1
@@ -202,51 +181,6 @@ custom_minimum_size = Vector2(8, 0)
 layout_mode = 2
 mouse_filter = 2
 
-[node name="DepartureIconAnchor" type="Control" parent="." unique_id=1764653113]
-layout_mode = 1
-anchor_left = 0.95
-anchor_top = 0.3
-anchor_right = 0.95
-anchor_bottom = 0.3
-mouse_filter = 2
-
-[node name="DepartureIcon" type="Control" parent="DepartureIconAnchor" unique_id=1764653114]
-anchors_preset = 0
-offset_left = -64.0
-offset_right = 64.0
-offset_bottom = 120.0
-mouse_filter = 2
-script = ExtResource("6_departure")
-
-[node name="Icon" type="TextureRect" parent="DepartureIconAnchor/DepartureIcon" unique_id=1340580498]
-layout_mode = 1
-anchors_preset = 5
-anchor_left = 0.5
-anchor_right = 0.5
-offset_left = -48.0
-offset_right = 48.0
-offset_bottom = 80.0
-grow_horizontal = 2
-mouse_filter = 2
-texture = ExtResource("8_departure_y")
-stretch_mode = 5
-
-[node name="Label" type="Label" parent="DepartureIconAnchor/DepartureIcon" unique_id=211218991]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_left = -11.0
-offset_top = 140.0
-offset_right = 11.0
-offset_bottom = 168.00003
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 24
-text = "Departure in 30.0s"
-horizontal_alignment = 1
-
 [node name="WarningIconAnchor" type="Control" parent="." unique_id=255438115]
 layout_mode = 1
 anchor_left = 0.95
@@ -260,16 +194,40 @@ texture = ExtResource("4_alert")
 
 [node name="ThreatUIAnchor" type="Control" parent="." unique_id=255438200]
 layout_mode = 1
-anchor_left = 0.05
-anchor_top = 0.5
-anchor_right = 0.05
-anchor_bottom = 0.5
-offset_left = -64.0
-offset_right = -64.0
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
 mouse_filter = 2
 
 [node name="ThreatUI" parent="ThreatUIAnchor" unique_id=1071300406 instance=ExtResource("5_threat_ui")]
 layout_mode = 0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="EventTextDisplay" parent="." instance=ExtResource("26_event_text")]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 118.0
+offset_right = 320.0
+offset_bottom = 172.0
+grow_horizontal = 2
+
+[node name="ControlPromptStack" type="VBoxContainer" parent="." unique_id=255438300]
+layout_mode = 1
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("27_prompts")
 
 [node name="ActivationMinigame" type="Control" parent="." unique_id=747004123]
 anchors_preset = 0
@@ -352,7 +310,7 @@ text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PlayerAugmentIcons" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow"]
+[node name="PlayerAugmentIcons" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=256267152]
 visible = false
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -717,7 +675,7 @@ theme_override_font_sizes/font_size = 30
 text = "0"
 vertical_alignment = 1
 
-[node name="PlayerAugmentTooltip" type="ColorRect" parent="."]
+[node name="PlayerAugmentTooltip" type="ColorRect" parent="." unique_id=414856661]
 visible = false
 z_index = 100
 layout_mode = 0
@@ -726,7 +684,7 @@ offset_bottom = 158.0
 mouse_filter = 2
 color = Color(0.09, 0.12, 0.17, 0.96)
 
-[node name="NameLabel" type="Label" parent="PlayerAugmentTooltip"]
+[node name="NameLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=373961281]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 12.0
@@ -739,7 +697,7 @@ theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 24
 text = "Augment"
 
-[node name="BodyLabel" type="Label" parent="PlayerAugmentTooltip"]
+[node name="BodyLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=162456594]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 54.0

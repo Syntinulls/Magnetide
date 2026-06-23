@@ -1,3 +1,6 @@
+// Generic canvas_item sprite outline. Samples the texture's alpha in 8
+// directions to draw a solid outline around the opaque silhouette. Reusable on
+// any Sprite2D / TextureRect material. Toggle with `outline_enabled`.
 shader_type canvas_item;
 
 uniform vec4 outline_color : source_color = vec4(1.0, 1.0, 1.0, 1.0);

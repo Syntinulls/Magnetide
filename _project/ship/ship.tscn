@@ -75,7 +75,6 @@ size = Vector2(809, 40)
 
 [node name="Ship" type="Node2D" unique_id=1033807799]
 script = ExtResource("1_ship_script")
-hitbox_path = NodePath("Hitbox")
 enemy_target_point_paths = Array[NodePath]([NodePath("Targets/EnemyTargetPoint"), NodePath("Targets/EnemyTargetPoint2"), NodePath("Targets/EnemyTargetPoint3"), NodePath("Targets/EnemyTargetPoint4"), NodePath("Targets/EnemyTargetPoint5"), NodePath("Targets/EnemyTargetPoint6")])
 
 [node name="Magnet" parent="." unique_id=143007537 instance=ExtResource("4_magnet")]

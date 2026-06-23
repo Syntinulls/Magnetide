@@ -10,7 +10,7 @@
 [ext_resource type="Resource" uid="uid://d2af8pqbs56sk" path="res://_project/items/salvage/resources/rocket_thruster.tres" id="8_b4nm2"]
 [ext_resource type="Resource" uid="uid://bb82f5e821yul" path="res://_project/items/salvage/resources/portable_reactor.tres" id="9_iqhgj"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="10_2np1l"]
-[ext_resource type="Resource" uid="uid://unknownartifact001" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="11_artifact"]
+[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="11_artifact"]
 
 [sub_resource type="Resource" id="Resource_artifact"]
 script = ExtResource("7_2clhp")

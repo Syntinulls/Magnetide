@@ -193,7 +193,8 @@ func _build_context() -> Dictionary:
 		"stage_count": required_stage_count,
 		"total_fail_count": total_fail_count,
 		"max_fail_count": max_fail_count,
-		"difficulty": 1.0 + float(threat_level) * 0.25,
+		# Scales 1.0 (level 1) -> 2.0 (max level) across the full threat range.
+		"difficulty": 1.0 + float(threat_level) / float(maxi(ThreatManager.LEVEL_COUNT - 1, 1)),
 		"threat_level": threat_level,
 		"rng_seed": randi(),
 	}

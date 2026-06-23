@@ -25,6 +25,7 @@ var _player: Player = null
 var _magnet: Magnet = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
+var _storm_controller: StormController = null
 var _run_loadout: RunLoadout = null
 var _active_augment_behaviors: Array[AugmentBehavior] = []
 var _elapsed_seconds: float = 0.0
@@ -68,6 +69,7 @@ func _bind_runtime() -> void:
 
 	_enemy_spawner = _level.get_node_or_null("EnemySpawner") as EnemySpawner
 	_magnet_minigame = _level.get_node_or_null("MagnetMinigame") as MagnetMinigame
+	_storm_controller = _level.get_node_or_null("StormController") as StormController
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
 	_connect_runtime_signals()
@@ -132,15 +134,12 @@ func _shutdown_gameplay(stop_player: bool = true) -> void:
 		_magnet_minigame.stop_for_run_end()
 	if _enemy_spawner:
 		_enemy_spawner.stop_for_run_end()
+	if _storm_controller:
+		_storm_controller.stop_for_run_end()
 	if _level and "level_speed" in _level:
 		_level.level_speed = 0.0
 	if _level and "threat" in _level and _level.threat:
 		_level.threat.stop_for_run_end()
-
-	if _game_ui:
-		var countdown := _game_ui.get_node_or_null("CountdownTimer") as CountdownTimer
-		if countdown:
-			countdown.stop_timer()
 
 	for node in get_tree().get_nodes_in_group("enemies"):
 		var enemy := node as Enemy

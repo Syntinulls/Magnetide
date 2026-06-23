@@ -14,7 +14,7 @@
 [ext_resource type="Resource" uid="uid://c4o6h7rcfvgsa" path="res://_project/items/salvage/resources/refrigerator.tres" id="12_aqj0n"]
 [ext_resource type="Resource" uid="uid://b4m4e377rt8fk" path="res://_project/items/salvage/resources/air_conditioner.tres" id="13_h6mpk"]
 [ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="14_o7p4a"]
-[ext_resource type="Resource" uid="uid://unknownartifact001" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="15_artifact"]
+[ext_resource type="Resource" uid="uid://db276m30x73no" path="res://_project/items/salvage/resources/artifacts/unknown_artifact.tres" id="15_artifact"]
 
 [sub_resource type="Resource" id="Resource_artifact"]
 script = ExtResource("8_whg8k")

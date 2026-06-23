@@ -41,8 +41,6 @@ signal artifact_pile_final_item_spawned(item_data: SalvageItemData)
 @export var breakaway_ramp_time: float = 0.3
 ## Max speed after breakaway.
 @export var breakaway_max_speed: float = 2000.0
-## Base threat cost per magnet activation. Affected by upgrades.
-@export var threat_penalty: float = 10.0
 ## Width of the magnet pull area at the top (full width, not half).
 @export var magnet_width: float = 100.0:
 	set(value):
@@ -132,7 +130,6 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	surface_dwell_time = loadout.magnet_surface_dwell_time
 	breakaway_ramp_time = loadout.magnet_breakaway_ramp_time
 	breakaway_max_speed = loadout.magnet_breakaway_max_speed
-	threat_penalty = loadout.magnet_threat_penalty
 	magnet_width = loadout.magnet_width
 	max_health = loadout.magnet_max_health
 	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
@@ -418,12 +415,6 @@ func get_pity_counter() -> int:
 	return _salvageable_pull_count
 
 
-## Get the total threat cost for activating the magnet over the given pile.
-func get_activation_threat_cost(pile_data: SalvagePileData = null) -> float:
-	if pile_data:
-		return pile_data.get_activation_threat_cost(threat_penalty)
-	return threat_penalty
-
 
 ## Update magnet visuals (sprite size) and collision shape based on magnet_width.
 func _update_magnet_visuals() -> void:
@@ -680,6 +671,11 @@ func get_surface_line() -> Line2D:
 
 func take_damage(amount: float, _source: Node = null) -> void:
 	current_health = maxf(current_health - amount, 0.0)
+
+
+## Environmental acid-storm drain (continuous DoT on magnet integrity).
+func apply_storm_damage(amount: float) -> void:
+	take_damage(amount)
 
 
 func get_hitbox() -> Hitbox:

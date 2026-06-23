@@ -13,7 +13,7 @@ enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
 # ============================================================================
 const SETTLE_TIME: float = 0.05
 const STORAGE_COLLISION_LAYER: int = 8
-const OUTLINE_SHADER: Shader = preload("res://_project/items/salvage/salvage_item_outline.gdshader")
+const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
 const TRASH_RARITY_COLOR: Color = Color("b8b8b8")
 const TRASH_DISPLAY_NAME: String = "Trash"
 const TRASH_PARTICLE_COUNT_MIN: int = 8

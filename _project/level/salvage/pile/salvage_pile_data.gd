@@ -29,10 +29,6 @@ const DEFAULT_TRASH_SPRITES: Array[Texture2D] = [
 ## Optional looting duration for this pile. Values <= 0 use the minigame default.
 @export_range(0.0, 180.0, 0.5, "suffix:s") var departure_duration_override: float = 0.0
 
-@export_group("Threat")
-## Additional threat cost applied on top of the magnet's base activation cost.
-@export var threat_cost_bonus: float = 0.0
-
 @export_group("Pity System")
 ## Base probability (0-100) for pulling a salvageable item.
 @export var salvageable_base_percent: float = 30.0
@@ -78,11 +74,6 @@ func can_roll_trash() -> bool:
 
 func can_roll_artifact() -> bool:
 	return allow_legacy_artifact_rolls and artifact_percent > 0.0 and artifact_loot_table != null and not is_artifact_pile
-
-
-## Get the total activation threat cost for this pile using the magnet's base cost.
-func get_activation_threat_cost(base_cost: float) -> float:
-	return base_cost + threat_cost_bonus
 
 
 ## Roll an item from this pile's loot tables.

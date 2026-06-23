@@ -6,7 +6,21 @@ signal enemy_killed(enemy: Enemy)
 const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 
 @export var spawn_zones: Array[NodePath] = []
-@export var profile: EnemySpawnerProfile
+## Flat list of every enemy in the game. Each profile declares its own threat
+## eligibility and spawn conditions; the roster for a given threat level is
+## derived by filtering this list.
+@export var enemy_profiles: Array[EnemySpawnProfile] = []
+
+@export_group("Threat Scaling")
+## Max batches rolled per spawn pass.
+@export_range(1, 16, 1) var max_batches_per_spawn: int = 1
+## Spawn interval (seconds) indexed by threat level 1-10. The last value is used
+## for any level beyond the array length.
+@export var spawn_interval_by_level: Array[float] = [10.0, 9.0, 8.0, 7.0, 6.0, 5.5, 5.0, 4.5, 4.0, 3.5]
+## Max concurrent living enemies indexed by threat level 1-10. Last value reused.
+@export var max_concurrent_by_level: Array[int] = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+## Spawn interval multiplier while the threat cap is reached (faster = more pressure).
+@export_range(0.05, 1.0, 0.05) var cap_state_interval_multiplier: float = 0.6
 
 var _zone_lookup: Dictionary = {}
 var _living_enemies: Array[Enemy] = []
@@ -22,10 +36,6 @@ func _ready() -> void:
 	_rng.randomize()
 	_resolve_threat_manager()
 	_rebuild_zone_lookup()
-
-	if profile == null:
-		profile = EnemySpawnerProfile.new()
-
 	_reset_spawn_timer()
 	set_process(true)
 
@@ -36,9 +46,6 @@ func _process(delta: float) -> void:
 
 	_cleanup_living_enemies()
 
-	if not _is_magnet_active():
-		return
-
 	_spawn_timer_remaining -= delta
 	if _spawn_timer_remaining > 0.0:
 		return
@@ -48,40 +55,30 @@ func _process(delta: float) -> void:
 
 
 func _run_spawn_pass() -> void:
-	var level_data := _get_current_level_data()
-	if level_data == null:
-		return
-
-	var max_batches := maxi(level_data.max_batches_per_spawn, 0)
-	if max_batches <= 0:
-		return
-
-	var batch_count := _rng.randi_range(1, max_batches)
+	var batch_count := _rng.randi_range(1, maxi(max_batches_per_spawn, 1))
 	for _i in range(batch_count):
-		_spawn_batch(level_data)
+		_spawn_batch()
 
 
-func _spawn_batch(level_data: EnemySpawnThreatLevelData) -> void:
-	var threat_stage := _get_current_threat_stage()
-	var valid_entries := _get_valid_pool_entries(level_data.get_pool(_is_magnet_active()), threat_stage)
-	if valid_entries.is_empty():
+func _spawn_batch() -> void:
+	var eligible := _get_eligible_profiles()
+	if eligible.is_empty():
 		return
 
-	var selected_entry := _roll_weighted_entry(valid_entries)
-	if selected_entry == null or selected_entry.enemy == null:
+	var profile := _roll_weighted_profile(eligible)
+	if profile == null:
 		return
 
-	var spawn_definition := selected_entry.enemy
-	var valid_zones := _resolve_valid_zones(spawn_definition.allowed_spawn_zones)
+	var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
 	if valid_zones.is_empty():
 		return
 
-	var max_batch_size := spawn_definition.get_max_batch_size(threat_stage)
-	if max_batch_size <= 0:
+	var remaining_capacity := _get_remaining_capacity(_current_max_concurrent())
+	if remaining_capacity == 0:
 		return
 
-	var remaining_capacity := _get_remaining_capacity(level_data.max_concurrent_enemies)
-	if remaining_capacity == 0:
+	var max_batch_size := maxi(profile.max_batch_size, 0)
+	if max_batch_size <= 0:
 		return
 
 	var spawn_count := _rng.randi_range(1, max_batch_size)
@@ -92,43 +89,37 @@ func _spawn_batch(level_data: EnemySpawnThreatLevelData) -> void:
 
 	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
 	for _i in range(spawn_count):
-		var enemy := _spawn_enemy(spawn_definition, zone)
+		var enemy := _spawn_enemy(profile, zone)
 		if enemy != null:
 			_track_enemy(enemy)
 
 
+## Force-spawn a single basic enemy immediately, ignoring the spawn timer.
+## Used for artifact-pile pressure and debug.
 func force_spawn_basic_enemy() -> void:
 	_cleanup_living_enemies()
 
-	var level_data := _get_current_level_data()
-	if level_data == null:
+	var profile := _get_basic_profile()
+	if profile == null:
 		return
 
-	var valid_entries := _get_valid_pool_entries(level_data.get_pool(true), _get_current_threat_stage())
-	if valid_entries.is_empty():
-		return
-
-	var selected_entry := valid_entries[0]
-	if selected_entry == null or selected_entry.enemy == null:
-		return
-
-	var valid_zones := _resolve_valid_zones(selected_entry.enemy.allowed_spawn_zones)
+	var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
 	if valid_zones.is_empty():
 		return
 
 	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
-	var enemy := _spawn_enemy(selected_entry.enemy, zone)
+	var enemy := _spawn_enemy(profile, zone)
 	if enemy != null:
 		_track_enemy(enemy)
 
 
-func _spawn_enemy(spawn_definition: EnemySpawnDefinition, zone: Area2D) -> Enemy:
-	var enemy_scene := spawn_definition.enemy_scene if spawn_definition.enemy_scene != null else DEFAULT_ENEMY_SCENE
+func _spawn_enemy(profile: EnemySpawnProfile, zone: Area2D) -> Enemy:
+	var enemy_scene := profile.enemy_scene if profile.enemy_scene != null else DEFAULT_ENEMY_SCENE
 	var enemy := enemy_scene.instantiate() as Enemy
 	if enemy == null:
 		return null
 
-	enemy.data = spawn_definition.enemy_data
+	enemy.data = profile.enemy_data
 	enemy.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	enemy.position = to_local(_sample_point_in_zone(zone))
 	add_child(enemy)
@@ -165,38 +156,63 @@ func _cleanup_living_enemies() -> void:
 			_living_enemies.remove_at(i)
 
 
-func _get_valid_pool_entries(pool: Array[WeightedEnemySpawnEntry], threat_stage: int) -> Array[WeightedEnemySpawnEntry]:
-	var valid_entries: Array[WeightedEnemySpawnEntry] = []
+## Profiles eligible to spawn right now (threat level + magnet context + zones).
+func _get_eligible_profiles() -> Array[EnemySpawnProfile]:
+	var magnet_active := _is_magnet_active()
+	var level := _get_current_threat_level()
+	var eligible: Array[EnemySpawnProfile] = []
 
-	for entry in pool:
-		if entry == null or entry.enemy == null:
+	for profile in enemy_profiles:
+		if profile == null or profile.spawn_weight <= 0.0:
 			continue
-		if entry.weight <= 0.0:
+		if profile.max_batch_size <= 0:
 			continue
-		if entry.enemy.get_max_batch_size(threat_stage) <= 0:
+		if not profile.is_eligible_at_level(level):
 			continue
-		if _resolve_valid_zones(entry.enemy.allowed_spawn_zones).is_empty():
+		if magnet_active and not profile.can_spawn_magnet_active:
 			continue
-		valid_entries.append(entry)
+		if not magnet_active and not profile.can_spawn_magnet_idle:
+			continue
+		if _resolve_valid_zones(profile.allowed_spawn_zones).is_empty():
+			continue
+		eligible.append(profile)
 
-	return valid_entries
+	return eligible
 
 
-func _roll_weighted_entry(entries: Array[WeightedEnemySpawnEntry]) -> WeightedEnemySpawnEntry:
+func _roll_weighted_profile(profiles: Array[EnemySpawnProfile]) -> EnemySpawnProfile:
 	var total_weight := 0.0
-	for entry in entries:
-		total_weight += entry.weight
+	for profile in profiles:
+		total_weight += profile.spawn_weight
 
 	if total_weight <= 0.0:
 		return null
 
 	var roll := _rng.randf() * total_weight
-	for entry in entries:
-		roll -= entry.weight
+	for profile in profiles:
+		roll -= profile.spawn_weight
 		if roll <= 0.0:
-			return entry
+			return profile
 
-	return entries[entries.size() - 1]
+	return profiles[profiles.size() - 1]
+
+
+## Lowest-threat magnet-active enemy, used by force_spawn_basic_enemy.
+func _get_basic_profile() -> EnemySpawnProfile:
+	var level := _get_current_threat_level()
+	var best: EnemySpawnProfile = null
+
+	for profile in enemy_profiles:
+		if profile == null or profile.max_batch_size <= 0:
+			continue
+		if not profile.can_spawn_magnet_active:
+			continue
+		if not profile.is_eligible_at_level(level):
+			continue
+		if best == null or profile.min_threat_level < best.min_threat_level:
+			best = profile
+
+	return best
 
 
 func _resolve_valid_zones(allowed_zone_names: PackedStringArray) -> Array[Area2D]:
@@ -241,18 +257,42 @@ func _rebuild_zone_lookup() -> void:
 		_zone_lookup[StringName(zone.name)] = zone
 
 
-func _get_current_level_data() -> EnemySpawnThreatLevelData:
-	if profile == null:
-		return null
-	return profile.get_level_data(_get_current_threat_stage())
-
-
-func _get_current_threat_stage() -> int:
+## Current threat level as a player-facing value (1-10).
+func _get_current_threat_level() -> int:
 	if _threat_manager == null:
 		_resolve_threat_manager()
 	if _threat_manager == null:
-		return 0
-	return _threat_manager.threat_level
+		return 1
+	return _threat_manager.get_player_threat_level()
+
+
+func _is_cap_reached() -> bool:
+	if _threat_manager == null:
+		_resolve_threat_manager()
+	return _threat_manager != null and _threat_manager.is_cap_reached
+
+
+func _current_max_concurrent() -> int:
+	return _int_value_for_level(max_concurrent_by_level, _get_current_threat_level(), 0)
+
+
+func _current_spawn_interval() -> float:
+	var interval := _float_value_for_level(spawn_interval_by_level, _get_current_threat_level(), 10.0)
+	if _is_cap_reached():
+		interval *= cap_state_interval_multiplier
+	return maxf(interval, 0.1)
+
+
+func _int_value_for_level(values: Array[int], level: int, fallback: int) -> int:
+	if values.is_empty():
+		return fallback
+	return values[clampi(level - 1, 0, values.size() - 1)]
+
+
+func _float_value_for_level(values: Array[float], level: int, fallback: float) -> float:
+	if values.is_empty():
+		return fallback
+	return values[clampi(level - 1, 0, values.size() - 1)]
 
 
 func _get_remaining_capacity(max_concurrent_enemies: int) -> int:
@@ -262,11 +302,7 @@ func _get_remaining_capacity(max_concurrent_enemies: int) -> int:
 
 
 func _reset_spawn_timer() -> void:
-	var level_data := _get_current_level_data()
-	if level_data == null:
-		_spawn_timer_remaining = 10.0
-		return
-	_spawn_timer_remaining = maxf(level_data.spawn_interval_seconds, 0.1)
+	_spawn_timer_remaining = _current_spawn_interval()
 
 
 func _resolve_threat_manager() -> void:
