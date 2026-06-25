@@ -42,6 +42,9 @@ const DEBUG_THREAT_ADD_AMOUNT: float = 20.0
 var _current_threat: float = 0.0
 var _threat_level_cap: int = 0
 var _is_cap_reached: bool = false
+## While true, entering the Cap Reached / storm-imminent state is deferred even if threat has filled
+## the cap segment (e.g. during an active magnet looting cycle). Threat still clamps at the ceiling.
+var _cap_hold: bool = false
 var _storm_active: bool = false
 var _storm_countdown_remaining: float = 0.0
 var _threat_level_factors: Array[ThreatLevelData] = _create_default_threat_level_factors()
@@ -162,6 +165,7 @@ func raise_cap() -> void:
 func reset() -> void:
 	_threat_level_cap = 0
 	_is_cap_reached = false
+	_cap_hold = false
 	_storm_active = false
 	_storm_countdown_remaining = 0.0
 	_current_threat = 0.0
@@ -194,12 +198,31 @@ func _set_current_threat(value: float) -> void:
 	if new_level != old_level:
 		threat_level_changed.emit(new_level)
 	if not _is_cap_reached and _current_threat >= ceiling:
-		_enter_cap_reached()
+		_try_enter_cap_reached()
+
+
+## Defer (or release) the Cap Reached / storm-imminent trigger. Driven by the magnet minigame so the
+## storm does not start mid-loot — it waits until looting finishes and the ship departs. Threat still
+## clamps at the cap ceiling while held; releasing enters Cap Reached at once if threat is there.
+func set_cap_hold(held: bool) -> void:
+	if _cap_hold == held:
+		return
+	_cap_hold = held
+	if not held:
+		_try_enter_cap_reached()
 
 
 ## Top of the current cap level's segment, where threat is clamped.
 func _cap_ceiling() -> float:
 	return minf(float(_threat_level_cap + 1) * THREAT_SEGMENT_SIZE, MAX_THREAT)
+
+
+## Enter the Cap Reached state unless already in it, currently held, or threat is below the ceiling.
+func _try_enter_cap_reached() -> void:
+	if _is_cap_reached or _cap_hold:
+		return
+	if _current_threat >= _cap_ceiling():
+		_enter_cap_reached()
 
 
 func _enter_cap_reached() -> void:

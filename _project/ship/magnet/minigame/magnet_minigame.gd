@@ -425,6 +425,9 @@ func _on_warning_expired() -> void:
 
 func _start_activation_minigame() -> void:
 	_state = State.ACTIVATION
+	# Looting cycle has begun — hold the storm-imminent trigger until the ship departs.
+	if _threat_manager:
+		_threat_manager.set_cap_hold(true)
 	_timescale_transition_elapsed = 0.0
 	_restoring_timescale = false
 	
@@ -495,7 +498,20 @@ func _start_deceleration() -> void:
 		_current_decel_time = 1.0
 
 
+## True while the ship is stopped/stopping for a looting cycle (the magnet minigame is engaged).
+## Used to defer the threat storm-imminent trigger until looting finishes and the ship departs.
+func is_looting_cycle_active() -> bool:
+	return _state == State.ACTIVATION \
+		or _state == State.DECELERATING \
+		or _state == State.LOOTING \
+		or _state == State.DROPPING
+
+
 func _process(delta: float) -> void:
+	# Defer the threat storm-imminent trigger while a looting cycle is in progress.
+	if _threat_manager:
+		_threat_manager.set_cap_hold(is_looting_cycle_active())
+
 	match _state:
 		State.WARNING:
 			_process_warning(delta)
@@ -863,4 +879,6 @@ func stop_for_run_end() -> void:
 	_end_activation_effects()
 	_set_level_speed(0.0)
 	_state = State.COOLDOWN
+	if _threat_manager:
+		_threat_manager.set_cap_hold(false)
 	set_process(false)
