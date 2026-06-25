@@ -39,17 +39,19 @@ enum State { INACTIVE, PLACING_MARKERS, PLAYING, SHOWING_RESULT }
 @export var green_threshold_ratio: float = 0.04
 ## Distance threshold for yellow (good) hit as ratio of bar width.
 @export var yellow_threshold_ratio: float = 0.08
-## Number of yellow markers allowed per rarity (COMMON, RARE, EPIC, LEGENDARY, ARTIFACT).
-@export var allowed_yellows: Array[int] = [2, 1, 1, 0, 1]
-## Number of markers per rarity (COMMON, RARE, EPIC, LEGENDARY, ARTIFACT).
-@export var markers_per_rarity: Array[int] = [2, 3, 4, 5, 3]
+## Markers to hit at min threat (level 1) and max threat (level 10); scales linearly between.
+@export var markers_min: int = 2
+@export var markers_max: int = 5
+## Allowed yellow (good) hits at min threat (level 1) and max threat (level 10).
+@export var yellows_min: int = 2
+@export var yellows_max: int = 1
 
 @export_group("Timing")
 ## Time to show result before closing.
 @export var result_display_time: float = 1.5
 
 var _state: State = State.INACTIVE
-var _current_rarity: SalvagePile.Rarity = SalvagePile.Rarity.COMMON
+var _current_threat_level: int = 0
 var _marker_positions: Array[float] = []  # X positions as ratio of bar width
 var _marker_results: Array[int] = []  # 0=pending, 1=green, 2=yellow, 3=red
 var _current_marker_index: int = 0
@@ -142,26 +144,41 @@ func _setup_ui() -> void:
 	_bar_sprite.add_child(_yellow_allowance_container)
 
 
-func start_minigame(rarity: SalvagePile.Rarity) -> void:
-	_current_rarity = rarity
+## Difficulty scales by threat level (zero-based stage index 0-9), not rarity.
+func start_minigame(threat_level: int) -> void:
+	_current_threat_level = clampi(threat_level, 0, ThreatManager.LEVEL_COUNT - 1)
 	_reset_state()
 	_generate_marker_positions()
 	_setup_yellow_allowance_icons()
-	
-	# Apply rarity color to cog
-	var rarity_color: Color = SalvagePile.RARITY_COLORS.get(rarity, Color.WHITE)
-	_cog_sprite.modulate = rarity_color
-	_chevron_sprite.modulate = rarity_color
+
+	# Cog/chevron are untinted — they no longer signify rarity.
+	_cog_sprite.modulate = Color.WHITE
+	_chevron_sprite.modulate = Color.WHITE
 
 	visible = true
 	set_process(true)
 	_state = State.PLACING_MARKERS
 
 
+## Markers to hit at the given threat stage index (linear markers_min -> markers_max over levels 1-10).
+func _markers_for_threat(threat_level: int) -> int:
+	return _scale_for_threat(threat_level, markers_min, markers_max)
+
+
+## Allowed yellow hits at the given threat stage index (linear yellows_min -> yellows_max).
+func _yellows_for_threat(threat_level: int) -> int:
+	return _scale_for_threat(threat_level, yellows_min, yellows_max)
+
+
+func _scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:
+	var span := maxi(ThreatManager.LEVEL_COUNT - 1, 1)
+	var t := clampf(float(threat_level) / float(span), 0.0, 1.0)
+	return int(roundf(lerpf(float(min_value), float(max_value), t)))
+
+
 func _setup_yellow_allowance_icons() -> void:
-	var rarity_index := int(_current_rarity)
-	var max_yellows := allowed_yellows[rarity_index] if rarity_index < allowed_yellows.size() else 2
-	
+	var max_yellows := _yellows_for_threat(_current_threat_level)
+
 	if max_yellows <= 0:
 		return
 	
@@ -211,9 +228,8 @@ func _reset_state() -> void:
 
 
 func _generate_marker_positions() -> void:
-	var rarity_index := int(_current_rarity)
-	var marker_count := markers_per_rarity[rarity_index] if rarity_index < markers_per_rarity.size() else 2
-	
+	var marker_count := _markers_for_threat(_current_threat_level)
+
 	var zone_start := marker_zone_left_ratio
 	var zone_end := marker_zone_right_ratio
 	
@@ -498,9 +514,8 @@ func _check_marker_hit() -> void:
 
 func _finish_game() -> void:
 	# Calculate win/lose
-	var rarity_index := int(_current_rarity)
-	var max_yellows := allowed_yellows[rarity_index] if rarity_index < allowed_yellows.size() else 2
-	
+	var max_yellows := _yellows_for_threat(_current_threat_level)
+
 	var yellow_count := 0
 	var red_count := 0
 	

@@ -105,7 +105,6 @@ var _current_pile: SalvagePile = null
 var _timescale_transition_elapsed: float = 0.0
 var _restoring_timescale: bool = false
 var _activation_won: bool = false
-var _pending_rarity: SalvagePile.Rarity = SalvagePile.Rarity.COMMON
 var _player_original_position: Vector2 = Vector2.ZERO
 var _camera: Camera2D = null
 var _original_zoom: Vector2 = Vector2.ONE
@@ -431,10 +430,7 @@ func _start_activation_minigame() -> void:
 	
 	# Set process mode to always so we can control timescale
 	process_mode = Node.PROCESS_MODE_ALWAYS
-	
-	# Pick rarity now but don't spawn pile yet - cog represents approaching pile
-	_pending_rarity = _pick_rarity()
-	
+
 	# Disable player input during minigame
 	_set_player_input_enabled(false)
 	
@@ -445,9 +441,9 @@ func _start_activation_minigame() -> void:
 	if _magnet_lever:
 		_magnet_lever.reset_rotation()
 	
-	# Start the activation minigame UI
+	# Start the activation minigame UI (difficulty scales by current threat level)
 	if _activation_minigame:
-		_activation_minigame.start_minigame(_pending_rarity)
+		_activation_minigame.start_minigame(_get_threat_level())
 	
 	# Start camera zoom and vignette effects
 	_start_activation_effects()
@@ -471,7 +467,7 @@ func _on_activation_completed(success: bool) -> void:
 	# Always spawn pile after minigame ends
 	var spawn_x := _get_screen_width() * pile_spawn_x_ratio
 	if _salvage_spawner:
-		_current_pile = _salvage_spawner.spawn_on_demand_with_rarity(spawn_x, _pending_rarity)
+		_current_pile = _salvage_spawner.spawn_on_demand(spawn_x)
 	
 	if success:
 		# Player won - set lever to flipped state for looting abort
@@ -557,12 +553,20 @@ func _process_deceleration(delta: float) -> void:
 		_start_looting()
 
 
+## Current threat level (zero-based stage index) from the ThreatManager, 0 if unavailable.
+func _get_threat_level() -> int:
+	var lvl := Magnetide.level
+	if lvl and "threat" in lvl and lvl.threat:
+		return lvl.threat.threat_level
+	return 0
+
+
 func _start_looting() -> void:
 	_state = State.LOOTING
 
 	# Activate magnet and start pulling items
 	if _magnet and _current_pile and _current_pile.pile_data:
-		_magnet.activate(_current_pile.pile_data, _current_pile, 0)
+		_magnet.activate(_current_pile.pile_data, _current_pile, _get_threat_level())
 		_magnet.set_spawn_paused_for_departure(false)
 
 	# Threat is driven only by passive time now; magnet use no longer adds threat.
@@ -595,14 +599,6 @@ func _process_looting() -> void:
 
 	var time_remaining := _departure_time_remaining()
 	var spawn_cutoff := maxf(spawn_cutoff_before_departure, 0.0)
-	if _current_pile and _current_pile.pile_data and _current_pile.pile_data.is_artifact_pile:
-		if time_remaining <= spawn_cutoff:
-			_magnet.spawn_artifact_pile_final_item()
-		var should_pause_artifact_spawning := time_remaining <= spawn_cutoff \
-			or _magnet.has_spawned_artifact_pile_final_item()
-		_magnet.set_spawn_paused_for_departure(should_pause_artifact_spawning)
-		return
-
 	var should_pause_spawning := time_remaining <= spawn_cutoff
 	_magnet.set_spawn_paused_for_departure(should_pause_spawning)
 
@@ -700,21 +696,6 @@ func _get_current_departure_duration() -> float:
 	if _current_pile and _current_pile.pile_data:
 		return _current_pile.pile_data.get_departure_duration(departure_duration)
 	return departure_duration
-
-
-func _pick_rarity() -> SalvagePile.Rarity:
-	# Delegate to salvage spawner's rarity picking logic
-	if _salvage_spawner and _salvage_spawner.has_method("_pick_rarity"):
-		return _salvage_spawner._pick_rarity()
-	# Fallback: simple random
-	var roll := randf()
-	if roll < 0.7:
-		return SalvagePile.Rarity.COMMON
-	elif roll < 0.9:
-		return SalvagePile.Rarity.RARE
-	elif roll < 0.98:
-		return SalvagePile.Rarity.EPIC
-	return SalvagePile.Rarity.LEGENDARY
 
 
 func _position_player_at_lever() -> void:

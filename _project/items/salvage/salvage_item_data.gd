@@ -9,8 +9,6 @@ const PART_SPRITE_SIZE: Vector2 = Vector2(80, 80)
 enum ItemRarity { COMMON, RARE, EPIC, LEGENDARY }
 enum ItemKind { SALVAGE, ARTIFACT }
 
-const ARTIFACT_COLOR: Color = Color("4fffe8")
-
 const ITEM_RARITY_WEIGHTS := {
 	ItemRarity.COMMON: 20.0,
 	ItemRarity.RARE: 10.0,
@@ -106,8 +104,6 @@ func get_drop_weight() -> float:
 
 
 func get_rarity_color() -> Color:
-	if is_artifact:
-		return ARTIFACT_COLOR
 	return get_color_for_rarity(int(rarity))
 
 

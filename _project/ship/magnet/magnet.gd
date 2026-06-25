@@ -5,7 +5,6 @@ signal item_attached(item: SalvageItem)
 signal item_removed(item: SalvageItem)
 signal capacity_reached()
 signal all_items_released()
-signal artifact_pile_final_item_spawned(item_data: SalvageItemData)
 
 # ============================================================================
 # MAGNET PROPERTIES
@@ -65,7 +64,6 @@ var _pile_data: SalvagePileData = null
 var _current_threat_level: int = 0
 var _pile_node: SalvagePile = null
 var _salvageable_pull_count: int = 0
-var _artifact_pile_pull_count: int = 0
 var _area: Area2D = null
 var _field_shape: CollisionShape2D = null
 var _effect_animation: AnimatedSprite2D = null
@@ -75,7 +73,6 @@ var _left_wall: StaticBody2D = null
 var _right_wall: StaticBody2D = null
 var _is_pull_suspended_by_capacity: bool = false
 var _is_spawn_paused_for_departure: bool = false
-var _artifact_pile_final_spawned: bool = false
 var current_health: float = 0.0
 const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
@@ -144,15 +141,13 @@ func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int =
 	_current_threat_level = threat_level
 	_is_active = true
 	_pull_timer = 0.0
-	_artifact_pile_pull_count = 0
 	_held_count = 0
 	_attached_items.clear()
 	_counted_items.clear()
 	_items_in_field.clear()
 	_is_pull_suspended_by_capacity = false
 	_is_spawn_paused_for_departure = false
-	_artifact_pile_final_spawned = false
-	
+
 	# Resize magnetic field trapezoid based on pile
 	_update_field_shape_for_pile(pile)
 	
@@ -197,8 +192,6 @@ func _process(delta: float) -> void:
 		return
 	if _is_spawn_paused_for_departure:
 		return
-	if _pile_data and _pile_data.is_artifact_pile and _artifact_pile_final_spawned:
-		return
 
 	_pull_timer += delta
 	if _pull_timer >= pull_frequency and not is_at_capacity:
@@ -206,32 +199,11 @@ func _process(delta: float) -> void:
 		_spawn_item_from_pile()
 
 
-func spawn_artifact_pile_final_item() -> bool:
-	if not _is_active or _artifact_pile_final_spawned:
-		return false
-	if _pile_data == null or not _pile_data.is_artifact_pile:
-		return false
-	return _spawn_item_from_pile(true)
-
-
-func has_spawned_artifact_pile_final_item() -> bool:
-	return _artifact_pile_final_spawned
-
-
-func _spawn_item_from_pile(force_artifact_pile_final: bool = false) -> bool:
+func _spawn_item_from_pile() -> bool:
 	if not _pile_data or not _pile_node or not is_instance_valid(_pile_node):
 		return false
 
-	var result := {}
-	if _pile_data.is_artifact_pile:
-		if _artifact_pile_final_spawned:
-			return false
-		if force_artifact_pile_final:
-			result = _pile_data.roll_artifact_pile_final_item(_current_threat_level)
-		else:
-			result = _pile_data.roll_artifact_pile_item(_artifact_pile_pull_count, _current_threat_level)
-	else:
-		result = _pile_data.roll_item(_salvageable_pull_count, _current_threat_level)
+	var result := _pile_data.roll_pull(_get_current_threat_level(), _get_artifact_tracker(), _salvageable_pull_count)
 	if not result:
 		return false
 
@@ -241,7 +213,6 @@ func _spawn_item_from_pile(force_artifact_pile_final: bool = false) -> bool:
 
 	var is_trash: bool = result.get("is_trash", false)
 	var is_artifact: bool = result.get("is_artifact", false)
-	var is_artifact_pile_final: bool = result.get("is_artifact_pile_final", false)
 	var data: SalvageItemData = null
 	if not is_trash:
 		if not result.has("item") or result["item"] == null:
@@ -275,15 +246,6 @@ func _spawn_item_from_pile(force_artifact_pile_final: bool = false) -> bool:
 	else:
 		item.setup(data)
 
-	if _pile_data.is_artifact_pile:
-		_artifact_pile_pull_count += 1
-		if is_trash:
-			_spawn_artifact_pile_pressure_enemy()
-		elif is_artifact_pile_final:
-			_artifact_pile_final_spawned = true
-			_is_spawn_paused_for_departure = true
-			artifact_pile_final_item_spawned.emit(data)
-
 	# Spawn item at pile position (top of pile) with random x variance within pile width
 	var pile_top := _pile_node.global_position
 	var pile_sprite := _pile_node.get_node_or_null("Sprite2D") as Sprite2D
@@ -312,15 +274,6 @@ func _spawn_item_from_pile(force_artifact_pile_final: bool = false) -> bool:
 	item.start_magnet_pull(self, pull_direction)
 	item.fell_off_screen.connect(_on_item_fell_off_screen)
 	return true
-
-
-func _spawn_artifact_pile_pressure_enemy() -> void:
-	var level := Magnetide.level
-	if level == null:
-		return
-	var enemy_spawner := level.get_node_or_null("EnemySpawner")
-	if enemy_spawner != null and enemy_spawner.has_method("force_spawn_basic_enemy"):
-		enemy_spawner.call("force_spawn_basic_enemy")
 
 
 func remove_item(item: SalvageItem) -> void:
@@ -413,6 +366,23 @@ func increment_pity_counter() -> void:
 ## Get the current pity counter value.
 func get_pity_counter() -> int:
 	return _salvageable_pull_count
+
+
+## Current threat level (zero-based stage index) read live from the ThreatManager, so loot scales
+## as threat rises during a looting session. Falls back to the activate-time value.
+func _get_current_threat_level() -> int:
+	var lvl := Magnetide.level
+	if lvl and "threat" in lvl and lvl.threat:
+		return lvl.threat.threat_level
+	return _current_threat_level
+
+
+## Per-run artifact tracker (owned by the run controller); null if unavailable.
+func _get_artifact_tracker() -> RunArtifactTracker:
+	var run := Magnetide.run
+	if run and run.has_method("get_artifact_tracker"):
+		return run.get_artifact_tracker()
+	return null
 
 
 

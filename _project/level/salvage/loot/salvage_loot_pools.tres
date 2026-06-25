@@ -1,0 +1,51 @@
+[gd_resource type="Resource" script_class="SalvageLootPools" format=3 uid="uid://t230sijeedxh"]
+
+[ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_vmol7"]
+[ext_resource type="Script" uid="uid://dn30025wdye4r" path="res://_project/level/salvage/loot/salvage_loot_pools.gd" id="2_bou5q"]
+[ext_resource type="Resource" uid="uid://b4m4e377rt8fk" path="res://_project/items/salvage/resources/air_conditioner.tres" id="air_conditioner"]
+[ext_resource type="Resource" uid="uid://battery001" path="res://_project/items/salvage/resources/battery.tres" id="battery"]
+[ext_resource type="Resource" uid="uid://rae48gakgn73" path="res://_project/items/salvage/resources/camera.tres" id="camera"]
+[ext_resource type="Resource" uid="uid://bgjwukwee2od3" path="res://_project/items/salvage/resources/cathode_ray_tube.tres" id="cathode_ray_tube"]
+[ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/salvage/resources/circuitry.tres" id="circuitry"]
+[ext_resource type="Resource" uid="uid://bttnr7vrdd8iv" path="res://_project/items/salvage/resources/engine_block.tres" id="engine_block"]
+[ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/salvage/resources/fan.tres" id="fan"]
+[ext_resource type="Resource" uid="uid://dbwsf18itsq6q" path="res://_project/items/salvage/resources/gear.tres" id="gear"]
+[ext_resource type="Resource" uid="uid://c7qk78j84w3wx" path="res://_project/items/salvage/resources/generator.tres" id="generator"]
+[ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/salvage/resources/hose.tres" id="hose"]
+[ext_resource type="Resource" uid="uid://colc0m2br7qtm" path="res://_project/items/salvage/resources/induction_coil.tres" id="induction_coil"]
+[ext_resource type="Resource" uid="uid://bfheki3dmj8e8" path="res://_project/items/salvage/resources/lens.tres" id="lens"]
+[ext_resource type="Resource" uid="uid://c88hehy55soyv" path="res://_project/items/salvage/resources/light_bulb.tres" id="light_bulb"]
+[ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/items/salvage/resources/magnet.tres" id="magnet"]
+[ext_resource type="Resource" uid="uid://kwbg58d0vfv0" path="res://_project/items/salvage/resources/mattress.tres" id="mattress"]
+[ext_resource type="Resource" uid="uid://b7p22gr4ie6ud" path="res://_project/items/salvage/resources/microscope.tres" id="microscope"]
+[ext_resource type="Resource" uid="uid://cyv0ft1sdt7fu" path="res://_project/items/salvage/resources/microwave.tres" id="microwave"]
+[ext_resource type="Resource" uid="uid://motor001" path="res://_project/items/salvage/resources/motor.tres" id="motor"]
+[ext_resource type="Resource" uid="uid://bg8g4p4wn2uuj" path="res://_project/items/salvage/resources/old_monitor.tres" id="old_monitor"]
+[ext_resource type="Resource" uid="uid://dsb0n6bwvbavo" path="res://_project/items/salvage/resources/piston.tres" id="piston"]
+[ext_resource type="Resource" uid="uid://bb82f5e821yul" path="res://_project/items/salvage/resources/portable_reactor.tres" id="portable_reactor"]
+[ext_resource type="Resource" uid="uid://cx0dudxtk1y0n" path="res://_project/items/salvage/resources/power_core.tres" id="power_core"]
+[ext_resource type="Resource" uid="uid://dwgm51pknakej" path="res://_project/items/salvage/resources/processor.tres" id="processor"]
+[ext_resource type="Resource" uid="uid://ceer6vrg47ny5" path="res://_project/items/salvage/resources/radio.tres" id="radio"]
+[ext_resource type="Resource" uid="uid://c4o6h7rcfvgsa" path="res://_project/items/salvage/resources/refrigerator.tres" id="refrigerator"]
+[ext_resource type="Resource" uid="uid://d2af8pqbs56sk" path="res://_project/items/salvage/resources/rocket_thruster.tres" id="rocket_thruster"]
+[ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/salvage/resources/rubber.tres" id="rubber"]
+[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/salvage/resources/scrap_metal.tres" id="scrap_metal"]
+[ext_resource type="Resource" uid="uid://wq1mcd7dr0cm" path="res://_project/items/salvage/resources/server_rack.tres" id="server_rack"]
+[ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/salvage/resources/spring.tres" id="spring"]
+[ext_resource type="Resource" uid="uid://bx4loo0ct74qp" path="res://_project/items/salvage/resources/tire.tres" id="tire"]
+[ext_resource type="Resource" uid="uid://b536k5ijx8aa8" path="res://_project/items/salvage/resources/transformer.tres" id="transformer"]
+[ext_resource type="Resource" uid="uid://ckmde17nv4mch" path="res://_project/items/salvage/resources/trashcan.tres" id="trashcan"]
+[ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/salvage/resources/wires.tres" id="wires"]
+[ext_resource type="Resource" uid="uid://co1xjhanrxvpj" path="res://_project/items/salvage/resources/xray_machine.tres" id="xray_machine"]
+
+[resource]
+script = ExtResource("2_bou5q")
+common_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("mattress"), ExtResource("tire"), ExtResource("trashcan")])
+common_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("gear"), ExtResource("hose"), ExtResource("rubber"), ExtResource("scrap_metal"), ExtResource("wires")])
+rare_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("microwave"), ExtResource("air_conditioner"), ExtResource("refrigerator"), ExtResource("old_monitor"), ExtResource("radio")])
+rare_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("battery"), ExtResource("cathode_ray_tube"), ExtResource("motor"), ExtResource("light_bulb"), ExtResource("spring")])
+epic_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("camera"), ExtResource("engine_block"), ExtResource("microscope"), ExtResource("generator"), ExtResource("server_rack"), ExtResource("transformer"), ExtResource("xray_machine")])
+epic_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("fan"), ExtResource("magnet"), ExtResource("circuitry"), ExtResource("lens"), ExtResource("piston")])
+legendary_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("portable_reactor"), ExtResource("rocket_thruster")])
+legendary_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("induction_coil"), ExtResource("processor"), ExtResource("power_core")])
+metadata/_custom_type_script = "uid://dn30025wdye4r"

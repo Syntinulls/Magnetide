@@ -5,24 +5,20 @@
 [ext_resource type="Texture2D" uid="uid://b4nfymaexsp2i" path="res://_project/level/decoration/sprites/trash_ground_1.png" id="3_ip1iq"]
 [ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage/salvage_spawner.tscn" id="3_salvage_spawner"]
 [ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/decoration/parallax_foreground.tscn" id="4_foreground"]
-[ext_resource type="Resource" uid="uid://bcweuy5i0bfcm" path="res://_project/level/salvage/pile/rarities/common.tres" id="6_pho3n"]
-[ext_resource type="Resource" uid="uid://dqr8k2m5xvn1a" path="res://_project/level/salvage/pile/rarities/rare.tres" id="7_ig01q"]
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
-[ext_resource type="Resource" uid="uid://c3p7gak2lm8nb" path="res://_project/level/salvage/pile/rarities/epic.tres" id="8_v4meo"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
-[ext_resource type="Resource" uid="uid://b5x2n8j4wq6mc" path="res://_project/level/salvage/pile/rarities/legendary.tres" id="9_uj1ub"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
-[ext_resource type="Resource" uid="uid://bih45ycehyrow" path="res://_project/level/salvage/pile/rarities/artifact.tres" id="10_artifact_pile"]
 [ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
 [ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
+[ext_resource type="Script" uid="uid://co7fiiw0csmn1" path="res://_project/level/threat/storm_controller.gd" id="13_storm"]
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
-[ext_resource type="Script" path="res://_project/level/threat/storm_controller.gd" id="13_storm"]
 [ext_resource type="Script" uid="uid://bgpa0y1q8s3n7" path="res://_project/level/threat/threat_level_data.gd" id="16_ig01q"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/level/enemies/enemy_spawner.gd" id="17_enemy_spawner"]
 [ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/level/decoration/sprites/star_particle.svg" id="19_star_particle"]
-[ext_resource type="Script" path="res://_project/level/enemies/enemy_spawn_profile.gd" id="20_enemy_profile"]
+[ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/level/enemies/enemy_spawn_profile.gd" id="20_enemy_profile"]
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
-[ext_resource type="Resource" path="res://_project/level/enemies/worm_enemy_profile.tres" id="22_x74ax"]
+[ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/level/enemies/worm_enemy_profile.tres" id="22_x74ax"]
+[ext_resource type="Resource" path="res://_project/level/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
@@ -118,94 +114,51 @@ fill_to = Vector2(0.5, 1)
 [sub_resource type="Resource" id="Resource_v4meo"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 95.0
-rare_weight = 5.0
-artifact_weight = 1.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_uj1ub"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 85.0
-rare_weight = 15.0
-artifact_weight = 1.5
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_17v6t"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 70.0
-rare_weight = 20.0
-epic_weight = 10.0
-artifact_weight = 2.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_x74ax"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 60.0
-rare_weight = 25.0
-epic_weight = 13.0
-legendary_weight = 2.0
-artifact_weight = 3.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_dx42g"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-rare_weight = 70.0
-epic_weight = 22.0
-legendary_weight = 8.0
-artifact_weight = 4.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_ivsrf"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 62.0
-rare_weight = 23.0
-epic_weight = 13.0
-legendary_weight = 2.0
-artifact_weight = 2.5
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_08aus"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 50.0
-rare_weight = 30.0
-epic_weight = 16.0
-legendary_weight = 4.0
-artifact_weight = 3.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_5o0it"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 35.0
-rare_weight = 38.0
-epic_weight = 20.0
-legendary_weight = 7.0
-artifact_weight = 3.5
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_1uybg"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-common_weight = 15.0
-rare_weight = 50.0
-epic_weight = 25.0
-legendary_weight = 10.0
-artifact_weight = 4.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="Resource" id="Resource_mxlpc"]
 script = ExtResource("16_ig01q")
 enemy_types = PackedStringArray()
-rare_weight = 60.0
-epic_weight = 28.0
-legendary_weight = 12.0
-artifact_weight = 5.0
 weather_conditions = PackedStringArray()
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_pho3n"]
@@ -344,11 +297,7 @@ speed_ratio = 0.05
 z_index = 1
 despawn_x_ratio = -0.2
 auto_spawn = false
-common_data = ExtResource("6_pho3n")
-rare_data = ExtResource("7_ig01q")
-epic_data = ExtResource("8_v4meo")
-legendary_data = ExtResource("9_uj1ub")
-artifact_data = ExtResource("10_artifact_pile")
+pile_data = ExtResource("23_genpile")
 pile_height_ratio_min = 0.18
 pile_height_ratio_max = 0.2
 

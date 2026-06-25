@@ -16,33 +16,15 @@ class_name SalvageSpawner
 ## Maximum time between spawns in seconds.
 @export var spawn_interval_max: float = 30.0
 
-@export_group("Rarities")
-@export_subgroup("Common")
-@export var common_data: SalvagePileData = null
-@export var common_weight: float = 70.0
-@export_subgroup("Rare")
-@export var rare_data: SalvagePileData = null
-@export var rare_weight: float = 20.0
-@export_subgroup("Epic")
-@export var epic_data: SalvagePileData = null
-@export var epic_weight: float = 8.0
-@export_subgroup("Legendary")
-@export var legendary_data: SalvagePileData = null
-@export var legendary_weight: float = 2.0
-@export_subgroup("Artifact")
-@export var artifact_data: SalvagePileData = null
-@export var artifact_weight: float = 1.0
-@export_subgroup("Pity")
-## Added to each eligible rarity that was not selected after every rarity roll.
-@export var rarity_pity_increment: float = 5.0
+@export_group("Pile Data")
+## Generic salvage pile data — every pile uses this single shared resource for loot.
+@export var pile_data: SalvagePileData = null
 
 @export_group("Salvage Properties")
 ## Minimum height of salvage pile as ratio of viewport height.
 @export var pile_height_ratio_min: float = 0.125
 ## Maximum height of salvage pile as ratio of viewport height.
 @export var pile_height_ratio_max: float = 0.15
-## Artifact piles are smaller than normal piles.
-@export var artifact_pile_height_multiplier: float = 0.62
 
 var _salvage_pile_scene: PackedScene
 var _spawn_timer: Timer
@@ -50,23 +32,6 @@ var _current_pile: SalvagePile = null
 var _level: Node = null
 var _threat_manager: ThreatManager = null
 var _viewport_anchor: ViewportAnchor = null
-var _rarity_pity_weights: Dictionary = {}
-var _rarity_pity_base_key: String = ""
-
-
-func _get_pile_data_for_rarity(rarity: SalvagePile.Rarity) -> SalvagePileData:
-	match rarity:
-		SalvagePile.Rarity.COMMON:
-			return common_data
-		SalvagePile.Rarity.RARE:
-			return rare_data
-		SalvagePile.Rarity.EPIC:
-			return epic_data
-		SalvagePile.Rarity.LEGENDARY:
-			return legendary_data
-		SalvagePile.Rarity.ARTIFACT:
-			return artifact_data
-	return common_data
 
 
 func _ready() -> void:
@@ -155,85 +120,6 @@ func on_pile_acquired() -> void:
 	_on_pile_removed()
 
 
-func _pick_rarity() -> SalvagePile.Rarity:
-	var base_weights := _get_active_rarity_weights()
-	_sync_rarity_pity_weights(base_weights)
-	var rarity_entries: Array = [
-		SalvagePile.Rarity.COMMON,
-		SalvagePile.Rarity.RARE,
-		SalvagePile.Rarity.EPIC,
-		SalvagePile.Rarity.LEGENDARY,
-		SalvagePile.Rarity.ARTIFACT,
-	]
-	var selected: Variant = WeightedRandom.roll_weighted(
-		rarity_entries,
-		Callable(self, "_get_rarity_roll_weight").bind(_rarity_pity_weights)
-	)
-	var selected_rarity := int(selected) if selected != null else int(SalvagePile.Rarity.COMMON)
-	_apply_rarity_pity_result(selected_rarity, base_weights)
-	return selected_rarity as SalvagePile.Rarity
-
-
-func _get_rarity_roll_weight(rarity: int, weights: Dictionary) -> float:
-	if _get_pile_data_for_rarity(rarity) == null:
-		return 0.0
-	return float(weights.get(rarity, 0.0))
-
-
-func _get_active_rarity_weights() -> Dictionary:
-	if not _threat_manager:
-		_resolve_threat_manager()
-	if _threat_manager:
-		return _threat_manager.get_pile_rarity_weights()
-	return {
-		SalvagePile.Rarity.COMMON: common_weight,
-		SalvagePile.Rarity.RARE: rare_weight,
-		SalvagePile.Rarity.EPIC: epic_weight,
-		SalvagePile.Rarity.LEGENDARY: legendary_weight,
-		SalvagePile.Rarity.ARTIFACT: artifact_weight,
-	}
-
-
-func _sync_rarity_pity_weights(base_weights: Dictionary) -> void:
-	var base_key := _get_rarity_weight_key(base_weights)
-	if base_key == _rarity_pity_base_key and not _rarity_pity_weights.is_empty():
-		return
-
-	_rarity_pity_base_key = base_key
-	_rarity_pity_weights = base_weights.duplicate(true)
-
-
-func _apply_rarity_pity_result(selected_rarity: int, base_weights: Dictionary) -> void:
-	for rarity in _get_rarity_entries():
-		var base_weight := maxf(float(base_weights.get(rarity, 0.0)), 0.0)
-		if _get_pile_data_for_rarity(rarity) == null or base_weight <= 0.0:
-			_rarity_pity_weights[rarity] = base_weight
-			continue
-
-		if rarity == selected_rarity:
-			_rarity_pity_weights[rarity] = base_weight
-		else:
-			var current_weight := maxf(float(_rarity_pity_weights.get(rarity, base_weight)), base_weight)
-			_rarity_pity_weights[rarity] = current_weight + maxf(rarity_pity_increment, 0.0)
-
-
-func _get_rarity_entries() -> Array[int]:
-	return [
-		SalvagePile.Rarity.COMMON,
-		SalvagePile.Rarity.RARE,
-		SalvagePile.Rarity.EPIC,
-		SalvagePile.Rarity.LEGENDARY,
-		SalvagePile.Rarity.ARTIFACT,
-	]
-
-
-func _get_rarity_weight_key(weights: Dictionary) -> String:
-	var parts := PackedStringArray()
-	for rarity in _get_rarity_entries():
-		parts.append("%d:%s" % [rarity, str(float(weights.get(rarity, 0.0)))])
-	return "|".join(parts)
-
-
 func _resolve_threat_manager() -> void:
 	if _threat_manager:
 		return
@@ -260,25 +146,14 @@ func _spawn_salvage() -> void:
 	var spawn_y := _get_screen_height()  # Bottom of screen
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
-	var rarity := _pick_rarity()
-	if rarity == SalvagePile.Rarity.ARTIFACT:
-		target_height *= artifact_pile_height_multiplier
-
-	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
-	_current_pile.activate(rarity, Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
+	_current_pile.pile_data = pile_data
+	_current_pile.activate(Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
 
 
 ## Spawn a salvage pile on demand (used by MagnetMinigame).
 ## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
 ## default off-screen location.  Returns the new SalvagePile instance.
 func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
-	return spawn_on_demand_with_rarity(custom_spawn_x, _pick_rarity())
-
-
-## Spawn a salvage pile on demand with a specific rarity.
-## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
-## default off-screen location.  Returns the new SalvagePile instance.
-func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rarity) -> SalvagePile:
 	if _is_cap_reached():
 		return null
 	if _current_pile and _current_pile.is_active:
@@ -293,9 +168,6 @@ func spawn_on_demand_with_rarity(custom_spawn_x: float, rarity: SalvagePile.Rari
 	var spawn_y := _get_screen_height()  # Bottom of screen
 	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
 	var rot := randf_range(0.0, TAU)
-	if rarity == SalvagePile.Rarity.ARTIFACT:
-		target_height *= artifact_pile_height_multiplier
-
-	_current_pile.pile_data = _get_pile_data_for_rarity(rarity)
-	_current_pile.activate(rarity, Vector2(spawn_x, spawn_y), _level, target_height, rot)
+	_current_pile.pile_data = pile_data
+	_current_pile.activate(Vector2(spawn_x, spawn_y), _level, target_height, rot)
 	return _current_pile

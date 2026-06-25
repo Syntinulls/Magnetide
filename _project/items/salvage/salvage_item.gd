@@ -14,6 +14,8 @@ enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
 const SETTLE_TIME: float = 0.05
 const STORAGE_COLLISION_LAYER: int = 8
 const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
+## Interact highlight color; supersedes the persistent rarity outline while hovered/interactable.
+const INTERACT_OUTLINE_COLOR: Color = Color.WHITE
 const TRASH_RARITY_COLOR: Color = Color("b8b8b8")
 const TRASH_DISPLAY_NAME: String = "Trash"
 const TRASH_PARTICLE_COUNT_MIN: int = 8
@@ -36,6 +38,8 @@ var _sprite: Sprite2D = null
 var _collision_shape: CollisionShape2D = null
 var _settle_timer: float = 0.0
 var _outline_material: ShaderMaterial = null
+var _rarity_outline_color: Color = Color.WHITE
+var _interact_highlight: bool = false
 var _contacting_items: Array[SalvageItem] = []
 var _gun_hold_target: Vector2 = Vector2.ZERO
 var _gun_hold_velocity: Vector2 = Vector2.ZERO
@@ -214,6 +218,8 @@ func setup(data: SalvageItemData) -> void:
 		var new_radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
 		(_collision_shape.shape as CircleShape2D).radius = new_radius
 
+	_apply_rarity_outline()
+
 
 func setup_trash(texture: Texture2D, area: Vector2 = Vector2(64, 64), hitbox: Vector2 = Vector2(36, 36), weight: float = 0.75) -> void:
 	_is_trash = true
@@ -233,6 +239,8 @@ func setup_trash(texture: Texture2D, area: Vector2 = Vector2(64, 64), hitbox: Ve
 	if _collision_shape and _collision_shape.shape is CircleShape2D:
 		var new_radius := minf(hitbox_size.x, hitbox_size.y) * 0.5
 		(_collision_shape.shape as CircleShape2D).radius = new_radius
+
+	_apply_rarity_outline()
 
 
 func _apply_sprite_texture(texture: Texture2D, area: Vector2) -> void:
@@ -277,8 +285,6 @@ func get_display_name() -> String:
 func get_rarity_color() -> Color:
 	if _is_trash:
 		return TRASH_RARITY_COLOR
-	if is_artifact:
-		return SalvageItemData.ARTIFACT_COLOR
 	return SalvageItemData.get_color_for_rarity(rarity)
 
 
@@ -483,10 +489,41 @@ func _check_off_screen() -> void:
 		queue_free()
 
 
-## Outline
+## Interact (white) highlight. Supersedes the persistent rarity outline while enabled; reverts on
+## disable. Same signature as before, so existing hover/recycler/research callers are unchanged.
 func set_outlined(enabled: bool) -> void:
-	if _outline_material:
-		_outline_material.set_shader_parameter("outline_enabled", enabled)
+	_interact_highlight = enabled
+	_refresh_outline()
+
+
+## Whether this item shows a persistent rarity outline.
+## Trash never does. Artifacts always do (even in storage). Salvage items show it everywhere except
+## while placed in the ship's storage area.
+func _has_rarity_outline() -> bool:
+	if _is_trash:
+		return false
+	if is_artifact:
+		return true
+	return not _is_in_storage
+
+
+## Cache the rarity color and apply the resting outline. Call from setup() / setup_trash().
+func _apply_rarity_outline() -> void:
+	_rarity_outline_color = get_rarity_color()
+	_refresh_outline()
+
+
+func _refresh_outline() -> void:
+	if not _outline_material:
+		return
+	if _interact_highlight:
+		_outline_material.set_shader_parameter("outline_enabled", true)
+		_outline_material.set_shader_parameter("outline_color", INTERACT_OUTLINE_COLOR)
+	elif _has_rarity_outline():
+		_outline_material.set_shader_parameter("outline_enabled", true)
+		_outline_material.set_shader_parameter("outline_color", _rarity_outline_color)
+	else:
+		_outline_material.set_shader_parameter("outline_enabled", false)
 
 
 ## Contact tracking for dependency chain and magnet friction
@@ -625,9 +662,12 @@ func grab_for_magnet_gun(puller: Node2D) -> void:
 		var pos := global_position
 		reparent(scene_root)
 		global_position = pos
-	
+
 	_magnet_target = null
 	z_index = 10  # Render above everything while held
+
+	# Held by the gun again (no longer in storage): the rarity outline returns.
+	_refresh_outline()
 
 
 func update_gun_hold_position(target_pos: Vector2) -> void:
@@ -685,6 +725,9 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 	z_index = 0
+
+	# In storage: salvage items hide their rarity outline; artifacts keep it.
+	_refresh_outline()
 
 
 func lock_for_research(target_pos: Vector2, research_parent: Node = null) -> void:

@@ -33,7 +33,7 @@ const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 const STORAGE_ITEMS_Z_INDEX: int = -5
-const DEBUG_RESEARCH_ARTIFACT_DATA: SalvageItemData = preload("res://_project/items/salvage/resources/artifacts/unknown_artifact.tres")
+const DEBUG_ARTIFACT_POOLS: ArtifactPools = preload("res://_project/level/salvage/loot/artifact_pools.tres")
 const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/shaders/border_outline.gdshader")
 const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
 const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
@@ -363,20 +363,37 @@ func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
 
 	item.place_in_storage(target_pos, _ensure_storage_items_root())
 	add_to_storage(item)
+	_commit_artifact_if_collected(item)
 	return true
+
+
+## Commit the per-run artifact cap the moment an artifact is placed into storage.
+func _commit_artifact_if_collected(item: SalvageItem) -> void:
+	if item == null or not item.is_artifact:
+		return
+	var run := Magnetide.run
+	if run and run.has_method("get_artifact_tracker"):
+		var tracker: RunArtifactTracker = run.get_artifact_tracker()
+		if tracker:
+			tracker.mark_collected(item.rarity)
 
 
 func _spawn_debug_research_artifact_in_storage() -> void:
 	if not spawn_debug_research_artifact_in_storage:
 		return
-	if DEBUG_RESEARCH_ARTIFACT_DATA == null:
+	if DEBUG_ARTIFACT_POOLS == null:
+		return
+
+	# Mint a generic common artifact (same path as the magnet's artifact roll).
+	var artifact_data := DEBUG_ARTIFACT_POOLS.make_artifact(SalvageItemData.ItemRarity.COMMON)
+	if artifact_data == null:
 		return
 
 	var storage_root := _ensure_storage_items_root()
 	var artifact := SalvageItem.new()
 	artifact.name = "DebugResearchArtifact"
 	storage_root.add_child(artifact)
-	artifact.setup(DEBUG_RESEARCH_ARTIFACT_DATA)
+	artifact.setup(artifact_data)
 
 	var target_pos := global_position + storage_area_position + debug_research_artifact_storage_offset
 	if not store_item(artifact, target_pos):

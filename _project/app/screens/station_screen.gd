@@ -8,6 +8,8 @@ const StorageSlotScene := preload("res://_project/app/screens/station_storage_sl
 const StationUpgradeSlotScript := preload("res://_project/app/screens/station_upgrade_slot.gd")
 const StationUpgradeSlotScene := preload("res://_project/app/screens/station_upgrade_slot.tscn")
 const SlottableCatalogEntryScript := preload("res://_project/items/slottable_catalog_entry.gd")
+## Accent color for the research-points readout (formerly borrowed from SalvageItemData.ARTIFACT_COLOR).
+const RESEARCH_POINTS_COLOR: Color = Color("4fffe8")
 const DEFAULT_AUGMENT_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_player.png")
 const DEFAULT_HEALTH_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_health.png")
 const DEFAULT_SHIELD_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_shield.png")
@@ -708,7 +710,7 @@ func _ensure_research_points_display() -> void:
 	_research_points_label.name = "ResearchPointsLabel"
 	_research_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
 	_research_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_research_points_label.add_theme_color_override("font_color", SalvageItemData.ARTIFACT_COLOR)
+	_research_points_label.add_theme_color_override("font_color", RESEARCH_POINTS_COLOR)
 	_research_points_label.add_theme_color_override("font_outline_color", Color.BLACK)
 	_research_points_label.add_theme_constant_override("outline_size", 4)
 	_research_points_label.add_theme_font_size_override("font_size", 34)

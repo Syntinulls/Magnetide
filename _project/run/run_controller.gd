@@ -27,6 +27,7 @@ var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
 var _storm_controller: StormController = null
 var _run_loadout: RunLoadout = null
+var _artifact_tracker: RunArtifactTracker = RunArtifactTracker.new()
 var _active_augment_behaviors: Array[AugmentBehavior] = []
 var _elapsed_seconds: float = 0.0
 var _enemies_killed: int = 0
@@ -43,6 +44,12 @@ func get_run_loadout() -> RunLoadout:
 	return _run_loadout
 
 
+## Per-run artifact tracker (1-each caps). Read by the magnet (roll gating) and the ship storage
+## path (cap commit on placement).
+func get_artifact_tracker() -> RunArtifactTracker:
+	return _artifact_tracker
+
+
 func start_run(level_definition: LevelDefinition, level_node: Node, run_loadout: RunLoadout = null) -> void:
 	_level_definition = level_definition
 	_level = level_node
@@ -52,6 +59,7 @@ func start_run(level_definition: LevelDefinition, level_node: Node, run_loadout:
 	_scrap_metal_collected = 0
 	_end_reason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 	_is_run_ending = false
+	_artifact_tracker.reset()
 	call_deferred("_bind_runtime")
 
 

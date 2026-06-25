@@ -1,19 +1,11 @@
 extends Node2D
 class_name SalvagePile
 
-enum Rarity { COMMON, RARE, EPIC, LEGENDARY, ARTIFACT }
-
-const RARITY_COLORS: Dictionary = {
-	Rarity.COMMON: Color(0.0, 0.8, 0.0),      # Green
-	Rarity.RARE: Color(0.2, 0.4, 1.0),        # Blue
-	Rarity.EPIC: Color(0.6, 0.2, 0.8),        # Purple
-	Rarity.LEGENDARY: Color(1.0, 0.85, 0.0),  # Yellow/Gold
-	Rarity.ARTIFACT: Color("4fffe8"),
-}
+# Salvage piles are generic and uncolored — they no longer carry a rarity. Loot is determined by
+# the shared pile_data; pile rarity has been removed from the game.
 
 var _pile_textures: Array[Texture2D] = []
 var direction: Vector2 = Vector2.LEFT
-var rarity: Rarity = Rarity.COMMON
 var is_active: bool = false
 var pile_data: SalvagePileData = null
 var _level: Node = null
@@ -29,8 +21,7 @@ func _ready() -> void:
 	deactivate()
 
 
-func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, target_height: float, _new_rotation: float) -> void:
-	rarity = new_rarity
+func activate(spawn_position: Vector2, level: Node, target_height: float, _new_rotation: float) -> void:
 	position = spawn_position
 	_level = level
 	rotation = deg_to_rad(randf_range(-3.0, 3.0))  # Subtle random rotation
@@ -40,12 +31,11 @@ func activate(new_rarity: Rarity, spawn_position: Vector2, level: Node, target_h
 		var tex_idx := randi() % _pile_textures.size()
 		sprite.texture = _pile_textures[tex_idx]
 		
-		# Apply rarity color via shader tint_color parameter
-		var tint: Color = RARITY_COLORS.get(rarity, Color.WHITE)
+		# Generic/uncolored pile: force a neutral white tint (no rarity color).
 		if sprite.material:
 			var shader_mat := sprite.material as ShaderMaterial
 			if shader_mat:
-				shader_mat.set_shader_parameter("tint_color", tint)
+				shader_mat.set_shader_parameter("tint_color", Color.WHITE)
 		
 		# Calculate uniform scale to achieve target height
 		var tex_size := sprite.texture.get_size()

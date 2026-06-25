@@ -1,0 +1,14 @@
+[gd_resource type="Resource" script_class="SalvagePileData" format=3 uid="uid://dt1qcniioijon"]
+
+[ext_resource type="Script" uid="uid://elnbd45b0anw" path="res://_project/level/salvage/pile/salvage_pile_data.gd" id="1_script"]
+[ext_resource type="Resource" uid="uid://t230sijeedxh" path="res://_project/level/salvage/loot/salvage_loot_pools.tres" id="2_pools"]
+[ext_resource type="Resource" uid="uid://d1bu4d1d84n5l" path="res://_project/level/salvage/loot/salvage_rarity_weights.tres" id="3_weights"]
+[ext_resource type="Resource" uid="uid://b03y5cxxo0qus" path="res://_project/level/salvage/loot/artifact_pools.tres" id="4_artifacts"]
+[ext_resource type="Texture2D" uid="uid://diiivvom46s0k" path="res://_project/items/salvage/sprites/trash_small.png" id="5_1wqhy"]
+
+[resource]
+script = ExtResource("1_script")
+loot_pools = ExtResource("2_pools")
+rarity_weights = ExtResource("3_weights")
+artifact_pools = ExtResource("4_artifacts")
+metadata/_custom_type_script = "uid://elnbd45b0anw"

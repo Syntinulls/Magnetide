@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="ArtifactPools" format=3 uid="uid://b03y5cxxo0qus"]
+
+[ext_resource type="Texture2D" uid="uid://cuyhmasia1a6s" path="res://_project/level/salvage/loot/sprites/artifact_1.png" id="1_p78os"]
+[ext_resource type="Script" uid="uid://c5qfapaiulmd8" path="res://_project/level/salvage/loot/artifact_pools.gd" id="2_dee6t"]
+
+[resource]
+script = ExtResource("2_dee6t")
+common_sprites = Array[Texture2D]([ExtResource("1_p78os")])
+rare_sprites = Array[Texture2D]([ExtResource("1_p78os")])
+epic_sprites = Array[Texture2D]([ExtResource("1_p78os")])

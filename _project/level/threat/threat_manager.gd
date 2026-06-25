@@ -185,13 +185,6 @@ func get_current_level_factors() -> ThreatLevelData:
 	return get_level_factors(threat_level)
 
 
-func get_pile_rarity_weights(level: int = threat_level) -> Dictionary:
-	var factors := get_level_factors(level)
-	if factors:
-		return factors.get_pile_rarity_weights()
-	return {}
-
-
 func _set_current_threat(value: float) -> void:
 	var ceiling := _cap_ceiling()
 	var old_level := threat_level
@@ -227,28 +220,10 @@ func _tick_storm_countdown(delta: float) -> void:
 
 
 static func _create_default_threat_level_factors() -> Array[ThreatLevelData]:
-	return [
-		_create_threat_level_data(95.0, 5.0, 0.0, 0.0, 1.0),
-		_create_threat_level_data(90.0, 10.0, 0.0, 0.0, 1.25),
-		_create_threat_level_data(85.0, 15.0, 0.0, 0.0, 1.5),
-		_create_threat_level_data(78.0, 18.0, 4.0, 0.0, 1.75),
-		_create_threat_level_data(70.0, 20.0, 10.0, 0.0, 2.0),
-		_create_threat_level_data(62.0, 23.0, 13.0, 2.0, 2.5),
-		_create_threat_level_data(50.0, 30.0, 16.0, 4.0, 3.0),
-		_create_threat_level_data(35.0, 38.0, 20.0, 7.0, 3.5),
-		_create_threat_level_data(15.0, 50.0, 25.0, 10.0, 4.0),
-		_create_threat_level_data(0.0, 60.0, 28.0, 12.0, 5.0),
-	]
-
-
-static func _create_threat_level_data(common: float, rare: float, epic: float, legendary: float, artifact: float) -> ThreatLevelData:
-	var data := ThreatLevelData.new()
-	data.common_weight = common
-	data.rare_weight = rare
-	data.epic_weight = epic
-	data.legendary_weight = legendary
-	data.artifact_weight = artifact
-	return data
+	var factors: Array[ThreatLevelData] = []
+	for _i in range(LEVEL_COUNT):
+		factors.append(ThreatLevelData.new())
+	return factors
 
 
 static func _normalize_threat_level_factors(value: Array[ThreatLevelData]) -> Array[ThreatLevelData]:

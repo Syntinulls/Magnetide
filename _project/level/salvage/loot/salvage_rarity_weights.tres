@@ -1,0 +1,8 @@
+[gd_resource type="Resource" script_class="SalvageRarityWeights" format=3 uid="uid://d1bu4d1d84n5l"]
+
+[ext_resource type="Script" uid="uid://b5mjivgjiupci" path="res://_project/level/salvage/loot/salvage_rarity_weights.gd" id="1_s4yrb"]
+
+[resource]
+script = ExtResource("1_s4yrb")
+base_weights = PackedFloat32Array(100, 30, 18, 12)
+metadata/_custom_type_script = "uid://b5mjivgjiupci"
