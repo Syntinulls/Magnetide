@@ -17,6 +17,8 @@
 [ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/level/enemies/enemy_spawn_profile.gd" id="20_enemy_profile"]
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
 [ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/level/enemies/worm_enemy_profile.tres" id="22_x74ax"]
+[ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage/salvage_spawner.tscn" id="3_salvage_spawner"]
+[ext_resource type="Resource" uid="uid://dt1qcniioijon" path="res://_project/level/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
@@ -302,10 +304,19 @@ ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/TopRight_UI/VBoxContai
 [node name="Player" parent="Ship" unique_id=155842924 instance=ExtResource("10_5p64y")]
 position = Vector2(4, -140)
 
+[node name="SalvageSpawner" parent="." unique_id=2088533275 instance=ExtResource("3_salvage_spawner")]
+z_index = 1
+despawn_x_ratio = -0.2
+auto_spawn = false
+pile_data = ExtResource("23_genpile")
+pile_height_ratio_min = 0.18
+pile_height_ratio_max = 0.2
+
 [node name="MagnetMinigame" parent="." unique_id=110391114 instance=ExtResource("11_minigame")]
 cooldown_min = 8.0
 cooldown_max = 10.0
 pile_spawn_x_ratio = 5.0
+salvage_spawner_path = NodePath("../SalvageSpawner")
 timescale_slowdown_time = 1.0
 timescale_speedup_time = 1.0
 zoom_tween_time = 1.0
