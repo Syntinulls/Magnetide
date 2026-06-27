@@ -3,7 +3,6 @@
 [ext_resource type="Script" uid="uid://r5gdu025jw7n" path="res://_project/level/level.gd" id="1_script"]
 [ext_resource type="PackedScene" uid="uid://bxms6wtkrevjc" path="res://_project/level/decoration/parallax_background.tscn" id="2_parallax"]
 [ext_resource type="Texture2D" uid="uid://b4nfymaexsp2i" path="res://_project/level/decoration/sprites/trash_ground_1.png" id="3_ip1iq"]
-[ext_resource type="PackedScene" uid="uid://bxms62cxu0ijc" path="res://_project/level/salvage/salvage_spawner.tscn" id="3_salvage_spawner"]
 [ext_resource type="PackedScene" uid="uid://bxms6n6xvqvjc" path="res://_project/level/decoration/parallax_foreground.tscn" id="4_foreground"]
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
@@ -18,7 +17,6 @@
 [ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/level/enemies/enemy_spawn_profile.gd" id="20_enemy_profile"]
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
 [ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/level/enemies/worm_enemy_profile.tres" id="22_x74ax"]
-[ext_resource type="Resource" path="res://_project/level/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
@@ -293,14 +291,6 @@ bottom_width_ratio = 3.0
 [node name="TrashSkyline" parent="ParallaxCanvasLayer/ParallaxViewportContainer/ParallaxViewport" unique_id=1138561827 instance=ExtResource("7_skyline")]
 speed_ratio = 0.05
 
-[node name="SalvageSpawner" parent="." unique_id=2088533275 instance=ExtResource("3_salvage_spawner")]
-z_index = 1
-despawn_x_ratio = -0.2
-auto_spawn = false
-pile_data = ExtResource("23_genpile")
-pile_height_ratio_min = 0.18
-pile_height_ratio_max = 0.2
-
 [node name="ParallaxForeground" parent="." unique_id=1830643006 instance=ExtResource("4_foreground")]
 follow_viewport_enabled = true
 ground_y_ratio = 0.9
@@ -319,7 +309,6 @@ pile_spawn_x_ratio = 5.0
 timescale_slowdown_time = 1.0
 timescale_speedup_time = 1.0
 zoom_tween_time = 1.0
-salvage_spawner_path = NodePath("../SalvageSpawner")
 ship_path = NodePath("../Ship")
 player_path = NodePath("../Ship/Player")
 magnet_lever_path = NodePath("../Ship/MagnetLever")

@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cq01ldr8m8m4n"
-path="res://.godot/imported/threat_1_color.png-19b2d66e81f76187fe08b925293385da.ctex"
+uid="uid://j7xfotns12rx"
+path="res://.godot/imported/threatbar_locked.png-bcf41f973180c4c7b8b5c867ba072ea8.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/threat/sprites/threat_1_color.png"
-dest_files=["res://.godot/imported/threat_1_color.png-19b2d66e81f76187fe08b925293385da.ctex"]
+source_file="res://_project/level/threat/sprites/threatbar_locked.png"
+dest_files=["res://.godot/imported/threatbar_locked.png-bcf41f973180c4c7b8b5c867ba072ea8.ctex"]
 
 [params]
 

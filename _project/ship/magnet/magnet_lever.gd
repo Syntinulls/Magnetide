@@ -117,8 +117,12 @@ func _process_advance_input() -> void:
 	else:
 		_advance_confirm_pending = false
 		_set_continue_prompt_visible(false)
-		# Consume advance mode so the cutscene isn't re-triggered.
-		_advance_mode = false
+		# Hand off to the advance handler. Do NOT clear _advance_mode here: the
+		# handler clears it itself the moment the cutscene actually commits (and
+		# _advancing guards against re-triggering). If we cleared it up front and
+		# the handler rejected the press (e.g. a cutscene is still mid-flight when
+		# presses arrive fast), the lever would be left permanently inert with no
+		# way to retry, stranding the run until the storm.
 		advance_confirmed.emit()
 
 

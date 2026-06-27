@@ -46,7 +46,6 @@ var _is_cap_reached: bool = false
 ## the cap segment (e.g. during an active magnet looting cycle). Threat still clamps at the ceiling.
 var _cap_hold: bool = false
 var _storm_active: bool = false
-var _storm_countdown_remaining: float = 0.0
 var _threat_level_factors: Array[ThreatLevelData] = _create_default_threat_level_factors()
 
 @export var threat_level_factors: Array[ThreatLevelData]:
@@ -83,10 +82,6 @@ var is_storm_active: bool:
 	get:
 		return _storm_active
 
-var storm_countdown_remaining: float:
-	get:
-		return _storm_countdown_remaining
-
 var threat_ratio: float:
 	get:
 		return _current_threat / MAX_THREAT
@@ -105,8 +100,10 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
+	# Cap reached: threat gain is fully paused. The storm countdown runs as an
+	# isolated timer owned by the event-text UI; the run waits there for the
+	# player to advance (lever) or for the storm to arrive.
 	if _is_cap_reached:
-		_tick_storm_countdown(delta)
 		return
 	if _current_threat >= _cap_ceiling():
 		return
@@ -155,7 +152,6 @@ func raise_cap() -> void:
 	_threat_level_cap += 1
 	_is_cap_reached = false
 	_storm_active = false
-	_storm_countdown_remaining = 0.0
 	cap_raised.emit(_threat_level_cap)
 	var new_level := threat_level
 	if new_level != old_level:
@@ -167,7 +163,6 @@ func reset() -> void:
 	_is_cap_reached = false
 	_cap_hold = false
 	_storm_active = false
-	_storm_countdown_remaining = 0.0
 	_current_threat = 0.0
 	threat_changed.emit(_current_threat)
 	threat_level_changed.emit(threat_level)
@@ -228,18 +223,19 @@ func _try_enter_cap_reached() -> void:
 func _enter_cap_reached() -> void:
 	_is_cap_reached = true
 	_storm_active = false
-	_storm_countdown_remaining = storm_countdown_seconds
 	cap_reached.emit()
-	storm_countdown_started.emit(_storm_countdown_remaining)
+	# The event-text UI owns the storm countdown timer; tell it to start one.
+	storm_countdown_started.emit(storm_countdown_seconds)
 
 
-func _tick_storm_countdown(delta: float) -> void:
-	if _storm_active:
+## Begin the acid storm. Called when the event-text storm countdown expires;
+## emits storm_arrived for the StormController. No-op if the storm is already
+## active or the cap is no longer reached (e.g. the player advanced in time).
+func trigger_storm() -> void:
+	if _storm_active or not _is_cap_reached:
 		return
-	_storm_countdown_remaining = maxf(_storm_countdown_remaining - delta, 0.0)
-	if _storm_countdown_remaining <= 0.0:
-		_storm_active = true
-		storm_arrived.emit()
+	_storm_active = true
+	storm_arrived.emit()
 
 
 static func _create_default_threat_level_factors() -> Array[ThreatLevelData]:

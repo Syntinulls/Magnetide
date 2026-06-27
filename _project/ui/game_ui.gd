@@ -55,6 +55,8 @@ func _ready() -> void:
 	if _player_augment_tooltip:
 		_player_augment_tooltip.visible = false
 	set_run_scrap_metal_count(0)
+	if _event_text and not _event_text.countdown_finished.is_connected(_on_event_countdown_finished):
+		_event_text.countdown_finished.connect(_on_event_countdown_finished)
 	call_deferred("_bind_to_active_run_controller")
 	call_deferred("_bind_to_active_player")
 	_update_health_ui()
@@ -111,6 +113,15 @@ func _on_storm_arrived() -> void:
 func _on_threat_cap_raised(_new_cap: int) -> void:
 	if _event_text:
 		_event_text.clear(&"storm")
+
+
+## The event text owns the storm countdown timer. When it expires, kick off the
+## acid storm on the threat manager (which notifies the StormController).
+func _on_event_countdown_finished(source: StringName) -> void:
+	if source != &"storm":
+		return
+	if _bound_threat and is_instance_valid(_bound_threat):
+		_bound_threat.trigger_storm()
 
 
 func _update_health_ui() -> void:
