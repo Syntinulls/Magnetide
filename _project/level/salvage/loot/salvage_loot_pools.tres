@@ -29,7 +29,6 @@
 [ext_resource type="Resource" uid="uid://c4o6h7rcfvgsa" path="res://_project/items/salvage/resources/refrigerator.tres" id="refrigerator"]
 [ext_resource type="Resource" uid="uid://d2af8pqbs56sk" path="res://_project/items/salvage/resources/rocket_thruster.tres" id="rocket_thruster"]
 [ext_resource type="Resource" uid="uid://bw7r83xr0mq7j" path="res://_project/items/salvage/resources/rubber.tres" id="rubber"]
-[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/salvage/resources/scrap_metal.tres" id="scrap_metal"]
 [ext_resource type="Resource" uid="uid://wq1mcd7dr0cm" path="res://_project/items/salvage/resources/server_rack.tres" id="server_rack"]
 [ext_resource type="Resource" uid="uid://d4epu7cwhfllj" path="res://_project/items/salvage/resources/spring.tres" id="spring"]
 [ext_resource type="Resource" uid="uid://bx4loo0ct74qp" path="res://_project/items/salvage/resources/tire.tres" id="tire"]
@@ -41,7 +40,7 @@
 [resource]
 script = ExtResource("2_bou5q")
 common_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("mattress"), ExtResource("tire"), ExtResource("trashcan")])
-common_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("gear"), ExtResource("hose"), ExtResource("rubber"), ExtResource("scrap_metal"), ExtResource("wires")])
+common_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("gear"), ExtResource("hose"), ExtResource("rubber"), ExtResource("wires")])
 rare_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("microwave"), ExtResource("air_conditioner"), ExtResource("refrigerator"), ExtResource("old_monitor"), ExtResource("radio")])
 rare_non_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("battery"), ExtResource("cathode_ray_tube"), ExtResource("motor"), ExtResource("light_bulb"), ExtResource("spring")])
 epic_salvageable = Array[ExtResource("1_vmol7")]([ExtResource("camera"), ExtResource("engine_block"), ExtResource("microscope"), ExtResource("generator"), ExtResource("server_rack"), ExtResource("transformer"), ExtResource("xray_machine")])

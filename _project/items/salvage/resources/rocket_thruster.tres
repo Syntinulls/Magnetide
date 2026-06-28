@@ -2,7 +2,6 @@
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_nrg7l"]
 [ext_resource type="Resource" uid="uid://wires001" path="res://_project/items/salvage/resources/wires.tres" id="2_o0464"]
-[ext_resource type="Resource" uid="uid://b5o14dfiluvf5" path="res://_project/items/salvage/resources/scrap_metal.tres" id="3_t5t8x"]
 [ext_resource type="Resource" uid="uid://m6j4757eg7s1" path="res://_project/items/salvage/resources/hose.tres" id="4_w0ec0"]
 [ext_resource type="Resource" uid="uid://dy3aedgus0ssj" path="res://_project/items/salvage/resources/circuitry.tres" id="5_dbwr0"]
 [ext_resource type="Resource" uid="uid://l0hpscbfug0q" path="res://_project/items/salvage/resources/fan.tres" id="6_lx7kv"]
@@ -13,10 +12,6 @@
 [sub_resource type="Resource" id="PartEntry_1"]
 script = ExtResource("part_entry_script")
 item_data = ExtResource("2_o0464")
-
-[sub_resource type="Resource" id="PartEntry_2"]
-script = ExtResource("part_entry_script")
-item_data = ExtResource("3_t5t8x")
 
 [sub_resource type="Resource" id="PartEntry_3"]
 script = ExtResource("part_entry_script")
@@ -40,5 +35,5 @@ item_name = "Rocket Thruster"
 rarity = 3
 sprite = ExtResource("8_o0464")
 area = Vector2(160, 160)
-parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2"), SubResource("PartEntry_3"), SubResource("PartEntry_4"), SubResource("PartEntry_5"), SubResource("PartEntry_6")])
+parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_3"), SubResource("PartEntry_4"), SubResource("PartEntry_5"), SubResource("PartEntry_6")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

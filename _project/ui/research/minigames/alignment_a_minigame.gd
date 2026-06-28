@@ -17,6 +17,9 @@ const REFERENCE_SIZE := Vector2(980.0, 590.0)
 ## Per-threat-level (1-10) bonus. Tuned so level 10 ~= the old level-5 ceiling.
 @export var threat_drift_speed_scale: float = 0.011
 @export var max_random_drift_speed_bonus: float = 0.035
+## Seconds for the laser drift to ramp from a standstill up to full speed once
+## play begins, giving the player time to read the controls before it moves.
+@export var drift_ramp_time: float = 4.0
 @export var base_drift_direction_change_interval: float = 4.5
 @export var input_speed: float = 0.62
 @export var max_laser_offset: float = 1.0
@@ -24,6 +27,11 @@ const REFERENCE_SIZE := Vector2(980.0, 590.0)
 ## Per-threat-level (1-10) bonus. Tuned so level 10 ~= the old level-5 ceiling.
 @export var threat_heat_build_rate_scale: float = 0.011
 @export var heat_cool_rate: float = 0.2
+## Cooling rate multiplier when a laser is aligned but at the very edge of the
+## artifact hitbox versus dead-centered on it. The closer to center, the faster
+## the laser sheds heat.
+@export var center_cool_min_scale: float = 0.5
+@export var center_cool_max_scale: float = 2.0
 @export var base_heat_cool_delay: float = 0.6
 ## Per-threat-level (1-10) bonus. Tuned so level 10 ~= the old level-5 ceiling.
 @export var threat_heat_cool_delay_scale: float = 0.111
@@ -85,7 +93,10 @@ var right_heat_cool_delay_remaining: float = 0.0
 var _threat_level: int = 0
 var _active: bool = false
 var _paused: bool = true
+var _awaiting_start: bool = false
 var _resume_countdown: float = 0.0
+## Real seconds of active play accumulated; drives the drift speed ramp-up.
+var _play_elapsed: float = 0.0
 var _left_direction_change_remaining: float = 0.0
 var _right_direction_change_remaining: float = 0.0
 var _left_drift_speed_bonus: float = 0.0
@@ -112,7 +123,6 @@ var _right_gear_dir: float = 1.0
 var _beam_anim_time: float = 0.0
 
 @onready var _background: Panel = %Background
-@onready var _signal_line: Line2D = %SignalLine
 @onready var _artifact: Sprite2D = %Artifact
 @onready var _left_emitter: Node2D = %LeftEmitter
 @onready var _right_emitter: Node2D = %RightEmitter
@@ -138,7 +148,6 @@ func _ready() -> void:
 	_right_emitter_base_rotation = _right_emitter.rotation
 	_left_prev_emitter_rotation = _left_emitter.rotation
 	_right_prev_emitter_rotation = _right_emitter.rotation
-	_build_signal_line()
 	if Engine.is_editor_hint():
 		# Run a passive refresh loop so the visuals track node edits live.
 		set_process(true)
@@ -165,11 +174,33 @@ func start_minigame(context) -> void:
 	if not _drift_speed_bonuses_initialized:
 		_reset_drift_speed_bonuses()
 
+	# Stay paused on a "press to start" prompt until the player activates it.
 	_active = true
-	_paused = false
-	_resume_countdown = resume_delay
+	_paused = true
+	_awaiting_start = true
+	_play_elapsed = 0.0
+	_resume_countdown = 0.0
 	_has_started_state = true
 	grab_focus()
+	set_process(true)
+	_update_labels()
+	_update_visuals()
+
+
+## True while the minigame is mounted but waiting for the player to start it.
+func is_awaiting_start() -> bool:
+	return _active and _awaiting_start
+
+
+## Player-triggered activation (LMB / E). Begins the short resume countdown and
+## then runs the round.
+func begin_play() -> void:
+	if not _active or not _awaiting_start:
+		return
+	_awaiting_start = false
+	_paused = false
+	_play_elapsed = 0.0
+	_resume_countdown = resume_delay
 	set_process(true)
 	_update_labels()
 	_update_visuals()
@@ -267,6 +298,8 @@ func reset_attempt() -> void:
 	right_heat_cool_delay_remaining = 0.0
 	_is_resuming_altered_state = false
 	_has_started_state = false
+	_awaiting_start = false
+	_play_elapsed = 0.0
 	_reset_drift_timers()
 	_reset_drift_speed_bonuses()
 	_resume_countdown = resume_delay
@@ -288,6 +321,7 @@ func _process(delta: float) -> void:
 		_update_visuals(delta)
 		return
 
+	_play_elapsed += delta
 	_process_selection_input()
 	_process_laser_motion(delta)
 	_process_progress_and_heat(delta)
@@ -428,22 +462,6 @@ func _update_heat_bar(bar: TextureProgressBar, ticker: Node2D, heat: float, sele
 		var bottom := bar.position.y + fill_height
 		ticker.position.y = lerpf(bottom, bar.position.y, clamped)
 		ticker.modulate = color
-
-
-func _build_signal_line() -> void:
-	if _signal_line == null:
-		return
-	var points := PackedVector2Array()
-	var start_x := REFERENCE_SIZE.x * 0.18
-	var end_x := REFERENCE_SIZE.x * 0.82
-	var center_y := _artifact_center().y
-	var steps := 64
-	for index in range(steps + 1):
-		var ratio := float(index) / float(steps)
-		var x := lerpf(start_x, end_x, ratio)
-		var y := center_y + sin(ratio * TAU * 7.0) * 5.0
-		points.append(Vector2(x, y))
-	_signal_line.points = points
 
 
 # ---------------------------------------------------------------------------
@@ -693,7 +711,9 @@ func _update_heat(value: float, aligned: bool, delta: float, is_left_laser: bool
 		_set_heat_cool_delay(is_left_laser, delay_remaining)
 		if delay_remaining > 0.0:
 			return value
-		return clampf(value - heat_cool_rate * delta, 0.0, 1.0)
+		# The closer the beam is to the artifact's center, the faster it cools.
+		var cool_scale := lerpf(center_cool_min_scale, center_cool_max_scale, _laser_centering(is_left_laser))
+		return clampf(value - heat_cool_rate * cool_scale * delta, 0.0, 1.0)
 	_set_heat_cool_delay(is_left_laser, _get_heat_cool_delay())
 	return clampf(value + _get_heat_build_rate() * delta, 0.0, 1.0)
 
@@ -761,7 +781,15 @@ func _roll_drift_speed_bonus() -> float:
 
 func _get_laser_drift_speed(is_left_laser: bool) -> float:
 	var bonus := _left_drift_speed_bonus if is_left_laser else _right_drift_speed_bonus
-	return _get_base_drift_speed() + bonus
+	return (_get_base_drift_speed() + bonus) * _drift_ramp_factor()
+
+
+## Drift ramps from a standstill (0.0) up to full speed (1.0) over drift_ramp_time
+## seconds of active play, so the lasers ease into motion when the round starts.
+func _drift_ramp_factor() -> float:
+	if drift_ramp_time <= 0.0:
+		return 1.0
+	return clampf(_play_elapsed / drift_ramp_time, 0.0, 1.0)
 
 
 func _get_base_drift_speed() -> float:
@@ -788,6 +816,23 @@ func _does_laser_hit_artifact(is_left_laser: bool) -> bool:
 	var center := _artifact_center()
 	var hitbox := _get_artifact_hitbox(center)
 	return bool(_raycast_circle(origin, direction, hitbox.get("center", center), float(hitbox.get("radius", ARTIFACT_HIT_RADIUS))).get("hit", false))
+
+
+## How centered a laser is on the artifact, 0.0 at the very edge of the hitbox
+## and 1.0 when the beam passes through the artifact's center. Returns 0.0 when
+## the laser points away from the artifact.
+func _laser_centering(is_left_laser: bool) -> float:
+	var origin := _left_origin() if is_left_laser else _right_origin()
+	var direction := _left_forward() if is_left_laser else _right_forward()
+	if direction == Vector2.ZERO:
+		return 0.0
+	var to_center := _artifact_center() - origin
+	var projection := to_center.dot(direction)
+	if projection < 0.0:
+		return 0.0
+	var closest_point := origin + direction * projection
+	var distance := closest_point.distance_to(_artifact_center())
+	return clampf(1.0 - distance / ARTIFACT_HIT_RADIUS, 0.0, 1.0)
 
 
 func _normalize_direction(value: float) -> float:
@@ -869,7 +914,10 @@ func _update_labels() -> void:
 	if _prompt_label:
 		_prompt_label.text = "A/D SELECT   W/S TUNE"
 	if _status_label:
-		if _paused:
+		if _awaiting_start:
+			var start_action := "RESUME" if _is_resuming_altered_state else "START"
+			_status_label.text = "[E] / CLICK TO %s" % start_action
+		elif _paused:
 			_status_label.text = "PAUSED"
 		elif _resume_countdown > 0.0:
 			var countdown_action := "RESUME" if _is_resuming_altered_state else "START"

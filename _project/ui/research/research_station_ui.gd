@@ -20,6 +20,9 @@ const OVERALL_BAR: Texture2D = preload("res://_project/ui/research/minigames/spr
 @export var failure_reset_duration: float = 2.5
 @export var failure_result_hesitation_duration: float = 1.0
 @export var stage_success_duration: float = 2.5
+## Seconds the final "RESEARCH COMPLETE" screen is shown before it auto-closes
+## and finalizes the research (no click required).
+@export var final_results_auto_proceed_duration: float = 2.5
 
 enum DisplayState {
 	ACTIVE,
@@ -124,6 +127,7 @@ func _show_and_resume() -> void:
 	_is_paused = false
 	Magnetide.research_ui_input_captured = true
 	if _display_state == DisplayState.FINAL_RESULTS:
+		_result_countdown = maxf(final_results_auto_proceed_duration, 0.0)
 		_show_result_overlay("RESEARCH COMPLETE", _build_final_result_text(), "")
 	else:
 		_ensure_minigame()
@@ -143,6 +147,13 @@ func _process(delta: float) -> void:
 	if not visible or _is_paused or not _is_started:
 		return
 	elapsed_seconds += delta
+	if _display_state == DisplayState.FINAL_RESULTS:
+		# Auto-finalize the research after showing the complete screen briefly,
+		# so the player doesn't have to click to move on.
+		_result_countdown = maxf(_result_countdown - delta, 0.0)
+		if _result_countdown <= 0.0:
+			close_and_pause()
+		return
 	if _display_state == DisplayState.STAGE_FAILURE or _display_state == DisplayState.STAGE_SUCCESS:
 		if _display_state == DisplayState.STAGE_FAILURE and _result_hesitation_remaining > 0.0:
 			_result_hesitation_remaining = maxf(_result_hesitation_remaining - delta, 0.0)
@@ -465,6 +476,7 @@ func _finish_stage_success_countdown() -> void:
 
 func _display_final_results() -> void:
 	_display_state = DisplayState.FINAL_RESULTS
+	_result_countdown = maxf(final_results_auto_proceed_duration, 0.0)
 	_clear_active_minigame()
 	_show_result_overlay("RESEARCH COMPLETE", _build_final_result_text())
 	_refresh_shell()
@@ -545,12 +557,34 @@ func _input(event: InputEvent) -> void:
 			close_and_pause()
 			get_viewport().set_input_as_handled()
 			return
+		if key_event.pressed and not key_event.echo and key_event.physical_keycode == KEY_E:
+			if _try_begin_active_minigame():
+				get_viewport().set_input_as_handled()
+				return
 	if event is InputEventMouseButton:
 		var mouse_event := event as InputEventMouseButton
 		if mouse_event.pressed and _panel and not _panel.get_global_rect().has_point(mouse_event.position):
 			close_and_pause()
 			get_viewport().set_input_as_handled()
 			return
+		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
+			if _try_begin_active_minigame():
+				get_viewport().set_input_as_handled()
+				return
+
+
+## Player-triggered start (E / LMB) for a minigame that is mounted but waiting
+## for activation. Returns true if a waiting minigame was started.
+func _try_begin_active_minigame() -> bool:
+	if _display_state != DisplayState.ACTIVE:
+		return false
+	if _active_minigame == null or not is_instance_valid(_active_minigame):
+		return false
+	if not _active_minigame.has_method("is_awaiting_start") or not _active_minigame.call("is_awaiting_start"):
+		return false
+	if _active_minigame.has_method("begin_play"):
+		_active_minigame.call("begin_play")
+	return true
 
 
 func _exit_tree() -> void:

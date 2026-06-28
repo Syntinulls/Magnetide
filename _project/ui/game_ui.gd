@@ -15,6 +15,12 @@ const SHIELD_BROKEN_LOOP_PAUSE_SECONDS := 0.35
 const SHIELD_BREAK_SHAKE_DEGREES := 8.0
 const PLAYER_AUGMENT_ICON_SIZE := Vector2(44.0, 44.0)
 const PLAYER_AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
+const PLAYER_AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/ui/sprites/ui_border_1.png")
+const PLAYER_AUGMENT_BG_COLOR := Color("5f6969")
+## Border thickness in the ui_border_1 nine-patch; icons inset by this much.
+const PLAYER_AUGMENT_BORDER_INSET := 6
+## Gray background inset so it doesn't show in the border's rounded corners.
+const PLAYER_AUGMENT_BG_INSET := 4
 
 @onready var _player_health_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/MarginContainer/PlayerHPBar
 @onready var _player_shield_container: Control = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon
@@ -25,6 +31,7 @@ const PLAYER_AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
 @onready var _player_augment_tooltip: ColorRect = $PlayerAugmentTooltip
 @onready var _player_augment_tooltip_name: Label = $PlayerAugmentTooltip/NameLabel
 @onready var _player_augment_tooltip_body: Label = $PlayerAugmentTooltip/BodyLabel
+@onready var _hotbar_item_name_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HotbarItemName
 @onready var _scrap_counter: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter
 @onready var _scrap_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapIcon
 @onready var _scrap_count_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapCountLabel
@@ -45,6 +52,7 @@ var _shield_pulse_tween: Tween = null
 var _shield_broken_loop_tween: Tween = null
 var _shield_break_shake_tween: Tween = null
 var _displayed_player_augment_key: String = ""
+var _displayed_hotbar_item_name: String = ""
 
 
 func _ready() -> void:
@@ -52,8 +60,15 @@ func _ready() -> void:
 		Magnetide.apply_digital_font(_scrap_count_label)
 	if _player_shield_label:
 		Magnetide.apply_digital_font(_player_shield_label)
+	if _hotbar_item_name_label:
+		Magnetide.apply_label_font(_hotbar_item_name_label)
+		_hotbar_item_name_label.text = ""
 	if _player_augment_tooltip:
 		_player_augment_tooltip.visible = false
+	if _player_augment_tooltip_name:
+		Magnetide.apply_label_font(_player_augment_tooltip_name)
+	if _player_augment_tooltip_body:
+		Magnetide.apply_label_font(_player_augment_tooltip_body)
 	set_run_scrap_metal_count(0)
 	if _event_text and not _event_text.countdown_finished.is_connected(_on_event_countdown_finished):
 		_event_text.countdown_finished.connect(_on_event_countdown_finished)
@@ -69,6 +84,7 @@ func _process(_delta: float) -> void:
 	_bind_to_threat()
 	_update_scrap_counter()
 	_update_health_ui()
+	_update_hotbar_item_name()
 	_refresh_player_augment_icons()
 
 
@@ -180,6 +196,21 @@ func _update_player_shield(player: Player) -> void:
 
 	_displayed_shield_count = current_shield
 	_shield_was_broken = shield_broken
+
+
+## Shows the name of the hotbar's currently selected item, centered below it.
+func _update_hotbar_item_name() -> void:
+	if _hotbar_item_name_label == null:
+		return
+	var name_text := ""
+	var hotbar := Magnetide.hotbar
+	if hotbar and hotbar.has_method("get_selected_item_data"):
+		var data: Variant = hotbar.get_selected_item_data()
+		if data != null and "display_name" in data:
+			name_text = String(data.display_name)
+	if name_text != _displayed_hotbar_item_name:
+		_displayed_hotbar_item_name = name_text
+		_hotbar_item_name_label.text = name_text
 
 
 func _update_scrap_counter() -> void:
@@ -326,15 +357,54 @@ func _create_player_augment_icon_button(augment: AugmentData, loadout: RunLoadou
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
 	button.text = ""
-	button.icon = _get_augment_icon(augment)
-	button.expand_icon = true
 	button.clip_text = true
-	button.add_theme_constant_override("icon_max_width", int(PLAYER_AUGMENT_ICON_SIZE.x))
+	# Transparent button chrome; the cell is composited from the child layers.
+	var empty_style := StyleBoxEmpty.new()
+	button.add_theme_stylebox_override("normal", empty_style)
+	button.add_theme_stylebox_override("hover", empty_style)
+	button.add_theme_stylebox_override("pressed", empty_style)
+	button.add_theme_stylebox_override("disabled", empty_style)
+	button.add_theme_stylebox_override("focus", empty_style)
+
+	# Gray background, inset so it never shows in the rounded border's corners.
+	var background := ColorRect.new()
+	background.color = PLAYER_AUGMENT_BG_COLOR
+	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_inset_full_rect(background, PLAYER_AUGMENT_BG_INSET)
+	button.add_child(background)
+
+	# Augment icon, inset within the border frame.
+	var icon_rect := TextureRect.new()
+	icon_rect.texture = _get_augment_icon(augment)
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_inset_full_rect(icon_rect, PLAYER_AUGMENT_BORDER_INSET)
+	button.add_child(icon_rect)
+
+	# Nine-patch border drawn on top; its transparent center shows the icon/bg.
+	var border := NinePatchRect.new()
+	border.texture = PLAYER_AUGMENT_BORDER_TEXTURE
+	border.patch_margin_left = PLAYER_AUGMENT_BORDER_INSET
+	border.patch_margin_top = PLAYER_AUGMENT_BORDER_INSET
+	border.patch_margin_right = PLAYER_AUGMENT_BORDER_INSET
+	border.patch_margin_bottom = PLAYER_AUGMENT_BORDER_INSET
+	border.set_anchors_preset(Control.PRESET_FULL_RECT)
+	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	button.add_child(border)
 	button.mouse_entered.connect(_show_player_augment_tooltip.bind(button, augment, loadout))
 	button.mouse_exited.connect(_hide_player_augment_tooltip)
 	button.focus_entered.connect(_show_player_augment_tooltip.bind(button, augment, loadout))
 	button.focus_exited.connect(_hide_player_augment_tooltip)
 	return button
+
+
+func _inset_full_rect(control: Control, inset: int) -> void:
+	control.set_anchors_preset(Control.PRESET_FULL_RECT)
+	control.offset_left = inset
+	control.offset_top = inset
+	control.offset_right = -inset
+	control.offset_bottom = -inset
 
 
 func _show_player_augment_tooltip(button: Control, augment: AugmentData, loadout: RunLoadout) -> void:

@@ -1,8 +1,6 @@
 [gd_scene format=3 uid="uid://c8qj2ks8d0w1x"]
 
 [ext_resource type="Script" uid="uid://be85jd8hol6ol" path="res://_project/app/screens/station_screen.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://b8rsmplore4d8" path="res://_project/player/sprites/guy.png" id="2_player"]
-[ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="3_ship"]
 [ext_resource type="Texture2D" uid="uid://boxg8omke0fl7" path="res://_project/items/salvage/sprites/part_gear.png" id="6_gear"]
 [ext_resource type="Texture2D" uid="uid://bm60dsyc5rlug" path="res://_project/ui/sprites/ui_icon_galaxy.png" id="7_galaxy_icon"]
 [ext_resource type="Script" uid="uid://poj3ou2ycfhc" path="res://_project/items/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
@@ -15,9 +13,9 @@
 [ext_resource type="Script" uid="uid://c5xt7c2x8t6xp" path="res://_project/items/slottable_catalog_entry.gd" id="18_slottable_catalog_entry"]
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="19_regeneration"]
 [ext_resource type="PackedScene" uid="uid://deheo7vkoke2n" path="res://_project/app/screens/station_dynamic_slot_popup.tscn" id="20_dynamic_slot_popup"]
-[ext_resource type="Script" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
-[ext_resource type="PackedScene" uid="uid://cplayerpreview01" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
-[ext_resource type="PackedScene" uid="uid://cshippreview01" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
+[ext_resource type="Script" uid="uid://c0f3hfjp6xlvp" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
+[ext_resource type="PackedScene" uid="uid://xhec0qwauhh1" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
+[ext_resource type="PackedScene" uid="uid://bgjkqi6c2xoc7" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
 
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_equipment_catalog_entry")
@@ -272,6 +270,10 @@ autowrap_mode = 3
 
 [node name="DynamicSlotPopup" parent="PageViewport/PageContainer/PlayerPage" unique_id=737096433 instance=ExtResource("20_dynamic_slot_popup")]
 layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 804.0
+offset_bottom = 310.0
 
 [node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
 anchors_preset = 0
@@ -304,14 +306,13 @@ mouse_filter = 2
 script = ExtResource("21_preview_stage")
 preview_scene = ExtResource("23_ship_preview")
 camera_offset = Vector2(0, -20)
-camera_zoom = 1.0
 
-[node name="UpgradeLayer" type="Control" parent="PageViewport/PageContainer/ShipPage"]
+[node name="UpgradeLayer" type="Control" parent="PageViewport/PageContainer/ShipPage" unique_id=1973545568]
 anchors_preset = 0
 offset_right = 2560.0
 offset_bottom = 810.0
 
-[node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer"]
+[node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer" unique_id=778651480]
 layout_mode = 0
 offset_left = 1805.0
 offset_top = 180.0
@@ -319,24 +320,24 @@ offset_right = 2505.0
 offset_bottom = 810.0
 theme_override_constants/separation = 100
 
-[node name="RightPanel" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout"]
+[node name="RightPanel" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout" unique_id=197548948]
 layout_mode = 2
 size_flags_vertical = 3
 alignment = 1
 
-[node name="SlotColumns" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel"]
+[node name="SlotColumns" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel" unique_id=1302392932]
 layout_mode = 2
 theme_override_constants/separation = 28
 
-[node name="ShipColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns"]
+[node name="ShipColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1801101931]
 layout_mode = 2
 theme_override_constants/separation = 16
 
-[node name="ShipPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn"]
+[node name="ShipPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=818610552]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair"]
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=547202252]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -344,29 +345,29 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Ship"
 
-[node name="ShipIntegrityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair"]
+[node name="ShipIntegrityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=1636039505]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="ShipIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow" instance=ExtResource("17_upgrade_slot")]
+[node name="ShipIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow" unique_id=1360064570 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
-[node name="StorageSizeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair"]
+[node name="StorageSizeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=31795759]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="StorageSizeSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow" instance=ExtResource("17_upgrade_slot")]
+[node name="StorageSizeSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow" unique_id=863753347 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
-[node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn"]
+[node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=1181292761]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair"]
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=228500529]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -374,30 +375,30 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Magnet"
 
-[node name="MagnetIntegrityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair"]
+[node name="MagnetIntegrityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=1772654315]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow" instance=ExtResource("17_upgrade_slot")]
+[node name="MagnetIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow" unique_id=471185732 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
-[node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair"]
+[node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=265744000]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow" instance=ExtResource("17_upgrade_slot")]
+[node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow" unique_id=1503082511 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
-[node name="AugmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns"]
+[node name="AugmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
 layout_mode = 2
 size_flags_vertical = 0
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn"]
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=1335478386]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -405,22 +406,22 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Augments"
 
-[node name="ShipAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn"]
+[node name="ShipAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=1308161103]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" instance=ExtResource("17_upgrade_slot")]
+[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
-[node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn"]
+[node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=952612685]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" instance=ExtResource("17_upgrade_slot")]
+[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 
 [node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]
@@ -449,12 +450,12 @@ offset_bottom = 84.0
 text = "Menu"
 
 [node name="MapButton" type="Button" parent="TopBar" unique_id=610011860]
-custom_minimum_size = Vector2(150, 150)
+custom_minimum_size = Vector2(100, 100)
 layout_mode = 0
-offset_left = 1205.0
-offset_top = 18.0
-offset_right = 1355.0
-offset_bottom = 168.0
+offset_left = 1230.0
+offset_top = 20.0
+offset_right = 1330.0
+offset_bottom = 120.0
 icon = ExtResource("7_galaxy_icon")
 expand_icon = true
 

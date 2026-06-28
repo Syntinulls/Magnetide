@@ -126,6 +126,13 @@ func get_selected_index() -> int:
 	return _selected_index
 
 
+## Equipment data (e.g. WeaponData / MagnetToolData) in the selected slot, or null.
+func get_selected_item_data() -> Variant:
+	if _selected_index < 0 or _selected_index >= _slot_data.size():
+		return null
+	return _slot_data[_selected_index].get("data", null)
+
+
 func _scroll_to(from_index: int, to_index: int) -> void:
 	var direction := _get_scroll_direction(from_index, to_index)
 	

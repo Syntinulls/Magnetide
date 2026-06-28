@@ -649,6 +649,17 @@ theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1
 
+[node name="HotbarItemName" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=846761520]
+custom_minimum_size = Vector2(288, 28)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
+
 [node name="ScrapCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=846761521]
 layout_mode = 2
 theme_override_constants/margin_left = -105
@@ -694,7 +705,7 @@ theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("7_pqqpn")
-theme_override_font_sizes/font_size = 24
+theme_override_font_sizes/font_size = 28
 text = "Augment"
 
 [node name="BodyLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=162456594]
@@ -707,5 +718,5 @@ theme_override_colors/font_color = Color(0.9, 0.94, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_fonts/font = ExtResource("7_pqqpn")
-theme_override_font_sizes/font_size = 18
+theme_override_font_sizes/font_size = 20
 autowrap_mode = 3

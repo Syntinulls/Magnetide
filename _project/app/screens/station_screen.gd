@@ -134,6 +134,7 @@ func _ready() -> void:
 		_run_loadout.prepare_for_run()
 
 	_ensure_research_points_display()
+	_ensure_station_header()
 	_apply_fonts(self)
 	_weapon_popup.visible = false
 	_weapon_popup_stats_panel.visible = false
@@ -759,6 +760,30 @@ func _ensure_research_points_display() -> void:
 	_research_points_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	panel.add_child(_research_points_label)
 	_refresh_research_points_display()
+
+
+## Persistent "Space Station" title to the right of the Menu button. Lives on
+## the TopBar (a sibling of the page viewport), so it stays put when panning
+## between the player and ship pages.
+func _ensure_station_header() -> void:
+	if _top_bar == null:
+		return
+	if _top_bar.get_node_or_null("StationHeaderLabel") != null:
+		return
+
+	var header := Label.new()
+	header.name = "StationHeaderLabel"
+	header.text = "Space Station"
+	header.add_theme_color_override("font_color", Color.WHITE)
+	header.add_theme_font_size_override("font_size", 56)
+	Magnetide.apply_label_font(header)
+	header.set_anchors_preset(Control.PRESET_TOP_LEFT)
+	# Right of the 160x60 Menu button (at x24..184, y24..84), vertically centered.
+	header.position = Vector2(208.0, 24.0)
+	header.custom_minimum_size = Vector2(0.0, 60.0)
+	header.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	header.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_top_bar.add_child(header)
 
 
 func _refresh_research_points_display() -> void:

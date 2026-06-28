@@ -70,9 +70,15 @@ var _chevron_sprite: Sprite2D
 var _marker_container: Node2D
 var _result_icon_container: Node2D
 var _yellow_allowance_container: Node2D
+var _prompt_label: Label
 
 # Yellow tracking
 var _yellows_used: int = 0
+
+# Chevron result flash
+const CHEVRON_FLASH_DURATION := 0.35
+var _chevron_flash_remaining: float = 0.0
+var _chevron_flash_color: Color = Color.WHITE
 
 # Camera tracking
 var _anchor_marker: Marker2D = null
@@ -143,6 +149,22 @@ func _setup_ui() -> void:
 	_yellow_allowance_container = Node2D.new()
 	_bar_sprite.add_child(_yellow_allowance_container)
 
+	# Create the control prompt above the bar so players know to press [E].
+	var bar_width := _bar_texture.get_size().x
+	_prompt_label = Label.new()
+	_prompt_label.text = "[E] CALIBRATE SENSORS"
+	_prompt_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
+	_prompt_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
+	Magnetide.apply_label_font(_prompt_label)
+	_prompt_label.add_theme_font_size_override("font_size", 22)
+	_prompt_label.add_theme_color_override("font_color", Color.WHITE)
+	_prompt_label.add_theme_color_override("font_outline_color", Color.BLACK)
+	_prompt_label.add_theme_constant_override("outline_size", 4)
+	_prompt_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_prompt_label.size = Vector2(bar_width, 30.0)
+	_prompt_label.position = Vector2(-bar_width * 0.5, _get_prompt_label_y())
+	_bar_sprite.add_child(_prompt_label)
+
 
 ## Difficulty scales by threat level (zero-based stage index 0-9), not rarity.
 func start_minigame(threat_level: int) -> void:
@@ -151,9 +173,11 @@ func start_minigame(threat_level: int) -> void:
 	_generate_marker_positions()
 	_setup_yellow_allowance_icons()
 
-	# Cog/chevron are untinted — they no longer signify rarity.
-	_cog_sprite.modulate = Color.WHITE
+	# Cog is tinted to its fixed control color; the chevron stays white so the
+	# per-hit result flash (green/yellow/red) reads clearly against it.
+	_cog_sprite.modulate = Color("766b69")
 	_chevron_sprite.modulate = Color.WHITE
+	_chevron_flash_remaining = 0.0
 
 	visible = true
 	set_process(true)
@@ -260,10 +284,14 @@ func _generate_marker_positions() -> void:
 func _process(delta: float) -> void:
 	# Update position and scale based on camera
 	_update_camera_tracking()
-	
+
 	# Compensate marker animation speed for timescale
 	_update_marker_animation_speed()
-	
+
+	# Fade the chevron flash back to white at real-time speed.
+	var real_delta := delta / Engine.time_scale if Engine.time_scale > 0.0 else delta
+	_update_chevron_flash(real_delta)
+
 	match _state:
 		State.PLACING_MARKERS:
 			_process_placing_markers(delta)
@@ -445,6 +473,10 @@ func _get_result_icon_y() -> float:
 	return _get_chevron_y() - _get_texture_half_height(_icon_chevron) - _get_texture_half_height(_icon_neutral) - result_icon_chevron_gap
 
 
+func _get_prompt_label_y() -> float:
+	return _get_result_icon_y() - _get_texture_half_height(_icon_neutral) - 8.0 - 30.0
+
+
 func _get_bar_top_y() -> float:
 	return -_bar_texture.get_size().y * 0.5
 
@@ -486,7 +518,10 @@ func _check_marker_hit() -> void:
 		color = Color.RED
 	
 	_marker_results[_current_marker_index] = result
-	
+
+	# Flash the chevron the color of the hit result so the player gets feedback.
+	_flash_chevron(color)
+
 	# Update marker color (AnimatedSprite2D)
 	var markers := _marker_container.get_children()
 	if _current_marker_index < markers.size():
@@ -510,6 +545,24 @@ func _check_marker_hit() -> void:
 				icon.modulate = Color.RED
 	
 	_current_marker_index += 1
+
+
+func _flash_chevron(flash_color: Color) -> void:
+	_chevron_flash_color = flash_color
+	_chevron_flash_remaining = CHEVRON_FLASH_DURATION
+	if _chevron_sprite:
+		_chevron_sprite.modulate = flash_color
+
+
+func _update_chevron_flash(real_delta: float) -> void:
+	if _chevron_flash_remaining <= 0.0:
+		return
+	_chevron_flash_remaining = maxf(_chevron_flash_remaining - real_delta, 0.0)
+	if _chevron_sprite == null:
+		return
+	# Ease from the result color back to white as the timer runs out.
+	var t := _chevron_flash_remaining / CHEVRON_FLASH_DURATION
+	_chevron_sprite.modulate = Color.WHITE.lerp(_chevron_flash_color, t)
 
 
 func _finish_game() -> void:

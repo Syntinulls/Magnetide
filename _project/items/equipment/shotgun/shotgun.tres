@@ -11,7 +11,6 @@ script = ExtResource("2_fire_behavior")
 
 [resource]
 script = ExtResource("1_weapon_data")
-item_id = &"weapon_shotgun"
 damage = 15.0
 fire_rate = 1.0
 bullet_speed = 1550.0
@@ -21,6 +20,7 @@ bullet_sprite = ExtResource("3_bullet")
 fire_behavior = SubResource("Resource_shotgun_fire_behavior")
 weapon_rotation = 0.0
 muzzle_position = Vector2(-62.897224, -5.8358216)
+item_id = &"weapon_shotgun"
 display_name = "Shotgun"
 hotbar_icon = ExtResource("4_hotbar")
 muzzle_effect_type = 2
