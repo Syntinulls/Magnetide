@@ -26,6 +26,8 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 @export var ship_storage_marker_height: float = 24.0
 @export var ship_storage_max_weight: float = 100.0
 @export var ship_max_health: float = 250.0
+## Upgradeable width of the ship storage area. Drives ship_storage_area_size.x.
+@export var ship_storage_width: float = 400.0
 
 @export_group("Magnet")
 @export var magnet_pull_frequency: float = 2.5
@@ -84,10 +86,104 @@ func increase_upgrade(upgrade_id: StringName, amount: int = 1) -> bool:
 	if upgrade == null:
 		return false
 
+	# Equipment-scoped upgrades track their level per equipped item, not globally,
+	# so each weapon / magnet tool has its own upgrade path.
+	if _is_equipment_scoped(upgrade):
+		return _increase_equipment_upgrade(upgrade, amount)
+
 	var level_changed := bool(upgrade.call("increase_level", amount))
 	if level_changed:
 		prepare_for_run()
 	return level_changed
+
+
+func _is_equipment_scoped(upgrade: Resource) -> bool:
+	var scope := int(upgrade.get("target_scope"))
+	return scope == RunUpgradeScript.TargetScope.EQUIPPED_WEAPON \
+		or scope == RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL
+
+
+func _get_equipped_for_scope(scope: int) -> EquipmentData:
+	match scope:
+		RunUpgradeScript.TargetScope.EQUIPPED_WEAPON:
+			return equipped_weapon
+		RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL:
+			return equipped_magnet_tool
+	return null
+
+
+func _equipment_item_id(equipment: EquipmentData) -> StringName:
+	if equipment == null:
+		return &""
+	if equipment.has_method("get_upgrade_item_id"):
+		return equipment.call("get_upgrade_item_id")
+	return &""
+
+
+func _increase_equipment_upgrade(upgrade: Resource, amount: int) -> bool:
+	var equip := _get_equipped_for_scope(int(upgrade.get("target_scope")))
+	var item_id := _equipment_item_id(equip)
+	if item_id == &"":
+		return false
+	var state := get_or_create_item_state(item_id)
+	if state == null:
+		return false
+	var level_changed := bool(state.call("increase_level", int(upgrade.get("max_level")), amount))
+	if level_changed:
+		prepare_for_run()
+	return level_changed
+
+
+## Per-item upgrade level for a specific equipment (keyed by its upgrade item id).
+func get_equipment_item_level(equipment: EquipmentData) -> int:
+	var item_id := _equipment_item_id(equipment)
+	if item_id == &"":
+		return 0
+	var state := get_item_state(item_id)
+	if state != null and _has_property(state, "current_level"):
+		return int(state.get("current_level"))
+	return 0
+
+
+# ---------------------------------------------------------------------------
+# Context-aware upgrade accessors used by the station UI. Equipment upgrades
+# resolve to the equipped item's per-item level; everything else uses the
+# global upgrade's current_level.
+# ---------------------------------------------------------------------------
+
+func get_upgrade_level(upgrade_id: StringName) -> int:
+	var upgrade := get_upgrade(upgrade_id)
+	if upgrade == null:
+		return 0
+	if _is_equipment_scoped(upgrade):
+		return get_equipment_item_level(_get_equipped_for_scope(int(upgrade.get("target_scope"))))
+	return int(upgrade.get("current_level"))
+
+
+func get_upgrade_max_level(upgrade_id: StringName) -> int:
+	var upgrade := get_upgrade(upgrade_id)
+	return int(upgrade.get("max_level")) if upgrade != null else 0
+
+
+func is_upgrade_maxed(upgrade_id: StringName) -> bool:
+	var upgrade := get_upgrade(upgrade_id)
+	if upgrade == null:
+		return true
+	return get_upgrade_level(upgrade_id) >= int(upgrade.get("max_level"))
+
+
+func get_upgrade_next_level_cost(upgrade_id: StringName) -> Resource:
+	var upgrade := get_upgrade(upgrade_id)
+	if upgrade == null:
+		return null
+	return upgrade.call("get_cost_for_level", get_upgrade_level(upgrade_id))
+
+
+func get_upgrade_next_gain_text(upgrade_id: StringName, stat_name: String) -> String:
+	var upgrade := get_upgrade(upgrade_id)
+	if upgrade == null:
+		return ""
+	return String(upgrade.call("get_gain_text_for_level", stat_name, get_upgrade_level(upgrade_id)))
 
 
 func get_upgrade(upgrade_id: StringName) -> Resource:
@@ -100,6 +196,7 @@ func get_upgrade(upgrade_id: StringName) -> Resource:
 func prepare_for_run() -> void:
 	ensure_upgrade_state()
 	_apply_loadout_upgrades()
+	_sync_storage_area_size()
 	_apply_augment_loadout_modifiers()
 	player_equipment = _build_runtime_equipment()
 	if player_equipment.is_empty():
@@ -166,6 +263,17 @@ func ensure_upgrade_state() -> void:
 		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
 		_create_default_level_costs(CostGearData, CostMagnetData)
 	))
+	_ensure_upgrade(ship_upgrades, _create_upgrade(
+		&"ship_storage_size",
+		"Ship Storage Size",
+		RunUpgradeScript.TargetScope.LOADOUT,
+		&"ship_storage_width",
+		60.0,
+		RunUpgradeScript.IncreaseMode.FLAT,
+		_create_default_level_costs(CostGearData, CostSpringData, 3),
+		[],
+		3
+	))
 	_ensure_upgrade(magnet_upgrades, _create_upgrade(
 		&"ship_magnet_capacity",
 		"Ship Magnet Capacity",
@@ -205,8 +313,11 @@ func get_upgraded_equipment_preview(equipment_data: EquipmentData, target_scope:
 	if preview == null:
 		return equipment_data
 
+	var level := get_equipment_item_level(equipment_data)
 	for upgrade in equipment_upgrades:
-		_apply_upgrade_to_resource(preview, equipment_data, upgrade, target_scope)
+		if upgrade == null or int(upgrade.get("target_scope")) != target_scope:
+			continue
+		_apply_upgrade_level_to_resource(preview, equipment_data, upgrade, level)
 	return preview
 
 
@@ -341,6 +452,28 @@ func equip_player_augment(slot_index: int, augment_data: AugmentData) -> void:
 	player_augments[slot_index] = augment_data
 
 
+func equip_ship_augment(slot_index: int, augment_data: AugmentData) -> void:
+	_equip_augment_into(ship_augments, slot_index, augment_data)
+
+
+func equip_magnet_augment(slot_index: int, augment_data: AugmentData) -> void:
+	_equip_augment_into(magnet_augments, slot_index, augment_data)
+
+
+func _equip_augment_into(augments: Array[AugmentData], slot_index: int, augment_data: AugmentData) -> void:
+	if slot_index < 0:
+		return
+	while augments.size() <= slot_index:
+		augments.append(null)
+
+	if augment_data != null:
+		for index in augments.size():
+			if index != slot_index and _same_upgradeable_item(augments[index], augment_data):
+				augments[index] = null
+
+	augments[slot_index] = augment_data
+
+
 func _same_upgradeable_item(left: Resource, right: Resource) -> bool:
 	if left == null or right == null:
 		return false
@@ -395,6 +528,12 @@ func _build_runtime_equipment() -> Array[EquipmentData]:
 	return runtime_equipment
 
 
+## Keep the storage area rectangle's width in sync with the upgradeable
+## ship_storage_width scalar (the upgrade system can only target scalars).
+func _sync_storage_area_size() -> void:
+	ship_storage_area_size = Vector2(ship_storage_width, ship_storage_area_size.y)
+
+
 func _apply_augment_loadout_modifiers() -> void:
 	for augment in get_equipped_augments():
 		if augment == null or augment.behavior == null:
@@ -432,25 +571,22 @@ func _apply_loadout_upgrades() -> void:
 		_add_numeric_delta(property_name, base_value, delta)
 
 
-func _apply_upgrade_to_resource(
+func _apply_upgrade_level_to_resource(
 	target_resource: Resource,
 	base_resource: Resource,
 	upgrade: Resource,
-	target_scope: int
+	level: int
 ) -> void:
 	if target_resource == null or base_resource == null or upgrade == null:
 		return
-	if upgrade.get("target_scope") != target_scope:
-		return
-	if String(upgrade.get("target_property")).is_empty():
-		return
-
 	var property_name := String(upgrade.get("target_property"))
+	if property_name.is_empty():
+		return
 	if not _has_property(base_resource, property_name) or not _has_property(target_resource, property_name):
 		return
 
 	var base_value: Variant = base_resource.get(property_name)
-	var delta := float(upgrade.call("get_delta_from_base", base_value))
+	var delta := float(upgrade.call("get_delta_for_level", base_value, level))
 	var current_value: Variant = target_resource.get(property_name)
 	if typeof(current_value) != TYPE_INT and typeof(current_value) != TYPE_FLOAT:
 		return
@@ -501,7 +637,8 @@ func _create_upgrade(
 	amount_per_level: float,
 	increase_mode: int,
 	upgrade_costs: Array[Resource],
-	level_amounts: Array[float] = []
+	level_amounts: Array[float] = [],
+	max_level: int = 5
 ) -> Resource:
 	var upgrade := RunUpgradeScript.new()
 	upgrade.upgrade_id = upgrade_id
@@ -511,7 +648,7 @@ func _create_upgrade(
 	upgrade.amount_per_level = amount_per_level
 	upgrade.level_amounts = level_amounts.duplicate()
 	upgrade.increase_mode = increase_mode as RunUpgrade.IncreaseMode
-	upgrade.max_level = 5
+	upgrade.max_level = max_level
 	upgrade.upgrade_costs = upgrade_costs.duplicate()
 	return upgrade
 
@@ -529,13 +666,17 @@ func _sync_upgrade_definition(upgrade: Resource, default_upgrade: Resource) -> v
 	upgrade.set("current_level", current_level)
 
 
-func _create_default_level_costs(primary_item: SalvageItemData, secondary_item: SalvageItemData = null) -> Array[Resource]:
+## Scrap metal required at the first upgrade level; scales linearly per level.
+const SCRAP_COST_PER_LEVEL_STEP: int = 10
+
+func _create_default_level_costs(primary_item: SalvageItemData, secondary_item: SalvageItemData = null, level_count: int = 5) -> Array[Resource]:
 	var level_costs: Array[Resource] = []
-	for level_index in range(5):
+	for level_index in range(level_count):
 		var level_cost := RunUpgradeLevelCostScript.new()
 		level_cost.costs.append(_create_item_cost(primary_item, level_index + 1))
 		if secondary_item != null and level_index >= 1:
 			level_cost.costs.append(_create_item_cost(secondary_item, level_index))
+		level_cost.scrap_cost = SCRAP_COST_PER_LEVEL_STEP * (level_index + 1)
 		level_costs.append(level_cost)
 	return level_costs
 

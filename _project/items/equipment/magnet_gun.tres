@@ -6,6 +6,7 @@
 
 [resource]
 script = ExtResource("1_script")
+item_id = &"magnet_gun"
 weapon_sprite = ExtResource("3_x47ok")
 hold_distance = 50.0
 pull_base_speed = 600.0

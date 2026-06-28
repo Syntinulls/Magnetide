@@ -114,6 +114,67 @@ func get_delta_from_base(base_value: Variant) -> float:
 	return float(get_value_with_upgrade(base_value)) - float(base_value)
 
 
+# ---------------------------------------------------------------------------
+# Level-parameterized variants. Used when the level is tracked externally
+# (per-item, e.g. per equipped weapon) instead of by current_level.
+# ---------------------------------------------------------------------------
+
+func is_maxed_at(level: int) -> bool:
+	return level >= max_level
+
+
+func get_total_amount_for_level(level: int) -> float:
+	var clamped := clampi(level, 0, max_level)
+	if not level_amounts.is_empty():
+		var total := 0.0
+		var count := mini(clamped, level_amounts.size())
+		for index in range(count):
+			total += level_amounts[index]
+		return total
+	return amount_per_level * float(clamped)
+
+
+func get_value_for_level(base_value: Variant, level: int) -> Variant:
+	if typeof(base_value) != TYPE_INT and typeof(base_value) != TYPE_FLOAT:
+		return base_value
+	var base_number := float(base_value)
+	var total_amount := get_total_amount_for_level(level)
+	var increase := total_amount
+	if increase_mode == IncreaseMode.PERCENT_OF_BASE:
+		increase = base_number * total_amount
+	var upgraded_value := base_number + increase
+	if typeof(base_value) == TYPE_INT:
+		return int(round(upgraded_value))
+	return upgraded_value
+
+
+func get_delta_for_level(base_value: Variant, level: int) -> float:
+	if typeof(base_value) != TYPE_INT and typeof(base_value) != TYPE_FLOAT:
+		return 0.0
+	return float(get_value_for_level(base_value, level)) - float(base_value)
+
+
+## Cost resource to go from `level` to `level + 1` (null if maxed/out of range).
+func get_cost_for_level(level: int) -> Resource:
+	if level < 0 or level >= max_level:
+		return null
+	if level >= upgrade_costs.size():
+		return null
+	return upgrade_costs[level]
+
+
+func get_gain_text_for_level(stat_name: String, level: int) -> String:
+	if is_maxed_at(level):
+		return "MAX LEVEL"
+	var amount := amount_per_level
+	if not level_amounts.is_empty():
+		amount = level_amounts[clampi(level, 0, level_amounts.size() - 1)]
+	var stat_suffix := "" if stat_name.is_empty() else " %s" % stat_name
+	if increase_mode == IncreaseMode.PERCENT_OF_BASE:
+		return "+%s%%%s" % [_format_number(amount * 100.0), stat_suffix]
+	return "+%s%s" % [_format_number(amount), stat_suffix]
+
+
 func _format_number(value: float) -> String:
 	if is_equal_approx(value, roundf(value)):
 		return str(int(roundf(value)))

@@ -2,9 +2,13 @@ extends Resource
 class_name RunUpgradeLevelCost
 
 @export var costs: Array[Resource] = []
+## Scrap metal required for this level, on top of the salvage-part costs.
+@export var scrap_cost: int = 0
 
 
 func is_empty() -> bool:
+	if scrap_cost > 0:
+		return false
 	for cost in costs:
 		if cost != null:
 			return false

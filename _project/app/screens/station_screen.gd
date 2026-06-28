@@ -14,6 +14,9 @@ const DEFAULT_AUGMENT_ICON: Texture2D = preload("res://_project/ui/sprites/ui_ic
 const DEFAULT_HEALTH_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_health.png")
 const DEFAULT_SHIELD_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_shield.png")
 const DEFAULT_UPGRADE_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_upgrade.png")
+const DEFAULT_SHIP_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_ship.png")
+const DEFAULT_MAGNET_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_magnet.png")
+const DEFAULT_CAPACITY_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_crate.png")
 
 @export var page_pan_duration: float = 0.35
 @export var run_loadout: RunLoadout = null
@@ -61,6 +64,12 @@ var _player_augment_1_row: HBoxContainer = null
 var _player_augment_2_row: HBoxContainer = null
 var _player_augment_1_button: Button = null
 var _player_augment_2_button: Button = null
+var _ship_augment_button: Button = null
+var _magnet_augment_button: Button = null
+var _ship_integrity_upgrade_button: Button = null
+var _storage_size_upgrade_button: Button = null
+var _magnet_integrity_upgrade_button: Button = null
+var _magnet_capacity_upgrade_button: Button = null
 var _active_dynamic_slot_id: StringName = &""
 var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
@@ -83,6 +92,14 @@ var _active_detail_entry: Resource = null
 @onready var _shield_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow
 @onready var _left_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn
 @onready var _right_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair
+@onready var _ship_integrity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow
+@onready var _storage_size_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow
+@onready var _magnet_integrity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow
+@onready var _magnet_capacity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow
+@onready var _ship_augment_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow
+@onready var _magnet_augment_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow
+@onready var _player_preview_stage: PreviewStage = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/PlayerPreviewStage
+@onready var _ship_preview_stage: PreviewStage = $PageViewport/PageContainer/ShipPage/ShipPreviewStage
 @onready var _weapon_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow/UpgradeButton") as Button
 @onready var _magnet_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/UpgradeButton") as Button
 @onready var _health_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow/UpgradeButton") as Button
@@ -145,11 +162,19 @@ func _ready() -> void:
 		_player_augment_1_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment1", 0))
 	if _player_augment_2_button != null:
 		_player_augment_2_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment2", 1))
+	if _ship_augment_button != null:
+		_ship_augment_button.pressed.connect(_toggle_owner_augment_popup.bind(&"ShipAugment", &"ship_augment", "Ship Augments"))
+	if _magnet_augment_button != null:
+		_magnet_augment_button.pressed.connect(_toggle_owner_augment_popup.bind(&"MagnetAugment", &"magnet_augment", "Magnet Augments"))
 
 	_connect_upgrade_button(_weapon_upgrade_button, &"weapon_damage")
 	_connect_upgrade_button(_magnet_upgrade_button, &"magnet_tool_pull")
 	_connect_upgrade_button(_health_upgrade_button, &"player_health")
 	_connect_upgrade_button(_shield_upgrade_button, &"player_shield")
+	_connect_upgrade_button(_ship_integrity_upgrade_button, &"ship_hull")
+	_connect_upgrade_button(_storage_size_upgrade_button, &"ship_storage_size")
+	_connect_upgrade_button(_magnet_integrity_upgrade_button, &"ship_magnet_health")
+	_connect_upgrade_button(_magnet_capacity_upgrade_button, &"ship_magnet_capacity")
 
 	_populate_storage_slots(_get_storage_entries())
 
@@ -224,6 +249,10 @@ func _install_compact_slot_rows() -> void:
 	_static_slot_icons[&"magnet_tool"] = _get_row_slot_icon(_magnet_row, _magnet_button)
 	_static_slot_icons[&"player_health"] = DEFAULT_HEALTH_ICON
 	_static_slot_icons[&"player_shield"] = DEFAULT_SHIELD_ICON
+	_static_slot_icons[&"ship_integrity"] = DEFAULT_SHIP_ICON
+	_static_slot_icons[&"ship_storage_size"] = DEFAULT_CAPACITY_ICON
+	_static_slot_icons[&"magnet_integrity"] = DEFAULT_MAGNET_ICON
+	_static_slot_icons[&"magnet_capacity"] = DEFAULT_CAPACITY_ICON
 
 	_player_augment_1_row = _create_compact_row(_right_slot_stack, "PlayerAugment1Row")
 	_player_augment_2_row = _create_compact_row(_right_slot_stack, "PlayerAugment2Row")
@@ -234,15 +263,27 @@ func _install_compact_slot_rows() -> void:
 	_install_compact_slot_row(_shield_row, &"player_shield", false)
 	_install_compact_slot_row(_player_augment_1_row, &"PlayerAugment1", true)
 	_install_compact_slot_row(_player_augment_2_row, &"PlayerAugment2", true)
+	_install_compact_slot_row(_ship_integrity_row, &"ship_integrity", false)
+	_install_compact_slot_row(_storage_size_row, &"ship_storage_size", false)
+	_install_compact_slot_row(_magnet_integrity_row, &"magnet_integrity", false)
+	_install_compact_slot_row(_magnet_capacity_row, &"magnet_capacity", false)
+	_install_compact_slot_row(_ship_augment_row, &"ShipAugment", true)
+	_install_compact_slot_row(_magnet_augment_row, &"MagnetAugment", true)
 
 	_weapon_button = _get_compact_slot_select_button(&"weapon")
 	_magnet_button = _get_compact_slot_select_button(&"magnet_tool")
 	_player_augment_1_button = _get_compact_slot_select_button(&"PlayerAugment1")
 	_player_augment_2_button = _get_compact_slot_select_button(&"PlayerAugment2")
+	_ship_augment_button = _get_compact_slot_select_button(&"ShipAugment")
+	_magnet_augment_button = _get_compact_slot_select_button(&"MagnetAugment")
 	_weapon_upgrade_button = _get_compact_slot_upgrade_button(&"weapon")
 	_magnet_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_tool")
 	_health_upgrade_button = _get_compact_slot_upgrade_button(&"player_health")
 	_shield_upgrade_button = _get_compact_slot_upgrade_button(&"player_shield")
+	_ship_integrity_upgrade_button = _get_compact_slot_upgrade_button(&"ship_integrity")
+	_storage_size_upgrade_button = _get_compact_slot_upgrade_button(&"ship_storage_size")
+	_magnet_integrity_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_integrity")
+	_magnet_capacity_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_capacity")
 
 
 func _create_compact_row(parent: VBoxContainer, row_name: String) -> HBoxContainer:
@@ -484,18 +525,18 @@ func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = _get_static_slot_display_name(static_slot_id)
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_static_slot_unlock_detail_text(static_slot_id)
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_static_slot_unlock_cost_text(static_slot_id)
-	elif bool(upgrade.call("is_maxed")):
+	elif _is_upgrade_maxed(upgrade_id):
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = "MAX LEVEL"
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = ""
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = ""
 	else:
-		var current_level := int(upgrade.get("current_level"))
+		var current_level := _get_upgrade_current_level(upgrade_id)
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = "Lv %d -> %d" % [
 			current_level,
 			current_level + 1,
 		]
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_upgrade_gain_text(upgrade)
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_upgrade_requirement_text(upgrade)
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_upgrade_gain_text(upgrade_id)
+		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_upgrade_requirement_text(upgrade_id)
 	var button_rect := button.get_global_rect()
 	var page_rect := _player_page.get_global_rect()
 	_resize_upgrade_cost_popup()
@@ -739,6 +780,11 @@ func _toggle_player_augment_popup(slot_id: StringName, augment_index: int) -> vo
 	_toggle_dynamic_slot_popup(slot_id, button, &"player_augment", augment_index, "Augments")
 
 
+func _toggle_owner_augment_popup(slot_id: StringName, slot_kind: StringName, list_title: String) -> void:
+	var button := _get_compact_slot_select_button(slot_id)
+	_toggle_dynamic_slot_popup(slot_id, button, slot_kind, 0, list_title)
+
+
 func _toggle_dynamic_slot_popup(
 	slot_id: StringName,
 	button: Button,
@@ -842,6 +888,16 @@ func _equip_dynamic_item_from_popup(entry: Resource) -> void:
 			if augment_data == null:
 				return
 			_run_loadout.equip_player_augment(_active_player_augment_index, augment_data)
+		&"ship_augment":
+			var ship_augment_data := _catalog_entry_item_data(entry) as AugmentData
+			if ship_augment_data == null:
+				return
+			_run_loadout.equip_ship_augment(_active_player_augment_index, ship_augment_data)
+		&"magnet_augment":
+			var magnet_augment_data := _catalog_entry_item_data(entry) as AugmentData
+			if magnet_augment_data == null:
+				return
+			_run_loadout.equip_magnet_augment(_active_player_augment_index, magnet_augment_data)
 		_:
 			return
 
@@ -901,6 +957,7 @@ func _refresh_loadout_ui() -> void:
 	_update_equipment_buttons()
 	_update_augment_slots()
 	_update_upgrade_rows()
+	_update_previews()
 	if _weapon_popup != null and _weapon_popup.visible:
 		_populate_dynamic_item_list()
 	_populate_storage_slots(_get_storage_entries())
@@ -920,7 +977,7 @@ func _update_equipment_buttons() -> void:
 			&"weapon",
 			_get_equipment_name(weapon),
 			_get_equipment_icon(weapon),
-			_get_upgrade(&"weapon_damage"),
+			&"weapon_damage",
 			true
 		)
 	elif weapon:
@@ -933,26 +990,36 @@ func _update_equipment_buttons() -> void:
 			&"magnet_tool",
 			_get_equipment_name(magnet_tool),
 			_get_equipment_icon(magnet_tool),
-			_get_upgrade(&"magnet_tool_pull"),
+			&"magnet_tool_pull",
 			false
 		)
 	elif magnet_tool:
 		_magnet_button.icon = _get_equipment_icon(magnet_tool)
 
 
+func _update_previews() -> void:
+	if _run_loadout == null:
+		return
+	if _player_preview_stage != null:
+		_player_preview_stage.set_loadout(_run_loadout)
+	if _ship_preview_stage != null:
+		_ship_preview_stage.set_loadout(_run_loadout)
+
+
 func _update_augment_slots() -> void:
-	_refresh_player_augment_slot(&"PlayerAugment1", 0)
-	_refresh_player_augment_slot(&"PlayerAugment2", 1)
+	_refresh_augment_slot(&"PlayerAugment1", _get_player_augment(0), _get_player_augment_slot_name(0), DEFAULT_AUGMENT_ICON)
+	_refresh_augment_slot(&"PlayerAugment2", _get_player_augment(1), _get_player_augment_slot_name(1), DEFAULT_AUGMENT_ICON)
+	_refresh_augment_slot(&"ShipAugment", _get_ship_augment(0), "Ship Augment", DEFAULT_SHIP_ICON)
+	_refresh_augment_slot(&"MagnetAugment", _get_magnet_augment(0), "Magnet Augment", DEFAULT_MAGNET_ICON)
 
 
-func _refresh_player_augment_slot(slot_id: StringName, augment_index: int) -> void:
-	var augment := _get_player_augment(augment_index)
+func _refresh_augment_slot(slot_id: StringName, augment: AugmentData, empty_name: String, empty_icon: Texture2D) -> void:
 	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
 	if slot == null:
 		return
 
 	if augment == null:
-		slot.setup(slot_id, _get_player_augment_slot_name(augment_index), DEFAULT_AUGMENT_ICON, 0, 0, true, _get_upgrade_icon())
+		slot.setup(slot_id, empty_name, empty_icon, 0, 0, true, _get_upgrade_icon())
 		slot.set_level_text("None")
 		return
 
@@ -960,7 +1027,7 @@ func _refresh_player_augment_slot(slot_id: StringName, augment_index: int) -> vo
 	slot.setup(
 		slot_id,
 		_get_upgradeable_item_name(augment),
-		_get_upgradeable_item_icon(augment, DEFAULT_AUGMENT_ICON),
+		_get_upgradeable_item_icon(augment, empty_icon),
 		level,
 		int(augment.max_level),
 		true,
@@ -977,37 +1044,67 @@ func _update_upgrade_rows() -> void:
 		&"player_health",
 		"Health",
 		_static_slot_icons.get(&"player_health", null) as Texture2D,
-		_get_upgrade(&"player_health"),
+		&"player_health",
 		false
 	)
 	_refresh_compact_slot(
 		&"player_shield",
 		"Shield",
 		_static_slot_icons.get(&"player_shield", null) as Texture2D,
-		_get_upgrade(&"player_shield"),
+		&"player_shield",
 		false
 	)
-	_set_upgrade_row_level(_weapon_row, _get_upgrade(&"weapon_damage"))
-	_set_upgrade_row_level(_magnet_row, _get_upgrade(&"magnet_tool_pull"))
-	_set_upgrade_row_level(_health_row, _get_upgrade(&"player_health"))
-	_set_upgrade_row_level(_shield_row, _get_upgrade(&"player_shield"))
+	_refresh_compact_slot(
+		&"ship_integrity",
+		"Integrity",
+		_static_slot_icons.get(&"ship_integrity", null) as Texture2D,
+		&"ship_hull",
+		false
+	)
+	_refresh_compact_slot(
+		&"ship_storage_size",
+		"Storage Size",
+		_static_slot_icons.get(&"ship_storage_size", null) as Texture2D,
+		&"ship_storage_size",
+		false
+	)
+	_refresh_compact_slot(
+		&"magnet_integrity",
+		"Integrity",
+		_static_slot_icons.get(&"magnet_integrity", null) as Texture2D,
+		&"ship_magnet_health",
+		false
+	)
+	_refresh_compact_slot(
+		&"magnet_capacity",
+		"Capacity",
+		_static_slot_icons.get(&"magnet_capacity", null) as Texture2D,
+		&"ship_magnet_capacity",
+		false
+	)
+	_set_upgrade_row_level(_weapon_row, &"weapon_damage")
+	_set_upgrade_row_level(_magnet_row, &"magnet_tool_pull")
+	_set_upgrade_row_level(_health_row, &"player_health")
+	_set_upgrade_row_level(_shield_row, &"player_shield")
 
 
-func _set_upgrade_row_level(row: HBoxContainer, upgrade: Resource) -> void:
-	if row == null or upgrade == null:
+func _set_upgrade_row_level(row: HBoxContainer, upgrade_id: StringName) -> void:
+	if row == null:
 		return
 	var slot := _get_compact_slot_for_row(row)
 	if slot != null:
-		slot.set_level(int(upgrade.get("current_level")), int(upgrade.get("max_level")))
+		slot.set_level(_get_upgrade_current_level(upgrade_id), _get_upgrade_current_max_level(upgrade_id))
 		return
 
+	var level := _get_upgrade_current_level(upgrade_id)
+	var max_level := _get_upgrade_current_max_level(upgrade_id)
 	var tick_index := 0
 	for child in row.get_children():
 		if child is ColorRect and String(child.name).begins_with("Tick"):
 			tick_index += 1
 			var tick := child as ColorRect
-			tick.visible = tick_index <= int(upgrade.get("max_level"))
-			tick.color = ACTIVE_TICK_COLOR if tick_index <= int(upgrade.get("current_level")) else INACTIVE_TICK_COLOR
+			tick.visible = tick_index <= max_level
+			tick.color = ACTIVE_TICK_COLOR if tick_index <= level else INACTIVE_TICK_COLOR
 
 
 func _on_upgrade_pressed(upgrade_id: StringName) -> void:
@@ -1019,12 +1116,12 @@ func _on_upgrade_pressed(upgrade_id: StringName) -> void:
 	if static_slot_id != &"" and not _is_static_slot_unlocked(static_slot_id):
 		_unlock_static_slot(static_slot_id)
 		return
-	var upgrade := _get_upgrade(upgrade_id)
-	if upgrade == null:
+	if _get_upgrade(upgrade_id) == null:
 		return
-	if bool(upgrade.call("is_maxed")):
+	if _is_upgrade_maxed(upgrade_id):
 		return
-	if _save_data != null and not bool(_save_data.call("spend_upgrade_cost", upgrade)):
+	var level_cost: Resource = _run_loadout.get_upgrade_next_level_cost(upgrade_id)
+	if _save_data != null and not bool(_save_data.call("spend_level_cost", level_cost)):
 		return
 	_run_loadout.increase_upgrade(upgrade_id)
 	_save_current_game()
@@ -1080,6 +1177,9 @@ func _get_active_catalog_entries() -> Array[Resource]:
 	match _active_dynamic_slot_kind:
 		&"player_augment":
 			return _get_player_augment_catalog_entries()
+		&"ship_augment", &"magnet_augment":
+			# No ship/magnet augments are available yet, so present an empty list.
+			return []
 	return _get_weapon_catalog_entries()
 
 
@@ -1425,11 +1525,11 @@ func _get_catalog_entry_level_progress(entry: Resource) -> Dictionary:
 			"max_level": int(item_data.get("max_level")),
 		}
 
-	if item_data is WeaponData:
-		var weapon_upgrade := _get_upgrade(&"weapon_damage")
+	if item_data is EquipmentData and _run_loadout != null:
+		var upgrade_id := &"weapon_damage" if item_data is WeaponData else &"magnet_tool_pull"
 		return {
-			"level": int(weapon_upgrade.get("current_level")) if weapon_upgrade != null else 0,
-			"max_level": int(weapon_upgrade.get("max_level")) if weapon_upgrade != null else 0,
+			"level": _run_loadout.get_equipment_item_level(item_data),
+			"max_level": _run_loadout.get_upgrade_max_level(upgrade_id),
 		}
 
 	return {"level": 0, "max_level": 0}
@@ -1472,6 +1572,16 @@ func _is_catalog_entry_equipped(entry: Resource) -> bool:
 			var item_data := _catalog_entry_item_data(entry)
 			for augment in _run_loadout.player_augments:
 				if _same_upgradeable_item(augment, item_data):
+					return true
+		&"ship_augment":
+			var ship_item_data := _catalog_entry_item_data(entry)
+			for augment in _run_loadout.ship_augments:
+				if _same_upgradeable_item(augment, ship_item_data):
+					return true
+		&"magnet_augment":
+			var magnet_item_data := _catalog_entry_item_data(entry)
+			for augment in _run_loadout.magnet_augments:
+				if _same_upgradeable_item(augment, magnet_item_data):
 					return true
 	return false
 
@@ -1545,8 +1655,8 @@ func _get_current_dynamic_item() -> Resource:
 	match _active_dynamic_slot_kind:
 		&"weapon":
 			return _run_loadout.equipped_weapon
-		&"player_augment":
-			return _get_player_augment(_active_player_augment_index)
+		&"player_augment", &"ship_augment", &"magnet_augment":
+			return _get_owner_augment(_active_dynamic_slot_kind, _active_player_augment_index)
 	return null
 
 
@@ -1606,6 +1716,19 @@ func _get_upgrade(upgrade_id: StringName) -> Resource:
 	return _run_loadout.get_upgrade(upgrade_id)
 
 
+## Context-aware level for an upgrade (equipment upgrades resolve per equipped item).
+func _get_upgrade_current_level(upgrade_id: StringName) -> int:
+	return _run_loadout.get_upgrade_level(upgrade_id) if _run_loadout != null else 0
+
+
+func _get_upgrade_current_max_level(upgrade_id: StringName) -> int:
+	return _run_loadout.get_upgrade_max_level(upgrade_id) if _run_loadout != null else 0
+
+
+func _is_upgrade_maxed(upgrade_id: StringName) -> bool:
+	return _run_loadout != null and _run_loadout.is_upgrade_maxed(upgrade_id)
+
+
 func _has_compact_slot(slot_id: StringName) -> bool:
 	return _station_slots.has(slot_id) and _station_slots[slot_id] is StationUpgradeSlot
 
@@ -1614,18 +1737,15 @@ func _refresh_compact_slot(
 	slot_id: StringName,
 	item_name: String,
 	icon: Texture2D,
-	upgrade: Resource,
+	upgrade_id: StringName,
 	can_select: bool
 ) -> void:
 	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
 	if slot == null:
 		return
 
-	var level := 0
-	var max_level := 0
-	if upgrade != null:
-		level = int(upgrade.get("current_level"))
-		max_level = int(upgrade.get("max_level"))
+	var level := _get_upgrade_current_level(upgrade_id)
+	var max_level := _get_upgrade_current_max_level(upgrade_id)
 	slot.setup(slot_id, item_name, icon, level, max_level, can_select, _get_upgrade_icon())
 	if _is_static_slot_unlockable(slot_id):
 		slot.set_unlock_mode(not _is_static_slot_unlocked(slot_id), "Unlock")
@@ -1656,6 +1776,14 @@ func _get_upgrade_button(upgrade_id: StringName) -> Button:
 			return _health_upgrade_button
 		&"player_shield":
 			return _shield_upgrade_button
+		&"ship_hull":
+			return _ship_integrity_upgrade_button
+		&"ship_storage_size":
+			return _storage_size_upgrade_button
+		&"ship_magnet_health":
+			return _magnet_integrity_upgrade_button
+		&"ship_magnet_capacity":
+			return _magnet_capacity_upgrade_button
 	return null
 
 
@@ -1672,15 +1800,15 @@ func _save_current_game() -> void:
 		_save_data.call("save_to_disk")
 
 
-func _build_upgrade_requirement_text(upgrade: Resource) -> String:
-	if upgrade == null:
+func _build_upgrade_requirement_text(upgrade_id: StringName) -> String:
+	if _run_loadout == null:
 		return "Requires: No cost"
 
-	var level_cost := upgrade.call("get_next_level_cost") as Resource
+	var level_cost: Resource = _run_loadout.get_upgrade_next_level_cost(upgrade_id)
 	if level_cost == null:
 		return "Requires: No cost"
 	if not _has_property(level_cost, "costs"):
-		return "Requires: %s" % String(upgrade.call("get_next_level_cost_text"))
+		return "Requires: No cost"
 
 	var lines := PackedStringArray(["Requires"])
 	var cost_text := _format_salvage_costs_text(level_cost.get("costs") as Array)
@@ -1688,7 +1816,26 @@ func _build_upgrade_requirement_text(upgrade: Resource) -> String:
 		lines.append("No cost")
 	else:
 		lines.append(cost_text)
+
+	var scrap_section := _build_scrap_cost_section(level_cost)
+	if not scrap_section.is_empty():
+		lines.append("")
+		lines.append(scrap_section)
 	return "\n".join(lines)
+
+
+## Separate "Scrap Metal" cost block for the upgrade popup (owned / required).
+func _build_scrap_cost_section(level_cost: Resource) -> String:
+	if level_cost == null or not _has_property(level_cost, "scrap_cost"):
+		return ""
+	var scrap_required := int(level_cost.get("scrap_cost"))
+	if scrap_required <= 0:
+		return ""
+	var owned := 0
+	var save_data := _save_data as AppSaveData
+	if save_data != null:
+		owned = save_data.total_scrap_metal
+	return "Scrap Metal\nx%d (%d / %d)" % [scrap_required, owned, scrap_required]
 
 
 func _format_research_point_cost_text(required: int) -> String:
@@ -1735,10 +1882,11 @@ func _get_owned_salvage_quantity(item_data: SalvageItemData) -> int:
 	return 0
 
 
-func _build_upgrade_gain_text(upgrade: Resource) -> String:
-	if upgrade == null:
+func _build_upgrade_gain_text(upgrade_id: StringName) -> String:
+	var upgrade := _get_upgrade(upgrade_id)
+	if upgrade == null or _run_loadout == null:
 		return ""
-	return String(upgrade.call("get_next_level_gain_text", _get_upgrade_stat_name(upgrade)))
+	return _run_loadout.get_upgrade_next_gain_text(upgrade_id, _get_upgrade_stat_name(upgrade))
 
 
 func _get_upgrade_stat_name(upgrade: Resource) -> String:
@@ -1757,13 +1905,15 @@ func _get_upgrade_stat_name(upgrade: Resource) -> String:
 		"pull_max_speed":
 			return "Pull Speed"
 		"ship_max_health":
-			return "Hull"
+			return "Ship Integrity"
+		"ship_storage_width":
+			return "Storage Size"
 		"ship_storage_max_weight":
 			return "Storage"
 		"magnet_hold_capacity":
 			return "Magnet Capacity"
 		"magnet_max_health":
-			return "Magnet Health"
+			return "Magnet Integrity"
 	return _prettify_property_name(target_property).capitalize()
 
 
@@ -1797,6 +1947,33 @@ func _get_player_augment(index: int) -> AugmentData:
 	if index < 0 or index >= _run_loadout.player_augments.size():
 		return null
 	return _run_loadout.player_augments[index] as AugmentData
+
+
+func _get_ship_augment(index: int) -> AugmentData:
+	if _run_loadout == null:
+		return null
+	if index < 0 or index >= _run_loadout.ship_augments.size():
+		return null
+	return _run_loadout.ship_augments[index] as AugmentData
+
+
+func _get_magnet_augment(index: int) -> AugmentData:
+	if _run_loadout == null:
+		return null
+	if index < 0 or index >= _run_loadout.magnet_augments.size():
+		return null
+	return _run_loadout.magnet_augments[index] as AugmentData
+
+
+func _get_owner_augment(slot_kind: StringName, index: int) -> AugmentData:
+	match slot_kind:
+		&"player_augment":
+			return _get_player_augment(index)
+		&"ship_augment":
+			return _get_ship_augment(index)
+		&"magnet_augment":
+			return _get_magnet_augment(index)
+	return null
 
 
 func _get_upgradeable_item_name(item_data: Resource) -> String:
@@ -1843,23 +2020,21 @@ func _build_ship_stats_text() -> String:
 		return "No run loadout assigned"
 
 	var lines := PackedStringArray([
-		"HULL: %s" % _stringify_stat_value(_run_loadout.ship_max_health),
-		"STORAGE: %s" % _stringify_stat_value(_run_loadout.ship_storage_max_weight),
-		"MAGNET CAPACITY: %s" % _stringify_stat_value(_run_loadout.magnet_hold_capacity),
-		"MAGNET HEALTH: %s" % _stringify_stat_value(_run_loadout.magnet_max_health),
+		"SHIP",
+		"  Integrity: %s" % _stringify_stat_value(_run_loadout.ship_max_health),
+		"  Storage Size: %s" % _stringify_stat_value(_run_loadout.ship_storage_area_size.x),
+		"",
+		"MAGNET",
+		"  Integrity: %s" % _stringify_stat_value(_run_loadout.magnet_max_health),
+		"  Capacity: %s" % _stringify_stat_value(_run_loadout.magnet_hold_capacity),
 	])
 	return "\n".join(lines)
 
 
 func _format_weapon_stats(weapon: WeaponData) -> String:
-	var lines := PackedStringArray([_format_resource_stats(weapon, WEAPON_STAT_PROPERTIES)])
-	var upgrade := _get_upgrade(&"weapon_damage")
-	if upgrade != null:
-		if bool(upgrade.call("is_maxed")):
-			lines.append("UPGRADE: MAX LEVEL")
-		else:
-			lines.append("UPGRADE COST:\n%s" % _build_upgrade_requirement_text(upgrade))
-	return "\n".join(lines)
+	# Current-item panel shows stats only. Upgrade cost lives on the upgrade
+	# button popup, not here.
+	return _format_resource_stats(weapon, WEAPON_STAT_PROPERTIES)
 
 
 func _format_resource_stats(resource: Resource, property_names: Array[String]) -> String:

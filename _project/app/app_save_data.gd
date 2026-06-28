@@ -214,11 +214,39 @@ func spend_upgrade_cost(upgrade: Resource) -> bool:
 		return false
 
 	var level_cost := upgrade.call("get_next_level_cost") as Resource
+	return spend_level_cost(level_cost)
+
+
+func can_spend_scrap_metal(amount: int) -> bool:
+	return amount >= 0 and total_scrap_metal >= amount
+
+
+## Validate and deduct a full upgrade level cost: salvage parts AND scrap metal.
+## Both must be affordable or nothing is spent. Returns true on success.
+func spend_level_cost(level_cost: Resource) -> bool:
 	if level_cost == null:
 		return true
 
-	var costs := level_cost.get("costs") as Array
-	return spend_costs(_to_resource_array(costs))
+	var costs := _to_resource_array(level_cost.get("costs") as Array)
+	var scrap_value: Variant = level_cost.get("scrap_cost")
+	var scrap_needed := int(scrap_value) if scrap_value != null else 0
+
+	if not can_pay_costs(costs):
+		return false
+	if not can_spend_scrap_metal(scrap_needed):
+		return false
+
+	for cost in costs:
+		if cost == null:
+			continue
+		var item_data := cost.get("item_data") as SalvageItemData
+		var quantity := int(cost.get("quantity"))
+		if item_data != null and quantity > 0:
+			_remove_storage_item(item_data, quantity)
+	if scrap_needed > 0:
+		total_scrap_metal = maxi(total_scrap_metal - scrap_needed, 0)
+	save_to_disk()
+	return true
 
 
 func get_storage_quantity(item_data: SalvageItemData) -> int:

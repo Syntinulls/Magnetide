@@ -1,10 +1,23 @@
 extends Resource
 class_name EquipmentData
 
+## Stable identifier used for per-item upgrade levels / unlock state.
+## Falls back to the resource path when left empty.
+@export var item_id: StringName = &""
 ## Display name shown in UI
 @export var display_name: String = ""
 ## Icon texture for hotbar slot
 @export var hotbar_icon: Texture2D
+
+
+## Per-item upgrade identifier, falling back to the resource path so distinct
+## equipment never collide when item_id is unset.
+func get_upgrade_item_id() -> StringName:
+	if item_id != &"":
+		return item_id
+	if not resource_path.is_empty():
+		return StringName(resource_path)
+	return &""
 
 @export_group("Muzzle Effect")
 @export_enum("None", "Magnet Gun", "Rifle Flash") var muzzle_effect_type: int = MuzzleEffect.EffectType.NONE

@@ -1,0 +1,51 @@
+[gd_scene load_steps=8 format=3 uid="uid://cshippreview01"]
+
+[ext_resource type="Script" path="res://_project/app/screens/preview/ship_preview.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="2_back"]
+[ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="3_fore"]
+[ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/ship_ff_gens.png" id="4_gens"]
+[ext_resource type="Texture2D" uid="uid://bvpl86d7qmb6e" path="res://_project/ship/sprites/pattern_hazard.png" id="5_hazard"]
+[ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="6_magnet"]
+[ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="7_thruster"]
+
+[node name="ShipPreview" type="Node2D"]
+script = ExtResource("1_script")
+
+[node name="Magnet" parent="." instance=ExtResource("6_magnet")]
+position = Vector2(0, 136)
+hold_capacity = 5
+
+[node name="StorageMarker" type="ColorRect" parent="."]
+z_index = -2
+offset_left = -206.0
+offset_top = -125.0
+offset_right = 206.0
+offset_bottom = -89.0
+color = Color(0, 0, 0, 1)
+mouse_filter = 2
+
+[node name="HazardPattern" type="TextureRect" parent="StorageMarker"]
+texture_filter = 1
+offset_left = 6.0
+offset_top = 6.0
+offset_right = 406.0
+offset_bottom = 30.0
+mouse_filter = 2
+texture = ExtResource("5_hazard")
+stretch_mode = 1
+
+[node name="ShipBack" type="Sprite2D" parent="."]
+texture = ExtResource("2_back")
+
+[node name="ShipFore" type="Sprite2D" parent="."]
+texture = ExtResource("3_fore")
+
+[node name="ShipGens" type="Sprite2D" parent="."]
+position = Vector2(0, -108)
+texture = ExtResource("4_gens")
+
+[node name="ThrusterLeft" parent="." instance=ExtResource("7_thruster")]
+position = Vector2(-333, 23)
+
+[node name="ThrusterRight" parent="." instance=ExtResource("7_thruster")]
+position = Vector2(333, 23)
