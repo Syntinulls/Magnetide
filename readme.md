@@ -1,6 +1,5 @@
-# Magnetide — Master Pitch
+# Magnetide
 
-## One-liner
 A 2D side-scroller salvage roguelite where you run a hovering platform with a giant magnet, haul up valuable junk from a trash planet, and defend your rig from trash-beasts, other scavengers, and various environmental hazards—then return to orbit to cash in and upgrade for the next run.
 
 ## Description
