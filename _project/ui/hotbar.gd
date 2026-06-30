@@ -214,7 +214,7 @@ func _update_visual_slots() -> void:
 
 
 func _set_slot_visual(slot: Control, data: Dictionary, equip_index: int = -1) -> void:
-	var icon_rect: TextureRect = slot.get_node("ItemIcon")
+	var icon_rect: TextureRect = slot.get_node("MarginContainer/ItemIcon")
 	icon_rect.texture = data.get("icon", null)
 	
 	# Update slot number if it exists (now inside SlotNumberContainer)

@@ -67,11 +67,15 @@ var target_point_selection_mode: TargetSelectionMode = TargetSelectionMode.RANDO
 @export_group("Rewards")
 @export var loot_table: LootTable
 
+@export_group("Hit Reaction")
+## How long the sprite shakes when the enemy is hit.
+@export var hit_shake_duration: float = 0.2
+## Maximum offset of the hit shake, in pixels.
+@export var hit_shake_distance: float = 6.0
+## Number of randomized offsets applied across the hit shake.
+@export var hit_shake_steps: int = 28
+
 @export_group("Death Sequence")
-@export var death_shake_duration: float = 0.5
-@export var death_shake_distance: float = 8.0
-@export var death_shake_steps: int = 28
-@export var death_pause_duration: float = 0.5
 @export var death_pop_velocity_x_range: Vector2 = Vector2(-80.0, 80.0)
 @export var death_pop_up_velocity_range: Vector2 = Vector2(520.0, 760.0)
 @export var death_pop_gravity: float = 1400.0

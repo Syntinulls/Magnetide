@@ -4,7 +4,7 @@ class_name Enemy
 signal died
 
 enum State { IDLE, MOVE, ATTACK, DEATH }
-enum DeathPhase { NONE, SHAKING, PAUSED, POPPING }
+enum DeathPhase { NONE, POPPING }
 
 const INVALID_TARGET_GROUP: StringName = &""
 const ANIM_IDLE: StringName = &"idle"
@@ -30,9 +30,9 @@ var _death_timer: float = 0.0
 var _death_pop_elapsed: float = 0.0
 var _death_phase: DeathPhase = DeathPhase.NONE
 var _death_rotation_velocity: float = 0.0
-var _death_shake_origin: Vector2 = Vector2.ZERO
+var _sprite_rest_position: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
-var _death_sequence_tween: Tween = null
+var _hit_shake_tween: Tween = null
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var hitbox: Hitbox = $Hitbox
@@ -41,6 +41,7 @@ var _death_sequence_tween: Tween = null
 
 func _ready() -> void:
 	add_to_group("enemies")
+	_sprite_rest_position = sprite.position
 	if not data:
 		push_warning("Enemy has no EnemyData assigned.")
 		return
@@ -177,7 +178,7 @@ func _enter_death_state() -> void:
 		_attack_behavior.teardown(self)
 	hitbox_collision_shape.set_deferred("disabled", true)
 	play_enemy_animation(ANIM_DEATH)
-	_start_death_sequence()
+	_launch_death_pop()
 	died.emit()
 
 
@@ -189,6 +190,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 	current_health -= amount
 	_flash_white()
+	_play_hit_shake()
 	if Magnetide.sfx:
 		Magnetide.sfx.play("enemy_hit.ogg", -6)
 
@@ -599,43 +601,25 @@ func _flash_white() -> void:
 		_flash_tween.tween_property(mat, "shader_parameter/flash_intensity", 0.0, 0.15)
 
 
-func _start_death_sequence() -> void:
-	if _death_sequence_tween:
-		_death_sequence_tween.kill()
-
-	_death_phase = DeathPhase.SHAKING
-	_death_shake_origin = position
-	_death_rotation_velocity = 0.0
-
-	var shake_duration := maxf(data.death_shake_duration, 0.0)
-	var pause_duration := maxf(data.death_pause_duration, 0.0)
-	_death_sequence_tween = create_tween()
-
-	if shake_duration > 0.0 and data.death_shake_distance > 0.0 and data.death_shake_steps > 0:
-		var steps := maxi(data.death_shake_steps, 1)
-		var step_duration := shake_duration / float(steps)
-		for i in steps:
-			var offset := Vector2(
-				randf_range(-data.death_shake_distance, data.death_shake_distance),
-				randf_range(-data.death_shake_distance, data.death_shake_distance)
-			)
-			_death_sequence_tween.tween_property(self, "position", _death_shake_origin + offset, step_duration)
-		_death_sequence_tween.tween_property(self, "position", _death_shake_origin, minf(step_duration, 0.06))
-	elif shake_duration > 0.0:
-		_death_sequence_tween.tween_interval(shake_duration)
-
-	_death_sequence_tween.tween_callback(_finish_death_shake)
-	if pause_duration > 0.0:
-		_death_sequence_tween.tween_interval(pause_duration)
-	_death_sequence_tween.tween_callback(_launch_death_pop)
-
-
-func _finish_death_shake() -> void:
-	if state != State.DEATH:
+func _play_hit_shake() -> void:
+	var shake_duration := maxf(data.hit_shake_duration, 0.0)
+	if shake_duration <= 0.0 or data.hit_shake_distance <= 0.0 or data.hit_shake_steps <= 0:
 		return
-	_death_phase = DeathPhase.PAUSED
-	position = _death_shake_origin
-	velocity = Vector2.ZERO
+
+	if _hit_shake_tween:
+		_hit_shake_tween.kill()
+
+	sprite.position = _sprite_rest_position
+	var steps := maxi(data.hit_shake_steps, 1)
+	var step_duration := shake_duration / float(steps)
+	_hit_shake_tween = create_tween()
+	for i in steps:
+		var offset := Vector2(
+			randf_range(-data.hit_shake_distance, data.hit_shake_distance),
+			randf_range(-data.hit_shake_distance, data.hit_shake_distance)
+		)
+		_hit_shake_tween.tween_property(sprite, "position", _sprite_rest_position + offset, step_duration)
+	_hit_shake_tween.tween_property(sprite, "position", _sprite_rest_position, minf(step_duration, 0.04))
 
 
 func _launch_death_pop() -> void:
@@ -643,7 +627,6 @@ func _launch_death_pop() -> void:
 		return
 	_death_phase = DeathPhase.POPPING
 	_death_pop_elapsed = 0.0
-	position = _death_shake_origin
 	velocity = Vector2(
 		randf_range(data.death_pop_velocity_x_range.x, data.death_pop_velocity_x_range.y),
 		-randf_range(data.death_pop_up_velocity_range.x, data.death_pop_up_velocity_range.y)

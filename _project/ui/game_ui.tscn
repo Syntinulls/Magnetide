@@ -7,7 +7,6 @@
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
-[ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/ui/event_text_display.tscn" id="26_event_text"]
 [ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="7_pqqpn"]
 [ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/ship_status_ui.gd" id="7_ship_status"]
 [ext_resource type="Texture2D" uid="uid://dwkrun3rqdmap" path="res://_project/ui/sprites/ui_ship_storage_bg.png" id="10_ship_bg"]
@@ -23,6 +22,7 @@
 [ext_resource type="Script" uid="uid://bfwl2ho2imvfr" path="res://_project/ui/game_ui.gd" id="24_game_ui"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="24_pqqpn"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="25_shield_icon"]
+[ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/ui/event_text_display.tscn" id="26_event_text"]
 [ext_resource type="Script" path="res://_project/ui/control_prompt_stack.gd" id="27_prompts"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
@@ -205,7 +205,7 @@ layout_mode = 0
 offset_right = 0.0
 offset_bottom = 0.0
 
-[node name="EventTextDisplay" parent="." instance=ExtResource("26_event_text")]
+[node name="EventTextDisplay" parent="." unique_id=104122633 instance=ExtResource("26_event_text")]
 layout_mode = 1
 anchors_preset = 5
 anchor_left = 0.5
@@ -218,6 +218,7 @@ grow_horizontal = 2
 
 [node name="ControlPromptStack" type="VBoxContainer" parent="." unique_id=255438300]
 layout_mode = 1
+anchors_preset = 7
 anchor_left = 0.5
 anchor_top = 1.0
 anchor_right = 0.5
@@ -373,12 +374,21 @@ texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=827461532]
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1451714845]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0/MarginContainer" unique_id=827461532]
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -431,12 +441,21 @@ texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=827461542]
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=1932971827]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1/MarginContainer" unique_id=1411466109]
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -490,12 +509,21 @@ texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=827461552]
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=1061687076]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2/MarginContainer" unique_id=2133265605]
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -549,12 +577,21 @@ texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=827461562]
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=785942895]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3/MarginContainer" unique_id=1708987239]
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5
@@ -608,12 +645,21 @@ texture = ExtResource("21_a5bm7")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=827461572]
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=334406349]
 layout_mode = 1
-anchors_preset = 10
+anchors_preset = 15
 anchor_right = 1.0
-offset_bottom = 48.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
 grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4/MarginContainer" unique_id=45771146]
+layout_mode = 2
 mouse_filter = 2
 expand_mode = 1
 stretch_mode = 5

@@ -1,13 +1,13 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://c3i6j83w7ausi"]
 
+[ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_0akki"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="1_kecvl"]
-[ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/items/equipment/rifle/bullet_1.png" id="1_pxyta"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/items/equipment/rifle/player_item_rifle.png" id="4_02vt3"]
 
 [resource]
 script = ExtResource("1_kecvl")
 weapon_sprite = ExtResource("4_02vt3")
-bullet_sprite = ExtResource("1_pxyta")
+bullet_sprite = ExtResource("1_0akki")
 weapon_rotation = 0.0
 muzzle_position = Vector2(-62.897224, -5.8358216)
 item_id = &"weapon_rifle"

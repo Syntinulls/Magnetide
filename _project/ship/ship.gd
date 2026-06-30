@@ -650,6 +650,6 @@ func set_departure_pylon_active(pylon: Node, active: bool) -> void:
 	var prompts := Magnetide.control_prompts
 	if prompts:
 		if any_active:
-			prompts.set_prompt(&"depart", "E", "DEPART", true, 10)
+			prompts.set_prompt(&"end_run", "E", "END RUN", true, 10)
 		else:
-			prompts.clear_prompt(&"depart")
+			prompts.clear_prompt(&"end_run")
