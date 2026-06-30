@@ -1,10 +1,9 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bmsp4hjbiegi"]
 
+[ext_resource type="Texture2D" uid="uid://dwyl5e1wioava" path="res://_project/items/equipment/shotgun/bullet_shotgun.png" id="1_ocsqx"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="1_weapon_data"]
 [ext_resource type="Script" uid="uid://bwa44jt60lssd" path="res://_project/items/equipment/shotgun/shotgun_fire_behavior.gd" id="2_fire_behavior"]
-[ext_resource type="Texture2D" uid="uid://3bx0akmn8eib" path="res://_project/items/equipment/rifle/bullet_1.png" id="3_bullet"]
-[ext_resource type="Texture2D" uid="uid://brxpe4qiqvo" path="res://_project/ui/sprites/ui_player_itemslot_rifle.png" id="4_hotbar"]
-[ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/items/equipment/rifle/player_item_rifle.png" id="5_weapon"]
+[ext_resource type="Texture2D" uid="uid://lj3kn1kn64j0" path="res://_project/items/equipment/shotgun/player_item_shotgun.png" id="3_tjpe0"]
 
 [sub_resource type="Resource" id="Resource_shotgun_fire_behavior"]
 script = ExtResource("2_fire_behavior")
@@ -15,14 +14,15 @@ damage = 15.0
 fire_rate = 1.0
 bullet_speed = 1550.0
 pierce = 2
-weapon_sprite = ExtResource("5_weapon")
-bullet_sprite = ExtResource("3_bullet")
+weapon_sprite = ExtResource("3_tjpe0")
+bullet_sprite = ExtResource("1_ocsqx")
 fire_behavior = SubResource("Resource_shotgun_fire_behavior")
+weapon_offset = Vector2(-18.675, 6.925)
 weapon_rotation = 0.0
-muzzle_position = Vector2(-62.897224, -5.8358216)
+muzzle_position = Vector2(-65.311, 2.142)
 item_id = &"weapon_shotgun"
 display_name = "Shotgun"
-hotbar_icon = ExtResource("4_hotbar")
+hotbar_icon = ExtResource("3_tjpe0")
 muzzle_effect_type = 2
 muzzle_effect_offset = Vector2(5, 0)
 metadata/_custom_type_script = "uid://dswvbat8qx1i4"
