@@ -1,25 +1,25 @@
-[gd_scene load_steps=5 format=3 uid="uid://cplayerpreview01"]
+[gd_scene format=3 uid="uid://xhec0qwauhh1"]
 
-[ext_resource type="Script" path="res://_project/app/screens/preview/player_preview.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://d4lqajvoxmrj0" path="res://_project/app/screens/preview/player_preview.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://dx1rtfv6p7g1o" path="res://_project/player/sprites/guy_part_body.png" id="2_body"]
 [ext_resource type="Texture2D" uid="uid://ba2hadpeipo0h" path="res://_project/player/sprites/guy_part_legs_idle.png" id="3_legs"]
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 
-[node name="PlayerPreview" type="Node2D"]
+[node name="PlayerPreview" type="Node2D" unique_id=358226845]
 script = ExtResource("1_script")
 
-[node name="Legs" type="Sprite2D" parent="."]
-texture = ExtResource("3_legs")
-
-[node name="BodySprite" type="Sprite2D" parent="."]
+[node name="BodySprite" type="Sprite2D" parent="." unique_id=726819088]
 texture = ExtResource("2_body")
 
-[node name="ArmSprite" type="Sprite2D" parent="."]
+[node name="Legs" type="Sprite2D" parent="." unique_id=578572448]
+texture = ExtResource("3_legs")
+
+[node name="ArmSprite" type="Sprite2D" parent="." unique_id=1840315691]
 position = Vector2(12.56, -8.88)
 texture = ExtResource("4_arm")
 offset = Vector2(-13.585, 8.13)
 
-[node name="Weapon" type="Sprite2D" parent="ArmSprite"]
+[node name="Weapon" type="Sprite2D" parent="ArmSprite" unique_id=1858018707]
 show_behind_parent = true
 position = Vector2(-2.485, 15.465)
 offset = Vector2(-15.125, 0)

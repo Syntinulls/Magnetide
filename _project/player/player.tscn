@@ -12,8 +12,8 @@
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
-[ext_resource type="Texture2D" uid="uid://d1ly2sv5d6n6q" path="res://_project/items/equipment/player_item_magnet.png" id="13_4y3ad"]
-[ext_resource type="Script" path="res://_project/player/muzzle_effect.gd" id="13_muzzle_effect"]
+[ext_resource type="Texture2D" uid="uid://lj3kn1kn64j0" path="res://_project/items/equipment/shotgun/player_item_shotgun.png" id="13_4y3ad"]
+[ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/player/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/equipment/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/equipment/player_item_gun_effect_1.png" id="15_4y3ad"]
 
@@ -224,10 +224,10 @@ offset = Vector2(-13.585, 8.13)
 show_behind_parent = true
 position = Vector2(-2.485, 15.465)
 texture = ExtResource("13_4y3ad")
-offset = Vector2(-15.125, 0)
+offset = Vector2(-18.675, 6.925)
 
 [node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
-position = Vector2(-46.22568, -2.3631382)
+position = Vector2(-65.311, 2.142)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
 sprite_frames = SubResource("SpriteFrames_op25k")
