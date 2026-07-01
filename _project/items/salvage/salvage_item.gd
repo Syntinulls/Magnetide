@@ -13,7 +13,6 @@ enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
 # ============================================================================
 const SETTLE_TIME: float = 0.05
 const STORAGE_COLLISION_LAYER: int = 8
-const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
 ## Interact highlight color; supersedes the persistent rarity outline while hovered/interactable.
 const INTERACT_OUTLINE_COLOR: Color = Color.WHITE
 const TRASH_RARITY_COLOR: Color = Color("b8b8b8")
@@ -21,8 +20,20 @@ const TRASH_DISPLAY_NAME: String = "Trash"
 const TRASH_PARTICLE_COUNT_MIN: int = 8
 const TRASH_PARTICLE_COUNT_MAX: int = 12
 
+## Stack visuals: up to two extra sprites shown behind the main one. Positions
+## are a fraction of the item's visual area (item-local space).
+const STACK_SPRITE_OFFSET_FRACTIONS: Array[Vector2] = [
+	Vector2(-0.16, -0.10),
+	Vector2(0.16, -0.10),
+]
+## Extra stack sprites are slightly dimmed so the front item reads as "on top".
+const STACK_SPRITE_MODULATE: Color = Color(0.82, 0.82, 0.82)
+
 var item_data: SalvageItemData = null
 var rarity: int = SalvageItemData.ItemRarity.COMMON
+## Number of identical parts represented by this single in-world object. Stacks
+## occupy no extra physical space; they are a purely visual/quantity grouping.
+var stack_count: int = 1
 var _is_trash: bool = false
 var _trash_area: Vector2 = Vector2(64, 64)
 var _trash_hitbox_size: Vector2 = Vector2(36, 36)
@@ -35,9 +46,10 @@ var _magnet_target: Node2D = null
 var _is_falling: bool = false
 var _is_in_magnet_field: bool = false
 var _sprite: Sprite2D = null
+var _stack_sprites: Array[Sprite2D] = []
 var _collision_shape: CollisionShape2D = null
 var _settle_timer: float = 0.0
-var _outline_material: ShaderMaterial = null
+var _outline: CompositeOutline = null
 var _rarity_outline_color: Color = Color.WHITE
 var _interact_highlight: bool = false
 var _contacting_items: Array[SalvageItem] = []
@@ -187,14 +199,28 @@ func _ready() -> void:
 	_sprite = Sprite2D.new()
 	_sprite.centered = true
 	add_child(_sprite)
-	
-	# Setup outline shader material (disabled by default)
-	_outline_material = ShaderMaterial.new()
-	_outline_material.shader = OUTLINE_SHADER
-	_outline_material.set_shader_parameter("outline_enabled", false)
-	_outline_material.set_shader_parameter("outline_width", 3.0)
-	_sprite.material = _outline_material
-	
+
+	# Pre-create the offset stack sprites, hidden and rendered behind the main
+	# sprite. They become visible when this object represents a stack (>1 items).
+	for _i in range(STACK_SPRITE_OFFSET_FRACTIONS.size()):
+		var stack_sprite := Sprite2D.new()
+		stack_sprite.centered = true
+		stack_sprite.visible = false
+		stack_sprite.z_index = -1  # behind the main sprite (relative to this body)
+		stack_sprite.modulate = STACK_SPRITE_MODULATE
+		add_child(stack_sprite)
+		_stack_sprites.append(stack_sprite)
+
+	# One composite outline around the whole item, including any visible stack
+	# sprites, instead of a per-sprite shader on each sprite.
+	_outline = CompositeOutline.new()
+	add_child(_outline)
+	var outline_sources: Array = [_sprite]
+	outline_sources.append_array(_stack_sprites)
+	# Match the outline depth to the main sprite so it never floats above/below
+	# what the item itself renders against (e.g. the player).
+	_outline.configure(outline_sources, false, INTERACT_OUTLINE_COLOR, 3.0, _sprite)
+
 	_collision_shape = CollisionShape2D.new()
 	var shape := CircleShape2D.new()
 	shape.radius = minf(hitbox_size.x, hitbox_size.y) * 0.5
@@ -254,6 +280,18 @@ func _apply_sprite_texture(texture: Texture2D, area: Vector2) -> void:
 		var uniform_scale := minf(scale_x, scale_y)
 		_sprite.scale = Vector2(uniform_scale, uniform_scale)
 
+	# Mirror the texture/scale onto the offset stack sprites and position them
+	# relative to the item's visual area.
+	for i in range(_stack_sprites.size()):
+		var stack_sprite := _stack_sprites[i]
+		stack_sprite.texture = texture
+		stack_sprite.scale = _sprite.scale
+		stack_sprite.position = STACK_SPRITE_OFFSET_FRACTIONS[i] * area
+
+	# Rebuild the composite silhouette now that textures/sizes are set.
+	if _outline != null:
+		_outline.refresh()
+
 
 func _create_placeholder_sprite() -> void:
 	if not item_data:
@@ -275,11 +313,63 @@ func _create_trash_placeholder_sprite() -> void:
 
 
 func get_display_name() -> String:
+	var base_name := _base_display_name()
+	if stack_count > 1:
+		return "%s x%d" % [base_name, stack_count]
+	return base_name
+
+
+func _base_display_name() -> String:
 	if _is_trash:
 		return TRASH_DISPLAY_NAME
 	if item_data and not item_data.item_name.is_empty():
 		return item_data.item_name
 	return "Unknown Salvage"
+
+
+## True if this item is a stackable terminal part (not trash, not an artifact,
+## and not a salvageable that breaks down into parts).
+func is_stackable_part() -> bool:
+	return not _is_trash and item_data != null and item_data.is_part
+
+
+## True if `other` is the same stackable part as this item. Only terminal parts
+## stack; salvageables, artifacts and trash never do.
+func can_stack_with(other: SalvageItem) -> bool:
+	if other == null or not is_instance_valid(other):
+		return false
+	if not is_stackable_part() or not other.is_stackable_part():
+		return false
+	if item_data == other.item_data:
+		return true
+	# Fall back to resource path so parts minted from the same .tres stack even
+	# if they happen to be distinct resource instances.
+	var path := item_data.resource_path
+	return path != "" and path == other.item_data.resource_path
+
+
+func set_stack_count(count: int) -> void:
+	stack_count = maxi(count, 1)
+	_update_stack_visuals()
+
+
+func add_to_stack(amount: int = 1) -> void:
+	set_stack_count(stack_count + maxi(amount, 0))
+
+
+## 1 item -> main sprite only; 2 -> main + 1 offset; 3+ -> main + 2 offsets.
+func _update_stack_visuals() -> void:
+	var visible_extras := 0
+	if stack_count == 2:
+		visible_extras = 1
+	elif stack_count >= 3:
+		visible_extras = 2
+	for i in range(_stack_sprites.size()):
+		_stack_sprites[i].visible = i < visible_extras
+
+	# The set of visible sprites changed, so rebuild the composite outline.
+	if _outline != null:
+		_outline.refresh()
 
 
 func get_rarity_color() -> Color:
@@ -364,7 +454,7 @@ func release_from_magnet() -> void:
 		global_position = pos
 	
 	_magnet_target = null
-	gravity_scale = DROP_GRAVITY_SCALE
+	gravity_scale = DROP_GRAVITY_SCALE * _get_gravity_scale_factor()
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 
@@ -514,16 +604,16 @@ func _apply_rarity_outline() -> void:
 
 
 func _refresh_outline() -> void:
-	if not _outline_material:
+	if _outline == null:
 		return
 	if _interact_highlight:
-		_outline_material.set_shader_parameter("outline_enabled", true)
-		_outline_material.set_shader_parameter("outline_color", INTERACT_OUTLINE_COLOR)
+		_outline.set_color(INTERACT_OUTLINE_COLOR)
+		_outline.set_enabled(true)
 	elif _has_rarity_outline():
-		_outline_material.set_shader_parameter("outline_enabled", true)
-		_outline_material.set_shader_parameter("outline_color", _rarity_outline_color)
+		_outline.set_color(_rarity_outline_color)
+		_outline.set_enabled(true)
 	else:
-		_outline_material.set_shader_parameter("outline_enabled", false)
+		_outline.set_enabled(false)
 
 
 ## Contact tracking for dependency chain and magnet friction
@@ -719,9 +809,9 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	# Unfreeze and enable gravity to let it drop
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 	freeze = false
-	gravity_scale = DROP_GRAVITY_SCALE
-	linear_damp = STORAGE_LINEAR_DAMP
-	angular_damp = STORAGE_ANGULAR_DAMP
+	gravity_scale = DROP_GRAVITY_SCALE * _get_gravity_scale_factor()
+	linear_damp = STORAGE_LINEAR_DAMP * _get_damp_scale_factor()
+	angular_damp = STORAGE_ANGULAR_DAMP * _get_damp_scale_factor()
 	linear_velocity = Vector2.ZERO
 	angular_velocity = 0.0
 	z_index = 0
@@ -938,6 +1028,20 @@ func _get_item_weight() -> float:
 	return 1.0
 
 
+## Weight-class gravity multiplier (drop/in-storage). 1.0 for trash / no data.
+func _get_gravity_scale_factor() -> float:
+	if item_data and not _is_trash:
+		return item_data.get_gravity_scale()
+	return 1.0
+
+
+## Weight-class deceleration (damping) multiplier. 1.0 for trash / no data.
+func _get_damp_scale_factor() -> float:
+	if item_data and not _is_trash:
+		return item_data.get_damp_scale()
+	return 1.0
+
+
 func _spawn_trash_pop_particles() -> void:
 	if not is_inside_tree():
 		return
@@ -1118,9 +1222,9 @@ func wake_for_storage_resettle() -> void:
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
 	freeze = false
 	sleeping = false
-	gravity_scale = DROP_GRAVITY_SCALE
-	linear_damp = STORAGE_LINEAR_DAMP
-	angular_damp = STORAGE_ANGULAR_DAMP
+	gravity_scale = DROP_GRAVITY_SCALE * _get_gravity_scale_factor()
+	linear_damp = STORAGE_LINEAR_DAMP * _get_damp_scale_factor()
+	angular_damp = STORAGE_ANGULAR_DAMP * _get_damp_scale_factor()
 	angular_velocity = 0.0
 	if _collision_shape:
 		_collision_shape.set_deferred("disabled", false)

@@ -603,20 +603,26 @@ func _get_magnet_gun_hold_point() -> Vector2:
 
 
 func _process_magnet_gun(delta: float) -> void:
+	var mouse_pos := get_global_mouse_position()
+
+	# Hover highlight (white outline on the salvage item under the cursor) is
+	# independent of whether we are carrying an item, so it always runs.
+	_process_magnet_gun_hover()
+
 	if _held_item and is_instance_valid(_held_item):
 		# Show magnet gun effect while holding item
 		if muzzle_effect:
 			muzzle_effect.play_effect(_get_current_muzzle_effect_type())
-		# RESEARCH is a not-carrying interaction; clear it while holding an item.
+		# RESEARCH and PICK UP are not-carrying interactions; clear them.
 		_interactable_research_station = null
 		_update_research_prompt()
+		_clear_pickup_prompt()
 
 		# Update held item position to follow gun
 		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
-		
+
 		# Only allow repel/place once item has reached the anchor point
 		if _held_item.has_reached_anchor:
-			var mouse_pos := get_global_mouse_position()
 			_update_storage_area_outline(mouse_pos)
 			_process_research_station_hover(mouse_pos)
 			_process_recycler_hover(mouse_pos)
@@ -637,7 +643,7 @@ func _process_magnet_gun(delta: float) -> void:
 					_is_repel_holding = false
 					_repel_hold_elapsed = 0.0
 					_update_repel_bar()
-			
+
 			# Left-click to place on a station, then fall back to storage
 			if Input.is_action_just_pressed("shoot"):
 				if _try_recycle_held_trash():
@@ -647,8 +653,8 @@ func _process_magnet_gun(delta: float) -> void:
 				var ship_node := _get_ship()
 				if _is_point_over_recycler(mouse_pos):
 					return
-				if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
-					_place_item_in_storage(mouse_pos)
+				if ship_node and ship_node.is_point_in_storage_area(mouse_pos):
+					_resolve_storage_click(ship_node, mouse_pos)
 		else:
 			_set_storage_area_outline_state(false)
 			_set_hovered_research_station(null)
@@ -662,9 +668,9 @@ func _process_magnet_gun(delta: float) -> void:
 		if _held_item != null:
 			_held_item = null
 		_stop_magnet_gun_sfx()
-		# No item held - hover detection and grab
-		_process_magnet_gun_hover()
-		
+		# Not carrying: the hovered item can be picked up.
+		_update_pickup_prompt()
+
 		if Input.is_action_just_pressed("shoot"):
 			if _hovered_item and is_instance_valid(_hovered_item):
 				_grab_item_from_magnet(_hovered_item)
@@ -924,6 +930,11 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 	if not ship_node.store_item(_held_item, mouse_pos):
 		return
 
+	_finalize_held_item_release()
+
+
+## Shared cleanup after the held item leaves the gun (placed / stacked / swapped).
+func _finalize_held_item_release() -> void:
 	_held_item = null
 	_stop_magnet_gun_sfx()
 	_is_repel_holding = false
@@ -933,10 +944,77 @@ func _place_item_in_storage(mouse_pos: Vector2) -> void:
 		muzzle_effect.stop_effect()
 
 
+## Resolve a click inside the storage area while holding an item.
+## Priority: Stack (matching type) > Swap (onto a different item) > Place (empty).
+func _resolve_storage_click(ship_node: Node, mouse_pos: Vector2) -> void:
+	if not _held_item or not is_instance_valid(_held_item):
+		return
+
+	# 1. Stack: the held item matches an existing stored stack of the same type.
+	if ship_node.find_stackable_stored_item(_held_item) != null:
+		_set_storage_area_outline_state(false)
+		if ship_node.stack_item(_held_item):
+			_clear_held_item_prompts()
+			_finalize_held_item_release()
+		return
+
+	# 2. Swap: clicking directly on a different stored item swaps the two.
+	var target := _get_stored_item_at(mouse_pos)
+	if target != null and target != _held_item:
+		_swap_held_item_with(ship_node, target)
+		return
+
+	# 3. Place into empty space, subject to the top-overflow gate.
+	if ship_node.can_accept_storage_item(_held_item):
+		_place_item_in_storage(mouse_pos)
+
+
+## Topmost stored SalvageItem under the given global point, or null.
+func _get_stored_item_at(mouse_pos: Vector2) -> SalvageItem:
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsPointQueryParameters2D.new()
+	query.position = mouse_pos
+	query.collision_mask = 2  # Salvage items layer
+	query.collide_with_bodies = true
+	var results := space_state.intersect_point(query, 8)
+
+	var best: SalvageItem = null
+	var best_dist := INF
+	for result in results:
+		var body: Object = result["collider"]
+		if body is SalvageItem and (body as SalvageItem).is_in_storage:
+			var dist := mouse_pos.distance_to((body as SalvageItem).global_position)
+			if dist < best_dist:
+				best_dist = dist
+				best = body as SalvageItem
+	return best
+
+
+## Swap the held item into storage where `target` sits, then grab `target`
+## (its whole stack) onto the gun.
+func _swap_held_item_with(ship_node: Node, target: SalvageItem) -> void:
+	var incoming := _held_item
+	if incoming == null or not is_instance_valid(incoming):
+		return
+
+	_set_storage_area_outline_state(false)
+	_held_item = null
+	var removed: SalvageItem = ship_node.swap_stored_item(incoming, target)
+	if removed == null:
+		# Swap failed; keep holding the incoming item.
+		_held_item = incoming
+		return
+
+	_finalize_held_item_release()
+	# Grab the swapped-out item (entire stack) back onto the gun.
+	_grab_item_from_magnet(removed)
+
+
 func _clear_magnet_gun_state() -> void:
 	_set_hovered_item(null)
 	_set_hovered_research_station(null)
 	_set_hovered_recycler(null)
+	_clear_pickup_prompt()
 	_set_storage_area_outline_state(false)
 	_clear_held_item_prompts()
 	_hide_hover_tooltip()
@@ -971,13 +1049,17 @@ func _update_storage_area_outline(mouse_pos: Vector2) -> void:
 		return
 
 	var is_hovered: bool = ship_node.is_point_in_storage_area(mouse_pos)
-	_set_storage_area_outline_state(true, is_hovered)
+	# Placeable (blue) if the held part can stack onto an existing part, or there
+	# is free space (top overflow sensors not all filled); otherwise red.
+	var can_stack: bool = ship_node.find_stackable_stored_item(_held_item) != null
+	var placeable: bool = can_stack or not ship_node.is_storage_top_blocked()
+	_set_storage_area_outline_state(true, is_hovered, placeable)
 
 
-func _set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> void:
+func _set_storage_area_outline_state(enabled: bool, hovered: bool = false, placeable: bool = true) -> void:
 	var ship_node := _get_ship()
 	if ship_node and ship_node.has_method("set_storage_area_outline_state"):
-		ship_node.set_storage_area_outline_state(enabled, hovered)
+		ship_node.set_storage_area_outline_state(enabled, hovered, placeable)
 
 
 func _process_research_station_hover(mouse_pos: Vector2) -> void:
@@ -1264,6 +1346,9 @@ func _hide_hover_tooltip() -> void:
 		_hover_tooltip.visible = false
 
 
+## Hover highlight only. This drives the white interact outline on the salvage
+## item under the cursor and is independent of the held item's rarity outline and
+## of any pickup/swap prompt (those are handled by the caller based on context).
 func _set_hovered_item(item: SalvageItem) -> void:
 	if _hovered_item == item:
 		return
@@ -1273,12 +1358,24 @@ func _set_hovered_item(item: SalvageItem) -> void:
 
 	_hovered_item = item
 
-	var prompts := Magnetide.control_prompts
 	if _hovered_item and is_instance_valid(_hovered_item):
 		_hovered_item.set_outlined(true)
-		if prompts:
-			prompts.set_prompt(&"pickup", "LMB", "PICK UP", false, 1)
-	elif prompts:
+
+
+## PICK UP prompt, shown only while not carrying and hovering a grabbable item.
+func _update_pickup_prompt() -> void:
+	var prompts := Magnetide.control_prompts
+	if prompts == null:
+		return
+	if _hovered_item and is_instance_valid(_hovered_item):
+		prompts.set_prompt(&"pickup", "LMB", "PICK UP", false, 1)
+	else:
+		prompts.clear_prompt(&"pickup")
+
+
+func _clear_pickup_prompt() -> void:
+	var prompts := Magnetide.control_prompts
+	if prompts:
 		prompts.clear_prompt(&"pickup")
 
 
@@ -1330,6 +1427,7 @@ func _update_repel_bar() -> void:
 func on_looting_ended() -> void:
 	# Clear hover only - player keeps any item held by magnet gun
 	_set_hovered_item(null)
+	_clear_pickup_prompt()
 	_hide_hover_tooltip()
 
 

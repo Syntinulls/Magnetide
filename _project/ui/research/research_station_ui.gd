@@ -1,9 +1,14 @@
 extends Control
 class_name ResearchStationUI
 
+## Emitted the instant the final stage is cleared — the station awards points and
+## consumes the artifact immediately, regardless of the result screens that follow.
 signal research_completed(item_data: SalvageItemData)
 signal research_failed(item_data: SalvageItemData, reason: StringName)
 signal ui_closed()
+## Emitted when an already-finalized session's result screens are dismissed
+## (auto-proceed / skip / X / ESC). The station just tears down the UI.
+signal research_dismissed()
 
 const DEFAULT_MINIGAME_SCENE: PackedScene = preload("res://_project/ui/research/minigames/alignment_a_minigame.tscn")
 const OVERALL_BG: Texture2D = preload("res://_project/ui/research/minigames/sprites/minigame_overall_bg.png")
@@ -40,6 +45,9 @@ var elapsed_seconds: float = 0.0
 
 var _active_minigame: Control = null
 var _is_started: bool = false
+## True once the final stage has been cleared and rewards granted. From then on
+## the result screens are purely cosmetic and closing just dismisses the UI.
+var _research_finalized: bool = false
 var _is_paused: bool = true
 var _display_state: int = DisplayState.ACTIVE
 var _result_countdown: float = 0.0
@@ -75,6 +83,7 @@ func start_session(new_artifact_data: SalvageItemData, saved_state: Dictionary =
 		total_fail_count = 0
 		elapsed_seconds = 0.0
 		_display_state = DisplayState.ACTIVE
+		_research_finalized = false
 	_is_started = true
 	_show_and_resume()
 
@@ -88,13 +97,10 @@ func reopen() -> void:
 func close_and_pause() -> void:
 	if not _is_started:
 		return
-	if _display_state == DisplayState.FINAL_RESULTS:
-		_is_started = false
-		_is_paused = true
-		visible = false
-		set_process(false)
-		Magnetide.research_ui_input_captured = false
-		research_completed.emit(artifact_data)
+	# Rewards were already granted when the final stage cleared, so any close
+	# from here on (auto-proceed, skip, X, ESC) just tears the UI down.
+	if _research_finalized:
+		_dismiss_after_finalized()
 		return
 	if _active_minigame and _active_minigame.has_method("save_state"):
 		current_stage_state = _active_minigame.call("save_state")
@@ -105,6 +111,15 @@ func close_and_pause() -> void:
 	set_process(false)
 	Magnetide.research_ui_input_captured = false
 	ui_closed.emit()
+
+
+func _dismiss_after_finalized() -> void:
+	_is_started = false
+	_is_paused = true
+	visible = false
+	set_process(false)
+	Magnetide.research_ui_input_captured = false
+	research_dismissed.emit()
 
 
 func fail_session(reason: StringName = &"research_failed") -> void:
@@ -545,6 +560,12 @@ func _on_minigame_completed() -> void:
 	completed_stage_count += 1
 	current_stage_state.clear()
 	_refresh_shell()
+	# The moment the final stage is cleared, finalize the research: the station
+	# awards points and consumes the artifact right away. The success/complete
+	# screens that follow are cosmetic and can be skipped or closed freely.
+	if completed_stage_count >= required_stage_count and not _research_finalized:
+		_research_finalized = true
+		research_completed.emit(artifact_data)
 	_begin_stage_success_countdown()
 
 
@@ -558,7 +579,7 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if key_event.pressed and not key_event.echo and key_event.physical_keycode == KEY_E:
-			if _try_begin_active_minigame():
+			if _try_skip_result_screen() or _try_begin_active_minigame():
 				get_viewport().set_input_as_handled()
 				return
 	if event is InputEventMouseButton:
@@ -568,9 +589,21 @@ func _input(event: InputEvent) -> void:
 			get_viewport().set_input_as_handled()
 			return
 		if mouse_event.pressed and mouse_event.button_index == MOUSE_BUTTON_LEFT:
-			if _try_begin_active_minigame():
+			if _try_skip_result_screen() or _try_begin_active_minigame():
 				get_viewport().set_input_as_handled()
 				return
+
+
+## Skip the wait on a stage-complete / research-complete screen via E or LMB.
+## Returns true if a result screen was skipped.
+func _try_skip_result_screen() -> bool:
+	if _display_state == DisplayState.STAGE_SUCCESS:
+		_finish_stage_success_countdown()
+		return true
+	if _display_state == DisplayState.FINAL_RESULTS:
+		close_and_pause()
+		return true
+	return false
 
 
 ## Player-triggered start (E / LMB) for a minigame that is mounted but waiting

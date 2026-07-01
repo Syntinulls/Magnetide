@@ -196,8 +196,7 @@ func _setup_ui_references() -> void:
 		if anchor:
 			_activation_minigame.set_anchor_marker(anchor)
 
-	# Initialize ship status UI with current storage and magnet capacity values.
-	_update_ship_storage_ui()
+	# Initialize ship status UI with the current magnet capacity value.
 	_update_magnet_capacity_ui()
 	
 	# Start cooldown now that UI references are set up
@@ -821,11 +820,6 @@ func _on_magnet_item_removed(_item: SalvageItem) -> void:
 func _update_magnet_capacity_ui() -> void:
 	if _ship_status_ui and _magnet:
 		_ship_status_ui.set_magnet_capacity(_magnet.held_count, _magnet.hold_capacity)
-
-
-func _update_ship_storage_ui() -> void:
-	if _ship_status_ui and _ship and _ship.has_method("get_storage_weight"):
-		_ship_status_ui.set_storage_weight(_ship.get_storage_weight(), _ship.storage_max_weight)
 
 
 func _end_activation_effects() -> void:

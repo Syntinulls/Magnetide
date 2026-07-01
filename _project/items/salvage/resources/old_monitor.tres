@@ -20,5 +20,6 @@ item_name = "Old Monitor"
 rarity = 1
 sprite = ExtResource("4_t7ldp")
 area = Vector2(160, 160)
+weight_class = 2
 parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -8,4 +8,5 @@
 script = ExtResource("1_x3mtv")
 item_name = "Hose"
 sprite = ExtResource("2_x3mtv")
+weight_class = 0
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

@@ -12,8 +12,6 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var storage_area_position: Vector2 = Vector2(0, -95)
 ## Height of the hazard pattern floor marker strip.
 @export var storage_marker_height: float = 24.0
-## Maximum weight capacity for ship storage.
-@export var storage_max_weight: float = 100.0
 @export_group("Combat")
 @export var max_health: float = 250.0
 @export var hitbox_path: NodePath = NodePath("Hitbox")
@@ -27,26 +25,35 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var thruster_speed_change_epsilon: float = 1.0
 @export_group("Debug")
 @export var spawn_debug_research_artifact_in_storage: bool = true
-@export var debug_research_artifact_storage_offset: Vector2 = Vector2(-140.0, -90.0)
+## X is 0 so the debug artifact spawns at the horizontal center of the storage
+## area (the ship/screen center); Y is where it drops in from before settling.
+@export var debug_research_artifact_storage_offset: Vector2 = Vector2(0.0, -90.0)
 
 const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
+## Thickness of the top-edge overflow sensor band (Area2D). When any stored item
+## intersects this band the storage is "full" and refuses new items.
+const STORAGE_TOP_SENSOR_THICKNESS: float = 14.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 const STORAGE_ITEMS_Z_INDEX: int = -5
 const DEBUG_ARTIFACT_POOLS: ArtifactPools = preload("res://_project/level/salvage/loot/artifact_pools.tres")
 const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/shaders/border_outline.gdshader")
 const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
 const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
-## Outline highlight for the shared pylon/generator sprite, driven by either
-## departure pylon being in range.
-const PYLON_OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
-
-var _pylon_outline_material: ShaderMaterial = null
+## Blue tint: the held item can be placed (stacked onto a part, or space is free).
+const STORAGE_OUTLINE_PLACEABLE_COLOR: Color = Color(0.72, 0.95, 1.0)
+## Red tint: the held item can't be placed (storage full and no stack target).
+const STORAGE_OUTLINE_BLOCKED_COLOR: Color = Color("ff5a5a")
+var _pylon_outline: CompositeOutline = null
 var _active_departure_pylons: Dictionary = {}
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
 var _storage_borders: StaticBody2D = null
+## Three top-edge overflow sensors (left / middle / right). Storage counts as
+## full only when every section has an item overlapping it, so a single corner
+## piling up can't block placement while the opposite corner is still open.
+var _storage_top_sensors: Array[Area2D] = []
 var _storage_outline_line: Line2D = null
 var _storage_outline_material: ShaderMaterial = null
 var _stored_salvage_items_root: Node2D = null
@@ -55,7 +62,6 @@ var _thruster_state: ThrusterState = ThrusterState.STOPPED
 var _thruster_reference_speed: float = 0.0
 var _last_level_speed: float = -1.0
 
-@onready var _ship_status_ui: ShipStatusUI = get_node_or_null(ship_status_ui_path) as ShipStatusUI
 @onready var _ship_gens: AnimatedSprite2D = $ShipGens as AnimatedSprite2D
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
 @onready var _thruster_right: Thruster = $ThrusterRight as Thruster
@@ -73,7 +79,6 @@ func _ready() -> void:
 	_ensure_storage_items_root()
 	_create_storage_zone()
 	_spawn_debug_research_artifact_in_storage()
-	call_deferred("_update_storage_weight_ui")
 	call_deferred("_initialize_thrusters")
 	_setup_pylon_highlight()
 
@@ -90,11 +95,8 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	storage_area_size = loadout.ship_storage_area_size
 	storage_area_position = loadout.ship_storage_area_position
 	storage_marker_height = loadout.ship_storage_marker_height
-	storage_max_weight = loadout.ship_storage_max_weight
 	max_health = loadout.ship_max_health
 	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
-	if _ship_status_ui:
-		_update_storage_weight_ui()
 
 
 func set_thrusters_auto_update(enabled: bool) -> void:
@@ -179,6 +181,7 @@ func _find_departure_shield() -> CanvasItem:
 func _create_storage_zone() -> void:
 	_create_storage_floor_marker()
 	_create_storage_borders()
+	_create_storage_top_sensor()
 	_create_storage_area_outline()
 
 
@@ -267,6 +270,59 @@ func _create_storage_borders() -> void:
 	_storage_borders.add_child(right_shape)
 
 
+## Non-solid Area2D band along the top edge of the storage rect. Items can pass
+## into it (they overflow upward as the pile grows); while any stored item
+## overlaps it, storage is considered full and refuses new placements.
+func _create_storage_top_sensor() -> void:
+	_storage_top_sensors.clear()
+	var top_y := storage_area_position.y - storage_area_size.y
+	var section_width := storage_area_size.x / 3.0
+	var left_edge := storage_area_position.x - storage_area_size.x * 0.5
+	for section in range(3):
+		var sensor := Area2D.new()
+		sensor.name = "StorageTopSensor%d" % section
+		sensor.monitoring = true
+		sensor.monitorable = false
+		# Detect salvage items (collision layer 2); don't advertise ourselves.
+		sensor.collision_layer = 0
+		sensor.collision_mask = 2
+		add_child(sensor)
+
+		var sensor_shape := CollisionShape2D.new()
+		var sensor_rect := RectangleShape2D.new()
+		sensor_rect.size = Vector2(section_width, STORAGE_TOP_SENSOR_THICKNESS)
+		sensor_shape.shape = sensor_rect
+		# Band sits just inside the top boundary (top edge aligned with it),
+		# centered over this section's third of the width.
+		sensor_shape.position = Vector2(
+			left_edge + section_width * (float(section) + 0.5),
+			top_y + STORAGE_TOP_SENSOR_THICKNESS * 0.5
+		)
+		sensor.add_child(sensor_shape)
+		_storage_top_sensors.append(sensor)
+
+
+## True only when EVERY top section has a stored item overlapping it, i.e. the
+## whole top edge is filled. A single filled corner leaves the others open.
+func is_storage_top_blocked() -> bool:
+	if _storage_top_sensors.is_empty():
+		return false
+	for sensor in _storage_top_sensors:
+		if sensor == null or not is_instance_valid(sensor):
+			return false
+		if not _section_has_stored_item(sensor):
+			return false
+	return true
+
+
+func _section_has_stored_item(sensor: Area2D) -> bool:
+	for body in sensor.get_overlapping_bodies():
+		var item := body as SalvageItem
+		if item and is_instance_valid(item) and item in _stored_items:
+			return true
+	return false
+
+
 func _create_storage_area_outline() -> void:
 	_storage_outline_line = Line2D.new()
 	_storage_outline_line.name = "StorageAreaOutline"
@@ -304,7 +360,7 @@ func _update_storage_area_outline_geometry() -> void:
 		_storage_outline_material.set_shader_parameter("rect_size", storage_area_size)
 
 
-func set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> void:
+func set_storage_area_outline_state(enabled: bool, hovered: bool = false, placeable: bool = true) -> void:
 	if _storage_outline_line == null or not is_instance_valid(_storage_outline_line):
 		_create_storage_area_outline()
 
@@ -313,6 +369,11 @@ func set_storage_area_outline_state(enabled: bool, hovered: bool = false) -> voi
 	if _storage_outline_material:
 		var alpha := STORAGE_OUTLINE_HOVER_ALPHA if hovered else STORAGE_OUTLINE_IDLE_ALPHA
 		_storage_outline_material.set_shader_parameter("opacity", alpha)
+		# Blue when the held item can be placed, red when it can't. The
+		# border_outline shader draws its color from the `outline_color` uniform,
+		# so the Line2D's own default_color would be ignored here.
+		var color := STORAGE_OUTLINE_PLACEABLE_COLOR if placeable else STORAGE_OUTLINE_BLOCKED_COLOR
+		_storage_outline_material.set_shader_parameter("outline_color", color)
 
 
 func get_storage_area_global_rect() -> Rect2:
@@ -328,31 +389,27 @@ func is_point_in_storage_area(global_point: Vector2) -> bool:
 
 
 func can_accept_new_storage_item() -> bool:
-	return get_storage_weight() < storage_max_weight
+	return not is_storage_top_blocked()
 
 
 func can_accept_storage_item(item: SalvageItem) -> bool:
 	if item == null or not is_instance_valid(item):
 		return false
-
-	var current_weight := get_storage_weight()
+	# Items already in storage (e.g. re-settling) are always accepted; only new
+	# placements are gated by the top-edge overflow sensor.
 	if item in _stored_items:
-		current_weight -= _get_item_weight(item)
-
-	return current_weight + _get_item_weight(item) <= storage_max_weight
+		return true
+	return not is_storage_top_blocked()
 
 
 func is_storage_at_or_over_capacity() -> bool:
-	return get_storage_weight() >= storage_max_weight
+	return is_storage_top_blocked()
 
 
 func add_to_storage(item: SalvageItem) -> void:
-	if not can_accept_new_storage_item():
-		return
 	if item not in _stored_items:
 		_stored_items.append(item)
 		item_stored.emit(item)
-		_update_storage_weight_ui()
 
 
 func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
@@ -365,6 +422,49 @@ func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
 	add_to_storage(item)
 	_commit_artifact_if_collected(item)
 	return true
+
+
+## Existing stored item that `item` could stack onto (same part type), or null.
+func find_stackable_stored_item(item: SalvageItem) -> SalvageItem:
+	if item == null or not is_instance_valid(item):
+		return null
+	for stored in _stored_items:
+		if is_instance_valid(stored) and stored != item and stored.can_stack_with(item):
+			return stored
+	return null
+
+
+## Merge `item` into an existing matching stored stack. The incoming node is
+## consumed (freed) and its quantity added to the target. Returns true on merge.
+## Stacks occupy no extra space, so this bypasses the top-overflow gate.
+func stack_item(item: SalvageItem) -> bool:
+	var target := find_stackable_stored_item(item)
+	if target == null:
+		return false
+	target.add_to_stack(item.stack_count)
+	if item in _stored_items:
+		_stored_items.erase(item)
+	item.queue_free()
+	item_stored.emit(target)
+	return true
+
+
+## Swap a held item with a stored target: place `held` where `target` was and
+## remove `target` from storage, returning it so the caller can grab it (whole
+## stack). Occupancy is net-neutral, so the overflow gate is bypassed. Returns
+## the removed target on success, or null on failure.
+func swap_stored_item(held: SalvageItem, target: SalvageItem) -> SalvageItem:
+	if held == null or not is_instance_valid(held):
+		return null
+	if target == null or not is_instance_valid(target) or target not in _stored_items:
+		return null
+
+	var swap_pos := target.global_position
+	remove_from_storage(target)
+	held.place_in_storage(swap_pos, _ensure_storage_items_root())
+	add_to_storage(held)
+	_commit_artifact_if_collected(held)
+	return target
 
 
 ## Commit the per-run artifact cap the moment an artifact is placed into storage.
@@ -450,34 +550,12 @@ func stop_for_run_end() -> void:
 		_research_station.stop_for_run_end()
 
 
-func _update_storage_weight_ui() -> void:
-	if not _ship_status_ui:
-		return
-	var total_weight := get_storage_weight()
-	_ship_status_ui.set_storage_weight(total_weight, storage_max_weight)
-
-
-func get_storage_weight() -> float:
-	var total := 0.0
-	for item in _stored_items:
-		if is_instance_valid(item):
-			total += _get_item_weight(item)
-	return total
-
-
 func remove_from_storage(item: SalvageItem) -> void:
 	_stored_items.erase(item)
-	_update_storage_weight_ui()
 
 
 func get_storage_items_root() -> Node2D:
 	return _ensure_storage_items_root()
-
-
-func _get_item_weight(item: SalvageItem) -> float:
-	if item and item.has_method("get_weight"):
-		return item.get_weight()
-	return 0.0
 
 
 func _initialize_thrusters() -> void:
@@ -603,7 +681,7 @@ func get_stored_item_count() -> int:
 	var total := 0
 	for item in _stored_items:
 		if is_instance_valid(item):
-			total += 1
+			total += maxi(item.stack_count, 1)
 	return total
 
 
@@ -611,7 +689,9 @@ func get_stored_loot_payload() -> Array[SalvageItemData]:
 	var loot: Array[SalvageItemData] = []
 	for item in _stored_items:
 		if is_instance_valid(item) and item.item_data != null:
-			loot.append(item.item_data)
+			# Each item in a stack counts as one unit of loot.
+			for _i in range(maxi(item.stack_count, 1)):
+				loot.append(item.item_data)
 	return loot
 
 
@@ -627,11 +707,11 @@ func get_departure_pylons() -> Array[DeparturePylon]:
 func _setup_pylon_highlight() -> void:
 	if _ship_gens == null:
 		return
-	_pylon_outline_material = ShaderMaterial.new()
-	_pylon_outline_material.shader = PYLON_OUTLINE_SHADER
-	_pylon_outline_material.set_shader_parameter("outline_enabled", false)
-	_pylon_outline_material.set_shader_parameter("outline_width", 3.0)
-	_ship_gens.material = _pylon_outline_material
+	# Composite outline around the (animated) generator sprite so the full ring
+	# renders even though its texture has no transparent border.
+	_pylon_outline = CompositeOutline.new()
+	add_child(_pylon_outline)
+	_pylon_outline.configure([_ship_gens], true, Color.WHITE, 3.0, _ship_gens)
 
 
 ## Called by each departure pylon as it enters/leaves interaction range. The
@@ -644,8 +724,8 @@ func set_departure_pylon_active(pylon: Node, active: bool) -> void:
 		_active_departure_pylons.erase(pylon)
 
 	var any_active := not _active_departure_pylons.is_empty()
-	if _pylon_outline_material:
-		_pylon_outline_material.set_shader_parameter("outline_enabled", any_active)
+	if _pylon_outline:
+		_pylon_outline.set_enabled(any_active)
 
 	var prompts := Magnetide.control_prompts
 	if prompts:

@@ -69,6 +69,18 @@ const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
 const SELECTED_LASER_COLOR := Color("f7f1a3")
 
+## Drift-direction arrow shown next to each emitter (up = drifting up).
+## Horizontal offset is inward (left laser -> to its right, right laser -> to its
+## left). Vertically the arrow sits ABOVE the laser when pointing up and BELOW it
+## when pointing down, so its position reinforces the drift direction.
+const DRIFT_ARROW_OFFSET_X: float = 40.0
+const DRIFT_ARROW_OFFSET_Y: float = 52.0
+const DRIFT_ARROW_HALF_WIDTH: float = 22.0
+const DRIFT_ARROW_HEIGHT: float = 30.0
+const DRIFT_ARROW_COLOR := Color("3be86b")
+const DRIFT_ARROW_OUTLINE_COLOR := Color.BLACK
+const DRIFT_ARROW_OUTLINE_WIDTH: float = 5.0
+
 const BEAM_COLOR_SUCCESS := Color("5bff8e")
 const BEAM_COLOR_MISALIGNED := Color("ff6f68")
 const BEAM_COLOR_DESTROYED := Color("ff2424")
@@ -121,6 +133,8 @@ var _right_prev_emitter_rotation: float = 0.0
 var _left_gear_dir: float = 1.0
 var _right_gear_dir: float = 1.0
 var _beam_anim_time: float = 0.0
+var _left_drift_arrow: Node2D = null
+var _right_drift_arrow: Node2D = null
 
 @onready var _background: Panel = %Background
 @onready var _artifact: Sprite2D = %Artifact
@@ -159,6 +173,7 @@ func _ready() -> void:
 	size = REFERENCE_SIZE
 	_rng.randomize()
 	_build_labels()
+	_build_drift_arrows()
 	_reset_drift_timers()
 	set_process(false)
 	_update_visuals()
@@ -364,12 +379,15 @@ func _update_visuals(delta: float = 0.0) -> void:
 	var left_impact := _beam_impact(left_origin, _left_forward())
 	var right_impact := _beam_impact(right_origin, _right_forward())
 
+	var firing := _lasers_firing()
 	var left_aligned := _is_left_aligned()
 	var right_aligned := _is_right_aligned()
-	_update_beam(_left_beam, _left_beam_glow, left_origin, left_impact, left_aligned, selected_laser == LEFT_LASER, LEFT_LASER)
-	_update_beam(_right_beam, _right_beam_glow, right_origin, right_impact, right_aligned, selected_laser == RIGHT_LASER, RIGHT_LASER)
+	_update_beam(_left_beam, _left_beam_glow, left_origin, left_impact, left_aligned, selected_laser == LEFT_LASER, LEFT_LASER, firing)
+	_update_beam(_right_beam, _right_beam_glow, right_origin, right_impact, right_aligned, selected_laser == RIGHT_LASER, RIGHT_LASER, firing)
 	_update_emitter(_left_emitter, selected_laser == LEFT_LASER, _failure_result_laser == LEFT_LASER)
 	_update_emitter(_right_emitter, selected_laser == RIGHT_LASER, _failure_result_laser == RIGHT_LASER)
+	_update_drift_arrow(_left_drift_arrow, _left_emitter, 1.0, left_drift_direction, firing)
+	_update_drift_arrow(_right_drift_arrow, _right_emitter, -1.0, right_drift_direction, firing)
 	# Defensive: hot-reloading the script onto an already-open editor instance
 	# can leave newly-added member vars uninitialized (null); heal them here.
 	if not (_left_gear_dir is float):
@@ -401,7 +419,12 @@ func _advance_beam_animation(delta: float) -> void:
 		_right_beam.texture = frame_texture
 
 
-func _update_beam(beam: Line2D, glow: Line2D, origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName) -> void:
+func _update_beam(beam: Line2D, glow: Line2D, origin: Vector2, impact: Vector2, aligned: bool, selected: bool, laser_id: StringName, firing: bool) -> void:
+	# Lasers are off (disabled) until the round starts and again once it ends.
+	beam.visible = firing
+	if not firing:
+		glow.visible = false
+		return
 	var is_destroyed := _failure_result_laser == laser_id
 	# Aligned beams render the texture untinted (white); only misalignment tints.
 	var color := BEAM_COLOR_SUCCESS if _success_result_active else Color.WHITE
@@ -647,6 +670,72 @@ func _create_label(text_value: String, font_size: int, alignment: HorizontalAlig
 	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	add_child(label)
 	return label
+
+
+# ---------------------------------------------------------------------------
+# Drift-direction arrows (up/down indicators beside each emitter).
+# ---------------------------------------------------------------------------
+
+func _build_drift_arrows() -> void:
+	_left_drift_arrow = _create_drift_arrow()
+	_right_drift_arrow = _create_drift_arrow()
+
+
+func _create_drift_arrow() -> Node2D:
+	var arrow := Node2D.new()
+	arrow.visible = false
+	# Triangle pointing up, centered on the node origin so a 180° rotation cleanly
+	# flips it to point down.
+	var points := PackedVector2Array([
+		Vector2(0.0, -DRIFT_ARROW_HEIGHT * 0.5),
+		Vector2(-DRIFT_ARROW_HALF_WIDTH, DRIFT_ARROW_HEIGHT * 0.5),
+		Vector2(DRIFT_ARROW_HALF_WIDTH, DRIFT_ARROW_HEIGHT * 0.5),
+	])
+	# Black outline behind the fill: a closed Line2D traces the perimeter, and the
+	# fill covers its inner half, leaving a clean black border around the arrow.
+	var outline := Line2D.new()
+	outline.points = points
+	outline.closed = true
+	outline.width = DRIFT_ARROW_OUTLINE_WIDTH
+	outline.default_color = DRIFT_ARROW_OUTLINE_COLOR
+	outline.joint_mode = Line2D.LINE_JOINT_ROUND
+	outline.begin_cap_mode = Line2D.LINE_CAP_ROUND
+	outline.end_cap_mode = Line2D.LINE_CAP_ROUND
+	arrow.add_child(outline)
+	var fill := Polygon2D.new()
+	fill.polygon = points
+	fill.color = DRIFT_ARROW_COLOR
+	arrow.add_child(fill)
+	add_child(arrow)
+	return arrow
+
+
+## Point the arrow up when the laser is drifting up (offset decreasing, i.e.
+## drift_direction < 0) and down otherwise. `side` is +1 for the left laser
+## (arrow sits to its right) and -1 for the right laser (arrow sits to its left).
+func _update_drift_arrow(arrow: Node2D, emitter: Node2D, side: float, drift_direction: float, firing: bool) -> void:
+	if arrow == null or emitter == null:
+		return
+	arrow.visible = firing
+	if not firing:
+		return
+	var drifting_up := drift_direction < 0.0
+	# Above the laser when pointing up, below it when pointing down (y is down).
+	var vertical := -DRIFT_ARROW_OFFSET_Y if drifting_up else DRIFT_ARROW_OFFSET_Y
+	arrow.position = emitter.position + Vector2(side * DRIFT_ARROW_OFFSET_X, vertical)
+	arrow.rotation = 0.0 if drifting_up else PI
+
+
+## True while the lasers are actively firing (beams visible). Off before the
+## round starts, while paused, and once the round ends (success / overheat).
+func _lasers_firing() -> bool:
+	if Engine.is_editor_hint():
+		return true
+	if not _active or _paused or _awaiting_start:
+		return false
+	if _success_result_active or _failure_result_laser != &"":
+		return false
+	return true
 
 
 # ---------------------------------------------------------------------------

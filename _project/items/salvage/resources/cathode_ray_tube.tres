@@ -1,6 +1,7 @@
 [gd_resource type="Resource" script_class="SalvageItemData" format=3 uid="uid://bgjwukwee2od3"]
 
 [ext_resource type="Script" uid="uid://qly6kt6v6em3" path="res://_project/items/salvage/salvage_item_data.gd" id="1_2s10v"]
+[ext_resource type="Script" uid="uid://johlbijrq8iq" path="res://_project/items/salvage/salvage_part_entry.gd" id="1_dx643"]
 [ext_resource type="Texture2D" uid="uid://b7fcfebubmbb1" path="res://_project/items/salvage/sprites/part_cathoderaytube.png" id="2_t2a40"]
 
 [resource]
@@ -8,4 +9,5 @@ script = ExtResource("1_2s10v")
 item_name = "Cathode Ray Tube"
 rarity = 1
 sprite = ExtResource("2_t2a40")
+weight_class = 0
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

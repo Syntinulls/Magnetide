@@ -8,4 +8,5 @@
 script = ExtResource("1_3yanl")
 item_name = "Rubber"
 sprite = ExtResource("2_n6par")
+weight_class = 0
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

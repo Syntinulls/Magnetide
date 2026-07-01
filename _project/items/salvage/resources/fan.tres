@@ -9,4 +9,5 @@ script = ExtResource("1_5b20r")
 item_name = "Fan"
 rarity = 2
 sprite = ExtResource("2_7n0dx")
+weight_class = 0
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

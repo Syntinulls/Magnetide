@@ -21,13 +21,10 @@ const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 
 @export_group("Ship")
-@export var ship_storage_area_size: Vector2 = Vector2(400, 250)
+@export var ship_storage_area_size: Vector2 = Vector2(180, 100)
 @export var ship_storage_area_position: Vector2 = Vector2(0, -95)
 @export var ship_storage_marker_height: float = 24.0
-@export var ship_storage_max_weight: float = 100.0
 @export var ship_max_health: float = 250.0
-## Upgradeable width of the ship storage area. Drives ship_storage_area_size.x.
-@export var ship_storage_width: float = 400.0
 
 @export_group("Magnet")
 @export var magnet_pull_frequency: float = 2.5
@@ -254,25 +251,19 @@ func ensure_upgrade_state() -> void:
 		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
 		_create_default_level_costs(CostGearData, CostSpringData)
 	))
-	_ensure_upgrade(ship_upgrades, _create_upgrade(
-		&"ship_storage",
-		"Ship Storage",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"ship_storage_max_weight",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostGearData, CostMagnetData)
-	))
+	# Storage size is a single 5-level upgrade that grows both width and height.
+	# The dimensions are looked up from STORAGE_SIZE_BY_LEVEL by the upgrade's
+	# current level (target_property is empty; the generic scalar path skips it).
 	_ensure_upgrade(ship_upgrades, _create_upgrade(
 		&"ship_storage_size",
 		"Ship Storage Size",
 		RunUpgradeScript.TargetScope.LOADOUT,
-		&"ship_storage_width",
-		60.0,
+		&"",
+		0.0,
 		RunUpgradeScript.IncreaseMode.FLAT,
-		_create_default_level_costs(CostGearData, CostSpringData, 3),
+		_create_default_level_costs(CostGearData, CostSpringData, 5),
 		[],
-		3
+		5
 	))
 	_ensure_upgrade(magnet_upgrades, _create_upgrade(
 		&"ship_magnet_capacity",
@@ -528,10 +519,28 @@ func _build_runtime_equipment() -> Array[EquipmentData]:
 	return runtime_equipment
 
 
-## Keep the storage area rectangle's width in sync with the upgradeable
-## ship_storage_width scalar (the upgrade system can only target scalars).
+## Storage rectangle dimensions per ship_storage_size upgrade level (0..5).
+## Level 0 starts small; each level grows both width and height.
+const STORAGE_SIZE_BY_LEVEL: Array[Vector2] = [
+	Vector2(180, 100),
+	Vector2(240, 140),
+	Vector2(300, 180),
+	Vector2(360, 220),
+	Vector2(420, 260),
+	Vector2(480, 300),
+]
+
+
+## Drive the storage area rectangle (both width and height) from the
+## ship_storage_size upgrade level, since a single upgrade grows both dims.
 func _sync_storage_area_size() -> void:
-	ship_storage_area_size = Vector2(ship_storage_width, ship_storage_area_size.y)
+	var level := clampi(get_upgrade_level(&"ship_storage_size"), 0, STORAGE_SIZE_BY_LEVEL.size() - 1)
+	ship_storage_area_size = STORAGE_SIZE_BY_LEVEL[level]
+
+
+## Storage rectangle size for a given upgrade level (used by station UI previews).
+func get_storage_size_for_level(level: int) -> Vector2:
+	return STORAGE_SIZE_BY_LEVEL[clampi(level, 0, STORAGE_SIZE_BY_LEVEL.size() - 1)]
 
 
 func _apply_augment_loadout_modifiers() -> void:

@@ -299,7 +299,7 @@ ground_y_ratio = 0.9
 
 [node name="Ship" parent="." unique_id=1033807799 instance=ExtResource("9_rr5ri")]
 position = Vector2(0, 94.5)
-ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/TopRight_UI/VBoxContainer/ShipStatusUI")
+ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/ShipStatusUI")
 
 [node name="Player" parent="Ship" unique_id=155842924 instance=ExtResource("10_5p64y")]
 position = Vector2(4, -140)
@@ -327,7 +327,7 @@ magnet_path = NodePath("../Ship/Magnet")
 camera_path = NodePath("../Camera2D")
 warning_icon_path = NodePath("../UICanvas/UIRoot/GameUI/WarningIconAnchor/WarningIcon")
 activation_minigame_path = NodePath("../UICanvas/UIRoot/GameUI/ActivationMinigame")
-ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/TopRight_UI/VBoxContainer/ShipStatusUI")
+ship_status_ui_path = NodePath("../UICanvas/UIRoot/GameUI/ShipStatusUI")
 activation_anchor_path = NodePath("../Ship/ActivationMinigameAnchor")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1705480197]

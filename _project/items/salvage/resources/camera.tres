@@ -20,5 +20,6 @@ item_name = "Camera"
 rarity = 2
 sprite = ExtResource("4_65w3e")
 area = Vector2(160, 160)
+weight_class = 0
 parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

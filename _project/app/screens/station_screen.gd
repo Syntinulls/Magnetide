@@ -36,6 +36,18 @@ const WEAPON_LIST_ENTRY_ICON_MAX_WIDTH := 62
 const WEAPON_LIST_ENTRY_ICON_MAX_HEIGHT := 30
 const WEAPON_LIST_ENTRY_FONT_SIZE := 20
 const DYNAMIC_ENTRY_LEVEL_FONT_SIZE := 16
+# Dynamic-slot item list auto-width. The center list panel grows to fit the
+# widest entry name so it never gets ellipsized; the other panels keep their
+# size (the detail panel just shifts right).
+const DYNAMIC_ENTRY_ROW_MARGIN := 10.0        # EntryRow left+right inset (per side)
+const DYNAMIC_ENTRY_ROW_SEPARATION := 8.0     # gap between row children
+const DYNAMIC_ENTRY_UNLOCK_WIDTH := 62.0      # trailing "Unlock" button (locked)
+const DYNAMIC_ENTRY_LEVEL_WIDTH := 46.0       # trailing level label (unlocked)
+const DYNAMIC_ENTRY_NAME_SLACK := 8.0         # breathing room so nothing clips
+const DYNAMIC_LIST_PANEL_MARGIN := 14.0       # ItemList inset within its panel (per side)
+const DYNAMIC_DETAIL_GAP := 12.0              # gap between list panel and detail panel
+const DYNAMIC_LIST_MIN_WIDTH := 232.0         # original ItemList width (never shrink below)
+const DYNAMIC_LIST_MAX_WIDTH := 560.0
 const DYNAMIC_ENTRY_LEVEL_COLOR := Color(0.68, 0.72, 0.78, 1.0)
 const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 const PLAYER_SHIELD_UNLOCK_RESEARCH_ID := &"player_shield"
@@ -309,15 +321,23 @@ func _configure_upgrade_popup_layout() -> void:
 	_upgrade_cost_popup.custom_minimum_size = Vector2.ZERO
 	var title := _upgrade_cost_popup.get_node_or_null("TitleLabel") as Label
 	var credits := _upgrade_cost_popup.get_node_or_null("CreditsLabel") as Label
-	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as Label
+	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as RichTextLabel
 	if title:
 		title.autowrap_mode = TextServer.AUTOWRAP_OFF
 	if credits:
 		credits.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
 		credits.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	if secondary:
-		secondary.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+		secondary.bbcode_enabled = true
+		secondary.fit_content = true
+		secondary.scroll_active = false
 		secondary.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+		# Mirror the sibling label's font/color so the requirement text measures
+		# and reads identically, just with per-line green/red coloring on top.
+		if credits:
+			secondary.add_theme_font_override("normal_font", credits.get_theme_font("font"))
+			secondary.add_theme_font_size_override("normal_font_size", credits.get_theme_font_size("font_size"))
+			secondary.add_theme_color_override("default_color", credits.get_theme_color("font_color"))
 	_resize_upgrade_cost_popup()
 
 
@@ -327,8 +347,8 @@ func _resize_upgrade_cost_popup() -> void:
 
 	var title := _upgrade_cost_popup.get_node_or_null("TitleLabel") as Label
 	var credits := _upgrade_cost_popup.get_node_or_null("CreditsLabel") as Label
-	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as Label
-	var labels: Array[Label] = []
+	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as Control
+	var labels: Array = []
 	for label in [title, credits, secondary]:
 		if label != null:
 			labels.append(label)
@@ -366,37 +386,67 @@ func _resize_upgrade_cost_popup() -> void:
 	_upgrade_cost_popup.size = Vector2(popup_width, popup_height)
 
 
-func _get_upgrade_popup_width(labels: Array[Label]) -> float:
+func _get_upgrade_popup_width(labels: Array) -> float:
 	var content_width := 0.0
 	for label in labels:
-		content_width = maxf(content_width, _get_label_natural_text_width(label))
+		content_width = maxf(content_width, _get_label_natural_text_width(label as Control))
 	var popup_width := content_width + (UPGRADE_POPUP_HORIZONTAL_PADDING * 2.0)
 	return clampf(popup_width, UPGRADE_POPUP_MIN_WIDTH, UPGRADE_POPUP_MAX_WIDTH)
 
 
-func _get_label_natural_text_width(label: Label) -> float:
-	if label == null or label.text.is_empty():
+func _get_label_natural_text_width(label: Control) -> float:
+	var text := _text_widget_plain_text(label)
+	if text.is_empty():
 		return 0.0
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
+	var font := _text_widget_font(label)
+	var font_size := _text_widget_font_size(label)
+	if font == null:
+		return 0.0
 	var widest := 0.0
-	for line in label.text.split("\n", false):
+	for line in text.split("\n", false):
 		widest = maxf(widest, font.get_string_size(line, HORIZONTAL_ALIGNMENT_LEFT, -1.0, font_size).x)
 	return widest
 
 
-func _get_label_text_height(label: Label, width: float) -> float:
-	if label == null or label.text.is_empty():
+func _get_label_text_height(label: Control, width: float) -> float:
+	var text := _text_widget_plain_text(label)
+	if text.is_empty():
 		return 0.0
-	var font := label.get_theme_font("font")
-	var font_size := label.get_theme_font_size("font_size")
-	var text_size := font.get_multiline_string_size(
-		label.text,
-		label.horizontal_alignment,
-		width,
-		font_size
-	)
+	var font := _text_widget_font(label)
+	var font_size := _text_widget_font_size(label)
+	if font == null:
+		return 0.0
+	var h_align := HORIZONTAL_ALIGNMENT_LEFT
+	if label is Label:
+		h_align = (label as Label).horizontal_alignment
+	var text_size := font.get_multiline_string_size(text, h_align, width, font_size)
 	return ceilf(text_size.y) + 2.0
+
+
+## Plain text / font accessors that work for both Label and RichTextLabel (the
+## latter reports BBCode-stripped text and uses the "normal_font" theme items).
+func _text_widget_plain_text(widget: Control) -> String:
+	if widget is RichTextLabel:
+		return (widget as RichTextLabel).get_parsed_text()
+	if widget is Label:
+		return (widget as Label).text
+	return ""
+
+
+func _text_widget_font(widget: Control) -> Font:
+	if widget is RichTextLabel:
+		return widget.get_theme_font("normal_font")
+	if widget is Label:
+		return widget.get_theme_font("font")
+	return null
+
+
+func _text_widget_font_size(widget: Control) -> int:
+	if widget is RichTextLabel:
+		return widget.get_theme_font_size("normal_font_size")
+	if widget is Label:
+		return widget.get_theme_font_size("font_size")
+	return 16
 
 
 func _configure_dynamic_popup_mouse_blocking() -> void:
@@ -1169,6 +1219,8 @@ func _populate_dynamic_item_list() -> void:
 		child.queue_free()
 
 	var entries := _get_active_catalog_entries()
+	var font := Magnetide.label_font
+	var max_needed_width := 0.0
 	for entry in entries:
 		if entry == null or _catalog_entry_item_data(entry) == null:
 			continue
@@ -1187,6 +1239,56 @@ func _populate_dynamic_item_list() -> void:
 		_connect_dynamic_entry_detail_hover(button, entry)
 		if not is_locked:
 			button.pressed.connect(_equip_dynamic_item_from_popup.bind(entry))
+		max_needed_width = maxf(max_needed_width, _measure_dynamic_entry_width(entry, is_locked, font))
+
+	_apply_dynamic_list_width(max_needed_width)
+
+
+## Width an entry button needs to show its full name alongside the fixed icon and
+## trailing level/unlock element (see _configure_dynamic_entry_button layout).
+func _measure_dynamic_entry_width(entry: Resource, is_locked: bool, font: Font) -> float:
+	if font == null:
+		return 0.0
+	var name_width := font.get_string_size(
+		_catalog_entry_display_name(entry),
+		HORIZONTAL_ALIGNMENT_LEFT,
+		-1.0,
+		WEAPON_LIST_ENTRY_FONT_SIZE
+	).x
+	var trailing := DYNAMIC_ENTRY_UNLOCK_WIDTH if is_locked else DYNAMIC_ENTRY_LEVEL_WIDTH
+	return DYNAMIC_ENTRY_ROW_MARGIN * 2.0 \
+		+ DYNAMIC_ENTRY_ICON_FRAME_SIZE.x \
+		+ DYNAMIC_ENTRY_ROW_SEPARATION * 2.0 \
+		+ name_width \
+		+ trailing \
+		+ DYNAMIC_ENTRY_NAME_SLACK
+
+
+## Resize only the center list panel to `content_width`, shifting the detail panel
+## right and growing the popup container. Other panels keep their size.
+func _apply_dynamic_list_width(content_width: float) -> void:
+	var list_panel := _weapon_popup.get_node_or_null("ItemListPanel") as Control
+	if list_panel == null or _weapon_list == null:
+		return
+
+	var list_width := clampf(content_width, DYNAMIC_LIST_MIN_WIDTH, DYNAMIC_LIST_MAX_WIDTH)
+	var panel_width := list_width + DYNAMIC_LIST_PANEL_MARGIN * 2.0
+
+	list_panel.size = Vector2(panel_width, list_panel.size.y)
+	_weapon_list.size = Vector2(list_width, _weapon_list.size.y)
+	if _weapon_list_title != null:
+		_weapon_list_title.size = Vector2(list_width, _weapon_list_title.size.y)
+	for child in _weapon_list.get_children():
+		if child is Control:
+			var entry_control := child as Control
+			entry_control.custom_minimum_size = Vector2(list_width, entry_control.custom_minimum_size.y)
+
+	# Detail panel keeps its size; it just moves to sit after the wider list.
+	if _weapon_popup_stats_panel != null:
+		var detail_width := _weapon_popup_stats_panel.size.x
+		var detail_left := list_panel.position.x + panel_width + DYNAMIC_DETAIL_GAP
+		_weapon_popup_stats_panel.position = Vector2(detail_left, _weapon_popup_stats_panel.position.y)
+		_weapon_popup.size = Vector2(detail_left + detail_width, _weapon_popup.size.y)
 
 
 func _connect_dynamic_entry_detail_hover(control: Control, entry: Resource) -> void:
@@ -1655,8 +1757,11 @@ func _format_catalog_item_stats(entry: Resource) -> String:
 			if not summary.is_empty():
 				lines.append(summary)
 
-	lines.append("")
-	lines.append(_get_catalog_entry_detail_level_text(entry))
+	# Locked items are always level 0, and the "LOCKED" status already conveys
+	# that, so omit the redundant level line (it can otherwise overlap the status).
+	if not _catalog_entry_locked(entry):
+		lines.append("")
+		lines.append(_get_catalog_entry_detail_level_text(entry))
 	return "\n".join(lines)
 
 
@@ -1825,6 +1930,16 @@ func _save_current_game() -> void:
 		_save_data.call("save_to_disk")
 
 
+## Green when the player owns enough of a requirement, red otherwise. Used to
+## color-code each part / scrap line in the upgrade cost popup (a RichTextLabel).
+const REQUIREMENT_MET_COLOR := "5af03c"
+const REQUIREMENT_UNMET_COLOR := "ff5c5c"
+
+
+func _colorize_requirement(text: String, met: bool) -> String:
+	return "[color=#%s]%s[/color]" % [REQUIREMENT_MET_COLOR if met else REQUIREMENT_UNMET_COLOR, text]
+
+
 func _build_upgrade_requirement_text(upgrade_id: StringName) -> String:
 	if _run_loadout == null:
 		return "Requires: No cost"
@@ -1836,13 +1951,13 @@ func _build_upgrade_requirement_text(upgrade_id: StringName) -> String:
 		return "Requires: No cost"
 
 	var lines := PackedStringArray(["Requires"])
-	var cost_text := _format_salvage_costs_text(level_cost.get("costs") as Array)
+	var cost_text := _format_salvage_costs_text(level_cost.get("costs") as Array, true)
 	if cost_text.is_empty() or cost_text == "No cost":
 		lines.append("No cost")
 	else:
 		lines.append(cost_text)
 
-	var scrap_section := _build_scrap_cost_section(level_cost)
+	var scrap_section := _build_scrap_cost_section(level_cost, true)
 	if not scrap_section.is_empty():
 		lines.append("")
 		lines.append(scrap_section)
@@ -1850,7 +1965,7 @@ func _build_upgrade_requirement_text(upgrade_id: StringName) -> String:
 
 
 ## Separate "Scrap Metal" cost block for the upgrade popup (owned / required).
-func _build_scrap_cost_section(level_cost: Resource) -> String:
+func _build_scrap_cost_section(level_cost: Resource, colorize: bool = false) -> String:
 	if level_cost == null or not _has_property(level_cost, "scrap_cost"):
 		return ""
 	var scrap_required := int(level_cost.get("scrap_cost"))
@@ -1860,7 +1975,11 @@ func _build_scrap_cost_section(level_cost: Resource) -> String:
 	var save_data := _save_data as AppSaveData
 	if save_data != null:
 		owned = save_data.total_scrap_metal
-	return "Scrap Metal\nx%d (%d / %d)" % [scrap_required, owned, scrap_required]
+	# Only the amount row is color-coded; the "Scrap Metal" heading stays neutral.
+	var amount := "x%d (%d / %d)" % [scrap_required, owned, scrap_required]
+	if colorize:
+		amount = _colorize_requirement(amount, owned >= scrap_required)
+	return "Scrap Metal\n%s" % amount
 
 
 func _format_research_point_cost_text(required: int) -> String:
@@ -1871,10 +1990,10 @@ func _format_research_point_cost_text(required: int) -> String:
 	return "%d RP (%d / %d)" % [required, owned, required]
 
 
-func _format_salvage_costs_text(costs: Array) -> String:
+func _format_salvage_costs_text(costs: Array, colorize: bool = false) -> String:
 	var lines := PackedStringArray()
 	for cost in costs:
-		var line := _format_salvage_cost_text(cost)
+		var line := _format_salvage_cost_text(cost, colorize)
 		if not line.is_empty():
 			lines.append(line)
 	if lines.is_empty():
@@ -1882,7 +2001,7 @@ func _format_salvage_costs_text(costs: Array) -> String:
 	return "\n".join(lines)
 
 
-func _format_salvage_cost_text(cost: Variant) -> String:
+func _format_salvage_cost_text(cost: Variant, colorize: bool = false) -> String:
 	if cost == null:
 		return ""
 	if not (cost is Resource):
@@ -1896,7 +2015,10 @@ func _format_salvage_cost_text(cost: Variant) -> String:
 		return str(cost_resource)
 	var owned := _get_owned_salvage_quantity(item_data)
 	var item_name := item_data.item_name if not item_data.item_name.is_empty() else "Unknown"
-	return "x%d %s (%d / %d)" % [quantity, item_name, owned, quantity]
+	var line := "x%d %s (%d / %d)" % [quantity, item_name, owned, quantity]
+	if colorize:
+		return _colorize_requirement(line, owned >= quantity)
+	return line
 
 
 func _get_owned_salvage_quantity(item_data: SalvageItemData) -> int:
@@ -1911,7 +2033,19 @@ func _build_upgrade_gain_text(upgrade_id: StringName) -> String:
 	var upgrade := _get_upgrade(upgrade_id)
 	if upgrade == null or _run_loadout == null:
 		return ""
+	# Storage size grows both dimensions from a per-level table, so describe the
+	# resulting rectangle rather than a scalar "+N".
+	if upgrade_id == &"ship_storage_size":
+		return _build_storage_size_gain_text()
 	return _run_loadout.get_upgrade_next_gain_text(upgrade_id, _get_upgrade_stat_name(upgrade))
+
+
+func _build_storage_size_gain_text() -> String:
+	if _run_loadout.is_upgrade_maxed(&"ship_storage_size"):
+		return "MAX LEVEL"
+	var next_level := _run_loadout.get_upgrade_level(&"ship_storage_size") + 1
+	var next_size: Vector2 = _run_loadout.get_storage_size_for_level(next_level)
+	return "%d×%d Storage" % [int(next_size.x), int(next_size.y)]
 
 
 func _get_upgrade_stat_name(upgrade: Resource) -> String:
@@ -1931,10 +2065,6 @@ func _get_upgrade_stat_name(upgrade: Resource) -> String:
 			return "Pull Speed"
 		"ship_max_health":
 			return "Ship Integrity"
-		"ship_storage_width":
-			return "Storage Size"
-		"ship_storage_max_weight":
-			return "Storage"
 		"magnet_hold_capacity":
 			return "Magnet Capacity"
 		"magnet_max_health":
@@ -2047,7 +2177,7 @@ func _build_ship_stats_text() -> String:
 	var lines := PackedStringArray([
 		"SHIP",
 		"  Integrity: %s" % _stringify_stat_value(_run_loadout.ship_max_health),
-		"  Storage Size: %s" % _stringify_stat_value(_run_loadout.ship_storage_area_size.x),
+		"  Storage Size: %d×%d" % [int(_run_loadout.ship_storage_area_size.x), int(_run_loadout.ship_storage_area_size.y)],
 		"",
 		"MAGNET",
 		"  Integrity: %s" % _stringify_stat_value(_run_loadout.magnet_max_health),

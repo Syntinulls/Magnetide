@@ -20,10 +20,9 @@ level_scene = ExtResource("3_level_scene")
 
 [sub_resource type="Resource" id="Resource_default_run_loadout"]
 script = ExtResource("6_run_loadout")
-ship_storage_area_size = Vector2(400, 250)
+ship_storage_area_size = Vector2(180, 100)
 ship_storage_area_position = Vector2(0, -95)
 ship_storage_marker_height = 24.0
-ship_storage_max_weight = 100.0
 ship_max_health = 250.0
 magnet_pull_frequency = 2.5
 magnet_pull_batch_size = 1

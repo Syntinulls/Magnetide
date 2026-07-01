@@ -279,14 +279,17 @@ offset_bottom = 100.0
 text = "350"
 autowrap_mode = 3
 
-[node name="SecondaryLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=1537061412]
+[node name="SecondaryLabel" type="RichTextLabel" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=1537061412]
 layout_mode = 0
 offset_left = 24.0
 offset_top = 108.0
 offset_right = 236.0
 offset_bottom = 146.0
-text = "0 / 5"
+bbcode_enabled = true
+fit_content = true
+scroll_active = false
 autowrap_mode = 3
+text = "0 / 5"
 
 [node name="DynamicSlotPopup" parent="PageViewport/PageContainer/PlayerPage" unique_id=737096433 instance=ExtResource("20_dynamic_slot_popup")]
 layout_mode = 0

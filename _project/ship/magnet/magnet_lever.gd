@@ -25,9 +25,7 @@ var _tween_start_progress: float = 0.0
 var _advance_mode: bool = false
 var _advance_confirm_pending: bool = false
 
-const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
-
-var _outline_material: ShaderMaterial = null
+var _outline: CompositeOutline = null
 
 @onready var _handle_pivot: Node2D = $HandlePivot
 @onready var _handle_sprite: Sprite2D = $HandlePivot/Handle
@@ -48,20 +46,22 @@ func _ready() -> void:
 
 
 func _setup_highlight() -> void:
-	_outline_material = ShaderMaterial.new()
-	_outline_material.shader = OUTLINE_SHADER
-	_outline_material.set_shader_parameter("outline_enabled", false)
-	_outline_material.set_shader_parameter("outline_width", 3.0)
-	# Share one material so the handle and base outline together.
+	# One composite outline around the handle + base (the handle rotates, so this
+	# is a dynamic outline that re-syncs each frame while shown).
+	_outline = CompositeOutline.new()
+	add_child(_outline)
+	var sources: Array = []
 	if _handle_sprite:
-		_handle_sprite.material = _outline_material
+		sources.append(_handle_sprite)
 	if _base_sprite:
-		_base_sprite.material = _outline_material
+		sources.append(_base_sprite)
+	# Mirror the base sprite's depth (a direct child, so a valid z sibling).
+	_outline.configure(sources, true, Color.WHITE, 3.0, _base_sprite)
 
 
 func _set_highlight(active: bool) -> void:
-	if _outline_material:
-		_outline_material.set_shader_parameter("outline_enabled", active)
+	if _outline:
+		_outline.set_enabled(active)
 
 
 func _process(delta: float) -> void:

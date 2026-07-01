@@ -9,3 +9,4 @@ script = ExtResource("1_script")
 item_name = "Copper Wires"
 value = 20
 sprite = ExtResource("2_kksav")
+weight_class = 0

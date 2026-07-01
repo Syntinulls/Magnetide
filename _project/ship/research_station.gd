@@ -9,13 +9,12 @@ signal artifact_cleared(item_data: SalvageItemData)
 
 @export var debug_research_duration: float = 5.0
 
-const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
 const ResearchStationUIScene: PackedScene = preload("res://_project/ui/research/research_station_ui.tscn")
 
 var _current_artifact: SalvageItem = null
 var _is_researching: bool = false
 var _research_timer: Timer = null
-var _outline_material: ShaderMaterial = null
+var _outline: CompositeOutline = null
 var _research_ui: ResearchStationUI = null
 var _saved_stage_state: Dictionary = {}
 
@@ -60,8 +59,8 @@ func can_accept_item(item: SalvageItem) -> bool:
 
 
 func set_highlighted(enabled: bool) -> void:
-	if _outline_material:
-		_outline_material.set_shader_parameter("outline_enabled", enabled)
+	if _outline:
+		_outline.set_enabled(enabled)
 
 
 func place_artifact(item: SalvageItem) -> bool:
@@ -132,13 +131,10 @@ func _on_research_timer_timeout() -> void:
 func _setup_outline_material() -> void:
 	if _station_sprite == null:
 		return
-
-	_outline_material = ShaderMaterial.new()
-	_outline_material.shader = OUTLINE_SHADER
-	_outline_material.set_shader_parameter("outline_enabled", false)
-	_outline_material.set_shader_parameter("outline_width", 3.0)
-	_outline_material.set_shader_parameter("outline_color", Color.WHITE)
-	_station_sprite.material = _outline_material
+	# Composite outline around the (animated) station sprite.
+	_outline = CompositeOutline.new()
+	add_child(_outline)
+	_outline.configure([_station_sprite], true, Color.WHITE, 3.0, _station_sprite)
 
 
 func _award_research_points(item_data: SalvageItemData) -> void:
@@ -178,11 +174,28 @@ func _ensure_research_ui() -> ResearchStationUI:
 		_research_ui.research_failed.connect(_on_research_ui_failed)
 	if not _research_ui.ui_closed.is_connected(_on_research_ui_closed):
 		_research_ui.ui_closed.connect(_on_research_ui_closed)
+	if not _research_ui.research_dismissed.is_connected(_on_research_ui_dismissed):
+		_research_ui.research_dismissed.connect(_on_research_ui_dismissed)
 	return _research_ui
 
 
+## Fired the instant the final stage clears: award points and consume the
+## artifact immediately, but keep the UI so its result screens can play out.
 func _on_research_ui_completed(item_data: SalvageItemData) -> void:
-	_complete_research_success(item_data)
+	if _research_timer:
+		_research_timer.stop()
+	_award_research_points(item_data)
+	research_completed.emit(item_data)
+	_consume_artifact_keep_ui(item_data)
+
+
+## Fired when the finalized session's result screens are dismissed. Rewards were
+## already granted, so this only tears down the UI.
+func _on_research_ui_dismissed() -> void:
+	if _research_ui and is_instance_valid(_research_ui):
+		_research_ui.queue_free()
+		_research_ui = null
+	Magnetide.research_ui_input_captured = false
 
 
 func _on_research_ui_failed(_item_data: SalvageItemData, reason: StringName) -> void:
@@ -215,6 +228,18 @@ func _clear_current_artifact(item_data: SalvageItemData) -> void:
 		_research_ui.queue_free()
 		_research_ui = null
 	Magnetide.research_ui_input_captured = false
+	if has_artifact():
+		_current_artifact.queue_free()
+	_current_artifact = null
+	_is_researching = false
+	_saved_stage_state.clear()
+	artifact_cleared.emit(item_data)
+
+
+## Consume the artifact and mark research finished, but leave the research UI
+## alive (its result screens are still showing). The UI is freed later, when it
+## emits research_dismissed.
+func _consume_artifact_keep_ui(item_data: SalvageItemData) -> void:
 	if has_artifact():
 		_current_artifact.queue_free()
 	_current_artifact = null

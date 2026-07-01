@@ -10,7 +10,6 @@ signal trash_recycled(scrap_origin: Vector2)
 @export var recycle_blade_pass_duration: float = 0.85
 @export var blade_spin_speed: float = 6.0
 
-const OUTLINE_SHADER: Shader = preload("res://_project/shaders/outline.gdshader")
 const RENDER_Z_MAX: int = 0
 const RENDER_Z_BACK: int = -3
 const RENDER_Z_TRASH: int = -4
@@ -18,13 +17,15 @@ const RENDER_Z_PARTICLES: int = -2
 const RENDER_Z_BLADES: int = -1
 
 var _is_recycling: bool = false
-var _outline_material: ShaderMaterial = null
+var _outline: CompositeOutline = null
 
 @onready var _sprite_back: Sprite2D = $SpriteBack as Sprite2D
 @onready var _sprite_front: AnimatedSprite2D = $SpriteFront as AnimatedSprite2D
 @onready var _placement_shape: CollisionShape2D = $CollisionShape2D as CollisionShape2D
 @onready var _grinder_left: Node2D = $GrinderLeft as Node2D
 @onready var _grinder_right: Node2D = $GrinderRight as Node2D
+@onready var _grinder_left_saw: Sprite2D = $GrinderLeft/Sprite2D as Sprite2D
+@onready var _grinder_right_saw: Sprite2D = $GrinderRight/Sprite2D as Sprite2D
 @onready var _trash_start: Marker2D = $TrashStart as Marker2D
 @onready var _trash_particles: GPUParticles2D = $TrashParticles as GPUParticles2D
 
@@ -61,8 +62,8 @@ func can_accept_item(item: SalvageItem) -> bool:
 
 
 func set_highlighted(enabled: bool) -> void:
-	if _outline_material:
-		_outline_material.set_shader_parameter("outline_enabled", enabled)
+	if _outline:
+		_outline.set_enabled(enabled)
 
 
 func recycle_trash(item: SalvageItem) -> bool:
@@ -106,14 +107,23 @@ func _finish_recycling(item: SalvageItem, scrap_origin: Vector2) -> void:
 
 
 func _setup_outline_material() -> void:
-	if _sprite_front == null:
+	# Composite outline around the back + front sprites (the front animates, so
+	# this is dynamic and re-syncs each frame while highlighted).
+	var sources: Array = []
+	if _sprite_back:
+		sources.append(_sprite_back)
+	if _grinder_left_saw:
+		sources.append(_grinder_left_saw)
+	if _grinder_right_saw:
+		sources.append(_grinder_right_saw)
+	if _sprite_front:
+		sources.append(_sprite_front)
+	if sources.is_empty():
 		return
-	_outline_material = ShaderMaterial.new()
-	_outline_material.shader = OUTLINE_SHADER
-	_outline_material.set_shader_parameter("outline_enabled", false)
-	_outline_material.set_shader_parameter("outline_width", 3.0)
-	_outline_material.set_shader_parameter("outline_color", Color.WHITE)
-	_sprite_front.material = _outline_material
+	_outline = CompositeOutline.new()
+	add_child(_outline)
+	# Mirror the front sprite's exact depth (uses absolute z in the scene).
+	_outline.configure(sources, true, Color.WHITE, 3.0, _sprite_front)
 
 
 func _apply_render_order() -> void:

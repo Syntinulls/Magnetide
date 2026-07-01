@@ -9,4 +9,5 @@ script = ExtResource("1_0mqpt")
 item_name = "Circuitry"
 rarity = 2
 sprite = ExtResource("2_ytgfh")
+weight_class = 0
 metadata/_custom_type_script = "uid://qly6kt6v6em3"

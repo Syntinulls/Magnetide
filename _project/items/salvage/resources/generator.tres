@@ -25,5 +25,6 @@ item_name = "generator"
 rarity = 2
 sprite = ExtResource("5_ik25u")
 area = Vector2(160, 160)
+weight_class = 3
 parts = Array[ExtResource("part_entry_script")]([SubResource("PartEntry_1"), SubResource("PartEntry_2"), SubResource("PartEntry_3")])
 metadata/_custom_type_script = "uid://qly6kt6v6em3"
