@@ -376,6 +376,37 @@ func get_item_level(item_data: Resource) -> int:
 	return 0
 
 
+## Cost (RunUpgradeLevelCost) to raise this augment/item to its next level, or
+## null if it is maxed or has no cost defined for that level.
+func get_augment_next_level_cost(augment_data: Resource) -> Resource:
+	if augment_data == null or not _has_property(augment_data, "max_level"):
+		return null
+	var level := get_item_level(augment_data)
+	if level >= int(augment_data.get("max_level")):
+		return null
+	var costs := augment_data.get("level_costs") as Array
+	if costs == null or level < 0 or level >= costs.size():
+		return null
+	return costs[level] as Resource
+
+
+## Raise an augment's per-item level by one (clamped to max_level). Returns true
+## if the level changed.
+func increase_augment_level(augment_data: Resource) -> bool:
+	if augment_data == null or not _has_property(augment_data, "item_id"):
+		return false
+	var level := get_item_level(augment_data)
+	if not _has_property(augment_data, "max_level") or level >= int(augment_data.get("max_level")):
+		return false
+	var state := get_or_create_item_state(augment_data.get("item_id") as StringName)
+	if state == null:
+		return false
+	state.set("current_level", level + 1)
+	state.set("unlocked", true)
+	prepare_for_run()
+	return true
+
+
 func is_item_unlocked(item_data: Resource, default_unlocked: bool = false) -> bool:
 	if item_data == null or not _has_property(item_data, "item_id"):
 		return default_unlocked
@@ -436,9 +467,12 @@ func equip_player_augment(slot_index: int, augment_data: AugmentData) -> void:
 		player_augments.append(null)
 
 	if augment_data != null:
+		# If this augment already occupies another slot, swap: move whatever is in
+		# the target slot into that other slot (rather than just clearing it).
 		for index in player_augments.size():
 			if index != slot_index and _same_upgradeable_item(player_augments[index], augment_data):
-				player_augments[index] = null
+				player_augments[index] = player_augments[slot_index]
+				break
 
 	player_augments[slot_index] = augment_data
 
@@ -458,9 +492,11 @@ func _equip_augment_into(augments: Array[AugmentData], slot_index: int, augment_
 		augments.append(null)
 
 	if augment_data != null:
+		# Swap with the target slot if this augment already occupies another slot.
 		for index in augments.size():
 			if index != slot_index and _same_upgradeable_item(augments[index], augment_data):
-				augments[index] = null
+				augments[index] = augments[slot_index]
+				break
 
 	augments[slot_index] = augment_data
 

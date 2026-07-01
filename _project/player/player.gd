@@ -951,11 +951,14 @@ func _resolve_storage_click(ship_node: Node, mouse_pos: Vector2) -> void:
 		return
 
 	# 1. Stack: the held item matches an existing stored stack of the same type.
-	if ship_node.find_stackable_stored_item(_held_item) != null:
+	# The item tweens into the stack to visually show the merge before vanishing.
+	var stack_target: SalvageItem = ship_node.find_stackable_stored_item(_held_item)
+	if stack_target != null:
 		_set_storage_area_outline_state(false)
-		if ship_node.stack_item(_held_item):
-			_clear_held_item_prompts()
-			_finalize_held_item_release()
+		_clear_held_item_prompts()
+		var item := _held_item
+		_finalize_held_item_release()
+		ship_node.stack_item_animated(item, stack_target)
 		return
 
 	# 2. Swap: clicking directly on a different stored item swaps the two.

@@ -16,7 +16,6 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var max_health: float = 250.0
 @export var hitbox_path: NodePath = NodePath("Hitbox")
 @export var enemy_target_point_paths: Array[NodePath] = []
-@export var ship_status_ui_path: NodePath
 @export_group("Thrusters")
 @export var auto_update_thrusters: bool = true
 @export var thruster_moving_speed_ratio_threshold: float = 0.15
@@ -446,6 +445,21 @@ func stack_item(item: SalvageItem) -> bool:
 		_stored_items.erase(item)
 	item.queue_free()
 	item_stored.emit(target)
+	return true
+
+
+## Animated stack: `item` tweens to `target`'s position, then merges and vanishes,
+## visually showing the stack forming. Returns true if the animation was started.
+func stack_item_animated(item: SalvageItem, target: SalvageItem) -> bool:
+	if item == null or not is_instance_valid(item):
+		return false
+	if target == null or not is_instance_valid(target):
+		return false
+	if item in _stored_items:
+		_stored_items.erase(item)
+	item.tween_into_stack(target, func() -> void:
+		if is_instance_valid(target):
+			item_stored.emit(target))
 	return true
 
 

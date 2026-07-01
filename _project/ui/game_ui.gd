@@ -413,6 +413,7 @@ func _show_player_augment_tooltip(button: Control, augment: AugmentData, loadout
 
 	_player_augment_tooltip_name.text = _get_augment_name(augment)
 	_player_augment_tooltip_body.text = _build_player_augment_tooltip_text(augment, loadout)
+	_resize_player_augment_tooltip()
 	_player_augment_tooltip.visible = true
 
 	var target_position := button.get_global_rect().position + PLAYER_AUGMENT_TOOLTIP_OFFSET
@@ -428,6 +429,29 @@ func _show_player_augment_tooltip(button: Control, augment: AugmentData, loadout
 func _hide_player_augment_tooltip() -> void:
 	if _player_augment_tooltip != null:
 		_player_augment_tooltip.visible = false
+
+
+## Grow the tooltip panel to fit the wrapped body text so the description never
+## spills outside the panel bounds.
+func _resize_player_augment_tooltip() -> void:
+	var body := _player_augment_tooltip_body
+	if body == null or _player_augment_tooltip == null:
+		return
+	var font := body.get_theme_font("font")
+	if font == null:
+		return
+	var font_size := body.get_theme_font_size("font_size")
+	var text_size := font.get_multiline_string_size(
+		body.text,
+		HORIZONTAL_ALIGNMENT_LEFT,
+		body.size.x,
+		font_size
+	)
+	var body_height := ceilf(text_size.y) + 4.0
+	body.size = Vector2(body.size.x, body_height)
+	# Panel height = body's top offset + measured body height + bottom margin.
+	var panel_height := body.position.y + body_height + 12.0
+	_player_augment_tooltip.size = Vector2(_player_augment_tooltip.size.x, panel_height)
 
 
 func _build_player_augment_tooltip_text(augment: AugmentData, loadout: RunLoadout) -> String:

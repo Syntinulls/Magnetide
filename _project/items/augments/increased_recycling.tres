@@ -3,12 +3,33 @@
 [ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
 [ext_resource type="Script" uid="uid://brcyc1bhv0x2b" path="res://_project/items/augments/increased_recycling_behavior.gd" id="2_increased_recycling_behavior"]
 [ext_resource type="Texture2D" uid="uid://n3p6ul4ffspg" path="res://_project/items/augments/sprites/augment_increasedrecycling.png" id="3_increased_recycling_icon"]
+[ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/run/run_upgrade_level_cost.gd" id="4_level_cost"]
 
 [sub_resource type="Resource" id="Resource_increased_recycling_behavior"]
 script = ExtResource("2_increased_recycling_behavior")
 base_double_scrap_chance_percent = 25.0
 double_scrap_chance_percent_per_level = 5.0
 double_scrap_chance_cap_percent = 50.0
+
+[sub_resource type="Resource" id="Resource_rec_cost_0"]
+script = ExtResource("4_level_cost")
+scrap_cost = 20
+
+[sub_resource type="Resource" id="Resource_rec_cost_1"]
+script = ExtResource("4_level_cost")
+scrap_cost = 35
+
+[sub_resource type="Resource" id="Resource_rec_cost_2"]
+script = ExtResource("4_level_cost")
+scrap_cost = 55
+
+[sub_resource type="Resource" id="Resource_rec_cost_3"]
+script = ExtResource("4_level_cost")
+scrap_cost = 80
+
+[sub_resource type="Resource" id="Resource_rec_cost_4"]
+script = ExtResource("4_level_cost")
+scrap_cost = 110
 
 [resource]
 script = ExtResource("1_augment_data")
@@ -19,4 +40,5 @@ display_name = "Increased Recycling"
 description = "Recycling a trash item has an extra chance to yield double scrap."
 icon = ExtResource("3_increased_recycling_icon")
 max_level = 5
+level_costs = Array[Resource]([SubResource("Resource_rec_cost_0"), SubResource("Resource_rec_cost_1"), SubResource("Resource_rec_cost_2"), SubResource("Resource_rec_cost_3"), SubResource("Resource_rec_cost_4")])
 tags = Array[StringName]([&"augment", &"player_augment"])

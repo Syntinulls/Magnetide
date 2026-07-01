@@ -48,7 +48,39 @@ const DYNAMIC_LIST_PANEL_MARGIN := 14.0       # ItemList inset within its panel 
 const DYNAMIC_DETAIL_GAP := 12.0              # gap between list panel and detail panel
 const DYNAMIC_LIST_MIN_WIDTH := 232.0         # original ItemList width (never shrink below)
 const DYNAMIC_LIST_MAX_WIDTH := 560.0
+# Detail panel auto-width so the item name (+ EQUIPPED badge) always fits without
+# ellipsis. The description wraps to whatever width the name dictates.
+const DETAIL_PANEL_MIN_WIDTH := 300.0         # original ItemDetailPanel width
+const DETAIL_PANEL_MAX_WIDTH := 620.0
+const DETAIL_PANEL_H_MARGIN := 18.0           # header/body inset per side
+const DETAIL_BODY_TOP_INSET := 66.0           # body column top (below the header)
+const DETAIL_BODY_BOTTOM_INSET := 14.0        # body column bottom margin
+const DETAIL_HEADER_FONT_SIZE := 28
+const DETAIL_EQUIPPED_FONT_SIZE := 20
+const DETAIL_EQUIPPED_SEPARATION := 8.0
+const DETAIL_EQUIPPED_RIGHT_MARGIN := 12.0     # gap between EQUIPPED and panel edge
 const DYNAMIC_ENTRY_LEVEL_COLOR := Color(0.68, 0.72, 0.78, 1.0)
+
+## Every dynamic slot upgrades through one generic path. Stat / equipment slots
+## map here to their RunUpgrade id; any slot NOT in this map upgrades the item
+## currently equipped in it (augments, via per-item level state).
+const SLOT_UPGRADE_IDS := {
+	&"weapon": &"weapon_damage",
+	&"magnet_tool": &"magnet_tool_pull",
+	&"player_health": &"player_health",
+	&"player_shield": &"player_shield",
+	&"ship_integrity": &"ship_hull",
+	&"ship_storage_size": &"ship_storage_size",
+	&"magnet_integrity": &"ship_magnet_health",
+	&"magnet_capacity": &"ship_magnet_capacity",
+}
+## Slots whose upgrade button should be wired (all dynamic slots).
+const UPGRADEABLE_SLOT_IDS: Array[StringName] = [
+	&"weapon", &"magnet_tool", &"player_health", &"player_shield",
+	&"ship_integrity", &"ship_storage_size", &"magnet_integrity", &"magnet_capacity",
+	&"PlayerAugment1", &"PlayerAugment2", &"ShipAugment", &"MagnetAugment",
+]
+
 const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 const PLAYER_SHIELD_UNLOCK_RESEARCH_ID := &"player_shield"
 const PLAYER_SHIELD_RESEARCH_POINT_COST := 1
@@ -116,15 +148,17 @@ var _active_detail_entry: Resource = null
 @onready var _magnet_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/UpgradeButton") as Button
 @onready var _health_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow/UpgradeButton") as Button
 @onready var _shield_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow/UpgradeButton") as Button
-@onready var _weapon_popup: Control = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup
-@onready var _weapon_popup_current_cutout: ColorRect = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/CurrentItemPanel/CurrentIconFrame
-@onready var _weapon_popup_current_stats: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/CurrentItemPanel/CurrentStatsLabel
-@onready var _weapon_list_title: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemListPanel/ItemListTitle
-@onready var _weapon_list: VBoxContainer = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemListPanel/ItemList
-@onready var _weapon_popup_stats_panel: Control = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemDetailPanel
-@onready var _weapon_popup_stats_name: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemDetailPanel/NameLabel
-@onready var _weapon_popup_stats_body: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemDetailPanel/BodyLabel
-@onready var _weapon_popup_stats_status: Label = $PageViewport/PageContainer/PlayerPage/DynamicSlotPopup/ItemDetailPanel/StatusLabel
+@onready var _weapon_popup: Control = $DynamicSlotPopup
+@onready var _weapon_popup_current_cutout: ColorRect = $DynamicSlotPopup/CurrentItemPanel/CurrentIconFrame
+@onready var _weapon_popup_current_stats: Label = $DynamicSlotPopup/CurrentItemPanel/CurrentStatsLabel
+@onready var _weapon_list_title: Label = $DynamicSlotPopup/ItemListPanel/ItemListTitle
+@onready var _weapon_list: VBoxContainer = $DynamicSlotPopup/ItemListPanel/ItemList
+@onready var _weapon_popup_stats_panel: Control = $DynamicSlotPopup/ItemDetailPanel
+@onready var _weapon_popup_stats_name: Label = $DynamicSlotPopup/ItemDetailPanel/HeaderRow/NameLabel
+@onready var _weapon_popup_stats_equipped: Label = $DynamicSlotPopup/ItemDetailPanel/HeaderRow/EquippedLabel
+@onready var _weapon_popup_stats_body_column: VBoxContainer = $DynamicSlotPopup/ItemDetailPanel/BodyColumn
+@onready var _weapon_popup_stats_desc: RichTextLabel = $DynamicSlotPopup/ItemDetailPanel/BodyColumn/DescriptionLabel
+@onready var _weapon_popup_stats_status: RichTextLabel = $DynamicSlotPopup/ItemDetailPanel/BodyColumn/StatusLabel
 @onready var _upgrade_cost_popup: Control = $PageViewport/PageContainer/PlayerPage/UpgradeCostPopup
 @onready var _stats_title_label: Label = $SharedBottomArea/StatsPanel/TitleLabel
 @onready var _stats_body_label: Label = $SharedBottomArea/StatsPanel/BodyLabel
@@ -150,8 +184,8 @@ func _ready() -> void:
 	_apply_fonts(self)
 	_weapon_popup.visible = false
 	_weapon_popup_stats_panel.visible = false
-	_weapon_popup_stats_body.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
-	_weapon_popup_stats_status.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	if _weapon_popup_current_stats:
+		_weapon_popup_current_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_upgrade_cost_popup.visible = false
 	_storage_detail_panel.visible = false
 	_weapon_popup.z_index = 30
@@ -180,14 +214,10 @@ func _ready() -> void:
 	if _magnet_augment_button != null:
 		_magnet_augment_button.pressed.connect(_toggle_owner_augment_popup.bind(&"MagnetAugment", &"magnet_augment", "Magnet Augments"))
 
-	_connect_upgrade_button(_weapon_upgrade_button, &"weapon_damage")
-	_connect_upgrade_button(_magnet_upgrade_button, &"magnet_tool_pull")
-	_connect_upgrade_button(_health_upgrade_button, &"player_health")
-	_connect_upgrade_button(_shield_upgrade_button, &"player_shield")
-	_connect_upgrade_button(_ship_integrity_upgrade_button, &"ship_hull")
-	_connect_upgrade_button(_storage_size_upgrade_button, &"ship_storage_size")
-	_connect_upgrade_button(_magnet_integrity_upgrade_button, &"ship_magnet_health")
-	_connect_upgrade_button(_magnet_capacity_upgrade_button, &"ship_magnet_capacity")
+	# Every slot's upgrade button is wired identically; the shared handler
+	# dispatches by slot to the right upgrade mechanism (RunUpgrade vs augment).
+	for upgrade_slot_id in UPGRADEABLE_SLOT_IDS:
+		_connect_slot_upgrade(upgrade_slot_id)
 
 	_populate_storage_slots(_get_storage_entries())
 
@@ -453,16 +483,14 @@ func _configure_dynamic_popup_mouse_blocking() -> void:
 	if _weapon_popup == null:
 		return
 
+	# The popup is a top-level node, so it already wins input over the rest of the
+	# screen by tree order. Panels stay STOP so they block click-through and so the
+	# detail panel's body can receive scroll input.
 	_weapon_popup.mouse_filter = Control.MOUSE_FILTER_STOP
 	var blocker := _weapon_popup.get_node_or_null("MouseBlocker") as Control
 	if blocker != null:
 		blocker.mouse_filter = Control.MOUSE_FILTER_STOP
-
-	for panel_name in [
-		"CurrentItemPanel",
-		"ItemListPanel",
-		"ItemDetailPanel",
-	]:
+	for panel_name in ["CurrentItemPanel", "ItemListPanel", "ItemDetailPanel"]:
 		var panel := _weapon_popup.get_node_or_null(panel_name) as Control
 		if panel != null:
 			panel.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -553,14 +581,31 @@ func _get_upgrade_icon() -> Texture2D:
 	return DEFAULT_UPGRADE_ICON
 
 
-func _connect_upgrade_button(button: Button, upgrade_id: StringName) -> void:
+## Wire one dynamic slot's upgrade button. All slots use this same path; the
+## generic handlers below dispatch to the appropriate upgrade mechanism.
+func _connect_slot_upgrade(slot_id: StringName) -> void:
+	var button := _get_compact_slot_upgrade_button(slot_id)
 	if button == null:
 		return
-	button.mouse_entered.connect(_show_upgrade_cost_popup.bind(button, upgrade_id))
+	button.mouse_entered.connect(_show_slot_cost_popup.bind(button, slot_id))
 	button.mouse_exited.connect(_hide_upgrade_cost_popup)
-	button.focus_entered.connect(_show_upgrade_cost_popup.bind(button, upgrade_id))
+	button.focus_entered.connect(_show_slot_cost_popup.bind(button, slot_id))
 	button.focus_exited.connect(_hide_upgrade_cost_popup)
-	button.pressed.connect(_on_upgrade_pressed.bind(upgrade_id))
+	button.pressed.connect(_on_slot_upgrade_pressed.bind(slot_id))
+
+
+func _on_slot_upgrade_pressed(slot_id: StringName) -> void:
+	if SLOT_UPGRADE_IDS.has(slot_id):
+		_on_upgrade_pressed(SLOT_UPGRADE_IDS[slot_id])
+	else:
+		_on_augment_upgrade_pressed(slot_id)
+
+
+func _show_slot_cost_popup(button: Button, slot_id: StringName) -> void:
+	if SLOT_UPGRADE_IDS.has(slot_id):
+		_show_upgrade_cost_popup(button, SLOT_UPGRADE_IDS[slot_id])
+	else:
+		_show_augment_cost_popup(button, slot_id)
 
 
 func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
@@ -899,12 +944,12 @@ func _close_weapon_popup() -> void:
 
 
 func _position_weapon_popup() -> void:
-	if _weapon_popup == null or _active_dynamic_slot_button == null or _player_page == null:
+	if _weapon_popup == null or _active_dynamic_slot_button == null:
 		return
 
-	var button_rect := _active_dynamic_slot_button.get_global_rect()
-	var page_rect := _player_page.get_global_rect()
-	_weapon_popup.position = button_rect.position - page_rect.position
+	# The popup is a top-level child (so it renders on top of everything and wins
+	# input), so anchor it to the button's screen position directly.
+	_weapon_popup.global_position = _active_dynamic_slot_button.get_global_rect().position
 
 
 func _show_dynamic_item_stats(entry: Resource) -> void:
@@ -914,38 +959,92 @@ func _show_dynamic_item_stats(entry: Resource) -> void:
 
 	_active_detail_entry = entry
 	_weapon_popup_stats_name.text = _catalog_entry_display_name(entry)
-	_weapon_popup_stats_body.text = _format_catalog_item_stats(entry)
-	_update_dynamic_item_status(entry)
+	# EQUIPPED lives in the header (right of the name) so it's always visible and
+	# never pushed off-screen by a long description.
+	if _weapon_popup_stats_equipped:
+		_weapon_popup_stats_equipped.visible = _is_catalog_entry_equipped(entry)
+	# Description (scrolls / expands vertically) and a pinned status row below it.
+	_weapon_popup_stats_desc.text = _format_catalog_item_description(entry)
+	_weapon_popup_stats_status.text = _build_catalog_status_row(entry)
+	_resize_detail_panel_to_fit(entry)
 	_weapon_popup_stats_panel.visible = true
 
 
-func _hide_dynamic_item_stats(entry: Resource) -> void:
-	if _active_detail_entry != entry:
+## Grow the detail panel so the item name (plus the EQUIPPED badge) fits at full
+## width without ellipsis; the description wraps to that width. The popup grows to
+## encompass the wider panel, which stays anchored to the right of the list.
+func _resize_detail_panel_to_fit(entry: Resource) -> void:
+	var panel := _weapon_popup_stats_panel
+	if panel == null:
 		return
-	_active_detail_entry = null
-	_weapon_popup_stats_panel.visible = false
-	_weapon_popup_stats_status.visible = false
+	var equipped := _is_catalog_entry_equipped(entry)
+	var font := Magnetide.label_font
+	var content_width := 0.0
+	if font != null:
+		content_width = font.get_string_size(
+			_catalog_entry_display_name(entry), HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_HEADER_FONT_SIZE
+		).x
+		if equipped:
+			content_width += DETAIL_EQUIPPED_SEPARATION + DETAIL_EQUIPPED_RIGHT_MARGIN + font.get_string_size(
+				"EQUIPPED", HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_EQUIPPED_FONT_SIZE
+			).x
+
+	var detail_width := clampf(
+		content_width + DETAIL_PANEL_H_MARGIN * 2.0, DETAIL_PANEL_MIN_WIDTH, DETAIL_PANEL_MAX_WIDTH
+	)
+	panel.size = Vector2(detail_width, panel.size.y)
+
+	var inner_width := detail_width - DETAIL_PANEL_H_MARGIN * 2.0
+	var header := panel.get_node_or_null("HeaderRow") as Control
+	if header != null:
+		# Pull the header (and thus the right-aligned EQUIPPED badge) in a little so
+		# it isn't flush against the panel edge.
+		var header_width := inner_width - (DETAIL_EQUIPPED_RIGHT_MARGIN if equipped else 0.0)
+		header.size = Vector2(header_width, header.size.y)
+	if _weapon_popup_stats_body_column != null:
+		# Fixed height (never read back its own grown size) so the VBox stays bounded:
+		# the description fills panel_height - status_height and scrolls past that.
+		var body_height := panel.size.y - DETAIL_BODY_TOP_INSET - DETAIL_BODY_BOTTOM_INSET
+		_weapon_popup_stats_body_column.size = Vector2(inner_width, body_height)
+
+	# Grow the popup to include the (possibly wider) detail panel at its position.
+	if _weapon_popup != null:
+		_weapon_popup.size = Vector2(panel.position.x + detail_width, _weapon_popup.size.y)
 
 
 func _show_weapon_stats(entry: Resource) -> void:
 	_show_dynamic_item_stats(entry)
 
 
-func _update_dynamic_item_status(entry: Resource) -> void:
-	if _weapon_popup_stats_status == null:
-		return
-	if _is_catalog_entry_equipped(entry):
-		_weapon_popup_stats_status.text = "EQUIPPED"
-		_weapon_popup_stats_status.add_theme_color_override("font_color", EQUIPPED_ENTRY_TEXT_COLOR)
-		_weapon_popup_stats_status.visible = true
-		return
+## Bottom status row of the detail panel: for a locked item, LOCKED + the RP
+## unlock requirement (colored by affordability); otherwise the LEVEL: x/X line.
+## EQUIPPED is shown separately in the header.
+func _build_catalog_status_row(entry: Resource) -> String:
 	if _catalog_entry_locked(entry):
-		_weapon_popup_stats_status.text = "LOCKED\nUNLOCK: %s" % _catalog_entry_unlock_cost_text(entry)
-		_weapon_popup_stats_status.add_theme_color_override("font_color", DYNAMIC_ENTRY_LEVEL_COLOR)
-		_weapon_popup_stats_status.visible = true
-		return
-	_weapon_popup_stats_status.text = ""
-	_weapon_popup_stats_status.visible = false
+		# "LOCKED" stays neutral; the unlock requirement is colored green/red.
+		return "[color=#%s]LOCKED[/color]\n%s" % [
+			DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
+			_build_unlock_requirement_bbcode(entry),
+		]
+	return "[color=#%s]%s[/color]" % [
+		DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
+		_get_catalog_entry_detail_level_text(entry),
+	]
+
+
+## "UNLOCK: <cost>" with the cost colored green (affordable) or red (not).
+func _build_unlock_requirement_bbcode(entry: Resource) -> String:
+	var research_cost := _catalog_entry_research_cost(entry)
+	if research_cost > 0:
+		var owned := 0
+		var save_data := _save_data as AppSaveData
+		if save_data != null:
+			owned = save_data.research_points
+		return "UNLOCK: " + _colorize_requirement(_format_research_point_cost_text(research_cost), owned >= research_cost)
+	var costs := _catalog_entry_unlock_costs(entry)
+	if not costs.is_empty():
+		return "UNLOCK: " + _format_salvage_costs_text(costs, true)
+	return "UNLOCK: No unlock cost"
 
 
 func _equip_dynamic_item_from_popup(entry: Resource) -> void:
@@ -1207,6 +1306,101 @@ func _on_upgrade_pressed(upgrade_id: StringName) -> void:
 			_show_upgrade_cost_popup(button, upgrade_id)
 
 
+# ---------------------------------------------------------------------------
+# Augment level upgrades (per-item level, spent from the same cost popup UI).
+# ---------------------------------------------------------------------------
+
+func _get_augment_for_slot(slot_id: StringName) -> AugmentData:
+	match slot_id:
+		&"PlayerAugment1":
+			return _get_player_augment(0)
+		&"PlayerAugment2":
+			return _get_player_augment(1)
+		&"ShipAugment":
+			return _get_ship_augment(0)
+		&"MagnetAugment":
+			return _get_magnet_augment(0)
+	return null
+
+
+func _on_augment_upgrade_pressed(slot_id: StringName) -> void:
+	if _weapon_popup != null and _weapon_popup.visible:
+		return
+	if _run_loadout == null:
+		return
+	var augment := _get_augment_for_slot(slot_id)
+	if augment == null:
+		return
+	var cost: Resource = _run_loadout.get_augment_next_level_cost(augment)
+	if cost == null:
+		return
+	if _save_data != null and not bool(_save_data.call("spend_level_cost", cost)):
+		return
+	_run_loadout.increase_augment_level(augment)
+	_save_current_game()
+	_refresh_loadout_ui()
+	if _upgrade_cost_popup.visible:
+		var button := _get_compact_slot_upgrade_button(slot_id)
+		if button:
+			_show_augment_cost_popup(button, slot_id)
+
+
+func _show_augment_cost_popup(button: Button, slot_id: StringName) -> void:
+	if _weapon_popup != null and _weapon_popup.visible:
+		return
+	var augment := _get_augment_for_slot(slot_id)
+	if augment == null:
+		return
+	var title := _upgrade_cost_popup.get_node_or_null("TitleLabel") as Label
+	var credits := _upgrade_cost_popup.get_node_or_null("CreditsLabel") as Label
+	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as RichTextLabel
+	var level := _run_loadout.get_item_level(augment)
+	var max_lvl := int(augment.max_level)
+	if level >= max_lvl:
+		if title: title.text = "MAX LEVEL"
+		if credits: credits.text = ""
+		if secondary: secondary.text = ""
+	else:
+		if title: title.text = "Lv %d -> %d" % [level, level + 1]
+		if credits: credits.text = _build_augment_gain_text(augment)
+		if secondary: secondary.text = _build_augment_requirement_text(augment)
+	var button_rect := button.get_global_rect()
+	var page_rect := _player_page.get_global_rect()
+	_resize_upgrade_cost_popup()
+	_upgrade_cost_popup.position = (button_rect.position - page_rect.position) + UPGRADE_POPUP_OFFSET
+	_upgrade_cost_popup.visible = true
+
+
+func _build_augment_gain_text(augment: AugmentData) -> String:
+	if augment == null:
+		return ""
+	var state := _get_item_state_for_data(augment)
+	if augment.has_method("get_next_level_gain_summary"):
+		return String(augment.call("get_next_level_gain_summary", state))
+	return ""
+
+
+func _build_augment_requirement_text(augment: AugmentData) -> String:
+	if augment == null or _run_loadout == null:
+		return "Requires: No cost"
+	var cost: Resource = _run_loadout.get_augment_next_level_cost(augment)
+	if cost == null:
+		return "Requires: No cost"
+	var lines := PackedStringArray(["Requires"])
+	if _has_property(cost, "costs"):
+		var salvage := _format_salvage_costs_text(cost.get("costs") as Array, true)
+		if not (salvage.is_empty() or salvage == "No cost"):
+			lines.append(salvage)
+	var scrap := _build_scrap_cost_section(cost, true)
+	if not scrap.is_empty():
+		if lines.size() > 1:
+			lines.append("")
+		lines.append(scrap)
+	if lines.size() == 1:
+		lines.append("No cost")
+	return "\n".join(lines)
+
+
 func _populate_weapon_list() -> void:
 	_populate_dynamic_item_list()
 
@@ -1283,21 +1477,23 @@ func _apply_dynamic_list_width(content_width: float) -> void:
 			var entry_control := child as Control
 			entry_control.custom_minimum_size = Vector2(list_width, entry_control.custom_minimum_size.y)
 
-	# Detail panel keeps its size; it just moves to sit after the wider list.
+	# Detail panel is reset to its minimum width here (it grows per hovered item in
+	# _resize_detail_panel_to_fit) and anchored to the right of the widened list.
 	if _weapon_popup_stats_panel != null:
-		var detail_width := _weapon_popup_stats_panel.size.x
 		var detail_left := list_panel.position.x + panel_width + DYNAMIC_DETAIL_GAP
 		_weapon_popup_stats_panel.position = Vector2(detail_left, _weapon_popup_stats_panel.position.y)
-		_weapon_popup.size = Vector2(detail_left + detail_width, _weapon_popup.size.y)
+		_weapon_popup_stats_panel.size = Vector2(DETAIL_PANEL_MIN_WIDTH, _weapon_popup_stats_panel.size.y)
+		_weapon_popup.size = Vector2(detail_left + DETAIL_PANEL_MIN_WIDTH, _weapon_popup.size.y)
 
 
 func _connect_dynamic_entry_detail_hover(control: Control, entry: Resource) -> void:
 	if control == null:
 		return
+	# Only show/update on hover; the detail stays visible (updating as other
+	# entries are hovered) so the player can move onto it to scroll long text.
+	# It's cleared when the popup closes / a different slot is opened.
 	control.mouse_entered.connect(_show_dynamic_item_stats.bind(entry))
-	control.mouse_exited.connect(_hide_dynamic_item_stats.bind(entry))
 	control.focus_entered.connect(_show_dynamic_item_stats.bind(entry))
-	control.focus_exited.connect(_hide_dynamic_item_stats.bind(entry))
 
 
 func _get_active_catalog_entries() -> Array[Resource]:
@@ -1737,7 +1933,9 @@ func _is_catalog_item_state_unlocked(entry: Resource) -> bool:
 	return _run_loadout.is_item_unlocked(item_data, false)
 
 
-func _format_catalog_item_stats(entry: Resource) -> String:
+## Description block (item description + its stats / current-effect summary) for
+## the expanding description label. Level / locked status live in the status row.
+func _format_catalog_item_description(entry: Resource) -> String:
 	var item_data := _catalog_entry_item_data(entry)
 	if item_data == null:
 		return ""
@@ -1757,11 +1955,6 @@ func _format_catalog_item_stats(entry: Resource) -> String:
 			if not summary.is_empty():
 				lines.append(summary)
 
-	# Locked items are always level 0, and the "LOCKED" status already conveys
-	# that, so omit the redundant level line (it can otherwise overlap the status).
-	if not _catalog_entry_locked(entry):
-		lines.append("")
-		lines.append(_get_catalog_entry_detail_level_text(entry))
 	return "\n".join(lines)
 
 
@@ -2288,5 +2481,7 @@ func _apply_fonts(node: Node) -> void:
 	if node is Label or node is Button:
 		var control := node as Control
 		Magnetide.apply_label_font(control)
+	elif node is RichTextLabel:
+		(node as RichTextLabel).add_theme_font_override("normal_font", Magnetide.label_font)
 	for child in node.get_children():
 		_apply_fonts(child)

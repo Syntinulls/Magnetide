@@ -3,6 +3,7 @@
 [ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
 [ext_resource type="Script" uid="uid://badrn1bhv0x1a" path="res://_project/items/augments/adrenaline_behavior.gd" id="2_adrenaline_behavior"]
 [ext_resource type="Texture2D" uid="uid://do3lo104lf13f" path="res://_project/items/augments/sprites/augment_adrenaline.png" id="3_adrenaline_icon"]
+[ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/run/run_upgrade_level_cost.gd" id="4_level_cost"]
 
 [sub_resource type="Resource" id="Resource_adrenaline_behavior"]
 script = ExtResource("2_adrenaline_behavior")
@@ -10,6 +11,26 @@ max_bonus_health_ratio = 0.1
 base_max_damage_bonus_percent = 25.0
 max_damage_bonus_percent_per_level = 5.0
 max_damage_bonus_cap_percent = 50.0
+
+[sub_resource type="Resource" id="Resource_adr_cost_0"]
+script = ExtResource("4_level_cost")
+scrap_cost = 20
+
+[sub_resource type="Resource" id="Resource_adr_cost_1"]
+script = ExtResource("4_level_cost")
+scrap_cost = 35
+
+[sub_resource type="Resource" id="Resource_adr_cost_2"]
+script = ExtResource("4_level_cost")
+scrap_cost = 55
+
+[sub_resource type="Resource" id="Resource_adr_cost_3"]
+script = ExtResource("4_level_cost")
+scrap_cost = 80
+
+[sub_resource type="Resource" id="Resource_adr_cost_4"]
+script = ExtResource("4_level_cost")
+scrap_cost = 110
 
 [resource]
 script = ExtResource("1_augment_data")
@@ -20,4 +41,5 @@ display_name = "Adrenaline"
 description = "The lower your health, the more damage you deal. Reaches its full bonus at 10% health or below."
 icon = ExtResource("3_adrenaline_icon")
 max_level = 5
+level_costs = Array[Resource]([SubResource("Resource_adr_cost_0"), SubResource("Resource_adr_cost_1"), SubResource("Resource_adr_cost_2"), SubResource("Resource_adr_cost_3"), SubResource("Resource_adr_cost_4")])
 tags = Array[StringName]([&"augment", &"player_augment"])

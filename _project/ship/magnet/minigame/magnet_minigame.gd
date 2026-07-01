@@ -85,7 +85,7 @@ const LEVER_RELEASE_SFX := "lever_release.ogg"
 @export var camera_path: NodePath
 @export var warning_icon_path: NodePath
 @export var activation_minigame_path: NodePath
-@export var ship_status_ui_path: NodePath
+@export var magnet_capacity_path: NodePath
 @export var activation_anchor_path: NodePath
 
 var _state: State = State.COOLDOWN
@@ -123,7 +123,7 @@ var _activation_minigame: Node = null  # ActivationMinigame
 var _player: Node2D = null  # Player
 var _ship: Node2D = null
 var _magnet: Magnet = null
-var _ship_status_ui: ShipStatusUI = null
+var _magnet_capacity: MagnetCapacity = null
 var _event_text: EventTextDisplay = null
 
 @onready var _cooldown_timer: Timer = $CooldownTimer
@@ -181,7 +181,7 @@ func _ready() -> void:
 func _setup_ui_references() -> void:
 	_warning_icon = _resolve_node(warning_icon_path) as WarningIcon
 	_activation_minigame = _resolve_node(activation_minigame_path)
-	_ship_status_ui = _resolve_node(ship_status_ui_path) as ShipStatusUI
+	_magnet_capacity = _resolve_node(magnet_capacity_path) as MagnetCapacity
 
 	# Presentation for the warning/departure timers is now unified into the
 	# top-center event text display; this icon widget keeps its phase logic but
@@ -818,8 +818,8 @@ func _on_magnet_item_removed(_item: SalvageItem) -> void:
 
 
 func _update_magnet_capacity_ui() -> void:
-	if _ship_status_ui and _magnet:
-		_ship_status_ui.set_magnet_capacity(_magnet.held_count, _magnet.hold_capacity)
+	if _magnet_capacity and _magnet:
+		_magnet_capacity.set_magnet_capacity(_magnet.held_count, _magnet.hold_capacity)
 
 
 func _end_activation_effects() -> void:

@@ -291,13 +291,6 @@ scroll_active = false
 autowrap_mode = 3
 text = "0 / 5"
 
-[node name="DynamicSlotPopup" parent="PageViewport/PageContainer/PlayerPage" unique_id=737096433 instance=ExtResource("20_dynamic_slot_popup")]
-layout_mode = 0
-offset_left = 0.0
-offset_top = 0.0
-offset_right = 804.0
-offset_bottom = 310.0
-
 [node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
 anchors_preset = 0
 offset_left = 2560.0
@@ -614,3 +607,10 @@ offset_top = 24.0
 offset_right = 622.0
 offset_bottom = 535.0
 color = Color(0.8, 0.86, 0.95, 0.45)
+
+[node name="DynamicSlotPopup" parent="." unique_id=737096433 instance=ExtResource("20_dynamic_slot_popup")]
+layout_mode = 0
+offset_left = 0.0
+offset_top = 0.0
+offset_right = 804.0
+offset_bottom = 310.0

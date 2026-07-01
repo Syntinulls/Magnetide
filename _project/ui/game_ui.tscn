@@ -8,8 +8,6 @@
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/level/threat/threat_ui.tscn" id="5_threat_ui"]
 [ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="7_pqqpn"]
-[ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/ship_status_ui.gd" id="7_ship_status"]
-[ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/ui/sprites/ui_ship_icon_magnet.png" id="12_magnet"]
 [ext_resource type="Texture2D" uid="uid://c2ac5cijo4oxe" path="res://_project/ui/sprites/ui_player_icon_1.png" id="16_si552"]
 [ext_resource type="Texture2D" uid="uid://bsjh8klbucwvl" path="res://_project/ui/sprites/hud_player_hp_back.png" id="17_si552"]
 [ext_resource type="Texture2D" uid="uid://dthmieu1ukrex" path="res://_project/ui/sprites/hud_player_hp_fore.png" id="18_s0nsh"]
@@ -102,42 +100,6 @@ theme_override_font_sizes/font_size = 30
 text = "100%"
 horizontal_alignment = 1
 vertical_alignment = 1
-
-[node name="ShipStatusUI" type="Control" parent="." unique_id=1764653112]
-anchors_preset = 0
-offset_right = 240.0
-offset_bottom = 74.0
-mouse_filter = 2
-script = ExtResource("7_ship_status")
-
-[node name="MagnetColumn" type="VBoxContainer" parent="ShipStatusUI" unique_id=1108105376]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-theme_override_constants/separation = 2
-alignment = 1
-
-[node name="MagnetIcon" type="TextureRect" parent="ShipStatusUI/MagnetColumn" unique_id=1987184274]
-custom_minimum_size = Vector2(34, 34)
-layout_mode = 2
-size_flags_horizontal = 4
-mouse_filter = 2
-texture = ExtResource("12_magnet")
-expand_mode = 1
-stretch_mode = 5
-
-[node name="MagnetLabel" type="Label" parent="ShipStatusUI/MagnetColumn" unique_id=1737146126]
-layout_mode = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 30
-text = "0 / 10"
-horizontal_alignment = 1
 
 [node name="WarningIconAnchor" type="Control" parent="." unique_id=255438115]
 layout_mode = 1

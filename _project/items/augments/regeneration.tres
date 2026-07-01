@@ -3,11 +3,24 @@
 [ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
 [ext_resource type="Script" uid="uid://b0fuecxutjo7s" path="res://_project/items/augments/regeneration_behavior.gd" id="2_regen_behavior"]
 [ext_resource type="Texture2D" uid="uid://dbkmtoiiphlm7" path="res://_project/items/augments/sprites/augment_regeneration.png" id="3_health_icon"]
+[ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/run/run_upgrade_level_cost.gd" id="4_level_cost"]
 
 [sub_resource type="Resource" id="Resource_regeneration_behavior"]
 script = ExtResource("2_regen_behavior")
 out_of_combat_seconds_per_level = -0.75
 health_per_second_per_level = 1.0
+
+[sub_resource type="Resource" id="Resource_regen_cost_0"]
+script = ExtResource("4_level_cost")
+scrap_cost = 20
+
+[sub_resource type="Resource" id="Resource_regen_cost_1"]
+script = ExtResource("4_level_cost")
+scrap_cost = 35
+
+[sub_resource type="Resource" id="Resource_regen_cost_2"]
+script = ExtResource("4_level_cost")
+scrap_cost = 55
 
 [resource]
 script = ExtResource("1_augment_data")
@@ -18,4 +31,5 @@ display_name = "Regeneration"
 description = "Regenerates health after a short time without taking damage."
 icon = ExtResource("3_health_icon")
 max_level = 3
+level_costs = Array[Resource]([SubResource("Resource_regen_cost_0"), SubResource("Resource_regen_cost_1"), SubResource("Resource_regen_cost_2")])
 tags = Array[StringName]([&"augment", &"player_augment"])

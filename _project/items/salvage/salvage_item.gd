@@ -357,6 +357,39 @@ func add_to_stack(amount: int = 1) -> void:
 	set_stack_count(stack_count + maxi(amount, 0))
 
 
+const STACK_MERGE_TWEEN_TIME: float = 0.18
+
+## Animate this (gun-held) item into `target`'s stack, then merge its quantity in
+## and free itself. `on_merged` is called after the merge, before freeing.
+func tween_into_stack(target: SalvageItem, on_merged: Callable = Callable()) -> void:
+	# Detach from the gun; the tween drives movement instead of the follow logic.
+	_is_held_by_gun = false
+	_is_flying_to_gun = false
+	_is_falling = false
+	_is_repelled = false
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
+	set_physics_process(false)
+	linear_velocity = Vector2.ZERO
+	angular_velocity = 0.0
+	if _collision_shape:
+		_collision_shape.set_deferred("disabled", true)
+	z_index = 10
+
+	var dest := target.global_position if is_instance_valid(target) else global_position
+	var merge_count := stack_count
+	var tween := create_tween()
+	tween.tween_property(self, "global_position", dest, STACK_MERGE_TWEEN_TIME) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	tween.tween_callback(func() -> void:
+		if is_instance_valid(target):
+			target.add_to_stack(merge_count)
+		if on_merged.is_valid():
+			on_merged.call()
+		queue_free()
+	)
+
+
 ## 1 item -> main sprite only; 2 -> main + 1 offset; 3+ -> main + 2 offsets.
 func _update_stack_visuals() -> void:
 	var visible_extras := 0
