@@ -12,15 +12,26 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 @export var enemy_profiles: Array[EnemySpawnProfile] = []
 
 @export_group("Threat Scaling")
-## Max batches rolled per spawn pass.
-@export_range(1, 16, 1) var max_batches_per_spawn: int = 1
-## Spawn interval (seconds) indexed by threat level 1-10. The last value is used
-## for any level beyond the array length.
-@export var spawn_interval_by_level: Array[float] = [10.0, 9.0, 8.0, 7.0, 6.0, 5.5, 5.0, 4.5, 4.0, 3.5]
+## Spawn interval (seconds) indexed by threat level 1-10. Lower = enemies spawn
+## more often. The last value is reused for any level beyond the array length.
+@export var spawn_interval_by_level: Array[float] = [12.0, 10.0, 8.0, 6.5, 5.0, 4.0, 3.2, 2.5, 2.0, 1.5]
 ## Max concurrent living enemies indexed by threat level 1-10. Last value reused.
-@export var max_concurrent_by_level: Array[int] = [4, 6, 8, 10, 12, 14, 16, 18, 20, 22]
+@export var max_concurrent_by_level: Array[int] = [4, 6, 9, 12, 16, 20, 25, 31, 37, 44]
+## Batches rolled per spawn pass, indexed by threat level 1-10. More batches =
+## more enemies added each pass. Last value reused.
+@export var batches_per_spawn_by_level: Array[int] = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+## Per-batch max spawn count, indexed by threat level 1-10. Combined (min) with
+## each enemy profile's own max_batch_size. Last value reused.
+@export var batch_size_by_level: Array[int] = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
 ## Spawn interval multiplier while the threat cap is reached (faster = more pressure).
 @export_range(0.05, 1.0, 0.05) var cap_state_interval_multiplier: float = 0.6
+## Enemy max-health multiplier at the top threat level. Level 1 uses the base
+## EnemyData value (1.0x) and it scales linearly to this at level 10. Locked in
+## per enemy at spawn. (A per-enemy scale override can layer on top of this later.)
+@export_range(1.0, 20.0, 0.1) var health_multiplier_at_max_level: float = 4.0
+## Enemy damage multiplier at the top threat level. Level 1 = 1.0x, scaling
+## linearly to this at level 10. Locked in per enemy at spawn.
+@export_range(1.0, 20.0, 0.1) var damage_multiplier_at_max_level: float = 3.0
 
 var _zone_lookup: Dictionary = {}
 var _living_enemies: Array[Enemy] = []
@@ -55,7 +66,8 @@ func _process(delta: float) -> void:
 
 
 func _run_spawn_pass() -> void:
-	var batch_count := _rng.randi_range(1, maxi(max_batches_per_spawn, 1))
+	var max_batches := _int_value_for_level(batches_per_spawn_by_level, _get_current_threat_level(), 1)
+	var batch_count := _rng.randi_range(1, maxi(max_batches, 1))
 	for _i in range(batch_count):
 		_spawn_batch()
 
@@ -77,7 +89,8 @@ func _spawn_batch() -> void:
 	if remaining_capacity == 0:
 		return
 
-	var max_batch_size := maxi(profile.max_batch_size, 0)
+	var level_batch_max := _int_value_for_level(batch_size_by_level, _get_current_threat_level(), 1)
+	var max_batch_size := maxi(mini(profile.max_batch_size, level_batch_max), 0)
 	if max_batch_size <= 0:
 		return
 
@@ -120,6 +133,9 @@ func _spawn_enemy(profile: EnemySpawnProfile, zone: Area2D) -> Enemy:
 		return null
 
 	enemy.data = profile.enemy_data
+	var level := _get_current_threat_level()
+	enemy.health_scale = _threat_stat_scale(health_multiplier_at_max_level, level)
+	enemy.damage_scale = _threat_stat_scale(damage_multiplier_at_max_level, level)
 	enemy.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	enemy.position = to_local(_sample_point_in_zone(zone))
 	add_child(enemy)
@@ -281,6 +297,14 @@ func _current_spawn_interval() -> float:
 	if _is_cap_reached():
 		interval *= cap_state_interval_multiplier
 	return maxf(interval, 0.1)
+
+
+## Linear stat multiplier from 1.0x at threat level 1 to `max_multiplier` at the
+## top threat level (ThreatManager.LEVEL_COUNT). Levels outside 1..top are clamped.
+func _threat_stat_scale(max_multiplier: float, level: int) -> float:
+	var top_threat_level := maxi(ThreatManager.LEVEL_COUNT, 2)
+	var t := clampf(float(level - 1) / float(top_threat_level - 1), 0.0, 1.0)
+	return lerpf(1.0, maxf(max_multiplier, 1.0), t)
 
 
 func _int_value_for_level(values: Array[int], level: int, fallback: int) -> int:

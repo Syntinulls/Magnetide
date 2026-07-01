@@ -12,6 +12,8 @@
 [ext_resource type="PackedScene" uid="uid://b6k44pcvew4j2" path="res://_project/app/screens/station_upgrade_slot.tscn" id="17_upgrade_slot"]
 [ext_resource type="Script" uid="uid://c5xt7c2x8t6xp" path="res://_project/items/slottable_catalog_entry.gd" id="18_slottable_catalog_entry"]
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="19_regeneration"]
+[ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
+[ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
 [ext_resource type="PackedScene" uid="uid://deheo7vkoke2n" path="res://_project/app/screens/station_dynamic_slot_popup.tscn" id="20_dynamic_slot_popup"]
 [ext_resource type="Script" uid="uid://c0f3hfjp6xlvp" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
 [ext_resource type="PackedScene" uid="uid://xhec0qwauhh1" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
@@ -38,6 +40,24 @@ research_unlock_group = &"player_augments"
 research_unlock_order = 10
 research_point_cost = 1
 
+[sub_resource type="Resource" id="Resource_station_augment_adrenaline"]
+script = ExtResource("18_slottable_catalog_entry")
+item_data = ExtResource("24_adrenaline")
+locked = true
+research_unlock_id = &"augment_adrenaline"
+research_unlock_group = &"player_augment_adrenaline"
+research_unlock_order = 20
+research_point_cost = 1
+
+[sub_resource type="Resource" id="Resource_station_augment_increased_recycling"]
+script = ExtResource("18_slottable_catalog_entry")
+item_data = ExtResource("25_increased_recycling")
+locked = true
+research_unlock_id = &"augment_increased_recycling"
+research_unlock_group = &"player_augment_increased_recycling"
+research_unlock_order = 30
+research_point_cost = 1
+
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
 anchors_preset = 15
@@ -47,7 +67,7 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
 weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_shotgun")])
-player_augment_catalog = Array[Resource]([SubResource("Resource_station_augment_regeneration")])
+player_augment_catalog = Array[Resource]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="Backdrop" type="ColorRect" parent="." unique_id=1722779487]
 layout_mode = 1

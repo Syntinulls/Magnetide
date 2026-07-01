@@ -1,0 +1,22 @@
+[gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://drcyc1tres0x2"]
+
+[ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
+[ext_resource type="Script" uid="uid://brcyc1bhv0x2b" path="res://_project/items/augments/increased_recycling_behavior.gd" id="2_increased_recycling_behavior"]
+[ext_resource type="Texture2D" uid="uid://n3p6ul4ffspg" path="res://_project/items/augments/sprites/augment_increasedrecycling.png" id="3_increased_recycling_icon"]
+
+[sub_resource type="Resource" id="Resource_increased_recycling_behavior"]
+script = ExtResource("2_increased_recycling_behavior")
+base_double_scrap_chance_percent = 25.0
+double_scrap_chance_percent_per_level = 5.0
+double_scrap_chance_cap_percent = 50.0
+
+[resource]
+script = ExtResource("1_augment_data")
+behavior = SubResource("Resource_increased_recycling_behavior")
+owner_tags = Array[StringName]([&"player"])
+item_id = &"augment_increased_recycling"
+display_name = "Increased Recycling"
+description = "Recycling a trash item has an extra chance to yield double scrap."
+icon = ExtResource("3_increased_recycling_icon")
+max_level = 5
+tags = Array[StringName]([&"augment", &"player_augment"])

@@ -60,6 +60,14 @@ var _shield_broken: bool = false
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
 
+## Outgoing weapon damage multiplier applied to every projectile the player fires.
+## Driven at runtime by augments (e.g. Adrenaline scales this with missing health).
+var outgoing_damage_multiplier: float = 1.0
+
+## Chance (0-100) that recycling a trash item yields double scrap. Set by the
+## Increased Recycling augment for the duration of a run.
+var recycler_double_scrap_chance_percent: float = 0.0
+
 ## Currently selected equipment
 var current_equipment: EquipmentData:
 	get:
@@ -485,7 +493,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"global_position": muzzle.global_position,
 			&"direction": bullet_direction,
 			&"sprite": weapon_data.bullet_sprite if weapon_data.bullet_sprite else MagnetEffectTexture,
-			&"damage": weapon_data.damage,
+			&"damage": weapon_data.damage * outgoing_damage_multiplier,
 			&"speed": weapon_data.bullet_speed,
 			&"lifetime": 3.0,
 			&"collision_layer": 2,
@@ -737,7 +745,15 @@ func _pop_trash_item(item: SalvageItem, dependents: Array[SalvageItem]) -> void:
 	var tool := current_magnet_tool
 	var scrap_chance := tool.trash_scrap_chance_percent if tool else 0.0
 	if randf() * 100.0 < scrap_chance:
-		_collect_scrap_metal_from(pop_position)
+		_award_recycled_scrap(pop_position)
+
+
+## Grants scrap for a recycled trash item, rolling the Increased Recycling
+## augment's double-scrap chance to spawn a second scrap pickup.
+func _award_recycled_scrap(origin: Vector2) -> void:
+	_collect_scrap_metal_from(origin)
+	if recycler_double_scrap_chance_percent > 0.0 and randf() * 100.0 < recycler_double_scrap_chance_percent:
+		_collect_scrap_metal_from(origin)
 
 
 func _collect_scrap_metal_from(start_position: Vector2) -> void:
@@ -1115,7 +1131,7 @@ func _on_recycler_trash_recycled(scrap_origin: Vector2) -> void:
 	var scrap_chance := _pending_recycler_scrap_chance_percent
 	_pending_recycler_scrap_chance_percent = 0.0
 	if randf() * 100.0 < scrap_chance:
-		_collect_scrap_metal_from(scrap_origin)
+		_award_recycled_scrap(scrap_origin)
 
 
 func _is_point_over_recycler(mouse_pos: Vector2) -> bool:

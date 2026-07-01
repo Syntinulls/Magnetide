@@ -10,4 +10,4 @@ id = &"worm"
 enemy_scene = ExtResource("2_enemy_scene")
 enemy_data = ExtResource("3_enemy_data")
 allowed_spawn_zones = PackedStringArray("SpawnSSE", "SpawnS", "SpawnSSW")
-max_batch_size = 2
+max_batch_size = 6

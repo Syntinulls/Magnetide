@@ -1,0 +1,23 @@
+[gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://dadrn1tres0x1"]
+
+[ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
+[ext_resource type="Script" uid="uid://badrn1bhv0x1a" path="res://_project/items/augments/adrenaline_behavior.gd" id="2_adrenaline_behavior"]
+[ext_resource type="Texture2D" uid="uid://do3lo104lf13f" path="res://_project/items/augments/sprites/augment_adrenaline.png" id="3_adrenaline_icon"]
+
+[sub_resource type="Resource" id="Resource_adrenaline_behavior"]
+script = ExtResource("2_adrenaline_behavior")
+max_bonus_health_ratio = 0.1
+base_max_damage_bonus_percent = 25.0
+max_damage_bonus_percent_per_level = 5.0
+max_damage_bonus_cap_percent = 50.0
+
+[resource]
+script = ExtResource("1_augment_data")
+behavior = SubResource("Resource_adrenaline_behavior")
+owner_tags = Array[StringName]([&"player"])
+item_id = &"augment_adrenaline"
+display_name = "Adrenaline"
+description = "The lower your health, the more damage you deal. Reaches its full bonus at 10% health or below."
+icon = ExtResource("3_adrenaline_icon")
+max_level = 5
+tags = Array[StringName]([&"augment", &"player_augment"])

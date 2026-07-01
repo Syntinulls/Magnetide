@@ -22,6 +22,13 @@ var current_target_root: Node2D = null
 var current_target_point: Node2D = null
 var current_damage_target: Node2D = null
 var current_health: float = 0.0
+var max_health: float = 0.0
+
+## Threat-based stat multipliers assigned by the spawner before this enemy enters
+## the tree. Default 1.0 keeps the base EnemyData values for enemies created
+## outside the threat system (e.g. editor tests or direct instantiation).
+var health_scale: float = 1.0
+var damage_scale: float = 1.0
 
 var _move_behavior: Resource = null
 var _attack_behavior: Resource = null
@@ -46,7 +53,8 @@ func _ready() -> void:
 		push_warning("Enemy has no EnemyData assigned.")
 		return
 
-	current_health = data.max_health
+	max_health = data.max_health * health_scale
+	current_health = max_health
 	_apply_data()
 	_setup_behaviors()
 	_acquire_target(false)
@@ -271,7 +279,7 @@ func face_current_target() -> void:
 func deal_damage_to_current_target(amount: float = -1.0) -> void:
 	if not current_damage_target or not current_damage_target.has_method("take_damage"):
 		return
-	var damage_amount := data.damage if amount < 0.0 else amount
+	var damage_amount := (data.damage * damage_scale) if amount < 0.0 else amount
 	current_damage_target.take_damage(damage_amount, self)
 
 
