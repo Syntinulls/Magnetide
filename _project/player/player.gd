@@ -60,6 +60,14 @@ var _shield_broken: bool = false
 var _fire_cooldown: float = 0.0
 var _selected_equipment_index: int = 0
 
+## Current rounds in the magazine, keyed by equipment slot index. Each weapon keeps
+## its own ammo when the player switches away and back.
+var _weapon_ammo: Dictionary = {}            # int index -> int current ammo
+## Reload progress in seconds, keyed by equipment slot index. An entry exists only
+## while that slot's weapon is mid-reload; it persists across weapon switches so a
+## reload resumes from where it left off rather than restarting.
+var _weapon_reload_elapsed: Dictionary = {}  # int index -> float seconds
+
 ## Outgoing weapon damage multiplier applied to every projectile the player fires.
 ## Driven at runtime by augments (e.g. Adrenaline scales this with missing health).
 var outgoing_damage_multiplier: float = 1.0
@@ -114,9 +122,11 @@ var _repel_hold_elapsed: float = 0.0
 var _is_repel_holding: bool = false
 var _is_recycling_held_trash: bool = false
 var _pending_recycler_scrap_chance_percent: float = 0.0
-var _repel_bar: ColorRect = null
-var _repel_bar_bg: ColorRect = null
-var _repel_bar_container: Control = null
+var _progress_bar: PlayerProgressBar = null
+## Active progress-bar claims keyed by source (StringName). Each entry is a
+## dictionary { progress, color, text, priority }; the highest-priority claim is
+## rendered so concurrent mechanics (repel / depart / reload) never fight.
+var _progress_bar_claims: Dictionary = {}
 var _hover_tooltip: Label = null
 var _active_scrap_labels: Array[Label] = []
 var _cinematic_walk_active: bool = false
@@ -140,8 +150,9 @@ func _ready() -> void:
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
-	_create_repel_bar()
+	_create_progress_bar()
 	_create_hover_tooltip()
+	_init_weapon_ammo()
 	_apply_current_equipment()
 	# Defer hotbar setup to ensure UI is ready
 	call_deferred("_connect_hotbar")
@@ -186,6 +197,8 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 		_shield_recharge_cooldown_remaining = 0.0
 		_shield_recharge_progress = 0.0
 		_shield_broken = false
+
+	_init_weapon_ammo()
 
 	if is_runtime_reconfigure:
 		_apply_current_equipment()
@@ -415,6 +428,9 @@ func _cleanup_current_equipment() -> void:
 	var equip := current_equipment
 	if muzzle_effect:
 		muzzle_effect.stop_effect()
+	# Hide the outgoing weapon's reload bar; its progress is preserved in
+	# _weapon_reload_elapsed and resumes if the weapon is reselected.
+	clear_progress_bar(&"reload")
 	if equip is MagnetToolData:
 		stop_magnetize()
 		_clear_magnet_gun_state()
@@ -449,8 +465,14 @@ func _populate_hotbar() -> void:
 	hotbar.set_all_slots(items)
 
 
-func _process_weapon_input(_delta: float) -> void:
-	if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0:
+func _process_weapon_input(delta: float) -> void:
+	_process_reload(delta)
+	if Input.is_action_just_pressed("reload"):
+		_try_manual_reload()
+	# Cannot shoot while reloading, and never past an empty magazine.
+	if is_reloading():
+		return
+	if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0 and get_current_ammo() > 0:
 		shoot()
 
 
@@ -470,6 +492,7 @@ func shoot() -> void:
 		wpn.fire_behavior.fire(self, wpn)
 	else:
 		fire_weapon_projectile(get_weapon_aim_direction(), wpn)
+	_consume_ammo_for_shot(wpn)
 
 
 func get_weapon_aim_direction() -> Vector2:
@@ -502,6 +525,101 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"pierce": weapon_data.pierce,
 		})
 	return null
+
+
+# =============================================================================
+# Ammo & Reloading
+# =============================================================================
+
+## Seeds every weapon slot with a full magazine and clears any reload progress.
+## Called on spawn and whenever the loadout is (re)applied.
+func _init_weapon_ammo() -> void:
+	_weapon_ammo.clear()
+	_weapon_reload_elapsed.clear()
+	for i in range(equipment.size()):
+		var wpn := equipment[i] as WeaponData
+		if wpn and wpn.magazine_size > 0:
+			_weapon_ammo[i] = wpn.magazine_size
+	clear_progress_bar(&"reload")
+
+
+## True when the current equipment is a weapon that uses a magazine (drives the
+## HUD ammo readout).
+func has_ammo_display() -> bool:
+	var wpn := current_weapon_data
+	return wpn != null and wpn.magazine_size > 0
+
+
+func get_current_magazine_size() -> int:
+	var wpn := current_weapon_data
+	return wpn.magazine_size if wpn else 0
+
+
+func get_current_ammo() -> int:
+	if current_weapon_data == null:
+		return 0
+	return int(_weapon_ammo.get(_selected_equipment_index, get_current_magazine_size()))
+
+
+## A weapon is reloading exactly while it has a reload-progress entry for its slot.
+func is_reloading() -> bool:
+	return current_weapon_data != null and _weapon_reload_elapsed.has(_selected_equipment_index)
+
+
+## Manual reload (R). Ignored if there is no magazine weapon equipped, a reload is
+## already running, or the magazine is already full.
+func _try_manual_reload() -> void:
+	var wpn := current_weapon_data
+	if wpn == null or wpn.magazine_size <= 0:
+		return
+	if is_reloading():
+		return
+	if get_current_ammo() >= wpn.magazine_size:
+		return
+	_weapon_reload_elapsed[_selected_equipment_index] = 0.0
+
+
+## Spends ammo for a shot that just fired. Drains whatever remains even when it is
+## less than the per-shot cost, then kicks off an automatic reload at empty.
+func _consume_ammo_for_shot(wpn: WeaponData) -> void:
+	if wpn == null or wpn.magazine_size <= 0:
+		return
+	var idx := _selected_equipment_index
+	var current := int(_weapon_ammo.get(idx, wpn.magazine_size))
+	current -= mini(current, wpn.ammo_consumption)
+	if current <= 0:
+		current = 0
+		_weapon_reload_elapsed[idx] = 0.0  # auto-reload begins next frame
+	_weapon_ammo[idx] = current
+
+
+## Advances the reload for the CURRENTLY selected weapon only. A weapon switched
+## away from freezes at its stored progress and resumes when reselected.
+func _process_reload(delta: float) -> void:
+	var idx := _selected_equipment_index
+	if not _weapon_reload_elapsed.has(idx):
+		clear_progress_bar(&"reload")
+		return
+	var wpn := current_weapon_data
+	if wpn == null or wpn.magazine_size <= 0:
+		_weapon_reload_elapsed.erase(idx)
+		clear_progress_bar(&"reload")
+		return
+	var reload_time := maxf(wpn.reload_time, 0.0)
+	var elapsed := float(_weapon_reload_elapsed[idx]) + delta
+	if elapsed >= reload_time:
+		_weapon_ammo[idx] = wpn.magazine_size
+		_weapon_reload_elapsed.erase(idx)
+		clear_progress_bar(&"reload")
+		return
+	_weapon_reload_elapsed[idx] = elapsed
+	request_progress_bar(
+		&"reload",
+		clampf(elapsed / maxf(reload_time, 0.01), 0.0, 1.0),
+		RELOAD_BAR_COLOR,
+		RELOAD_BAR_TEXT,
+		PROGRESS_BAR_PRIORITY_RELOAD
+	)
 
 
 func _play_machine_gun_shoot_sfx() -> void:
@@ -1255,12 +1373,23 @@ func _set_hovered_recycler(recycler: Node) -> void:
 
 
 # =============================================================================
-# Repel Progress Bar
+# Player Progress Bar
 # =============================================================================
 
-const REPEL_BAR_WIDTH: float = 40.0
-const REPEL_BAR_HEIGHT: float = 6.0
-const REPEL_BAR_OFFSET_Y: float = -70.0
+## World offset (from the player origin) at which the shared bar is anchored.
+const PROGRESS_BAR_OFFSET_Y: float = -72.0
+## Priorities decide which claim is rendered when several are active at once.
+## Reload locks the player, so it outranks the optional repel/depart holds.
+const PROGRESS_BAR_PRIORITY_DEPART: int = 10
+const PROGRESS_BAR_PRIORITY_REPEL: int = 20
+const PROGRESS_BAR_PRIORITY_RELOAD: int = 30
+const REPEL_BAR_COLOR: Color = Color(1.0, 0.3, 0.2, 0.9)
+const DEPART_BAR_COLOR: Color = Color("6ad1ff")
+const RELOAD_BAR_COLOR: Color = Color("ffffff")
+const RELOAD_BAR_TEXT: String = "Reloading..."
+
+const PlayerProgressBarScene: PackedScene = preload("res://_project/ui/player_progress_bar.tscn")
+
 const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
 const SCRAP_LABEL_OFFSET_Y: float = -86.0
 const SCRAP_LABEL_SPACING: float = 24.0
@@ -1269,38 +1398,64 @@ const SCRAP_LABEL_LIFETIME_SECONDS: float = 0.75
 const SCRAP_LABEL_FADE_SECONDS: float = 0.35
 const SCRAP_LABEL_DRIFT_DISTANCE: float = 18.0
 
-func _create_repel_bar() -> void:
+func _create_progress_bar() -> void:
 	# Defer to ensure GameUI is ready
-	call_deferred("_setup_repel_bar")
+	call_deferred("_setup_progress_bar")
 
 
-func _setup_repel_bar() -> void:
+func _setup_progress_bar() -> void:
 	var game_ui := Magnetide.game_ui
 	if not game_ui:
-		push_warning("Player: GameUI not found, repel bar will not be created")
+		push_warning("Player: GameUI not found, progress bar will not be created")
 		return
-	
-	_repel_bar_container = Control.new()
-	_repel_bar_container.name = "RepelBarContainer"
-	_repel_bar_container.visible = false
-	_repel_bar_container.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	game_ui.add_child(_repel_bar_container)
-	
-	# Background
-	_repel_bar_bg = ColorRect.new()
-	_repel_bar_bg.size = Vector2(REPEL_BAR_WIDTH, REPEL_BAR_HEIGHT)
-	_repel_bar_bg.position = Vector2(-REPEL_BAR_WIDTH * 0.5, 0)
-	_repel_bar_bg.color = Color(0.15, 0.15, 0.15, 0.8)
-	_repel_bar_bg.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_repel_bar_container.add_child(_repel_bar_bg)
-	
-	# Fill bar
-	_repel_bar = ColorRect.new()
-	_repel_bar.size = Vector2(0, REPEL_BAR_HEIGHT)
-	_repel_bar.position = Vector2(-REPEL_BAR_WIDTH * 0.5, 0)
-	_repel_bar.color = Color(1.0, 0.3, 0.2, 0.9)
-	_repel_bar.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_repel_bar_container.add_child(_repel_bar)
+
+	_progress_bar = PlayerProgressBarScene.instantiate() as PlayerProgressBar
+	game_ui.add_child(_progress_bar)
+	_progress_bar.attach_to_target(self, Vector2(0.0, PROGRESS_BAR_OFFSET_Y))
+
+
+## Show/refresh a claim on the shared progress bar. The highest-priority active
+## claim wins, so overlapping mechanics don't clobber each other.
+func request_progress_bar(
+	source: StringName,
+	progress: float,
+	fill_color: Color,
+	text: String = "",
+	priority: int = 0
+) -> void:
+	_progress_bar_claims[source] = {
+		"progress": clampf(progress, 0.0, 1.0),
+		"color": fill_color,
+		"text": text,
+		"priority": priority,
+	}
+	_refresh_progress_bar()
+
+
+## Drop a claim (e.g. the hold was released or completed). Hides the bar when no
+## claims remain.
+func clear_progress_bar(source: StringName) -> void:
+	if _progress_bar_claims.erase(source):
+		_refresh_progress_bar()
+
+
+func _refresh_progress_bar() -> void:
+	if _progress_bar == null:
+		return
+	var best: Dictionary = {}
+	var best_priority: int = -0x7FFFFFFF
+	for source in _progress_bar_claims:
+		var claim: Dictionary = _progress_bar_claims[source]
+		if int(claim["priority"]) >= best_priority:
+			best_priority = int(claim["priority"])
+			best = claim
+	if best.is_empty():
+		_progress_bar.hide_bar()
+		return
+	_progress_bar.set_fill_color(best["color"])
+	_progress_bar.set_text(best["text"])
+	_progress_bar.set_progress(best["progress"])
+	_progress_bar.show_bar()
 
 
 func _create_hover_tooltip() -> void:
@@ -1412,18 +1567,13 @@ func _clear_held_item_prompts() -> void:
 
 
 func _update_repel_bar() -> void:
-	if not _repel_bar_container:
-		return
-	_repel_bar_container.visible = _is_repel_holding
 	if _is_repel_holding:
-		# Position bar above player's head in screen space
-		var screen_pos := get_viewport().get_canvas_transform() * (global_position + Vector2(0, REPEL_BAR_OFFSET_Y))
-		_repel_bar_container.position = screen_pos
-		if _repel_bar:
-			var tool := current_magnet_tool
-			var repel_time := tool.repel_hold_time if tool else 0.8
-			var fill := clampf(_repel_hold_elapsed / repel_time, 0.0, 1.0)
-			_repel_bar.size.x = REPEL_BAR_WIDTH * fill
+		var tool := current_magnet_tool
+		var repel_time := tool.repel_hold_time if tool else 0.8
+		var fill := clampf(_repel_hold_elapsed / repel_time, 0.0, 1.0)
+		request_progress_bar(&"repel", fill, REPEL_BAR_COLOR, "Repel", PROGRESS_BAR_PRIORITY_REPEL)
+	else:
+		clear_progress_bar(&"repel")
 
 
 ## Called externally when looting ends to clean up hover state (but keep held item)
@@ -1522,8 +1672,10 @@ func stop_for_run_end() -> void:
 	stop_magnetize()
 	_cleanup_current_equipment()
 	_clear_magnet_gun_state()
-	if _repel_bar_container:
-		_repel_bar_container.visible = false
+	_weapon_reload_elapsed.clear()
+	_progress_bar_claims.clear()
+	if _progress_bar:
+		_progress_bar.hide_bar()
 	set_process(false)
 	set_physics_process(false)
 

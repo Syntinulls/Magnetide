@@ -20,6 +20,7 @@
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/ui/sprites/ui_icon_shield.png" id="25_shield_icon"]
 [ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/ui/event_text_display.tscn" id="26_event_text"]
 [ext_resource type="Script" uid="uid://cver2thb56t61" path="res://_project/ui/control_prompt_stack.gd" id="27_prompts"]
+[ext_resource type="Texture2D" uid="uid://dijcob8i8yu8u" path="res://_project/ui/sprites/icon_bullet.png" id="28_bullet"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -179,6 +180,7 @@ stretch_mode = 2
 [node name="PlayerBars" type="VBoxContainer" parent="PlayerStatus/HBoxContainer" unique_id=467069703]
 layout_mode = 2
 size_flags_horizontal = 3
+theme_override_constants/separation = 0
 
 [node name="HealthShieldRow" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=1887190161]
 layout_mode = 2
@@ -247,6 +249,23 @@ custom_minimum_size = Vector2(288, 72)
 layout_mode = 2
 mouse_filter = 2
 script = ExtResource("20_hotbar")
+
+[node name="HotbarItemName" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=846761520]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
 
 [node name="HotbarMask" type="SubViewportContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=827461524]
 material = SubResource("ShaderMaterial_hotbar_gradient")
@@ -615,27 +634,50 @@ theme_override_font_sizes/font_size = 24
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="HotbarItemName" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=846761520]
-custom_minimum_size = Vector2(288, 28)
+[node name="HBoxContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=1750649897]
 layout_mode = 2
 size_flags_horizontal = 0
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 4
-theme_override_font_sizes/font_size = 22
-horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_constants/separation = 4
 
-[node name="ScrapCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=846761521]
+[node name="VBoxContainer" type="VBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer" unique_id=413187490]
+layout_mode = 2
+
+[node name="MagazineCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer" unique_id=846761530]
 layout_mode = 2
 theme_override_constants/margin_left = -105
 theme_override_constants/margin_top = 0
 
-[node name="ScrapCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin" unique_id=364917313]
+[node name="MagazineCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin" unique_id=364917320]
 layout_mode = 2
 theme_override_constants/separation = 6
 
-[node name="ScrapIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter" unique_id=136974712]
+[node name="BulletIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter" unique_id=136974720]
+custom_minimum_size = Vector2(40, 32)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("28_bullet")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MagazineLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter" unique_id=1395657360]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "0 / 0"
+vertical_alignment = 1
+
+[node name="ScrapCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer" unique_id=846761521]
+layout_mode = 2
+theme_override_constants/margin_left = -105
+theme_override_constants/margin_top = 0
+
+[node name="ScrapCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin" unique_id=364917313]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ScrapIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter" unique_id=136974712]
 custom_minimum_size = Vector2(40, 32)
 layout_mode = 2
 mouse_filter = 2
@@ -643,7 +685,7 @@ texture = ExtResource("24_pqqpn")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="ScrapCountLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter" unique_id=1395657352]
+[node name="ScrapCountLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter" unique_id=1395657352]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)

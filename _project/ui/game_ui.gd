@@ -1,5 +1,7 @@
 extends Control
 
+const MAGAZINE_READY_COLOR := Color("dbdbdb")
+const MAGAZINE_RELOADING_COLOR := Color("ffd24a")
 const HEALTHY_INTEGRITY_COLOR := Color("9bff63")
 const DAMAGED_INTEGRITY_COLOR := Color("ff7c7c")
 const SHIELD_READY_COLOR := Color("eaf6ff")
@@ -15,7 +17,7 @@ const SHIELD_BROKEN_LOOP_PAUSE_SECONDS := 0.35
 const SHIELD_BREAK_SHAKE_DEGREES := 8.0
 const PLAYER_AUGMENT_ICON_SIZE := Vector2(44.0, 44.0)
 const PLAYER_AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
-const PLAYER_AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/ui/sprites/ui_border_1.png")
+const PLAYER_AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/ui/sprites/ui_border_2.png")
 const PLAYER_AUGMENT_BG_COLOR := Color("5f6969")
 ## Border thickness in the ui_border_1 nine-patch; icons inset by this much.
 const PLAYER_AUGMENT_BORDER_INSET := 6
@@ -31,10 +33,12 @@ const PLAYER_AUGMENT_BG_INSET := 4
 @onready var _player_augment_tooltip: ColorRect = $PlayerAugmentTooltip
 @onready var _player_augment_tooltip_name: Label = $PlayerAugmentTooltip/NameLabel
 @onready var _player_augment_tooltip_body: Label = $PlayerAugmentTooltip/BodyLabel
-@onready var _hotbar_item_name_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HotbarItemName
-@onready var _scrap_counter: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter
-@onready var _scrap_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapIcon
-@onready var _scrap_count_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/ScrapCounterMargin/ScrapCounter/ScrapCountLabel
+@onready var _hotbar_item_name_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarItemName
+@onready var _scrap_counter: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter
+@onready var _scrap_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter/ScrapIcon
+@onready var _scrap_count_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter/ScrapCountLabel
+@onready var _magazine_row: MarginContainer = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin
+@onready var _magazine_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter/MagazineLabel
 @onready var _ship_hull_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPHull
 @onready var _ship_magnet_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPMagnet
 @onready var _ship_hull_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHullIntegrityLabel
@@ -58,6 +62,8 @@ var _displayed_hotbar_item_name: String = ""
 func _ready() -> void:
 	if _scrap_count_label:
 		Magnetide.apply_digital_font(_scrap_count_label)
+	if _magazine_label:
+		Magnetide.apply_digital_font(_magazine_label)
 	if _player_shield_label:
 		Magnetide.apply_digital_font(_player_shield_label)
 	if _hotbar_item_name_label:
@@ -83,6 +89,7 @@ func _process(_delta: float) -> void:
 	_bind_to_active_player()
 	_bind_to_threat()
 	_update_scrap_counter()
+	_update_magazine_counter()
 	_update_health_ui()
 	_update_hotbar_item_name()
 	_refresh_player_augment_icons()
@@ -224,6 +231,25 @@ func _update_scrap_counter() -> void:
 		set_run_scrap_metal_count(run.scrap_metal_collected)
 		return
 	set_run_scrap_metal_count(0)
+
+
+## Magazine readout ("[icon] current / max"), shown above the scrap counter only
+## while a magazine weapon is equipped. Amber while a reload is in progress.
+func _update_magazine_counter() -> void:
+	if _magazine_row == null:
+		return
+	var player := Magnetide.player as Player
+	var show_row: bool = player != null and player.has_method("has_ammo_display") and player.has_ammo_display()
+	_magazine_row.visible = show_row
+	if not show_row:
+		return
+	if _magazine_label:
+		_magazine_label.text = "%d / %d" % [player.get_current_ammo(), player.get_current_magazine_size()]
+		var reloading: bool = player.has_method("is_reloading") and player.is_reloading()
+		_magazine_label.add_theme_color_override(
+			"font_color",
+			MAGAZINE_RELOADING_COLOR if reloading else MAGAZINE_READY_COLOR
+		)
 
 
 func _bind_to_active_run_controller() -> void:
