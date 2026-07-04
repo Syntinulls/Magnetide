@@ -3,23 +3,15 @@ class_name Magnet
 
 signal item_attached(item: SalvageItem)
 signal item_removed(item: SalvageItem)
-signal capacity_reached()
-signal all_items_released()
 
-# ============================================================================
-# MAGNET PROPERTIES
-# ============================================================================
+# Magnet properties
 
 ## Time between pulling each item from the pile (seconds).
 @export var pull_frequency: float = 2.5
-## Number of items pulled simultaneously per interval. Always 1 for now.
-@export var pull_batch_size: int = 1
 ## Max number of items the magnet can hold at once. Stops pulling once reached.
 @export var hold_capacity: int = 10
 
-# ============================================================================
-# PULL SPEED PARAMETERS
-# ============================================================================
+# Pull speed parameters
 
 ## Base speed items are pulled toward the magnet.
 @export var pull_base_speed: float = 200.0
@@ -28,9 +20,7 @@ signal all_items_released()
 ## Time for pull speed to ramp from base to max.
 @export var pull_ramp_time: float = 0.6
 
-# ============================================================================
-# SURFACE RESISTANCE PARAMETERS (Phase 2)
-# ============================================================================
+# Surface resistance parameters (Phase 2)
 
 ## Near-zero crawl speed when item is at surface.
 @export var surface_slow_speed: float = 15.0
@@ -59,7 +49,6 @@ var _attached_items: Array[SalvageItem] = []
 var _counted_items: Array[SalvageItem] = []
 var _held_count: int = 0
 var _pull_timer: float = 0.0
-var _items_in_field: Array[SalvageItem] = []  # All unfrozen items currently in pull area
 var _pile_data: SalvagePileData = null
 var _current_threat_level: int = 0
 var _pile_node: SalvagePile = null
@@ -74,7 +63,8 @@ var _right_wall: StaticBody2D = null
 var _is_pull_suspended_by_capacity: bool = false
 var _is_spawn_paused_for_departure: bool = false
 var current_health: float = 0.0
-const SPAWN_WIDTH_RATIO: float = 0.50  # Must match spawn ratio in _spawn_item_from_pile
+## Random spawn x range as a fraction of the pile width.
+const SPAWN_WIDTH_RATIO: float = 0.50
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
 const EDGE_WALL_FRICTION: float = 0.0
 const EDGE_WALL_BOUNCE: float = 0.0
@@ -118,7 +108,6 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 		return
 
 	pull_frequency = loadout.magnet_pull_frequency
-	pull_batch_size = loadout.magnet_pull_batch_size
 	hold_capacity = loadout.magnet_hold_capacity
 	pull_base_speed = loadout.magnet_pull_base_speed
 	pull_max_speed = loadout.magnet_pull_max_speed
@@ -144,7 +133,6 @@ func activate(pile_data: SalvagePileData, pile: SalvagePile, threat_level: int =
 	_held_count = 0
 	_attached_items.clear()
 	_counted_items.clear()
-	_items_in_field.clear()
 	_is_pull_suspended_by_capacity = false
 	_is_spawn_paused_for_departure = false
 
@@ -181,10 +169,8 @@ func _release_all_items() -> void:
 			child.release_from_magnet()
 	
 	_held_count = 0
-	_items_in_field.clear()
 	_is_pull_suspended_by_capacity = false
 	_update_pull_state()
-	all_items_released.emit()
 
 
 func _process(delta: float) -> void:
@@ -255,9 +241,7 @@ func _spawn_item_from_pile() -> bool:
 		pile_top.y -= tex_size.y
 		pile_half_width = tex_size.x * 0.5
 	
-	# Random x within 50% of pile width
-	var spawn_width_ratio := 0.50
-	var x_range := pile_half_width * spawn_width_ratio
+	var x_range := pile_half_width * SPAWN_WIDTH_RATIO
 	var x_offset := randf_range(-x_range, x_range)
 
 	# Spawn at bottom of screen (items pulled up from below)
@@ -282,10 +266,6 @@ func remove_item(item: SalvageItem) -> void:
 		if _remove_counted_item(item):
 			_update_pull_state()
 			item_removed.emit(item)
-
-
-func get_attached_items() -> Array[SalvageItem]:
-	return _attached_items
 
 
 func set_spawn_paused_for_departure(paused: bool) -> void:
@@ -363,11 +343,6 @@ func increment_pity_counter() -> void:
 	_salvageable_pull_count += 1
 
 
-## Get the current pity counter value.
-func get_pity_counter() -> int:
-	return _salvageable_pull_count
-
-
 ## Current threat level (zero-based stage index) read live from the ThreatManager, so loot scales
 ## as threat rises during a looting session. Falls back to the activate-time value.
 func _get_current_threat_level() -> int:
@@ -416,7 +391,6 @@ func _update_pull_state() -> void:
 
 	if _is_pull_suspended_by_capacity and not was_suspended:
 		_release_uncounted_tracked_items()
-		capacity_reached.emit()
 
 
 func _update_running_sfx(should_play: bool) -> void:
@@ -588,51 +562,8 @@ func _create_edge_wall_material() -> PhysicsMaterial:
 	return phys_material
 
 
-# ============================================================================
-# NEW AREA-BASED PULL SYSTEM (Stubs)
-# ============================================================================
-
-## Called when an item enters the magnetic field area
-func _on_item_entered_field(item: SalvageItem) -> void:
-	if item not in _items_in_field:
-		_items_in_field.append(item)
-		# Set surface line reference on item for Phase 2 detection
-		if _pile_node:
-			item.set_surface_line(_pile_node.get_surface_line())
-
-
-## Called when an item exits the magnetic field area
-func _on_item_exited_field(item: SalvageItem) -> void:
-	_items_in_field.erase(item)
-
-
-## Apply pull force to all unfrozen items in the field (called each frame)
-func _apply_pull_to_field_items(delta: float) -> void:
-	# Clean up invalid items
-	_items_in_field = _items_in_field.filter(func(item): return is_instance_valid(item))
-	
-	for item in _items_in_field:
-		# Skip frozen items - they don't receive pull force
-		if item._is_frozen:
-			continue
-		
-		# Check for phase transitions
-		item._check_phase_transition()
-		
-		# Get pull speed based on current phase
-		var speed := item._process_pull_phase(delta)
-		
-		# Apply pull velocity in the item's pull direction
-		item.linear_velocity = item._pull_direction * speed
-		
-		# Apply soft-body collision forces
-		item._apply_soft_collision_forces(delta)
-		
-		# Check if item should freeze
-		item._check_freeze_condition(delta)
-
-
-## Get the surface line from the current pile (for Phase 2 detection)
+## Surface line from the current pile, used by pulled items for Phase 2
+## (surface) detection. Called dynamically from SalvageItem._apply_pull_config_from_source.
 func get_surface_line() -> Line2D:
 	if _pile_node and _pile_node.has_method("get_surface_line"):
 		return _pile_node.get_surface_line()

@@ -1,0 +1,285 @@
+extends Control
+class_name RunSummaryPopup
+
+signal station_requested
+
+const ENTRY_ICON_SIZE := Vector2(60.0, 60.0)
+const SOURCE_ICON_SIZE := Vector2(36.0, 36.0)
+const ENTRY_NAME_WIDTH := 300.0
+const ENTRY_COUNT_WIDTH := 84.0
+const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
+const LOST_STAT_COLOR: Color = Color(0.52, 0.52, 0.58, 1.0)
+const LOST_STRIKE_HEIGHT: float = 3.0
+const SALVAGED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_salvaged.png")
+const COLLECTED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_collected.png")
+
+var _run_result: RunResult = null
+var _result_entries: Array[Dictionary] = []
+var _run_stats: Dictionary = {}
+var _hover_tooltip: Label = null
+
+@onready var _title_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/TitleLabel
+@onready var _end_reason_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/EndReasonLabel
+@onready var _time_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/TimeRow/Value
+@onready var _kills_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/KillsRow/Value
+@onready var _collected_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow/Label
+@onready var _collected_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/CollectedRow/Value
+@onready var _scrap_collected_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/ScrapCollectedRow/Label
+@onready var _scrap_collected_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/ScrapCollectedRow/Value
+@onready var _salvaged_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow/Label
+@onready var _salvaged_value: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/StatsColumn/StatsPanel/MarginContainer/StatsVBox/SalvagedRow/Value
+@onready var _empty_label: Label = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/EmptyLabel
+@onready var _scroll_container: ScrollContainer = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/ScrollContainer
+@onready var _list_container: VBoxContainer = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/BodyColumns/ItemsColumn/ScrollContainer/ListContainer
+@onready var _menu_button: Button = $CenterContainer/PanelContainer/MarginContainer/VBoxContainer/MenuButton
+
+
+func _ready() -> void:
+	_setup_hover_tooltip()
+	_menu_button.pressed.connect(_on_menu_pressed)
+	_apply_data()
+
+
+func setup(run_result: RunResult, result_entries: Array[Dictionary], run_stats: Dictionary = {}) -> void:
+	_run_result = run_result
+	_result_entries = result_entries.duplicate(true)
+	_run_stats = run_stats.duplicate(true)
+	_apply_data()
+
+
+func _process(_delta: float) -> void:
+	if _hover_tooltip != null and _hover_tooltip.visible:
+		_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
+
+
+func _apply_data() -> void:
+	if _time_value == null:
+		return
+
+	_apply_header()
+	_apply_stats()
+	_rebuild_list()
+
+
+func _apply_header() -> void:
+	if _title_label:
+		_title_label.text = "Run Failed" if _is_loss_run() else "Run Summary"
+	if _end_reason_label:
+		_end_reason_label.text = _get_end_summary_text()
+		_end_reason_label.add_theme_color_override(
+			"font_color",
+			Color(0.95, 0.45, 0.45, 1.0) if _is_loss_run() else Color(0.78, 0.86, 0.94, 1.0)
+		)
+	if _empty_label:
+		_empty_label.text = "No salvage recovered" if _is_loss_run() else "No materials recovered"
+
+
+func _apply_stats() -> void:
+	if _time_value == null:
+		return
+
+	var collected_items := int(_run_stats.get("collected_items", 0))
+	var scrap_collected := int(_run_stats.get("scrap_collected", 0))
+	var items_salvaged := int(_run_stats.get("items_salvaged", 0))
+	var is_loss := _is_loss_run()
+
+	_time_value.text = Utils.format_elapsed_time(float(_run_stats.get("time_elapsed", 0.0)))
+	_kills_value.text = str(int(_run_stats.get("enemies_killed", 0)))
+	_collected_value.text = str(collected_items)
+	_scrap_collected_value.text = str(scrap_collected)
+	_salvaged_value.text = str(items_salvaged)
+	_set_lost_stat_row_style(_collected_label, _collected_value, is_loss and collected_items > 0)
+	_set_lost_stat_row_style(_scrap_collected_label, _scrap_collected_value, is_loss and scrap_collected > 0)
+	_set_lost_stat_row_style(_salvaged_label, _salvaged_value, is_loss and items_salvaged > 0)
+
+
+func _rebuild_list() -> void:
+	if _list_container == null:
+		return
+
+	_hide_hover_tooltip()
+	for child in _list_container.get_children():
+		child.queue_free()
+
+	var is_empty := _result_entries.is_empty()
+	_empty_label.visible = is_empty
+	if _scroll_container:
+		_scroll_container.visible = not is_empty
+
+	for entry in _result_entries:
+		_list_container.add_child(_build_entry_row(entry))
+
+
+func _build_entry_row(entry: Dictionary) -> HBoxContainer:
+	var row := HBoxContainer.new()
+	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+	row.alignment = BoxContainer.ALIGNMENT_BEGIN
+	row.add_theme_constant_override("separation", 24)
+
+	var item_data := entry.get("item_data", null) as SalvageItemData
+
+	var was_collected := bool(entry.get("from_collection", false))
+	var was_salvaged := bool(entry.get("from_salvage", false))
+	row.add_child(_build_source_icon(was_collected, COLLECTED_ICON_TEXTURE, "Collected"))
+	row.add_child(_build_source_icon(was_salvaged, SALVAGED_ICON_TEXTURE, "Salvaged"))
+
+	var icon_holder := CenterContainer.new()
+	icon_holder.custom_minimum_size = ENTRY_ICON_SIZE
+	var icon_rect := TextureRect.new()
+	icon_rect.custom_minimum_size = ENTRY_ICON_SIZE
+	icon_rect.size = ENTRY_ICON_SIZE
+	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon_rect.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon_rect.texture = item_data.sprite if item_data != null else null
+	if icon_rect.texture == null:
+		icon_rect.texture = Utils.create_placeholder_texture(
+			item_data.get_rarity_color() if item_data else Color.WHITE, ENTRY_ICON_SIZE)
+	icon_holder.add_child(icon_rect)
+	row.add_child(icon_holder)
+
+	var name_label := Label.new()
+	name_label.custom_minimum_size = Vector2(ENTRY_NAME_WIDTH, 0.0)
+	name_label.text = str(entry.get("name", "Unknown Material"))
+	Magnetide.apply_label_font(name_label)
+	name_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+
+	if item_data != null:
+		name_label.add_theme_color_override("font_color", item_data.get_rarity_color())
+	row.add_child(name_label)
+
+	var count_label := Label.new()
+	count_label.custom_minimum_size = Vector2(ENTRY_COUNT_WIDTH, 0.0)
+	count_label.text = "x%d" % int(entry.get("count", 0))
+	Magnetide.apply_label_font(count_label)
+	count_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_LEFT
+	row.add_child(count_label)
+
+	return row
+
+
+func _is_loss_run() -> bool:
+	return _run_result != null and _run_result.end_reason != RunResult.EndReason.VOLUNTARY_DEPARTURE
+
+
+func _get_end_summary_text() -> String:
+	if _run_result == null:
+		return "Ended by ship departure."
+	return _run_result.get_end_reason_text()
+
+
+func _set_lost_stat_row_style(label: Label, value: Label, is_lost: bool) -> void:
+	if label == null or value == null:
+		return
+
+	_remove_loss_strike(label)
+	_remove_loss_strike(value)
+
+	var row := label.get_parent() as Control
+	if row == null:
+		return
+
+	var strike := row.get_node_or_null("LossStrike") as Line2D
+
+	if not is_lost:
+		label.remove_theme_color_override("font_color")
+		value.remove_theme_color_override("font_color")
+		if strike != null:
+			strike.queue_free()
+		return
+
+	label.add_theme_color_override("font_color", LOST_STAT_COLOR)
+	value.add_theme_color_override("font_color", LOST_STAT_COLOR)
+	if strike == null:
+		strike = Line2D.new()
+		strike.name = "LossStrike"
+		strike.default_color = LOST_STAT_COLOR
+		strike.width = LOST_STRIKE_HEIGHT
+		strike.antialiased = true
+		strike.z_index = 10
+		row.add_child(strike)
+	call_deferred("_refresh_loss_row_strike", label, value, row, strike)
+
+
+func _remove_loss_strike(node: Node) -> void:
+	var strike := node.get_node_or_null("LossStrike")
+	if strike != null:
+		strike.queue_free()
+
+
+func _refresh_loss_row_strike(label: Label, value: Label, row: Control, strike: Line2D) -> void:
+	if label == null or value == null or row == null or strike == null:
+		return
+	if not is_instance_valid(label) or not is_instance_valid(value) \
+		or not is_instance_valid(row) or not is_instance_valid(strike):
+		return
+
+	var value_width := maxf(value.size.x, value.get_combined_minimum_size().x)
+	var strike_left := label.position.x - 4.0
+	var strike_right := value.position.x + value_width + 4.0
+	var row_height := maxf(
+		row.size.y,
+		maxf(label.get_combined_minimum_size().y, value.get_combined_minimum_size().y)
+	)
+	var strike_y := row_height * 0.55
+	strike.default_color = LOST_STAT_COLOR
+	strike.width = LOST_STRIKE_HEIGHT
+	strike.points = PackedVector2Array([
+		Vector2(strike_left, strike_y),
+		Vector2(strike_right, strike_y),
+	])
+
+
+func _build_source_icon(is_active: bool, tex: Texture2D, tooltip: String) -> Control:
+	var holder := CenterContainer.new()
+	holder.custom_minimum_size = SOURCE_ICON_SIZE
+	holder.mouse_filter = Control.MOUSE_FILTER_STOP if is_active else Control.MOUSE_FILTER_IGNORE
+	holder.mouse_default_cursor_shape = Control.CURSOR_POINTING_HAND if is_active else Control.CURSOR_ARROW
+	if is_active:
+		holder.mouse_entered.connect(_show_hover_tooltip.bind(tooltip))
+		holder.mouse_exited.connect(_hide_hover_tooltip)
+
+	var icon := TextureRect.new()
+	icon.custom_minimum_size = SOURCE_ICON_SIZE
+	icon.size = SOURCE_ICON_SIZE
+	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	icon.texture_filter = CanvasItem.TEXTURE_FILTER_NEAREST
+	icon.texture = tex
+	icon.visible = is_active
+	holder.add_child(icon)
+	return holder
+
+
+func _setup_hover_tooltip() -> void:
+	if _hover_tooltip != null:
+		return
+
+	_hover_tooltip = Label.new()
+	_hover_tooltip.name = "RunSummaryTooltip"
+	_hover_tooltip.visible = false
+	_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	Magnetide.apply_label_font(_hover_tooltip)
+	_hover_tooltip.add_theme_font_size_override("font_size", 24)
+	_hover_tooltip.add_theme_color_override("font_color", Color.WHITE)
+	_hover_tooltip.add_theme_color_override("font_outline_color", Color.BLACK)
+	_hover_tooltip.add_theme_constant_override("outline_size", 4)
+	add_child(_hover_tooltip)
+
+
+func _show_hover_tooltip(text: String) -> void:
+	if _hover_tooltip == null:
+		return
+
+	_hover_tooltip.text = text
+	_hover_tooltip.visible = true
+	_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
+
+
+func _hide_hover_tooltip() -> void:
+	if _hover_tooltip != null:
+		_hover_tooltip.visible = false
+
+
+func _on_menu_pressed() -> void:
+	station_requested.emit()

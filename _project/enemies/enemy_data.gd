@@ -64,9 +64,6 @@ var target_point_selection_mode: TargetSelectionMode = TargetSelectionMode.RANDO
 @export var move_behavior: Resource
 @export var attack_behavior: Resource
 
-@export_group("Rewards")
-@export var loot_table: LootTable
-
 @export_group("Hit Reaction")
 ## How long the sprite shakes when the enemy is hit.
 @export var hit_shake_duration: float = 0.2

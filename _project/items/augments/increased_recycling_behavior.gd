@@ -34,19 +34,13 @@ func get_double_scrap_chance_percent(level: int) -> float:
 
 
 func get_current_effect_summary(level: int) -> String:
-	return "%s%% chance for double scrap" % _format_number(get_double_scrap_chance_percent(level))
+	return "%s%% chance for double scrap" % Utils.format_number(get_double_scrap_chance_percent(level))
 
 
 func get_next_level_gain_summary(level: int, max_level: int) -> String:
 	if level >= max_level:
 		return ""
 	return "%s%% -> %s%% double scrap" % [
-		_format_number(get_double_scrap_chance_percent(level)),
-		_format_number(get_double_scrap_chance_percent(level + 1)),
+		Utils.format_number(get_double_scrap_chance_percent(level)),
+		Utils.format_number(get_double_scrap_chance_percent(level + 1)),
 	]
-
-
-func _format_number(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return str(int(roundf(value)))
-	return "%.1f" % value

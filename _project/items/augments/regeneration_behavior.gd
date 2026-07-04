@@ -9,7 +9,6 @@ class_name RegenerationBehavior
 var _player: Player = null
 var _level: int = 0
 var _seconds_since_damage: float = 0.0
-var _process_node: Node = null
 
 
 func initialize_for_run(context: Dictionary, level: int) -> void:
@@ -20,7 +19,6 @@ func initialize_for_run(context: Dictionary, level: int) -> void:
 		return
 	if _player.has_signal("damaged") and not _player.damaged.is_connected(_on_player_damaged):
 		_player.damaged.connect(_on_player_damaged)
-	_process_node = _player
 	_seconds_since_damage = 0.0
 	_player.set_process(true)
 
@@ -30,7 +28,6 @@ func cleanup_after_run() -> void:
 		if _player.has_signal("damaged") and _player.damaged.is_connected(_on_player_damaged):
 			_player.damaged.disconnect(_on_player_damaged)
 	_player = null
-	_process_node = null
 	_seconds_since_damage = 0.0
 
 
@@ -47,8 +44,8 @@ func tick(delta: float) -> void:
 
 func get_current_effect_summary(level: int) -> String:
 	return "Regen %s HP/s after %ss" % [
-		_format_number(get_health_per_second(level)),
-		_format_number(get_out_of_combat_seconds(level)),
+		Utils.format_number(get_health_per_second(level)),
+		Utils.format_number(get_out_of_combat_seconds(level)),
 	]
 
 
@@ -72,9 +69,3 @@ func get_health_per_second(level: int) -> float:
 
 func _on_player_damaged(_amount: float, _source: Node) -> void:
 	_seconds_since_damage = 0.0
-
-
-func _format_number(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return str(int(roundf(value)))
-	return "%.1f" % value

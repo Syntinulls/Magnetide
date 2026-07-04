@@ -23,6 +23,7 @@ var _icon: Sprite2D = null
 
 func _ready() -> void:
 	z_index = world_z_index
+	visible = false
 	_build()
 	_update_display()
 	_update_position()
@@ -58,11 +59,14 @@ func _process(_delta: float) -> void:
 	_update_position()
 
 
-## Pin the readout just above the magnet in world space.
+## Pin the readout just above the magnet in world space. The readout only shows
+## while the magnet is actively pulling (the looting phase of the minigame).
 func _update_position() -> void:
-	var magnet := Magnetide.magnet as Node2D
+	var magnet := Magnetide.magnet
 	if magnet == null or not is_instance_valid(magnet) or not magnet.is_inside_tree():
+		visible = false
 		return
+	visible = magnet.is_active
 	global_position = magnet.global_position + Vector2(0.0, -above_magnet_offset)
 
 

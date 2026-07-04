@@ -32,13 +32,6 @@ func get_next_level_gain_summary(_state: Resource) -> String:
 	return ""
 
 
-func get_next_level_detail_lines(state: Resource) -> PackedStringArray:
-	var summary := get_next_level_gain_summary(state)
-	if summary.is_empty():
-		return PackedStringArray()
-	return PackedStringArray([summary])
-
-
 func get_level_text(state: Resource) -> String:
 	var level := _get_state_level(state)
 	if max_level <= 0:
@@ -46,6 +39,15 @@ func get_level_text(state: Resource) -> String:
 	if not _is_state_unlocked(state):
 		return "Locked"
 	return "Lv %d/%d" % [level, max_level]
+
+
+## True when both refer to the same item (same instance or matching item_id).
+static func is_same_item(a: UpgradeableItemData, b: UpgradeableItemData) -> bool:
+	if a == null or b == null:
+		return false
+	if a == b:
+		return true
+	return a.item_id == b.item_id
 
 
 func get_next_level_cost(state: Resource) -> Resource:
@@ -63,7 +65,7 @@ func get_next_level_cost(state: Resource) -> Resource:
 func _get_state_level(state: Resource) -> int:
 	if state == null:
 		return 0
-	if not _has_property(state, "current_level"):
+	if not Utils.has_property(state, "current_level"):
 		return 0
 	return clampi(int(state.get("current_level")), 0, max_level)
 
@@ -71,13 +73,6 @@ func _get_state_level(state: Resource) -> int:
 func _is_state_unlocked(state: Resource) -> bool:
 	if state == null:
 		return false
-	if not _has_property(state, "unlocked"):
+	if not Utils.has_property(state, "unlocked"):
 		return true
 	return bool(state.get("unlocked"))
-
-
-func _has_property(object: Object, property_name: String) -> bool:
-	for property in object.get_property_list():
-		if String(property.get("name", "")) == property_name:
-			return true
-	return false

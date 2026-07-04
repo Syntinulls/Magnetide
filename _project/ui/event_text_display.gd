@@ -70,18 +70,6 @@ func clear(source: StringName) -> void:
 		_refresh()
 
 
-func clear_all() -> void:
-	if _entries.is_empty():
-		return
-	_entries.clear()
-	_refresh()
-
-
-## True while a source has an active entry.
-func is_active(source: StringName) -> bool:
-	return _entries.has(source)
-
-
 ## Remaining seconds for a source's countdown (0.0 if absent or not a countdown).
 func get_remaining(source: StringName) -> float:
 	if _entries.has(source):

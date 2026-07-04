@@ -1,8 +1,6 @@
 extends EquipmentData
 class_name MagnetToolData
 
-## Sprite shown on player arm when equipped
-@export var weapon_sprite: Texture2D
 ## Distance from muzzle to the magnet tool hold point
 @export var hold_distance: float = 30.0
 ## Time in seconds to hold right-click to repel an item
@@ -17,8 +15,3 @@ class_name MagnetToolData
 @export var pull_ramp_time: float = 0.6
 ## Chance that popping a trash object creates a scrap metal pickup.
 @export_range(0.0, 100.0, 1.0) var trash_scrap_chance_percent: float = 25.0
-
-@export_group("Positioning")
-@export var weapon_offset: Vector2 = Vector2(-15.125, 0.0)
-@export var weapon_rotation: float = -0.14660765
-@export var muzzle_position: Vector2 = Vector2(-55.915, -4.695)

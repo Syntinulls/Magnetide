@@ -31,13 +31,6 @@ func clear_prompt(source: StringName) -> void:
 		_rebuild()
 
 
-func clear_all() -> void:
-	if _prompts.is_empty():
-		return
-	_prompts.clear()
-	_rebuild()
-
-
 func _rebuild() -> void:
 	for child in get_children():
 		child.queue_free()

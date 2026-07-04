@@ -35,8 +35,8 @@ const STORAGE_BORDER_THICKNESS: float = 8.0
 const STORAGE_TOP_SENSOR_THICKNESS: float = 14.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 const STORAGE_ITEMS_Z_INDEX: int = -5
-const DEBUG_ARTIFACT_POOLS: ArtifactPools = preload("res://_project/level/salvage/loot/artifact_pools.tres")
-const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/shaders/border_outline.gdshader")
+const DEBUG_ARTIFACT_POOLS: ArtifactPools = preload("res://_project/salvage/loot/artifact_pools.tres")
+const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/common/border_outline.gdshader")
 const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
 const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
 ## Blue tint: the held item can be placed (stacked onto a part, or space is free).
@@ -96,18 +96,6 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	storage_marker_height = loadout.ship_storage_marker_height
 	max_health = loadout.ship_max_health
 	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
-
-
-func set_thrusters_auto_update(enabled: bool) -> void:
-	auto_update_thrusters = enabled
-	if enabled:
-		_last_level_speed = -1.0
-		_update_thrusters_from_level_speed()
-
-
-func set_thruster_state(state: ThrusterState) -> void:
-	auto_update_thrusters = false
-	_apply_thruster_state(state)
 
 
 func refresh_thrusters_from_level_speed() -> void:
@@ -387,10 +375,6 @@ func is_point_in_storage_area(global_point: Vector2) -> bool:
 	return get_storage_area_global_rect().has_point(global_point)
 
 
-func can_accept_new_storage_item() -> bool:
-	return not is_storage_top_blocked()
-
-
 func can_accept_storage_item(item: SalvageItem) -> bool:
 	if item == null or not is_instance_valid(item):
 		return false
@@ -399,10 +383,6 @@ func can_accept_storage_item(item: SalvageItem) -> bool:
 	if item in _stored_items:
 		return true
 	return not is_storage_top_blocked()
-
-
-func is_storage_at_or_over_capacity() -> bool:
-	return is_storage_top_blocked()
 
 
 func add_to_storage(item: SalvageItem) -> void:
@@ -431,21 +411,6 @@ func find_stackable_stored_item(item: SalvageItem) -> SalvageItem:
 		if is_instance_valid(stored) and stored != item and stored.can_stack_with(item):
 			return stored
 	return null
-
-
-## Merge `item` into an existing matching stored stack. The incoming node is
-## consumed (freed) and its quantity added to the target. Returns true on merge.
-## Stacks occupy no extra space, so this bypasses the top-overflow gate.
-func stack_item(item: SalvageItem) -> bool:
-	var target := find_stackable_stored_item(item)
-	if target == null:
-		return false
-	target.add_to_stack(item.stack_count)
-	if item in _stored_items:
-		_stored_items.erase(item)
-	item.queue_free()
-	item_stored.emit(target)
-	return true
 
 
 ## Animated stack: `item` tweens to `target`'s position, then merges and vanishes,

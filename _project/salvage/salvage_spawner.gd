@@ -1,0 +1,173 @@
+extends Node2D
+class_name SalvageSpawner
+
+@export_group("Spawn Area")
+## The horizontal position ratio where salvage piles spawn (right side of screen).
+@export var spawn_x_ratio: float = 1.1
+## The horizontal position ratio where salvage piles are despawned (left side of screen).
+@export var despawn_x_ratio: float = -0.052
+
+@export_group("Spawning")
+## When true the spawner uses its own timer to create piles automatically.
+## Set to false when spawning is driven externally (e.g. by MagnetMinigame).
+@export var auto_spawn: bool = true
+## Minimum time between spawns in seconds.
+@export var spawn_interval_min: float = 20.0
+## Maximum time between spawns in seconds.
+@export var spawn_interval_max: float = 30.0
+
+@export_group("Pile Data")
+## Generic salvage pile data — every pile uses this single shared resource for loot.
+@export var pile_data: SalvagePileData = null
+
+@export_group("Salvage Properties")
+## Minimum height of salvage pile as ratio of viewport height.
+@export var pile_height_ratio_min: float = 0.125
+## Maximum height of salvage pile as ratio of viewport height.
+@export var pile_height_ratio_max: float = 0.15
+
+var _salvage_pile_scene: PackedScene
+var _spawn_timer: Timer
+var _current_pile: SalvagePile = null
+var _level: Node = null
+var _threat_manager: ThreatManager = null
+var _viewport_anchor: ViewportAnchor = null
+
+
+func _ready() -> void:
+	_salvage_pile_scene = preload("res://_project/salvage/pile/salvage_pile.tscn")
+
+	_level = get_parent()
+	if _level and "viewport_anchor" in _level:
+		_viewport_anchor = _level.viewport_anchor
+	_resolve_threat_manager()
+
+	_spawn_timer = Timer.new()
+	_spawn_timer.one_shot = true
+	_spawn_timer.timeout.connect(_on_spawn_timer_timeout)
+	add_child(_spawn_timer)
+
+	if auto_spawn:
+		_start_spawn_timer()
+
+
+func _get_level_speed() -> float:
+	if _level and "level_speed" in _level:
+		return _level.level_speed
+	return 0.0
+
+
+func _get_screen_width() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.x
+	return get_viewport().get_visible_rect().size.x
+
+
+func _get_screen_height() -> float:
+	if _viewport_anchor:
+		return _viewport_anchor.size.y
+	return get_viewport().get_visible_rect().size.y
+
+
+func _get_spawn_x() -> float:
+	return _get_screen_width() * spawn_x_ratio
+
+
+func _get_despawn_x() -> float:
+	return _get_screen_width() * despawn_x_ratio
+
+
+func _get_surface_y() -> float:
+	if _level and "surface_y" in _level:
+		return _level.surface_y
+	return get_viewport().get_visible_rect().size.y * 0.463
+
+
+func _process(_delta: float) -> void:
+	var level_speed := _get_level_speed()
+
+	if level_speed <= 0.0:
+		if not _spawn_timer.paused:
+			_spawn_timer.paused = true
+	else:
+		if _spawn_timer.paused:
+			_spawn_timer.paused = false
+
+	if _current_pile and _current_pile.is_active:
+		if _current_pile.global_position.x < _get_despawn_x():
+			_on_pile_removed()
+
+
+func _start_spawn_timer() -> void:
+	var interval := randf_range(spawn_interval_min, spawn_interval_max)
+	_spawn_timer.start(interval)
+
+
+func _on_spawn_timer_timeout() -> void:
+	_spawn_salvage()
+
+
+func _on_pile_removed() -> void:
+	if _current_pile:
+		_current_pile.deactivate()
+		_current_pile.queue_free()
+		_current_pile = null
+	if auto_spawn:
+		_start_spawn_timer()
+
+
+func on_pile_acquired() -> void:
+	_on_pile_removed()
+
+
+func _resolve_threat_manager() -> void:
+	if _threat_manager:
+		return
+	if _level:
+		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
+
+
+## No new salvage piles while the run is in the threat-cap (storm) decision state.
+func _is_cap_reached() -> bool:
+	if not _threat_manager:
+		_resolve_threat_manager()
+	return _threat_manager != null and _threat_manager.is_cap_reached
+
+
+func _spawn_salvage() -> void:
+	if _is_cap_reached():
+		return
+	if _current_pile and _current_pile.is_active:
+		return
+
+	_current_pile = _salvage_pile_scene.instantiate() as SalvagePile
+	add_child(_current_pile)
+
+	var spawn_y := _get_screen_height()  # Bottom of screen
+	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
+	var rot := randf_range(0.0, TAU)
+	_current_pile.pile_data = pile_data
+	_current_pile.activate(Vector2(_get_spawn_x(), spawn_y), _level, target_height, rot)
+
+
+## Spawn a salvage pile on demand (used by MagnetMinigame).
+## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
+## default off-screen location.  Returns the new SalvagePile instance.
+func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
+	if _is_cap_reached():
+		return null
+	if _current_pile and _current_pile.is_active:
+		_current_pile.deactivate()
+		_current_pile.queue_free()
+		_current_pile = null
+
+	_current_pile = _salvage_pile_scene.instantiate() as SalvagePile
+	add_child(_current_pile)
+
+	var spawn_x := custom_spawn_x if custom_spawn_x >= 0.0 else _get_spawn_x()
+	var spawn_y := _get_screen_height()  # Bottom of screen
+	var target_height := _get_screen_height() * randf_range(pile_height_ratio_min, pile_height_ratio_max)
+	var rot := randf_range(0.0, TAU)
+	_current_pile.pile_data = pile_data
+	_current_pile.activate(Vector2(spawn_x, spawn_y), _level, target_height, rot)
+	return _current_pile

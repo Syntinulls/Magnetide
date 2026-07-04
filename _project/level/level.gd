@@ -93,7 +93,10 @@ func _create_fog_overlay() -> void:
 	_fog_overlay = TextureRect.new()
 	_fog_overlay.texture = placeholder
 	_fog_overlay.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
-	_fog_overlay.z_index = -49  # Above parallax content
+	# Negative z keeps the fog behind gameplay sprites in this canvas; the
+	# parallax content sits in a lower CanvasLayer, so it stays behind the fog
+	# regardless of z_index.
+	_fog_overlay.z_index = -49
 	
 	# Apply shader that handles fog with exponential falloff
 	var shader_material := ShaderMaterial.new()

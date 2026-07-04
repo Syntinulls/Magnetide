@@ -11,8 +11,8 @@ const ANIM_IDLE: StringName = &"idle"
 const ANIM_MOVE: StringName = &"move"
 const ANIM_ATTACK: StringName = &"attack"
 const ANIM_DEATH: StringName = &"death"
-const DefaultMoveBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_move.gd")
-const DefaultAttackBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_attack.gd")
+const DefaultMoveBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_move_behavior.gd")
+const DefaultAttackBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_attack_behavior.gd")
 
 @export var data: EnemyData
 
@@ -40,6 +40,7 @@ var _death_rotation_velocity: float = 0.0
 var _sprite_rest_position: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
 var _hit_shake_tween: Tween = null
+var _run_ended: bool = false
 
 @onready var sprite: AnimatedSprite2D = $Sprite
 @onready var hitbox: Hitbox = $Hitbox
@@ -193,7 +194,7 @@ func _enter_death_state() -> void:
 # -- Shared Enemy API --------------------------------------------------------
 
 func take_damage(amount: float, source: Node = null) -> void:
-	if state == State.DEATH:
+	if state == State.DEATH or _run_ended:
 		return
 
 	current_health -= amount
@@ -214,10 +215,6 @@ func get_hitbox() -> Hitbox:
 	return hitbox
 
 
-func get_current_target_group() -> StringName:
-	return current_target_group
-
-
 func has_valid_target() -> bool:
 	if not current_target_point or not is_instance_valid(current_target_point):
 		return false
@@ -230,16 +227,8 @@ func has_valid_target() -> bool:
 	return true
 
 
-func get_current_target_root() -> Node2D:
-	return current_target_root
-
-
 func get_current_target_point() -> Node2D:
 	return current_target_point
-
-
-func get_current_damage_target() -> Node2D:
-	return current_damage_target
 
 
 func get_direction_to_target() -> Vector2:
@@ -283,12 +272,6 @@ func deal_damage_to_current_target(amount: float = -1.0) -> void:
 	current_damage_target.take_damage(damage_amount, self)
 
 
-func get_projectile_parent() -> Node:
-	if Magnetide.world_root:
-		return Magnetide.world_root
-	return get_parent()
-
-
 func play_enemy_animation(animation_name: StringName) -> void:
 	if not sprite.sprite_frames:
 		return
@@ -301,6 +284,7 @@ func play_enemy_animation(animation_name: StringName) -> void:
 
 
 func stop_for_run_end() -> void:
+	_run_ended = true
 	velocity = Vector2.ZERO
 	set_process(false)
 	set_physics_process(false)

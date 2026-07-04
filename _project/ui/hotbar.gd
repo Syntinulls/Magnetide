@@ -2,8 +2,6 @@ extends Control
 class_name Hotbar
 
 signal slot_selected(index: int)
-signal scroll_started(from_index: int, to_index: int)
-signal scroll_finished(index: int)
 
 const MAX_SLOTS := 3
 const SLOT_SIZE := Vector2(96.0, 48.0)
@@ -116,8 +114,9 @@ func select_slot(index: int) -> void:
 	
 	_previous_index = _selected_index
 	_selected_index = index
-	scroll_started.emit(from_index, to_index)
-	slot_selected.emit(_selected_index)  # Emit immediately so player switches right away
+	# Emit before the scroll animation so the player switches immediately,
+	# not after the tween finishes.
+	slot_selected.emit(_selected_index)
 	
 	_scroll_to(from_index, to_index)
 
@@ -204,7 +203,6 @@ func _on_scroll_complete() -> void:
 	_strip.position.x = BUFFER_OFFSET
 	_update_visual_slots()
 	_apply_slot_scales_instant()
-	scroll_finished.emit(_selected_index)
 
 
 func _update_visual_slots() -> void:
@@ -216,8 +214,7 @@ func _update_visual_slots() -> void:
 func _set_slot_visual(slot: Control, data: Dictionary, equip_index: int = -1) -> void:
 	var icon_rect: TextureRect = slot.get_node("MarginContainer/ItemIcon")
 	icon_rect.texture = data.get("icon", null)
-	
-	# Update slot number if it exists (now inside SlotNumberContainer)
+
 	var slot_number: Label = slot.get_node_or_null("SlotNumberContainer/SlotNumber")
 	if slot_number and equip_index >= 0:
 		slot_number.text = str(equip_index + 1)

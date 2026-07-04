@@ -1,0 +1,22 @@
+[gd_scene format=3 uid="uid://bxms6wspu2pjc"]
+
+[ext_resource type="Texture2D" uid="uid://ftaau21hygnp" path="res://icon.svg" id="1_icon"]
+[ext_resource type="Script" uid="uid://de2nrraqjtpel" path="res://_project/salvage/pile/salvage_pile.gd" id="2_script"]
+[ext_resource type="Shader" uid="uid://dk3sk1t8t6qov" path="res://_project/salvage/pile/salvage_pile.gdshader" id="3_shader"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_pile"]
+shader = ExtResource("3_shader")
+shader_parameter/tint_color = Color(1, 1, 1, 1)
+shader_parameter/alpha_cutoff = 0.01
+
+[node name="SalvagePile" type="Node2D" unique_id=149491860]
+script = ExtResource("2_script")
+
+[node name="Sprite2D" type="Sprite2D" parent="." unique_id=909141319]
+texture_filter = 3
+texture_repeat = 2
+material = SubResource("ShaderMaterial_pile")
+texture = ExtResource("1_icon")
+
+[node name="Line2D" type="Line2D" parent="Sprite2D" unique_id=69529324]
+points = PackedVector2Array(-478, -3, -368, -97, -250, -153, -124, -191, -1, -200, 137, -187, 265, -149, 373, -90, 483, -1)

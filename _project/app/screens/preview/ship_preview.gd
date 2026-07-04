@@ -12,7 +12,7 @@ class_name ShipPreview
 const STORAGE_BORDER_WIDTH: float = 6.0
 ## Dashed storage-area outline (same shader the in-game Ship uses), shown so the
 ## Storage Size upgrade's width AND height growth is visible in the preview.
-const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/shaders/border_outline.gdshader")
+const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/common/border_outline.gdshader")
 const STORAGE_OUTLINE_WIDTH: float = 4.0
 const STORAGE_OUTLINE_OPACITY: float = 0.9
 

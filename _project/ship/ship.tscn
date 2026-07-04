@@ -8,9 +8,9 @@
 [ext_resource type="PackedScene" uid="uid://cbjj3u6hbmydw" path="res://_project/ship/departure_pylon.tscn" id="5_departure_pylon"]
 [ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/ship_ff_gens.png" id="5_my72g"]
 [ext_resource type="Texture2D" uid="uid://c64fldhe8gdig" path="res://_project/ship/sprites/ship_ff_anim.png" id="6_7id8t"]
-[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/enemies/hitbox.gd" id="6_dbcm7"]
-[ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/enemies/enemy_target_point.gd" id="7_r6cvl"]
-[ext_resource type="PackedScene" uid="uid://ggn0tn42w7k4" path="res://_project/ship/research_station.tscn" id="8_6os2d"]
+[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="6_dbcm7"]
+[ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="7_r6cvl"]
+[ext_resource type="PackedScene" uid="uid://ggn0tn42w7k4" path="res://_project/ship/research/research_station.tscn" id="8_6os2d"]
 [ext_resource type="PackedScene" uid="uid://bvaekv4vjhgyn" path="res://_project/ship/recycler.tscn" id="9_0vixk"]
 [ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="10_dbkfd"]
 

@@ -52,11 +52,5 @@ func _get_total_amount(level: int) -> float:
 func _format_effect(amount: float) -> String:
 	var property_name := String(target_property).replace("_", " ").capitalize()
 	if increase_mode == IncreaseMode.PERCENT_OF_BASE:
-		return "%s +%s%%" % [property_name, _format_number(amount * 100.0)]
-	return "%s +%s" % [property_name, _format_number(amount)]
-
-
-func _format_number(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return str(int(roundf(value)))
-	return "%.2f" % value
+		return "%s +%s%%" % [property_name, Utils.format_number(amount * 100.0)]
+	return "%s +%s" % [property_name, Utils.format_number(amount)]

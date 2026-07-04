@@ -7,14 +7,14 @@ const RunUpgradeScript := preload("res://_project/run/run_upgrade.gd")
 const RunUpgradeLevelCostScript := preload("res://_project/run/run_upgrade_level_cost.gd")
 const UpgradeableItemStateScript := preload("res://_project/run/upgradeable_item_state.gd")
 const UpgradeSlotStateScript := preload("res://_project/run/upgrade_slot_state.gd")
-const SalvageItemCostScript := preload("res://_project/items/salvage/salvage_item_cost.gd")
-const CostGearData := preload("res://_project/items/salvage/resources/gear.tres")
-const CostMagnetData := preload("res://_project/items/salvage/resources/magnet.tres")
-const CostBatteryData := preload("res://_project/items/salvage/resources/battery.tres")
-const CostSpringData := preload("res://_project/items/salvage/resources/spring.tres")
-const CostProcessorData := preload("res://_project/items/salvage/resources/processor.tres")
-const CostCircuitryData := preload("res://_project/items/salvage/resources/circuitry.tres")
-const CostPowerCoreData := preload("res://_project/items/salvage/resources/power_core.tres")
+const SalvageItemCostScript := preload("res://_project/salvage/salvage_item_cost.gd")
+const CostGearData := preload("res://_project/salvage/catalog/gear.tres")
+const CostMagnetData := preload("res://_project/salvage/catalog/magnet.tres")
+const CostBatteryData := preload("res://_project/salvage/catalog/battery.tres")
+const CostSpringData := preload("res://_project/salvage/catalog/spring.tres")
+const CostProcessorData := preload("res://_project/salvage/catalog/processor.tres")
+const CostCircuitryData := preload("res://_project/salvage/catalog/circuitry.tres")
+const CostPowerCoreData := preload("res://_project/salvage/catalog/power_core.tres")
 const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
 const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
 const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
@@ -28,7 +28,6 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 
 @export_group("Magnet")
 @export var magnet_pull_frequency: float = 2.5
-@export var magnet_pull_batch_size: int = 1
 @export var magnet_hold_capacity: int = 10
 @export var magnet_pull_base_speed: float = 200.0
 @export var magnet_pull_max_speed: float = 1500.0
@@ -137,7 +136,7 @@ func get_equipment_item_level(equipment: EquipmentData) -> int:
 	if item_id == &"":
 		return 0
 	var state := get_item_state(item_id)
-	if state != null and _has_property(state, "current_level"):
+	if state != null and Utils.has_property(state, "current_level"):
 		return int(state.get("current_level"))
 	return 0
 
@@ -367,11 +366,11 @@ func get_or_create_item_state(item_id: StringName) -> Resource:
 
 
 func get_item_level(item_data: Resource) -> int:
-	if item_data == null or not _has_property(item_data, "item_id"):
+	if item_data == null or not Utils.has_property(item_data, "item_id"):
 		return 0
 	var item_id := item_data.get("item_id") as StringName
 	var state := get_item_state(item_id)
-	if state != null and _has_property(state, "current_level"):
+	if state != null and Utils.has_property(state, "current_level"):
 		return int(state.get("current_level"))
 	return 0
 
@@ -379,7 +378,7 @@ func get_item_level(item_data: Resource) -> int:
 ## Cost (RunUpgradeLevelCost) to raise this augment/item to its next level, or
 ## null if it is maxed or has no cost defined for that level.
 func get_augment_next_level_cost(augment_data: Resource) -> Resource:
-	if augment_data == null or not _has_property(augment_data, "max_level"):
+	if augment_data == null or not Utils.has_property(augment_data, "max_level"):
 		return null
 	var level := get_item_level(augment_data)
 	if level >= int(augment_data.get("max_level")):
@@ -393,10 +392,10 @@ func get_augment_next_level_cost(augment_data: Resource) -> Resource:
 ## Raise an augment's per-item level by one (clamped to max_level). Returns true
 ## if the level changed.
 func increase_augment_level(augment_data: Resource) -> bool:
-	if augment_data == null or not _has_property(augment_data, "item_id"):
+	if augment_data == null or not Utils.has_property(augment_data, "item_id"):
 		return false
 	var level := get_item_level(augment_data)
-	if not _has_property(augment_data, "max_level") or level >= int(augment_data.get("max_level")):
+	if not Utils.has_property(augment_data, "max_level") or level >= int(augment_data.get("max_level")):
 		return false
 	var state := get_or_create_item_state(augment_data.get("item_id") as StringName)
 	if state == null:
@@ -408,21 +407,21 @@ func increase_augment_level(augment_data: Resource) -> bool:
 
 
 func is_item_unlocked(item_data: Resource, default_unlocked: bool = false) -> bool:
-	if item_data == null or not _has_property(item_data, "item_id"):
+	if item_data == null or not Utils.has_property(item_data, "item_id"):
 		return default_unlocked
 	var item_id := item_data.get("item_id") as StringName
 	var state := get_item_state(item_id)
-	if state == null or not _has_property(state, "unlocked"):
+	if state == null or not Utils.has_property(state, "unlocked"):
 		return default_unlocked
 	return bool(state.get("unlocked"))
 
 
 func set_item_unlocked(item_data: Resource, unlocked: bool = true) -> void:
-	if item_data == null or not _has_property(item_data, "item_id"):
+	if item_data == null or not Utils.has_property(item_data, "item_id"):
 		return
 	var item_id := item_data.get("item_id") as StringName
 	var state := get_or_create_item_state(item_id)
-	if state != null and _has_property(state, "unlocked"):
+	if state != null and Utils.has_property(state, "unlocked"):
 		state.set("unlocked", unlocked)
 
 
@@ -441,7 +440,6 @@ func get_or_create_slot_state(slot_id: StringName) -> Resource:
 		return state
 	state = UpgradeSlotStateScript.new()
 	state.set("slot_id", slot_id)
-	state.set("equipped_item_id", &"")
 	state.set("unlocked", false)
 	slot_states.append(state)
 	return state
@@ -449,14 +447,14 @@ func get_or_create_slot_state(slot_id: StringName) -> Resource:
 
 func is_slot_unlocked(slot_id: StringName, default_unlocked: bool = false) -> bool:
 	var state := get_slot_state(slot_id)
-	if state == null or not _has_property(state, "unlocked"):
+	if state == null or not Utils.has_property(state, "unlocked"):
 		return default_unlocked
 	return bool(state.get("unlocked"))
 
 
 func set_slot_unlocked(slot_id: StringName, unlocked: bool = true) -> void:
 	var state := get_or_create_slot_state(slot_id)
-	if state != null and _has_property(state, "unlocked"):
+	if state != null and Utils.has_property(state, "unlocked"):
 		state.set("unlocked", unlocked)
 
 
@@ -470,7 +468,7 @@ func equip_player_augment(slot_index: int, augment_data: AugmentData) -> void:
 		# If this augment already occupies another slot, swap: move whatever is in
 		# the target slot into that other slot (rather than just clearing it).
 		for index in player_augments.size():
-			if index != slot_index and _same_upgradeable_item(player_augments[index], augment_data):
+			if index != slot_index and UpgradeableItemData.is_same_item(player_augments[index], augment_data):
 				player_augments[index] = player_augments[slot_index]
 				break
 
@@ -494,21 +492,11 @@ func _equip_augment_into(augments: Array[AugmentData], slot_index: int, augment_
 	if augment_data != null:
 		# Swap with the target slot if this augment already occupies another slot.
 		for index in augments.size():
-			if index != slot_index and _same_upgradeable_item(augments[index], augment_data):
+			if index != slot_index and UpgradeableItemData.is_same_item(augments[index], augment_data):
 				augments[index] = augments[slot_index]
 				break
 
 	augments[slot_index] = augment_data
-
-
-func _same_upgradeable_item(left: Resource, right: Resource) -> bool:
-	if left == null or right == null:
-		return false
-	if left == right:
-		return true
-	if _has_property(left, "item_id") and _has_property(right, "item_id"):
-		return left.get("item_id") == right.get("item_id")
-	return false
 
 
 func _ensure_equipped_defaults() -> void:
@@ -596,7 +584,7 @@ func _apply_loadout_upgrades() -> void:
 		if String(upgrade.get("target_property")).is_empty():
 			continue
 		var property_name := String(upgrade.get("target_property"))
-		if not _has_property(self, property_name):
+		if not Utils.has_property(self, property_name):
 			continue
 		if not upgrade_base_values.has(property_name):
 			upgrade_base_values[property_name] = get(property_name)
@@ -627,7 +615,7 @@ func _apply_upgrade_level_to_resource(
 	var property_name := String(upgrade.get("target_property"))
 	if property_name.is_empty():
 		return
-	if not _has_property(base_resource, property_name) or not _has_property(target_resource, property_name):
+	if not Utils.has_property(base_resource, property_name) or not Utils.has_property(target_resource, property_name):
 		return
 
 	var base_value: Variant = base_resource.get(property_name)
@@ -731,10 +719,3 @@ func _create_item_cost(item_data: SalvageItemData, quantity: int) -> Resource:
 	item_cost.item_data = item_data
 	item_cost.quantity = quantity
 	return item_cost
-
-
-func _has_property(object: Object, property_name: String) -> bool:
-	for property in object.get_property_list():
-		if String(property.get("name", "")) == property_name:
-			return true
-	return false

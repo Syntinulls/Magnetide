@@ -22,17 +22,10 @@ func accepts_item(item_data: Resource) -> bool:
 		return false
 	if allowed_tags.is_empty():
 		return true
-	if not _has_property(item_data, "tags"):
+	if not Utils.has_property(item_data, "tags"):
 		return false
 	var item_tags := item_data.get("tags") as Array
 	for tag in allowed_tags:
 		if tag in item_tags:
-			return true
-	return false
-
-
-func _has_property(object: Object, property_name: String) -> bool:
-	for property in object.get_property_list():
-		if String(property.get("name", "")) == property_name:
 			return true
 	return false

@@ -93,8 +93,6 @@ var _icon_neutral: Texture2D
 var _icon_success: Texture2D
 var _icon_failure: Texture2D
 var _icon_chevron: Texture2D
-var _icon_yellow_empty: Texture2D
-var _icon_yellow_filled: Texture2D
 
 
 func _ready() -> void:
@@ -105,10 +103,7 @@ func _ready() -> void:
 	_icon_success = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_success.png")
 	_icon_failure = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_failure.png")
 	_icon_chevron = preload("res://_project/ship/magnet/minigame/sprites/magnetgame_icon_chevron.png")
-	# Use neutral icon for yellow allowance (modulated to show state)
-	_icon_yellow_empty = _icon_neutral
-	_icon_yellow_filled = _icon_neutral
-	
+
 	# Run even when timescale is slowed
 	process_mode = Node.PROCESS_MODE_ALWAYS
 	
@@ -282,6 +277,10 @@ func _generate_marker_positions() -> void:
 
 
 func _process(delta: float) -> void:
+	# Runs PROCESS_MODE_ALWAYS (to ignore the timescale slowdown), so it must
+	# respect the pause menu explicitly.
+	if get_tree().paused:
+		return
 	# Update position and scale based on camera
 	_update_camera_tracking()
 
@@ -486,7 +485,7 @@ func _get_texture_half_height(texture: Texture2D) -> float:
 
 
 func _input(event: InputEvent) -> void:
-	if _state != State.PLAYING:
+	if get_tree().paused or _state != State.PLAYING:
 		return
 	
 	if event.is_action_pressed("interact"):

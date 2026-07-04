@@ -10,14 +10,6 @@ class_name UpgradeableItemState
 		unlocked = value
 
 
-func is_unlocked() -> bool:
-	return unlocked
-
-
-func unlock() -> void:
-	unlocked = true
-
-
 func increase_level(max_level: int, amount: int = 1) -> bool:
 	var previous_level := current_level
 	current_level = clampi(current_level + amount, 0, maxi(max_level, 0))

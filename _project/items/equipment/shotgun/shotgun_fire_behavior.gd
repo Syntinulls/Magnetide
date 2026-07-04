@@ -1,4 +1,4 @@
-extends "res://_project/items/equipment/weapon_fire_behavior.gd"
+extends WeaponFireBehavior
 class_name ShotgunFireBehavior
 
 @export var pellet_count: int = 3:

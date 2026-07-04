@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://uiieqdlx023s" path="res://_project/enemies/enemy_data.gd" id="1_script"]
 [ext_resource type="SpriteFrames" uid="uid://cbax3ii8fygys" path="res://_project/enemies/worm/worm_sprite_frames.tres" id="2_frames"]
-[ext_resource type="Script" uid="uid://o6yeu4otjbpn" path="res://_project/enemies/behaviors/default_move.gd" id="3_move"]
-[ext_resource type="Script" uid="uid://cucvtmxqg8oty" path="res://_project/enemies/behaviors/default_attack.gd" id="4_attack"]
+[ext_resource type="Script" uid="uid://o6yeu4otjbpn" path="res://_project/enemies/behaviors/default_move_behavior.gd" id="3_move"]
+[ext_resource type="Script" uid="uid://cucvtmxqg8oty" path="res://_project/enemies/behaviors/default_attack_behavior.gd" id="4_attack"]
 
 [sub_resource type="Resource" id="Resource_attack_behavior"]
 script = ExtResource("4_attack")

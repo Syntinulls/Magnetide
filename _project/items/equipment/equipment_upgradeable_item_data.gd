@@ -19,8 +19,5 @@ func get_icon() -> Texture2D:
 	if equipment_data != null:
 		if equipment_data.hotbar_icon != null:
 			return equipment_data.hotbar_icon
-		if equipment_data is WeaponData:
-			return (equipment_data as WeaponData).weapon_sprite
-		if equipment_data is MagnetToolData:
-			return (equipment_data as MagnetToolData).weapon_sprite
+		return equipment_data.weapon_sprite
 	return null

@@ -66,19 +66,13 @@ func get_damage_bonus_fraction(level: int, health_ratio: float) -> float:
 
 
 func get_current_effect_summary(level: int) -> String:
-	return "Up to +%s%% damage at low HP" % _format_number(get_max_damage_bonus_percent(level))
+	return "Up to +%s%% damage at low HP" % Utils.format_number(get_max_damage_bonus_percent(level))
 
 
 func get_next_level_gain_summary(level: int, max_level: int) -> String:
 	if level >= max_level:
 		return ""
 	return "+%s%% -> +%s%% max damage" % [
-		_format_number(get_max_damage_bonus_percent(level)),
-		_format_number(get_max_damage_bonus_percent(level + 1)),
+		Utils.format_number(get_max_damage_bonus_percent(level)),
+		Utils.format_number(get_max_damage_bonus_percent(level + 1)),
 	]
-
-
-func _format_number(value: float) -> String:
-	if is_equal_approx(value, roundf(value)):
-		return str(int(roundf(value)))
-	return "%.1f" % value

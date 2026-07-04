@@ -114,6 +114,12 @@ func can_accept_departure_request() -> bool:
 	return not _is_run_ending
 
 
+## True once the run has entered its end sequence (departure cutscene or death
+## teardown). Used by UI (pause menu) to refuse actions during the sequence.
+func is_run_ending() -> bool:
+	return _is_run_ending
+
+
 func request_end_run(reason: RunResult.EndReason) -> void:
 	if _is_run_ending:
 		return
@@ -136,8 +142,14 @@ func _shutdown_gameplay(stop_player: bool = true) -> void:
 	set_process(false)
 	_cleanup_augments()
 
-	if _player and stop_player:
-		_player.stop_for_run_end()
+	if _player:
+		# Even when the player keeps walking for the departure cutscene, they can
+		# no longer deal or receive damage.
+		_player.combat_disabled = true
+		if stop_player:
+			_player.stop_for_run_end()
+	if _game_ui and _game_ui.has_method("stop_for_run_end"):
+		_game_ui.call("stop_for_run_end")
 	if _magnet_minigame:
 		_magnet_minigame.stop_for_run_end()
 	if _enemy_spawner:

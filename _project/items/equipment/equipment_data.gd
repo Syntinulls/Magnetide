@@ -8,6 +8,14 @@ class_name EquipmentData
 @export var display_name: String = ""
 ## Icon texture for hotbar slot
 @export var hotbar_icon: Texture2D
+## Sprite shown on player arm when equipped
+@export var weapon_sprite: Texture2D
+
+@export_group("Positioning")
+@export var weapon_offset: Vector2 = Vector2(-15.125, 0.0)
+@export var weapon_rotation: float = -0.14660765
+@export var muzzle_position: Vector2 = Vector2(-55.915, -4.695)
+@export_group("")
 
 
 ## Per-item upgrade identifier, falling back to the resource path so distinct

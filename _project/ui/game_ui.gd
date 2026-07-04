@@ -1,4 +1,5 @@
 extends Control
+class_name GameUI
 
 const MAGAZINE_READY_COLOR := Color("dbdbdb")
 const MAGAZINE_RELOADING_COLOR := Color("ffd24a")
@@ -82,6 +83,18 @@ func _ready() -> void:
 	call_deferred("_bind_to_active_player")
 	_update_health_ui()
 	_refresh_player_augment_icons(true)
+
+	var pause_menu := PauseMenu.new()
+	pause_menu.name = "PauseMenu"
+	add_child(pause_menu)
+
+
+## Run teardown: kill the storm countdown so it cannot expire (and trigger the
+## acid storm) during the departure cutscene. Hiding the UI alone does not stop
+## the EventTextDisplay from processing.
+func stop_for_run_end() -> void:
+	if _event_text:
+		_event_text.clear(&"storm")
 
 
 func _process(_delta: float) -> void:
@@ -504,7 +517,7 @@ func _get_augment_gains(augment: AugmentData, loadout: RunLoadout) -> String:
 
 
 func _get_augment_state(augment: AugmentData, loadout: RunLoadout) -> Resource:
-	if augment == null or loadout == null or not _has_property(augment, "item_id"):
+	if augment == null or loadout == null or not Utils.has_property(augment, "item_id"):
 		return null
 	return loadout.get_item_state(augment.get("item_id") as StringName)
 
@@ -518,7 +531,7 @@ func _get_augment_name(augment: AugmentData) -> String:
 
 
 func _get_augment_description(augment: AugmentData) -> String:
-	if augment == null or not _has_property(augment, "description"):
+	if augment == null or not Utils.has_property(augment, "description"):
 		return ""
 	return String(augment.get("description"))
 
@@ -526,7 +539,7 @@ func _get_augment_description(augment: AugmentData) -> String:
 func _get_augment_icon(augment: AugmentData) -> Texture2D:
 	if augment != null and augment.has_method("get_icon"):
 		return augment.call("get_icon") as Texture2D
-	if augment != null and _has_property(augment, "icon"):
+	if augment != null and Utils.has_property(augment, "icon"):
 		return augment.get("icon") as Texture2D
 	return null
 
@@ -534,20 +547,12 @@ func _get_augment_icon(augment: AugmentData) -> Texture2D:
 func _get_augment_key(augment: AugmentData) -> String:
 	if augment == null:
 		return ""
-	if _has_property(augment, "item_id"):
+	if Utils.has_property(augment, "item_id"):
 		return String(augment.get("item_id"))
 	if not augment.resource_path.is_empty():
 		return augment.resource_path
 	return str(augment.get_instance_id())
 
-
-func _has_property(resource: Resource, property_name: String) -> bool:
-	if resource == null:
-		return false
-	for property in resource.get_property_list():
-		if String(property.get("name", "")) == property_name:
-			return true
-	return false
 
 
 func set_run_scrap_metal_count(scrap_count: int) -> void:

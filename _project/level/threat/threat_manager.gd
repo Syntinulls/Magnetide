@@ -36,8 +36,7 @@ const DEBUG_THREAT_ADD_AMOUNT: float = 20.0
 ## Passive threat gained per second. Constant for the whole run.
 @export var passive_threat_per_second: float = MAX_THREAT / DEFAULT_RUN_DURATION_SECONDS
 ## Seconds the player has to decide once the threat cap is reached.
-## TODO: temporarily 10s for debug — restore to DEFAULT_STORM_COUNTDOWN_SECONDS (60).
-@export var storm_countdown_seconds: float = 10.0
+@export var storm_countdown_seconds: float = DEFAULT_STORM_COUNTDOWN_SECONDS
 
 var _current_threat: float = 0.0
 var _threat_level_cap: int = 0
@@ -46,13 +45,7 @@ var _is_cap_reached: bool = false
 ## the cap segment (e.g. during an active magnet looting cycle). Threat still clamps at the ceiling.
 var _cap_hold: bool = false
 var _storm_active: bool = false
-var _threat_level_factors: Array[ThreatLevelData] = _create_default_threat_level_factors()
-
-@export var threat_level_factors: Array[ThreatLevelData]:
-	get:
-		return _threat_level_factors
-	set(value):
-		_threat_level_factors = _normalize_threat_level_factors(value)
+var _run_ended: bool = false
 
 var current_threat: float:
 	get:
@@ -85,10 +78,6 @@ var is_storm_active: bool:
 var threat_ratio: float:
 	get:
 		return _current_threat / MAX_THREAT
-
-
-func _init() -> void:
-	_threat_level_factors = _normalize_threat_level_factors(_threat_level_factors)
 
 
 func _ready() -> void:
@@ -133,11 +122,6 @@ func get_player_threat_level() -> int:
 	return threat_level + 1
 
 
-## Player-facing threat level cap (1-10).
-func get_player_threat_level_cap() -> int:
-	return _threat_level_cap + 1
-
-
 ## True only when the cap has been reached and there is a higher level to unlock.
 func can_raise_cap() -> bool:
 	return _is_cap_reached and _threat_level_cap < MAX_STAGE_INDEX
@@ -163,6 +147,7 @@ func reset() -> void:
 	_is_cap_reached = false
 	_cap_hold = false
 	_storm_active = false
+	_run_ended = false
 	_current_threat = 0.0
 	threat_changed.emit(_current_threat)
 	threat_level_changed.emit(threat_level)
@@ -170,18 +155,8 @@ func reset() -> void:
 
 
 func stop_for_run_end() -> void:
+	_run_ended = true
 	set_process(false)
-
-
-func get_level_factors(level: int = threat_level) -> ThreatLevelData:
-	var clamped_level := clampi(level, 0, MAX_STAGE_INDEX)
-	if clamped_level >= 0 and clamped_level < _threat_level_factors.size():
-		return _threat_level_factors[clamped_level]
-	return _create_default_threat_level_factors()[clamped_level]
-
-
-func get_current_level_factors() -> ThreatLevelData:
-	return get_level_factors(threat_level)
 
 
 func _set_current_threat(value: float) -> void:
@@ -214,7 +189,7 @@ func _cap_ceiling() -> float:
 
 ## Enter the Cap Reached state unless already in it, currently held, or threat is below the ceiling.
 func _try_enter_cap_reached() -> void:
-	if _is_cap_reached or _cap_hold:
+	if _is_cap_reached or _cap_hold or _run_ended:
 		return
 	if _current_threat >= _cap_ceiling():
 		_enter_cap_reached()
@@ -230,29 +205,10 @@ func _enter_cap_reached() -> void:
 
 ## Begin the acid storm. Called when the event-text storm countdown expires;
 ## emits storm_arrived for the StormController. No-op if the storm is already
-## active or the cap is no longer reached (e.g. the player advanced in time).
+## active, the cap is no longer reached (e.g. the player advanced in time), or
+## the run is ending (departure cutscene).
 func trigger_storm() -> void:
-	if _storm_active or not _is_cap_reached:
+	if _storm_active or not _is_cap_reached or _run_ended:
 		return
 	_storm_active = true
 	storm_arrived.emit()
-
-
-static func _create_default_threat_level_factors() -> Array[ThreatLevelData]:
-	var factors: Array[ThreatLevelData] = []
-	for _i in range(LEVEL_COUNT):
-		factors.append(ThreatLevelData.new())
-	return factors
-
-
-static func _normalize_threat_level_factors(value: Array[ThreatLevelData]) -> Array[ThreatLevelData]:
-	var defaults := _create_default_threat_level_factors()
-	var normalized: Array[ThreatLevelData] = []
-
-	for i in range(LEVEL_COUNT):
-		if i < value.size() and value[i] != null:
-			normalized.append(value[i])
-		else:
-			normalized.append(defaults[i])
-
-	return normalized

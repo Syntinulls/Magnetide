@@ -21,7 +21,7 @@ signal damaged(amount: float, source: Node)
 @export var equipment: Array[EquipmentData] = []
 
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
-const ProjectileScript: Script = preload("res://_project/utils/projectile.gd")
+const ProjectileScript: Script = preload("res://_project/combat/projectile.gd")
 const ScrapMetalTexture: Texture2D = preload("res://_project/ui/sprites/scrap_metal.png")
 const MACHINE_GUN_SHOOT_SFX: Array[String] = [
 	"machine_gun_shot_1.ogg",
@@ -47,6 +47,8 @@ const FOOTSTEP_INTERVAL_SECONDS := 0.28
 const FOOTSTEP_MIN_SPEED := 8.0
 
 var input_enabled: bool = true
+## While true the player can neither receive nor deal damage (departure cutscene).
+var combat_disabled: bool = false
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
@@ -146,7 +148,6 @@ func _ready() -> void:
 	add_to_group("player")
 	current_health = max_health
 	current_shield = _get_max_shield_hits()
-	# Initialize facing based on current mouse position
 	var mouse_pos := get_global_mouse_position()
 	var mouse_is_right := mouse_pos.x > global_position.x
 	_apply_facing(mouse_is_right)
@@ -154,7 +155,8 @@ func _ready() -> void:
 	_create_hover_tooltip()
 	_init_weapon_ammo()
 	_apply_current_equipment()
-	# Defer hotbar setup to ensure UI is ready
+	# GameUI/hotbar may not have registered with Magnetide yet when the player
+	# enters the tree, so UI wiring must be deferred.
 	call_deferred("_connect_hotbar")
 	call_deferred("_populate_hotbar")
 
@@ -333,13 +335,6 @@ func _physics_process(delta: float) -> void:
 	_update_hover_tooltip()
 
 
-func walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
-	start_walk_to_ship_center_for_cutscene(target_local_x, walk_speed)
-
-	while _cinematic_walk_active and is_inside_tree():
-		await get_tree().physics_frame
-
-
 func start_walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
 	input_enabled = false
 	stop_magnetize()
@@ -466,6 +461,8 @@ func _populate_hotbar() -> void:
 
 
 func _process_weapon_input(delta: float) -> void:
+	if combat_disabled:
+		return
 	_process_reload(delta)
 	if Input.is_action_just_pressed("reload"):
 		_try_manual_reload()
@@ -1399,7 +1396,6 @@ const SCRAP_LABEL_FADE_SECONDS: float = 0.35
 const SCRAP_LABEL_DRIFT_DISTANCE: float = 18.0
 
 func _create_progress_bar() -> void:
-	# Defer to ensure GameUI is ready
 	call_deferred("_setup_progress_bar")
 
 
@@ -1585,7 +1581,7 @@ func on_looting_ended() -> void:
 
 
 func take_damage(amount: float, source: Node = null) -> void:
-	if current_health <= 0.0:
+	if current_health <= 0.0 or combat_disabled:
 		return
 	if amount <= 0.0:
 		return
@@ -1612,7 +1608,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 ## Environmental acid-storm drain. Bypasses the kinetic shield and reduces
 ## health directly (a continuous DoT, not a discrete hit).
 func apply_storm_damage(amount: float) -> void:
-	if amount <= 0.0 or current_health <= 0.0:
+	if amount <= 0.0 or current_health <= 0.0 or combat_disabled:
 		return
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)

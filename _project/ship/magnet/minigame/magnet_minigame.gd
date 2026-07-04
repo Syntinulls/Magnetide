@@ -83,10 +83,10 @@ const LEVER_RELEASE_SFX := "lever_release.ogg"
 @export var magnet_lever_path: NodePath
 @export var magnet_path: NodePath
 @export var camera_path: NodePath
-@export var warning_icon_path: NodePath
 @export var activation_minigame_path: NodePath
 @export var magnet_capacity_path: NodePath
 @export var activation_anchor_path: NodePath
+@export var warning_icon_path: NodePath
 
 var _state: State = State.COOLDOWN
 var _spawns_frozen: bool = false
@@ -116,7 +116,6 @@ var _vignette_tween: Tween = null
 
 var _level: Node2D = null
 var _salvage_spawner: SalvageSpawner = null
-var _warning_icon: WarningIcon = null
 var _magnet_lever: MagnetLever = null
 var _viewport_anchor: ViewportAnchor = null
 var _activation_minigame: Node = null  # ActivationMinigame
@@ -124,6 +123,7 @@ var _player: Node2D = null  # Player
 var _ship: Node2D = null
 var _magnet: Magnet = null
 var _magnet_capacity: MagnetCapacity = null
+var _warning_icon: WarningIcon = null
 var _event_text: EventTextDisplay = null
 
 @onready var _cooldown_timer: Timer = $CooldownTimer
@@ -182,12 +182,6 @@ func _setup_ui_references() -> void:
 	_warning_icon = _resolve_node(warning_icon_path) as WarningIcon
 	_activation_minigame = _resolve_node(activation_minigame_path)
 	_magnet_capacity = _resolve_node(magnet_capacity_path) as MagnetCapacity
-
-	# Presentation for the warning/departure timers is now unified into the
-	# top-center event text display; this icon widget keeps its phase logic but
-	# is no longer shown.
-	if _warning_icon:
-		_warning_icon.visible = false
 
 	if _activation_minigame:
 		_activation_minigame.minigame_completed.connect(_on_activation_completed)
@@ -507,6 +501,10 @@ func is_looting_cycle_active() -> bool:
 
 
 func _process(delta: float) -> void:
+	# This node runs PROCESS_MODE_ALWAYS during activation (to ignore the
+	# timescale slowdown), so it must respect the pause menu explicitly.
+	if get_tree().paused:
+		return
 	# Defer the threat storm-imminent trigger while a looting cycle is in progress.
 	if _threat_manager:
 		_threat_manager.set_cap_hold(is_looting_cycle_active())
@@ -543,6 +541,7 @@ func _process_warning(delta: float) -> void:
 		_on_warning_expired()
 		return
 
+	# Escalate the warning icon through yellow -> orange -> red as the window runs out.
 	var ratio := _warning_elapsed / _warning_duration
 	var yellow_end := yellow_phase_ratio
 	var orange_end := yellow_phase_ratio + orange_phase_ratio
@@ -583,8 +582,6 @@ func _start_looting() -> void:
 	if _magnet and _current_pile and _current_pile.pile_data:
 		_magnet.activate(_current_pile.pile_data, _current_pile, _get_threat_level())
 		_magnet.set_spawn_paused_for_departure(false)
-
-	# Threat is driven only by passive time now; magnet use no longer adds threat.
 
 	# Start departure timer, driven by the event text countdown.
 	var event_text := _get_event_text()
@@ -851,6 +848,8 @@ func _end_activation_effects() -> void:
 
 func stop_for_run_end() -> void:
 	_advancing = false
+	_state = State.COOLDOWN
+	set_process(false)
 	if _cooldown_timer:
 		_cooldown_timer.stop()
 	if _warning_icon:

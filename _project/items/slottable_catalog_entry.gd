@@ -13,7 +13,7 @@ class_name SlottableCatalogEntry
 func get_display_name() -> String:
 	if item_data != null and item_data.has_method("get_display_name"):
 		return String(item_data.call("get_display_name"))
-	if item_data != null and _has_property(item_data, "display_name"):
+	if item_data != null and Utils.has_property(item_data, "display_name"):
 		var name := String(item_data.get("display_name"))
 		if not name.is_empty():
 			return name
@@ -23,7 +23,7 @@ func get_display_name() -> String:
 func get_icon() -> Texture2D:
 	if item_data != null and item_data.has_method("get_icon"):
 		return item_data.call("get_icon") as Texture2D
-	if item_data != null and _has_property(item_data, "icon"):
+	if item_data != null and Utils.has_property(item_data, "icon"):
 		return item_data.get("icon") as Texture2D
 	return null
 
@@ -44,13 +44,6 @@ func get_unlock_cost_text() -> String:
 func get_research_unlock_id() -> StringName:
 	if research_unlock_id != &"":
 		return research_unlock_id
-	if item_data != null and _has_property(item_data, "item_id"):
+	if item_data != null and Utils.has_property(item_data, "item_id"):
 		return item_data.get("item_id") as StringName
 	return StringName(get_display_name().to_snake_case())
-
-
-func _has_property(object: Object, property_name: String) -> bool:
-	for property in object.get_property_list():
-		if String(property.get("name", "")) == property_name:
-			return true
-	return false

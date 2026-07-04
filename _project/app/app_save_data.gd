@@ -31,16 +31,19 @@ static func _migrate_legacy_resource_paths() -> void:
 	var text := file.get_as_text()
 	file.close()
 
+	# Ordered oldest-layout-first; later rules assume earlier ones already ran.
 	var migrated := text
 	migrated = migrated.replace("res://_project/player/equipment/", "res://_project/items/equipment/")
-	migrated = migrated.replace("res://_project/items/resources/", "res://_project/items/salvage/resources/")
-	migrated = migrated.replace("res://_project/items/sprites/", "res://_project/items/salvage/sprites/")
-	migrated = migrated.replace("res://_project/items/salvage_item", "res://_project/items/salvage/salvage_item")
-	migrated = migrated.replace("res://_project/items/salvage_part", "res://_project/items/salvage/salvage_part")
-	migrated = migrated.replace("res://_project/items/salvage/salvage/salvage_", "res://_project/items/salvage/salvage_")
-	migrated = migrated.replace("res://_project/items/salvage/salvage/resources/", "res://_project/items/salvage/resources/")
-	migrated = migrated.replace("res://_project/items/salvage/salvage/sprites/", "res://_project/items/salvage/sprites/")
+	migrated = migrated.replace("res://_project/items/resources/", "res://_project/salvage/catalog/")
+	migrated = migrated.replace("res://_project/items/sprites/", "res://_project/salvage/sprites/")
+	migrated = migrated.replace("res://_project/items/salvage_item", "res://_project/salvage/salvage_item")
+	migrated = migrated.replace("res://_project/items/salvage_part", "res://_project/salvage/salvage_part")
+	migrated = migrated.replace("res://_project/items/salvage/salvage/", "res://_project/items/salvage/")
 	migrated = migrated.replace("res://_project/items/salvage/equipment/", "res://_project/items/equipment/")
+	# 2026-07 reorganization: the salvage domain moved to res://_project/salvage/.
+	migrated = migrated.replace("res://_project/items/salvage/resources/", "res://_project/salvage/catalog/")
+	migrated = migrated.replace("res://_project/items/salvage/", "res://_project/salvage/")
+	migrated = migrated.replace("res://_project/level/salvage/", "res://_project/salvage/")
 	if migrated == text:
 		return
 
@@ -190,31 +193,6 @@ func can_pay_costs(costs: Array[Resource]) -> bool:
 		if get_storage_quantity(item_data) < quantity:
 			return false
 	return true
-
-
-func spend_costs(costs: Array[Resource]) -> bool:
-	if not can_pay_costs(costs):
-		return false
-
-	for cost in costs:
-		if cost == null:
-			continue
-		var item_data := cost.get("item_data") as SalvageItemData
-		var quantity := int(cost.get("quantity"))
-		if item_data != null and quantity > 0:
-			_remove_storage_item(item_data, quantity)
-	save_to_disk()
-	return true
-
-
-func spend_upgrade_cost(upgrade: Resource) -> bool:
-	if upgrade == null:
-		return false
-	if bool(upgrade.call("is_maxed")):
-		return false
-
-	var level_cost := upgrade.call("get_next_level_cost") as Resource
-	return spend_level_cost(level_cost)
 
 
 func can_spend_scrap_metal(amount: int) -> bool:

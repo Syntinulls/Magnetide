@@ -3,7 +3,7 @@ class_name AppRoot
 
 const RunControllerScript := preload("res://_project/run/run_controller.gd")
 const AppSaveDataScript := preload("res://_project/app/app_save_data.gd")
-const RunSummaryPopupScene := preload("res://_project/app/screens/salvage_results_popup.tscn")
+const RunSummaryPopupScene := preload("res://_project/app/screens/salvage/run_summary_popup.tscn")
 
 @export var default_level: LevelDefinition
 @export var default_run_loadout: RunLoadout
@@ -111,25 +111,21 @@ func _show_salvage_process_screen(result: RunResult) -> void:
 		return
 	if screen.has_method("set_run_result"):
 		screen.set_run_result(result)
-	if screen.has_signal("start_requested"):
-		screen.start_requested.connect(_on_salvage_screen_start_requested)
 	if screen.has_signal("station_requested"):
 		screen.station_requested.connect(_on_salvage_screen_station_requested)
-	if screen.has_signal("main_menu_requested"):
-		screen.main_menu_requested.connect(_on_salvage_screen_main_menu_requested)
 
 
 func _show_death_summary_screen(result: RunResult) -> void:
 	_clear_screen()
 
-	var popup := RunSummaryPopupScene.instantiate() as SalvageResultsPopup
+	var popup := RunSummaryPopupScene.instantiate() as RunSummaryPopup
 	if popup == null:
 		_show_station_screen()
 		return
 
 	_active_screen = popup
 	_screen_root.add_child(_active_screen)
-	popup.setup(result, [], _build_run_stats(result, 0))
+	popup.setup(result, [], result.to_stats_dict())
 	popup.station_requested.connect(_on_death_summary_station_requested)
 
 
@@ -149,14 +145,14 @@ func _show_run_summary_screen(result: RunResult) -> void:
 
 	_clear_screen()
 
-	var popup := RunSummaryPopupScene.instantiate() as SalvageResultsPopup
+	var popup := RunSummaryPopupScene.instantiate() as RunSummaryPopup
 	if popup == null:
 		_show_station_screen()
 		return
 
 	_active_screen = popup
 	_screen_root.add_child(_active_screen)
-	popup.setup(result, entries, _build_run_stats(result, 0))
+	popup.setup(result, entries, result.to_stats_dict())
 	popup.station_requested.connect(_show_station_screen)
 
 
@@ -261,17 +257,7 @@ func _on_map_station_requested() -> void:
 	_show_station_screen()
 
 
-func _on_salvage_screen_start_requested() -> void:
-	_collect_salvage_screen_storage()
-	start_run(default_level, _get_current_run_loadout())
-
-
 func _on_salvage_screen_station_requested() -> void:
-	_collect_salvage_screen_storage()
-	_show_station_screen()
-
-
-func _on_salvage_screen_main_menu_requested() -> void:
 	_collect_salvage_screen_storage()
 	_show_station_screen()
 
@@ -303,6 +289,14 @@ func _on_death_summary_station_requested() -> void:
 	_show_station_screen()
 
 
+## Discards the active run entirely (no loot, scrap, or stats are banked) and
+## returns to the station. Used by the pause menu's ABANDON RUN.
+func abandon_run_to_station() -> void:
+	Engine.time_scale = 1.0
+	get_tree().paused = false
+	_show_station_screen()
+
+
 func _collect_salvage_screen_storage() -> void:
 	if _save_data == null or _active_screen == null:
 		return
@@ -315,16 +309,6 @@ func _get_current_run_loadout() -> RunLoadout:
 	if _save_data != null:
 		return _save_data.get("current_run_loadout") as RunLoadout
 	return default_run_loadout
-
-
-func _build_run_stats(result: RunResult, items_salvaged: int = 0) -> Dictionary:
-	return {
-		"time_elapsed": result.elapsed_seconds if result != null else 0.0,
-		"enemies_killed": result.enemies_killed if result != null else 0,
-		"collected_items": result.salvage_items_collected if result != null else 0,
-		"scrap_collected": result.scrap_metal_collected if result != null else 0,
-		"items_salvaged": items_salvaged,
-	}
 
 
 func get_save_data() -> Resource:

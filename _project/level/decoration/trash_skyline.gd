@@ -1,5 +1,5 @@
 extends Node2D
-class_name LevelSkyline
+class_name TrashSkyline
 
 @export_group("Positioning")
 ## Y position ratio for the skyline (0.0 = top, 1.0 = bottom).
@@ -35,23 +35,13 @@ func _ready() -> void:
 		preload("res://_project/level/decoration/sprites/trash_mountain_3_crop1.png"),
 	]
 	
-	_level = _find_level_node()
+	_level = Utils.find_level_ancestor(self)
 	if _level and "viewport_anchor" in _level:
 		_viewport_anchor = _level.viewport_anchor
 		_viewport_anchor.viewport_changed.connect(_on_viewport_changed)
 	
 	# Defer generation to ensure viewport size is correct
 	call_deferred("_generate_skyline")
-
-
-func _find_level_node() -> Node:
-	# Traverse up the tree to find the Level node (may be past SubViewport)
-	var node := get_parent()
-	while node:
-		if "level_speed" in node and "viewport_anchor" in node:
-			return node
-		node = node.get_parent()
-	return null
 
 
 func _on_viewport_changed(_size: Vector2) -> void:
