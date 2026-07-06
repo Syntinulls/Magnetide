@@ -25,8 +25,10 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 ## Per-batch max spawn count, indexed by threat level 1-10. Combined (min) with
 ## each enemy profile's own max_batch_size. Last value reused.
 @export var batch_size_by_level: Array[int] = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
-## Spawn interval multiplier while the threat cap is reached (faster = more pressure).
-@export_range(0.05, 1.0, 0.05) var cap_state_interval_multiplier: float = 0.6
+## Spawn-rate multiplier while the threat cap is reached (storm imminent). Works
+## like magnet_active_spawn_rate_multiplier — the interval is divided by this — so
+## >1 spawns enemies more often to pressure the leave-or-continue decision.
+@export_range(0.1, 10.0, 0.1, "or_greater") var cap_state_spawn_rate_multiplier: float = 3.0
 ## Spawn-rate multiplier while the magnet minigame is active. >1 = enemies spawn
 ## more often during looting than in idle traversal (the interval is divided by
 ## this). 1.0 = no change.
@@ -350,9 +352,11 @@ func _current_max_concurrent() -> int:
 
 func _current_spawn_interval() -> float:
 	var interval := _float_value_for_level(spawn_interval_by_level, _get_current_threat_level(), 10.0)
-	if _is_cap_reached():
-		interval *= cap_state_interval_multiplier
-	if _is_magnet_active() and magnet_active_spawn_rate_multiplier > 0.0:
+	# Cap-reached (storm imminent) and magnet-active rates never stack; storm
+	# imminent takes precedence if they ever coincide.
+	if _is_cap_reached() and cap_state_spawn_rate_multiplier > 0.0:
+		interval /= cap_state_spawn_rate_multiplier
+	elif _is_magnet_active() and magnet_active_spawn_rate_multiplier > 0.0:
 		interval /= magnet_active_spawn_rate_multiplier
 	return maxf(interval, 0.1)
 

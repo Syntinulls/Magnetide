@@ -29,7 +29,7 @@ const THREAT_SEGMENT_SIZE: float = MAX_THREAT / float(LEVEL_COUNT)
 ## Target run length (seconds) to fill the whole bar with no decision delays:
 ## 20 minutes -> 5 points/minute -> 2 minutes per segment.
 const DEFAULT_RUN_DURATION_SECONDS: float = 1200.0
-const DEFAULT_STORM_COUNTDOWN_SECONDS: float = 60.0
+const DEFAULT_STORM_COUNTDOWN_SECONDS: float = 30.0
 
 const DEBUG_THREAT_ADD_AMOUNT: float = 20.0
 
