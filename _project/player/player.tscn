@@ -205,7 +205,7 @@ visible = false
 shape = SubResource("CapsuleShape2D_g7wmw")
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=1552825495]
-collision_layer = 0
+collision_layer = 8
 collision_mask = 0
 script = ExtResource("2_hitbox")
 owner_path = NodePath("..")

@@ -1,0 +1,54 @@
+[gd_scene format=3 uid="uid://dny5rf2unjs3q"]
+
+[ext_resource type="Script" uid="uid://bxwoh3kr42uch" path="res://_project/enemies/mosquito/mosquito.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
+[ext_resource type="SpriteFrames" path="res://_project/enemies/mosquito/mosquito_sprite_frames.tres" id="4_odlmr"]
+[ext_resource type="SpriteFrames" uid="uid://dus88tsf7ka22" path="res://_project/enemies/mosquito/mosquito_wing_back_sprite_frames.tres" id="4_wing_back"]
+[ext_resource type="SpriteFrames" uid="uid://4sids8ibsnch" path="res://_project/enemies/mosquito/mosquito_wing_fore_sprite_frames.tres" id="5_wing_fore"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+shader = ExtResource("2_shader")
+shader_parameter/flash_intensity = 0.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_mosquito_hitbox"]
+size = Vector2(48, 40)
+
+[node name="Mosquito" type="CharacterBody2D" unique_id=117270025]
+motion_mode = 1
+script = ExtResource("1_script")
+hover_distance = 1000.0
+resume_margin = 200.0
+wing_frame_offsets = {
+&"attack": PackedVector2Array(4, 4),
+&"death": PackedVector2Array(-8, -8),
+&"idle": PackedVector2Array(0, 0),
+&"move": PackedVector2Array(0, 0),
+&"windup": PackedVector2Array(-8, -8)
+}
+
+[node name="Muzzle" type="Marker2D" parent="." unique_id=1929457646]
+position = Vector2(110, -15)
+
+[node name="WingBack" type="AnimatedSprite2D" parent="." unique_id=51089519]
+sprite_frames = ExtResource("4_wing_back")
+animation = &"fly"
+
+[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=695932254]
+material = SubResource("ShaderMaterial_flash")
+sprite_frames = ExtResource("4_odlmr")
+animation = &"idle"
+
+[node name="WingFore" type="AnimatedSprite2D" parent="." unique_id=1247941610]
+sprite_frames = ExtResource("5_wing_fore")
+animation = &"fly"
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=2027282538]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_hitbox")
+owner_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=126519331]
+visible = false
+shape = SubResource("RectangleShape2D_mosquito_hitbox")

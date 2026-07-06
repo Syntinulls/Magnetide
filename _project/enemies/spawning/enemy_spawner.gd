@@ -107,19 +107,24 @@ func _spawn_batch() -> void:
 			_track_enemy(enemy)
 
 
-## Force-spawn a single basic enemy immediately, ignoring the spawn timer.
-## Used for artifact-pile pressure and debug.
-func force_spawn_basic_enemy() -> void:
+## Force-spawn a single random enemy from the roster, ignoring the spawn timer and
+## threat/magnet gating so any registered enemy is testable. Debug only.
+func force_spawn_random_enemy() -> void:
 	_cleanup_living_enemies()
 
-	var profile := _get_basic_profile()
-	if profile == null:
+	var spawnable: Array[EnemySpawnProfile] = []
+	for profile in enemy_profiles:
+		if profile == null or profile.max_batch_size <= 0:
+			continue
+		if _resolve_valid_zones(profile.allowed_spawn_zones).is_empty():
+			continue
+		spawnable.append(profile)
+
+	if spawnable.is_empty():
 		return
 
+	var profile := spawnable[_rng.randi_range(0, spawnable.size() - 1)]
 	var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
-	if valid_zones.is_empty():
-		return
-
 	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
 	var enemy := _spawn_enemy(profile, zone)
 	if enemy != null:
@@ -211,24 +216,6 @@ func _roll_weighted_profile(profiles: Array[EnemySpawnProfile]) -> EnemySpawnPro
 			return profile
 
 	return profiles[profiles.size() - 1]
-
-
-## Lowest-threat magnet-active enemy, used by force_spawn_basic_enemy.
-func _get_basic_profile() -> EnemySpawnProfile:
-	var level := _get_current_threat_level()
-	var best: EnemySpawnProfile = null
-
-	for profile in enemy_profiles:
-		if profile == null or profile.max_batch_size <= 0:
-			continue
-		if not profile.can_spawn_magnet_active:
-			continue
-		if not profile.is_eligible_at_level(level):
-			continue
-		if best == null or profile.min_threat_level < best.min_threat_level:
-			best = profile
-
-	return best
 
 
 func _resolve_valid_zones(allowed_zone_names: PackedStringArray) -> Array[Area2D]:

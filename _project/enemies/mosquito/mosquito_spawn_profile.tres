@@ -1,0 +1,15 @@
+[gd_resource type="Resource" script_class="EnemySpawnProfile" format=3 uid="uid://dg8vx2ya4b0w3"]
+
+[ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/enemies/spawning/enemy_spawn_profile.gd" id="1_profile"]
+[ext_resource type="PackedScene" uid="uid://dny5rf2unjs3q" path="res://_project/enemies/mosquito/mosquito.tscn" id="2_enemy_scene"]
+[ext_resource type="Resource" uid="uid://hnnb3qi44nbi" path="res://_project/enemies/mosquito/mosquito_data.tres" id="3_enemy_data"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"mosquito"
+enemy_scene = ExtResource("2_enemy_scene")
+enemy_data = ExtResource("3_enemy_data")
+allowed_spawn_zones = PackedStringArray("SpawnW", "SpawnWNW", "SpawnE", "SpawnENE")
+min_threat_level = 2
+can_spawn_magnet_idle = true
+max_batch_size = 2

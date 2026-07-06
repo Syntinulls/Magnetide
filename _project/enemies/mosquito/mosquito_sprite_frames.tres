@@ -1,0 +1,49 @@
+[gd_resource type="SpriteFrames" format=3]
+
+[ext_resource type="Texture2D" uid="uid://bw01ebpxun52k" path="res://_project/enemies/mosquito/sprites/enemy_2_idle_body_frame.png" id="1_idle"]
+[ext_resource type="Texture2D" uid="uid://b7lxkncacrys" path="res://_project/enemies/mosquito/sprites/enemy_2_prepare_body_frame.png" id="2_prepare"]
+[ext_resource type="Texture2D" uid="uid://cgja3nl0wg3wl" path="res://_project/enemies/mosquito/sprites/enemy_2_shoot_body_frame.png" id="3_shoot"]
+[ext_resource type="Texture2D" uid="uid://c4tqwa7ymsyii" path="res://_project/enemies/mosquito/sprites/enemy_2_dead_body_frame.png" id="4_dead"]
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("1_idle")
+}],
+"loop": true,
+"name": &"move",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_prepare")
+}],
+"loop": false,
+"name": &"windup",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("3_shoot")
+}],
+"loop": false,
+"name": &"attack",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_dead")
+}],
+"loop": false,
+"name": &"death",
+"speed": 1.0
+}]

@@ -1,0 +1,48 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://4sids8ibsnch"]
+
+[ext_resource type="Texture2D" uid="uid://c8ce205a510hs" path="res://_project/enemies/mosquito/sprites/enemy_2_flying_wing_fore.png" id="1_fly"]
+[ext_resource type="Texture2D" uid="uid://byvjvbuvuw3hv" path="res://_project/enemies/mosquito/sprites/enemy_2_dead_wing_fore.png" id="2_dead"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fore_0"]
+atlas = ExtResource("1_fly")
+region = Rect2(0, 0, 256, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fore_1"]
+atlas = ExtResource("1_fly")
+region = Rect2(256, 0, 256, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fore_2"]
+atlas = ExtResource("1_fly")
+region = Rect2(512, 0, 256, 192)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fore_3"]
+atlas = ExtResource("1_fly")
+region = Rect2(768, 0, 256, 192)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_dead")
+}],
+"loop": false,
+"name": &"dead",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fore_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fore_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fore_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fore_3")
+}],
+"loop": true,
+"name": &"fly",
+"speed": 16.0
+}]

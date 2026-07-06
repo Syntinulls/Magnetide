@@ -61,7 +61,7 @@ func _unhandled_input(event: InputEvent) -> void:
 	if Magnetide.research_ui_input_captured:
 		return
 	if _enemy_spawner:
-		_enemy_spawner.force_spawn_basic_enemy()
+		_enemy_spawner.force_spawn_random_enemy()
 		get_viewport().set_input_as_handled()
 
 

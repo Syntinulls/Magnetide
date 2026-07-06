@@ -106,7 +106,7 @@ func _unhandled_input(event: InputEvent) -> void:
 		if event.keycode == KEY_T:
 			add_threat(DEBUG_THREAT_ADD_AMOUNT)
 			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_Y:
+		elif event.keycode == KEY_U:
 			raise_cap()
 			get_viewport().set_input_as_handled()
 

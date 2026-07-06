@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://drcyc1tres0x2"]
 
 [ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
-[ext_resource type="Script" path="res://_project/items/augments/increased_recycling_behavior.gd" id="2_increased_recycling_behavior"]
+[ext_resource type="Script" uid="uid://brcyc1bhv0x2b" path="res://_project/items/augments/increased_recycling_behavior.gd" id="2_increased_recycling_behavior"]
 [ext_resource type="Texture2D" uid="uid://n3p6ul4ffspg" path="res://_project/items/augments/sprites/augment_increasedrecycling.png" id="3_increased_recycling_icon"]
 [ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/run/run_upgrade_level_cost.gd" id="4_level_cost"]
 
