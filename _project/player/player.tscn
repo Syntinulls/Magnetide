@@ -118,7 +118,7 @@ radius = 26.0
 height = 114.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_g7wmw"]
-size = Vector2(52, 112)
+size = Vector2(48, 83)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_4y3ad"]
 atlas = ExtResource("14_5c2p4")
@@ -212,7 +212,7 @@ owner_path = NodePath("..")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=360981932]
 visible = false
-position = Vector2(-0.5, 0)
+position = Vector2(0, -15.5)
 shape = SubResource("RectangleShape2D_g7wmw")
 
 [node name="ArmSprite" type="Sprite2D" parent="." unique_id=1625981677]

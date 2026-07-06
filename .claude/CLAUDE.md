@@ -1,1 +1,1 @@
-Always refer to the specification file stored at specs/project_organization.md for rules on how to develop this project when it comes to editing code, creating new files, or organization.
+Always refer to the specification file stored at specs/project_organization.md for rules on how to develop this project when it comes to editing code, creating new files, or reorganizing.

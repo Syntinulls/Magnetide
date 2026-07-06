@@ -8,8 +8,6 @@ signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 signal damaged(amount: float, source: Node)
 
 @export var speed: float = 400.0
-@export var jump_velocity: float = -600.0
-@export var gravity: float = 1600.0
 @export_group("Combat")
 @export var max_health: float = 100.0
 @export var max_shield: float = 2.0
@@ -45,6 +43,12 @@ const FOOTSTEP_SFX: Array[String] = [
 const FOOTSTEP_SFX_VOLUME_DB := -10.0
 const FOOTSTEP_INTERVAL_SECONDS := 0.28
 const FOOTSTEP_MIN_SPEED := 8.0
+
+## Jump physics resolved from the run loadout on apply — derived from the
+## loadout's jump max/min height and time-to-apex, never authored directly here.
+var jump_velocity: float = -600.0
+var jump_cut_velocity: float = -360.0
+var gravity: float = 1600.0
 
 var input_enabled: bool = true
 ## While true the player can neither receive nor deal damage (departure cutscene).
@@ -170,8 +174,9 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 		_cleanup_current_equipment()
 
 	speed = loadout.player_speed
-	jump_velocity = loadout.player_jump_velocity
-	gravity = loadout.player_gravity
+	jump_velocity = loadout.get_player_jump_velocity()
+	jump_cut_velocity = loadout.get_player_jump_cut_velocity()
+	gravity = loadout.get_player_gravity()
 	max_health = loadout.player_max_health
 	max_shield = loadout.player_max_shield
 	shield_recharge_delay = loadout.player_shield_recharge_delay
@@ -315,9 +320,12 @@ func _physics_process(delta: float) -> void:
 			if Input.is_action_just_pressed("interact"):
 				_try_open_hovered_research_station()
 		
-		if Input.is_action_just_pressed("move_jump") and is_on_floor():
+		# Variable-height jump: hold to reach max height, release early to cut to min.
+		if is_on_floor() and Input.is_action_pressed("move_jump"):
 			velocity.y = jump_velocity
 			_play_jump_sfx()
+		if Input.is_action_just_released("move_jump") and velocity.y < jump_cut_velocity:
+			velocity.y = jump_cut_velocity
 		
 		var direction := Input.get_axis("move_left", "move_right")
 		velocity.x = direction * speed

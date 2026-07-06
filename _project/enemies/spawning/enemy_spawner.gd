@@ -17,14 +17,20 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 @export var spawn_interval_by_level: Array[float] = [12.0, 10.0, 8.0, 6.5, 5.0, 4.0, 3.2, 2.5, 2.0, 1.5]
 ## Max concurrent living enemies indexed by threat level 1-10. Last value reused.
 @export var max_concurrent_by_level: Array[int] = [4, 6, 9, 12, 16, 20, 25, 31, 37, 44]
-## Batches rolled per spawn pass, indexed by threat level 1-10. More batches =
-## more enemies added each pass. Last value reused.
-@export var batches_per_spawn_by_level: Array[int] = [1, 1, 2, 2, 3, 3, 4, 4, 5, 5]
+## Max batches spawned per pass, indexed by threat level 1-10. Each pass rolls
+## 1..this many batches and independently picks a weighted eligible type for each,
+## so a type can repeat (e.g. two batches of worms, or one worm + one mosquito).
+## Last value reused.
+@export var max_spawn_occurrences_by_level: Array[int] = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
 ## Per-batch max spawn count, indexed by threat level 1-10. Combined (min) with
 ## each enemy profile's own max_batch_size. Last value reused.
 @export var batch_size_by_level: Array[int] = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
 ## Spawn interval multiplier while the threat cap is reached (faster = more pressure).
 @export_range(0.05, 1.0, 0.05) var cap_state_interval_multiplier: float = 0.6
+## Spawn-rate multiplier while the magnet minigame is active. >1 = enemies spawn
+## more often during looting than in idle traversal (the interval is divided by
+## this). 1.0 = no change.
+@export_range(0.1, 10.0, 0.1, "or_greater") var magnet_active_spawn_rate_multiplier: float = 2.0
 ## Enemy max-health multiplier at the top threat level. Level 1 uses the base
 ## EnemyData value (1.0x) and it scales linearly to this at level 10. Locked in
 ## per enemy at spawn.
@@ -33,9 +39,20 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 ## linearly to this at level 10. Locked in per enemy at spawn.
 @export_range(1.0, 20.0, 0.1) var damage_multiplier_at_max_level: float = 3.0
 
+@export_group("Batch Spread")
+## Within a batch, enemies spawn one at a time, each offset from the previous by a
+## random distance in [min, max] px along the axis perpendicular to its direction
+## toward the player/ship (a random side). Perpendicular keeps the spread lateral
+## so enemies fan out sideways instead of creeping in front of / behind the group
+## toward the player's screen.
+@export_range(0.0, 2000.0, 1.0, "or_greater") var batch_spread_min_distance: float = 100.0
+@export_range(0.0, 2000.0, 1.0, "or_greater") var batch_spread_max_distance: float = 400.0
+
 var _zone_lookup: Dictionary = {}
 var _living_enemies: Array[Enemy] = []
 var _spawn_timer_remaining: float = 0.0
+## Per-profile spawn cooldown remaining, in seconds. Keyed by EnemySpawnProfile.
+var _profile_cooldowns: Dictionary = {}
 var _threat_manager: ThreatManager = null
 var _rng := RandomNumberGenerator.new()
 
@@ -56,6 +73,7 @@ func _process(delta: float) -> void:
 		return
 
 	_cleanup_living_enemies()
+	_tick_profile_cooldowns(delta)
 
 	_spawn_timer_remaining -= delta
 	if _spawn_timer_remaining > 0.0:
@@ -66,18 +84,20 @@ func _process(delta: float) -> void:
 
 
 func _run_spawn_pass() -> void:
-	var max_batches := _int_value_for_level(batches_per_spawn_by_level, _get_current_threat_level(), 1)
-	var batch_count := _rng.randi_range(1, maxi(max_batches, 1))
-	for _i in range(batch_count):
-		_spawn_batch()
-
-
-func _spawn_batch() -> void:
 	var eligible := _get_eligible_profiles()
 	if eligible.is_empty():
 		return
 
-	var profile := _roll_weighted_profile(eligible)
+	var max_occurrences := _int_value_for_level(max_spawn_occurrences_by_level, _get_current_threat_level(), 1)
+	var occurrence_count := _rng.randi_range(1, maxi(max_occurrences, 1))
+
+	# Each batch independently picks a weighted eligible type (with replacement),
+	# so the same type can appear in more than one batch this pass.
+	for _i in range(occurrence_count):
+		_spawn_batch(_roll_weighted_profile(eligible))
+
+
+func _spawn_batch(profile: EnemySpawnProfile) -> void:
 	if profile == null:
 		return
 
@@ -101,10 +121,47 @@ func _spawn_batch() -> void:
 		return
 
 	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
+	var reference_point := _get_spread_reference_point()
+	var spawn_position := _sample_point_in_zone(zone)
 	for _i in range(spawn_count):
-		var enemy := _spawn_enemy(profile, zone)
+		if _i > 0:
+			spawn_position += _random_batch_spread_offset(spawn_position, reference_point)
+		var enemy := _spawn_enemy(profile, spawn_position)
 		if enemy != null:
 			_track_enemy(enemy)
+
+	if profile.spawn_cooldown > 0.0:
+		_profile_cooldowns[profile] = profile.spawn_cooldown
+
+
+## Offset for the next enemy in a batch: perpendicular to the direction from
+## `from_position` toward `reference_point`, on a random side, a random distance in
+## the configured [min, max] range. Lateral spread avoids pushing enemies in front
+## of / behind the group toward the player.
+func _random_batch_spread_offset(from_position: Vector2, reference_point: Vector2) -> Vector2:
+	var to_target := reference_point - from_position
+	var perpendicular := Vector2(-to_target.y, to_target.x)
+	if perpendicular.length_squared() <= 0.0001:
+		perpendicular = Vector2.UP
+	perpendicular = perpendicular.normalized()
+	if _rng.randf() < 0.5:
+		perpendicular = -perpendicular
+
+	var min_distance := minf(batch_spread_min_distance, batch_spread_max_distance)
+	var max_distance := maxf(batch_spread_min_distance, batch_spread_max_distance)
+	return perpendicular * _rng.randf_range(min_distance, max_distance)
+
+
+## Point the batch spread orients around — perpendicular offsets are taken relative
+## to the direction toward this. Prefers the player, then the ship.
+func _get_spread_reference_point() -> Vector2:
+	var player := get_tree().get_first_node_in_group("player") as Node2D
+	if player != null and is_instance_valid(player):
+		return player.global_position
+	var ship := get_tree().get_first_node_in_group(EnemyData.GROUP_SHIP) as Node2D
+	if ship != null and is_instance_valid(ship):
+		return ship.global_position
+	return global_position
 
 
 ## Force-spawn a single random enemy from the roster, ignoring the spawn timer and
@@ -126,12 +183,12 @@ func force_spawn_random_enemy() -> void:
 	var profile := spawnable[_rng.randi_range(0, spawnable.size() - 1)]
 	var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
 	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
-	var enemy := _spawn_enemy(profile, zone)
+	var enemy := _spawn_enemy(profile, _sample_point_in_zone(zone))
 	if enemy != null:
 		_track_enemy(enemy)
 
 
-func _spawn_enemy(profile: EnemySpawnProfile, zone: Area2D) -> Enemy:
+func _spawn_enemy(profile: EnemySpawnProfile, spawn_global_position: Vector2) -> Enemy:
 	var enemy_scene := profile.enemy_scene if profile.enemy_scene != null else DEFAULT_ENEMY_SCENE
 	var enemy := enemy_scene.instantiate() as Enemy
 	if enemy == null:
@@ -142,7 +199,7 @@ func _spawn_enemy(profile: EnemySpawnProfile, zone: Area2D) -> Enemy:
 	enemy.health_scale = _threat_stat_scale(health_multiplier_at_max_level, level)
 	enemy.damage_scale = _threat_stat_scale(damage_multiplier_at_max_level, level)
 	enemy.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
-	enemy.position = to_local(_sample_point_in_zone(zone))
+	enemy.position = to_local(spawn_global_position)
 	add_child(enemy)
 	return enemy
 
@@ -194,11 +251,23 @@ func _get_eligible_profiles() -> Array[EnemySpawnProfile]:
 			continue
 		if not magnet_active and not profile.can_spawn_magnet_idle:
 			continue
+		if _profile_cooldowns.has(profile):
+			continue
 		if _resolve_valid_zones(profile.allowed_spawn_zones).is_empty():
 			continue
 		eligible.append(profile)
 
 	return eligible
+
+
+## Decrement each profile's remaining spawn cooldown, dropping expired entries.
+func _tick_profile_cooldowns(delta: float) -> void:
+	for profile in _profile_cooldowns.keys():
+		var remaining: float = _profile_cooldowns[profile] - delta
+		if remaining <= 0.0:
+			_profile_cooldowns.erase(profile)
+		else:
+			_profile_cooldowns[profile] = remaining
 
 
 func _roll_weighted_profile(profiles: Array[EnemySpawnProfile]) -> EnemySpawnProfile:
@@ -283,6 +352,8 @@ func _current_spawn_interval() -> float:
 	var interval := _float_value_for_level(spawn_interval_by_level, _get_current_threat_level(), 10.0)
 	if _is_cap_reached():
 		interval *= cap_state_interval_multiplier
+	if _is_magnet_active() and magnet_active_spawn_rate_multiplier > 0.0:
+		interval /= magnet_active_spawn_rate_multiplier
 	return maxf(interval, 0.1)
 
 

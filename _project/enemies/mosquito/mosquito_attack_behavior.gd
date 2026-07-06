@@ -1,23 +1,26 @@
 extends AttackBehavior
 class_name MosquitoAttackBehavior
 
-## Windup -> shoot -> recover firing loop. Gated on the Mosquito holding position,
-## so the base Enemy state machine only enters ATTACK once the mosquito has settled
-## at hover range. On the shoot frame it spawns a needle Projectile aimed at the
-## current target; the body sprite drives the windup/shoot animations while the
-## wings keep flapping independently.
+## Windup -> shoot -> recover -> cooldown firing cycle. Gated on the Mosquito
+## holding position, so the base Enemy state machine only enters ATTACK once the
+## mosquito has settled at hover range. On the shoot frame it spawns a needle
+## Projectile aimed at the current target; the body sprite drives the
+## windup/shoot animations while the wings keep flapping independently.
 
 ## Seconds the body winds up before the needle is released.
-@export var windup_time: float = 0.5
-## Seconds the mosquito recovers after firing before the next windup begins.
-@export var recover_time: float = 0.6
+@export var windup_time: float = 0.8
+## Seconds the mosquito recovers after firing before the shoot cooldown begins.
+@export var recover_time: float = 0.2
+## Seconds the mosquito idles after recovering before it winds up the next shot.
+## Separates each shot instead of looping windup->shoot back-to-back.
+@export var shoot_cooldown: float = 3.0
 
 @export_group("Needle")
 ## Texture used for the spawned needle projectile. Left unset = no projectile
 ## (safe no-op) until the art is assigned.
 @export var needle_sprite: Texture2D
 ## Needle travel speed in pixels/second.
-@export var needle_speed: float = 600.0
+@export var needle_speed: float = 800.0
 ## Needle lifetime in seconds before it despawns.
 @export var needle_lifetime: float = 4.0
 ## Extra distance ahead of the muzzle (toward the target) the needle spawns from.
@@ -37,6 +40,7 @@ func register_states(_enemy: Enemy) -> void:
 	add_state(&"windup")
 	add_state(&"shoot")
 	add_state(&"recover")
+	add_state(&"cooldown")
 
 
 func get_initial_state(_enemy: Enemy) -> StringName:
@@ -44,6 +48,11 @@ func get_initial_state(_enemy: Enemy) -> StringName:
 
 
 func on_enter_attack(enemy: Enemy) -> void:
+	# setup() pre-selects "windup" as the initial state, so a plain
+	# request_state(&"windup") here would no-op on the first attack and skip
+	# on_enter_state (timer reset + windup animation). Clear the state first so the
+	# windup is always entered fresh whenever ATTACK begins.
+	_current_state = &""
 	request_state(enemy, &"windup")
 
 
@@ -58,6 +67,9 @@ func on_enter_state(enemy: Enemy, state_name: StringName) -> void:
 			_fire_needle(enemy)
 		&"recover":
 			_timer = recover_time
+		&"cooldown":
+			_timer = shoot_cooldown
+			enemy.play_enemy_animation(Enemy.ANIM_IDLE)
 
 
 func update_state(enemy: Enemy, delta: float, state_name: StringName) -> void:
@@ -72,6 +84,10 @@ func update_state(enemy: Enemy, delta: float, state_name: StringName) -> void:
 		&"shoot":
 			request_state(enemy, &"recover")
 		&"recover":
+			_timer -= delta
+			if _timer <= 0.0:
+				request_state(enemy, &"cooldown")
+		&"cooldown":
 			_timer -= delta
 			if _timer <= 0.0:
 				request_state(enemy, &"windup")

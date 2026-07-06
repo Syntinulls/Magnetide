@@ -326,16 +326,19 @@ func _spawn_component_tokens(part_entries: Array[Dictionary], source_center: Vec
 		var part_count := maxi(int(part_entry.get("count", 1)), 1)
 		if part_data == null:
 			continue
-		var token := SalvageComponentTokenScene.instantiate() as SalvageComponentToken
-		if token == null:
-			continue
-		token.setup(part_data, component_token_display_size, part_count)
-		_stage_layer.add_child(token)
-		token.set_center_position(source_center)
-		token.visible = false
-		token.arrived.connect(_on_component_token_arrived)
-		_active_tokens.append(token)
-		spawned.append(token)
+		# One token per unit of quantity, so a rolled part of count N bursts and
+		# flies as N separate tokens rather than a single aggregated one.
+		for _unit in range(part_count):
+			var token := SalvageComponentTokenScene.instantiate() as SalvageComponentToken
+			if token == null:
+				continue
+			token.setup(part_data, component_token_display_size, 1)
+			_stage_layer.add_child(token)
+			token.set_center_position(source_center)
+			token.visible = false
+			token.arrived.connect(_on_component_token_arrived)
+			_active_tokens.append(token)
+			spawned.append(token)
 
 	return spawned
 

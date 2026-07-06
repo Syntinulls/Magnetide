@@ -310,6 +310,7 @@ script = ExtResource("13_storm")
 script = ExtResource("17_enemy_spawner")
 spawn_zones = Array[NodePath]([NodePath("../SpawnZones/SpawnN"), NodePath("../SpawnZones/SpawnNNE"), NodePath("../SpawnZones/SpawnNE"), NodePath("../SpawnZones/SpawnENE"), NodePath("../SpawnZones/SpawnE"), NodePath("../SpawnZones/SpawnESE"), NodePath("../SpawnZones/SpawnSE"), NodePath("../SpawnZones/SpawnSSE"), NodePath("../SpawnZones/SpawnESE/SpawnS"), NodePath("../SpawnZones/SpawnSSW"), NodePath("../SpawnZones/SpawnSW"), NodePath("../SpawnZones/SpawnWSW"), NodePath("../SpawnZones/SpawnW"), NodePath("../SpawnZones/SpawnWNW"), NodePath("../SpawnZones/SpawnNW"), NodePath("../SpawnZones/SpawnNNW")])
 enemy_profiles = Array[ExtResource("20_enemy_profile")]([ExtResource("22_x74ax"), ExtResource("23_mosquito")])
+spawn_interval_by_level = Array[float]([30.0, 28.0, 26.0, 24.0, 22.0, 20.0, 18.0, 16.0, 14.0, 12.0])
 
 [node name="SpawnZones" type="Node2D" parent="." unique_id=736015592]
 

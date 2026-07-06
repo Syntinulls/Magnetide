@@ -41,8 +41,15 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 
 @export_group("Player")
 @export var player_speed: float = 400.0
-@export var player_jump_velocity: float = -600.0
-@export var player_gravity: float = 1600.0
+## Apex height of a full-hold (maximum) jump, in pixels. Gravity and the launch
+## velocity are derived from this and player_jump_time_to_apex so both the height
+## and the airtime are exact.
+@export var player_jump_max_height: float = 150.0
+## Apex height of a tapped (minimum) jump, in pixels. Releasing jump while still
+## rising cuts the ascent so it peaks here.
+@export var player_jump_min_height: float = 25.0
+## Seconds from leaving the floor to the top of a full-hold jump.
+@export var player_jump_time_to_apex: float = 0.375
 @export var player_max_health: float = 100.0
 @export var player_max_shield: float = 0.0
 @export var player_shield_recharge_delay: float = 6.0
@@ -66,6 +73,32 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 @export var upgrade_base_values: Dictionary = {}
 @export var item_states: Array[Resource] = []
 @export var slot_states: Array[Resource] = []
+
+
+## Upward launch velocity (negative Y) of a full-hold jump: reaches
+## player_jump_max_height in player_jump_time_to_apex seconds under the derived
+## gravity.
+func get_player_jump_velocity() -> float:
+	if player_jump_time_to_apex <= 0.0:
+		return 0.0
+	return -2.0 * player_jump_max_height / player_jump_time_to_apex
+
+
+## Upward velocity (negative Y) the ascent is clamped to when jump is released
+## early, so a tapped jump peaks at player_jump_min_height. Derived so the min/max
+## heights are exact under the shared gravity.
+func get_player_jump_cut_velocity() -> float:
+	if player_jump_time_to_apex <= 0.0:
+		return 0.0
+	return -2.0 * sqrt(player_jump_max_height * player_jump_min_height) / player_jump_time_to_apex
+
+
+## Gravity that brings a full-hold jump to its apex in player_jump_time_to_apex
+## seconds, so both the height and the airtime match the authored values exactly.
+func get_player_gravity() -> float:
+	if player_jump_time_to_apex <= 0.0:
+		return 0.0
+	return 2.0 * player_jump_max_height / (player_jump_time_to_apex * player_jump_time_to_apex)
 
 
 func equip_weapon(weapon_data: WeaponData) -> void:

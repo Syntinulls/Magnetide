@@ -28,6 +28,11 @@ class_name EnemySpawnProfile
 @export var can_spawn_magnet_idle: bool = false
 ## Maximum number spawned in a single batch.
 @export_range(0, 99, 1) var max_batch_size: int = 1
+## Minimum seconds between spawns of THIS enemy, on top of the global spawn
+## interval. 0 = no throttle. Unlike spawn_weight (relative pick chance among
+## eligible enemies), this caps a single enemy's rate even when it is the only
+## one eligible — use it to make a specific enemy rarer.
+@export_range(0.0, 300.0, 0.5, "or_greater") var spawn_cooldown: float = 0.0
 
 
 ## True if this enemy is allowed to spawn at the given threat level (1-10).
