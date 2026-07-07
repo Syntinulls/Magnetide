@@ -17,6 +17,10 @@ const DEPARTURE_BOOST_CAMERA_RATIO: float = 0.22
 const DEPARTURE_LEVEL_SPEED_EPSILON: float = 1.0
 const DEPARTURE_PLAYER_WALK_SPEED: float = 180.0
 
+## Track that fades in when a run is entered. Later threat levels crossfade to a
+## random track from the bgm folder as the run advances out of each acid storm.
+const LEVEL_ENTRY_BGM: String = "bgm_zone1.ogg"
+
 var _level_definition: LevelDefinition = null
 var _level: Node = null
 var _game_ui: Control = null
@@ -26,6 +30,7 @@ var _magnet: Magnet = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
 var _storm_controller: StormController = null
+var _threat: ThreatManager = null
 var _run_loadout: RunLoadout = null
 var _artifact_tracker: RunArtifactTracker = RunArtifactTracker.new()
 var _active_augment_behaviors: Array[AugmentBehavior] = []
@@ -78,11 +83,13 @@ func _bind_runtime() -> void:
 	_enemy_spawner = _level.get_node_or_null("EnemySpawner") as EnemySpawner
 	_magnet_minigame = _level.get_node_or_null("MagnetMinigame") as MagnetMinigame
 	_storm_controller = _level.get_node_or_null("StormController") as StormController
+	_threat = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
 	_connect_runtime_signals()
 	_initialize_augments()
 	_sync_game_ui_scrap_counter()
+	_start_run_music()
 	set_process(true)
 
 
@@ -99,6 +106,8 @@ func _connect_runtime_signals() -> void:
 		for pylon in _ship.get_departure_pylons():
 			if not pylon.departure_requested.is_connected(_on_departure_requested):
 				pylon.departure_requested.connect(_on_departure_requested)
+	if _threat and not _threat.cap_raised.is_connected(_on_threat_cap_raised):
+		_threat.cap_raised.connect(_on_threat_cap_raised)
 
 
 func _process(delta: float) -> void:
@@ -126,6 +135,8 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 
 	_is_run_ending = true
 	_end_reason = reason
+	if Magnetide.bgm:
+		Magnetide.bgm.fade_out()
 	var departure_start_speed := _get_level_speed()
 	_shutdown_gameplay(reason != RunResult.EndReason.VOLUNTARY_DEPARTURE)
 	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
@@ -379,6 +390,16 @@ func _on_ship_destroyed() -> void:
 
 func _on_enemy_killed(_enemy: Enemy) -> void:
 	_enemies_killed += 1
+
+
+func _start_run_music() -> void:
+	if Magnetide.bgm:
+		Magnetide.bgm.play_track(LEVEL_ENTRY_BGM)
+
+
+func _on_threat_cap_raised(_new_cap: int) -> void:
+	if Magnetide.bgm:
+		Magnetide.bgm.fade_to_random_track()
 
 
 func record_scrap_metal_collected(amount: int) -> void:

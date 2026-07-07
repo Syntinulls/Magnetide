@@ -37,7 +37,8 @@ _project/                    All game content. (Root level is reserved for engin
 │       ├── station/         Station hub screen + slot widgets + popups.
 │       ├── salvage/         Salvage-processing minigame screen + run summary popup.
 │       └── preview/         Render-only player/ship preview stages (shared by screens).
-├── audio/                   SFX playback service (sfx_player.gd) + sound assets (sfx/).
+├── audio/                   Audio playback services + assets: sfx_player.gd + sfx/,
+│                            bgm_player.gd + bgm/ (looping background music, own bus).
 ├── combat/                  Combat primitives shared across concepts:
 │                            projectile, hitbox, enemy_target_point, muzzle_effect.
 ├── common/                  Generic, game-agnostic building blocks:

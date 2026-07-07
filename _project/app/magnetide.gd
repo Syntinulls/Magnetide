@@ -3,6 +3,7 @@ extends Node
 const DIGITAL_FONT: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
 const LABEL_FONT: Font = preload("res://_project/ui/fonts/Super Wonder.ttf")
 const SFX_PLAYER_SCRIPT: Script = preload("res://_project/audio/sfx_player.gd")
+const BGM_PLAYER_SCRIPT: Script = preload("res://_project/audio/bgm_player.gd")
 
 var _active_app_root: Node = null
 var _active_run: Node = null
@@ -13,6 +14,7 @@ var _active_ship: Node2D = null
 var _active_player: Node2D = null
 var _active_magnet: Magnet = null
 var _sfx: SfxPlayer = null
+var _bgm: BgmPlayer = null
 var research_ui_input_captured: bool = false
 
 
@@ -20,6 +22,10 @@ func _ready() -> void:
 	_sfx = SFX_PLAYER_SCRIPT.new()
 	_sfx.name = "SfxPlayer"
 	add_child(_sfx)
+
+	_bgm = BGM_PLAYER_SCRIPT.new()
+	_bgm.name = "BgmPlayer"
+	add_child(_bgm)
 
 
 func register_app_root(app_root_node: Node) -> void:
@@ -94,6 +100,10 @@ var label_font: Font:
 var sfx: SfxPlayer:
 	get:
 		return _sfx
+
+var bgm: BgmPlayer:
+	get:
+		return _bgm
 
 var run: Node:
 	get:
