@@ -27,12 +27,12 @@ const MACHINE_GUN_SHOOT_SFX: Array[String] = [
 	"machine_gun_shot_3.ogg"
 ]
 const MAGNET_GUN_LOOP_SFX := "magnet_effect.ogg"
-const MAGNET_GUN_LOOP_VOLUME_DB := -12.0
+const MAGNET_GUN_LOOP_VOLUME_DB := -10.0
 const MAGNET_GUN_LOOP_PITCH_SCALE := 1.35
 const JUMP_SFX := "jump_metal_1_1.ogg"
-const JUMP_SFX_VOLUME_DB := -10.0
+const JUMP_SFX_VOLUME_DB := -6.0
 const LAND_SFX := "jump_metal_1_2.ogg"
-const LAND_SFX_VOLUME_DB := -10.0
+const LAND_SFX_VOLUME_DB := -6.0
 const FOOTSTEP_SFX: Array[String] = [
 	"metal_footstep_1.ogg",
 	"metal_footstep_2.ogg",
@@ -40,7 +40,7 @@ const FOOTSTEP_SFX: Array[String] = [
 	"metal_footstep_4.ogg",
 	"metal_footstep_5.ogg"
 ]
-const FOOTSTEP_SFX_VOLUME_DB := -10.0
+const FOOTSTEP_SFX_VOLUME_DB := -6.0
 const FOOTSTEP_INTERVAL_SECONDS := 0.28
 const FOOTSTEP_MIN_SPEED := 8.0
 
@@ -582,6 +582,7 @@ func _try_manual_reload() -> void:
 	if get_current_ammo() >= wpn.magazine_size:
 		return
 	_weapon_reload_elapsed[_selected_equipment_index] = 0.0
+	_play_reload_sfx(wpn)
 
 
 ## Spends ammo for a shot that just fired. Drains whatever remains even when it is
@@ -595,6 +596,7 @@ func _consume_ammo_for_shot(wpn: WeaponData) -> void:
 	if current <= 0:
 		current = 0
 		_weapon_reload_elapsed[idx] = 0.0  # auto-reload begins next frame
+		_play_reload_sfx(wpn)
 	_weapon_ammo[idx] = current
 
 
@@ -632,6 +634,12 @@ func _play_machine_gun_shoot_sfx() -> void:
 		return
 	var sound_name := MACHINE_GUN_SHOOT_SFX[randi() % MACHINE_GUN_SHOOT_SFX.size()]
 	Magnetide.sfx.play(sound_name)
+
+
+func _play_reload_sfx(wpn: WeaponData) -> void:
+	if Magnetide.sfx == null or wpn == null or wpn.reload_sfx == null:
+		return
+	Magnetide.sfx.play(wpn.reload_sfx, wpn.reload_sfx_volume_db)
 
 
 func _play_jump_sfx() -> void:

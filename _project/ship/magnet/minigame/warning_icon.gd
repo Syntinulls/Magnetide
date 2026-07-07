@@ -10,6 +10,14 @@ const ALERT_YELLOW: Texture2D = preload("res://_project/ui/sprites/alert_y.png")
 const ALERT_ORANGE: Texture2D = preload("res://_project/ui/sprites/alert_o.png")
 const ALERT_RED: Texture2D = preload("res://_project/ui/sprites/alert_r.png")
 
+## Scrap-proximity alarm played once each time the warning escalates to a stage.
+const PROXIMITY_ALARM_SFX := {
+	Phase.YELLOW: "scrap_proximity_alarm_1.ogg",
+	Phase.ORANGE: "scrap_proximity_alarm_2.ogg",
+	Phase.RED: "scrap_proximity_alarm_3.ogg",
+}
+const PROXIMITY_ALARM_VOLUME_DB := -3.0
+
 var current_phase: Phase = Phase.YELLOW
 var _blink_timer: float = 0.0
 var _blink_visible: bool = true
@@ -38,6 +46,7 @@ func set_phase(phase: Phase) -> void:
 	current_phase = phase
 	_blink_timer = 0.0
 	_blink_visible = true
+	_play_proximity_alarm(phase)
 
 	match phase:
 		Phase.OFF:
@@ -51,3 +60,9 @@ func set_phase(phase: Phase) -> void:
 		Phase.RED:
 			visible = true
 			texture = ALERT_RED
+
+
+func _play_proximity_alarm(phase: Phase) -> void:
+	if not Magnetide.sfx or not PROXIMITY_ALARM_SFX.has(phase):
+		return
+	Magnetide.sfx.play(PROXIMITY_ALARM_SFX[phase], PROXIMITY_ALARM_VOLUME_DB)

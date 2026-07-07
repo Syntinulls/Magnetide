@@ -2,9 +2,9 @@
 
 [ext_resource type="Texture2D" uid="uid://dd3rdls7x4miy" path="res://_project/ui/sprites/ui_ship_hp_bg.png" id="1_0iwrd"]
 [ext_resource type="Texture2D" uid="uid://2n1fcn020y6g" path="res://_project/ui/sprites/ui_ship_hp_hull.png" id="2_bsnt1"]
+[ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
 [ext_resource type="Texture2D" uid="uid://dgrocedjnu8rf" path="res://_project/ui/sprites/ui_ship_hp_magnet.png" id="3_7b8vq"]
 [ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/ship/magnet/minigame/activation_minigame.gd" id="3_activation"]
-[ext_resource type="PackedScene" path="res://_project/ship/magnet/minigame/warning_icon.tscn" id="2_warning"]
 [ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/ui/sprites/alert_y.png" id="4_alert"]
 [ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/ui/threat_ui.tscn" id="5_threat_ui"]
 [ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="7_pqqpn"]

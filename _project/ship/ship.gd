@@ -60,6 +60,7 @@ var current_health: float = 0.0
 var _thruster_state: ThrusterState = ThrusterState.STOPPED
 var _thruster_reference_speed: float = 0.0
 var _last_level_speed: float = -1.0
+var _thruster_audio: ThrusterAudio = null
 
 @onready var _ship_gens: AnimatedSprite2D = $ShipGens as AnimatedSprite2D
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
@@ -78,6 +79,7 @@ func _ready() -> void:
 	_ensure_storage_items_root()
 	_create_storage_zone()
 	_spawn_debug_research_artifact_in_storage()
+	_create_thruster_audio()
 	call_deferred("_initialize_thrusters")
 	_setup_pylon_highlight()
 
@@ -119,6 +121,8 @@ func set_departure_lift_thrusters(boosting: bool) -> void:
 	_thruster_right.set_thrust_level(thrust_level)
 	_thruster_left.set_ship_speed_ratio(speed_ratio)
 	_thruster_right.set_ship_speed_ratio(speed_ratio)
+	if _thruster_audio:
+		_thruster_audio.set_mode(ThrusterAudio.Mode.BOOST if boosting else ThrusterAudio.Mode.SLOW)
 
 
 ## Turbo boost plume used during the threat-advance cutscene. When disabled,
@@ -134,6 +138,8 @@ func set_turbo_thrusters(enabled: bool) -> void:
 		_thruster_right.set_thrust_level(Thruster.ThrustLevel.HIGH)
 		_thruster_left.set_ship_speed_ratio(1.0)
 		_thruster_right.set_ship_speed_ratio(1.0)
+		if _thruster_audio:
+			_thruster_audio.set_mode(ThrusterAudio.Mode.BOOST)
 	else:
 		_thruster_left.set_thrust_animation(Thruster.DEFAULT_THRUST_ANIMATION)
 		_thruster_right.set_thrust_animation(Thruster.DEFAULT_THRUST_ANIMATION)
@@ -537,6 +543,12 @@ func get_storage_items_root() -> Node2D:
 	return _ensure_storage_items_root()
 
 
+func _create_thruster_audio() -> void:
+	_thruster_audio = ThrusterAudio.new()
+	_thruster_audio.name = "ThrusterAudio"
+	add_child(_thruster_audio)
+
+
 func _initialize_thrusters() -> void:
 	_thruster_reference_speed = maxf(_get_level_speed(), 0.0)
 	_update_thrusters_from_level_speed()
@@ -569,6 +581,8 @@ func _update_thrusters_from_level_speed() -> void:
 
 	_last_level_speed = speed
 	_apply_thruster_state(next_state)
+	if _thruster_audio:
+		_thruster_audio.follow_speed_ratio(speed_ratio)
 	if next_state == ThrusterState.NEAR_STOPPED:
 		_update_near_stop_thruster_rotation(speed_ratio)
 
