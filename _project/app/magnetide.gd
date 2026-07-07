@@ -23,9 +23,9 @@ func _ready() -> void:
 	_sfx.name = "SfxPlayer"
 	add_child(_sfx)
 
-	_bgm = BGM_PLAYER_SCRIPT.new()
-	_bgm.name = "BgmPlayer"
-	add_child(_bgm)
+	# _bgm = BGM_PLAYER_SCRIPT.new()
+	# _bgm.name = "BgmPlayer"
+	# add_child(_bgm)
 
 
 func register_app_root(app_root_node: Node) -> void:

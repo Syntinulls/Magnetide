@@ -28,6 +28,11 @@ const EquipmentCatalogEntryScript := preload("res://_project/items/equipment/equ
 const ACTIVE_TICK_COLOR := Color(0.82, 0.87, 0.95, 1.0)
 const INACTIVE_TICK_COLOR := Color(0.35, 0.4, 0.5, 1.0)
 const LOCKED_ENTRY_MODULATE := Color(0.58, 0.62, 0.68, 1.0)
+## Icons of locked entries whose unlock dependencies aren't met are rendered as a
+## solid-black silhouette (RGB multiplied to zero, alpha shape preserved).
+const HIDDEN_ENTRY_ICON_MODULATE := Color(0.0, 0.0, 0.0, 1.0)
+## Name shown for a hidden (dependency-not-met) entry in place of its real name.
+const HIDDEN_ENTRY_NAME := "???"
 const UNLOCKED_ENTRY_MODULATE := Color.WHITE
 const EQUIPPED_ENTRY_TEXT_COLOR := Color(0.55, 1.0, 0.55, 1.0)
 const WEAPON_LIST_ENTRY_SIZE := Vector2(178.0, 38.0)
@@ -943,6 +948,21 @@ func _show_dynamic_item_stats(entry: Resource) -> void:
 		return
 
 	_active_detail_entry = entry
+	# A hidden entry keeps its identity masked in the detail panel too: no name,
+	# stats, or description are revealed until its unlock dependency is met.
+	if _is_catalog_entry_hidden(entry):
+		_dynamic_slot_popup_stats_name.text = HIDDEN_ENTRY_NAME
+		if _dynamic_slot_popup_stats_equipped:
+			_dynamic_slot_popup_stats_equipped.visible = false
+		_dynamic_slot_popup_stats_desc.text = "Locked. Unlock the previous weapon to reveal this one."
+		_dynamic_slot_popup_stats_status.text = "[color=#%s]LOCKED[/color]\n%s" % [
+			DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
+			_colorize_requirement("Requires the previous weapon", false),
+		]
+		_resize_detail_panel_to_fit(entry)
+		_dynamic_slot_popup_stats_panel.visible = true
+		return
+
 	_dynamic_slot_popup_stats_name.text = _catalog_entry_display_name(entry)
 	# EQUIPPED lives in the header (right of the name) so it's always visible and
 	# never pushed off-screen by a long description.
@@ -967,7 +987,7 @@ func _resize_detail_panel_to_fit(entry: Resource) -> void:
 	var content_width := 0.0
 	if font != null:
 		content_width = font.get_string_size(
-			_catalog_entry_display_name(entry), HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_HEADER_FONT_SIZE
+			_catalog_entry_visible_name(entry), HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_HEADER_FONT_SIZE
 		).x
 		if equipped:
 			content_width += DETAIL_EQUIPPED_SEPARATION + DETAIL_EQUIPPED_RIGHT_MARGIN + font.get_string_size(
@@ -1396,33 +1416,35 @@ func _populate_dynamic_item_list() -> void:
 		button.custom_minimum_size = WEAPON_LIST_ENTRY_SIZE
 		button.size_flags_horizontal = Control.SIZE_FILL
 		var is_locked := _catalog_entry_locked(entry)
-		var can_unlock := _can_unlock_catalog_entry(entry)
+		var is_hidden := _is_catalog_entry_hidden(entry)
 		button.modulate = UNLOCKED_ENTRY_MODULATE
 		button.disabled = false
 		button.mouse_filter = Control.MOUSE_FILTER_STOP
 		Magnetide.apply_label_font(button)
-		_configure_dynamic_entry_button(button, entry, is_locked, can_unlock)
+		_configure_dynamic_entry_button(button, entry, is_locked, is_hidden)
 		_dynamic_item_list.add_child(button)
 		_connect_dynamic_entry_detail_hover(button, entry)
 		if not is_locked:
 			button.pressed.connect(_equip_dynamic_item_from_popup.bind(entry))
-		max_needed_width = maxf(max_needed_width, _measure_dynamic_entry_width(entry, is_locked, font))
+		max_needed_width = maxf(max_needed_width, _measure_dynamic_entry_width(entry, font))
 
 	_apply_dynamic_list_width(max_needed_width)
 
 
 ## Width an entry button needs to show its full name alongside the fixed icon and
 ## trailing level/unlock element (see _configure_dynamic_entry_button layout).
-func _measure_dynamic_entry_width(entry: Resource, is_locked: bool, font: Font) -> float:
+func _measure_dynamic_entry_width(entry: Resource, font: Font) -> float:
 	if font == null:
 		return 0.0
 	var name_width := font.get_string_size(
-		_catalog_entry_display_name(entry),
+		_catalog_entry_visible_name(entry),
 		HORIZONTAL_ALIGNMENT_LEFT,
 		-1.0,
 		WEAPON_LIST_ENTRY_FONT_SIZE
 	).x
-	var trailing := DYNAMIC_ENTRY_UNLOCK_WIDTH if is_locked else DYNAMIC_ENTRY_LEVEL_WIDTH
+	# Locked entries (masked or not) carry the trailing Unlock button; unlocked ones
+	# carry the level readout.
+	var trailing := DYNAMIC_ENTRY_LEVEL_WIDTH if not _catalog_entry_locked(entry) else DYNAMIC_ENTRY_UNLOCK_WIDTH
 	return DYNAMIC_ENTRY_ROW_MARGIN * 2.0 \
 		+ DYNAMIC_ENTRY_ICON_FRAME_SIZE.x \
 		+ DYNAMIC_ENTRY_ROW_SEPARATION * 2.0 \
@@ -1489,7 +1511,7 @@ func _get_dynamic_entry_icon_max_width(icon: Texture2D) -> int:
 	return clampi(width_for_height, 1, WEAPON_LIST_ENTRY_ICON_MAX_WIDTH)
 
 
-func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, _can_unlock: bool) -> void:
+func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked: bool, is_hidden: bool) -> void:
 	button.text = ""
 	button.icon = null
 	button.expand_icon = false
@@ -1521,14 +1543,17 @@ func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked:
 	icon.set_anchors_preset(Control.PRESET_FULL_RECT)
 	icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
-	icon.modulate = LOCKED_ENTRY_MODULATE if is_locked else UNLOCKED_ENTRY_MODULATE
+	if is_hidden:
+		icon.modulate = HIDDEN_ENTRY_ICON_MODULATE
+	else:
+		icon.modulate = LOCKED_ENTRY_MODULATE if is_locked else UNLOCKED_ENTRY_MODULATE
 	icon_frame.add_child(icon)
 
 	var name_label := Label.new()
 	name_label.name = "NameLabel"
 	name_label.size_flags_horizontal = Control.SIZE_EXPAND_FILL
 	name_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	name_label.text = _catalog_entry_display_name(entry)
+	name_label.text = _catalog_entry_visible_name(entry)
 	name_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
 	name_label.clip_text = true
 	name_label.text_overrun_behavior = TextServer.OVERRUN_TRIM_ELLIPSIS
@@ -1550,10 +1575,12 @@ func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked:
 		unlock_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		unlock_button.mouse_filter = Control.MOUSE_FILTER_STOP
 		unlock_button.text = "Unlock"
-		unlock_button.disabled = false
+		# Enabled only once the dependency chain is satisfied; a hidden entry keeps a
+		# greyed, non-interactive Unlock button until its predecessor is unlocked.
+		unlock_button.disabled = is_hidden
 		unlock_button.clip_text = true
 		unlock_button.add_theme_font_size_override("font_size", 16)
-		_set_button_font_color(unlock_button, Color.WHITE)
+		_set_button_font_color(unlock_button, LOCKED_ENTRY_MODULATE if is_hidden else Color.WHITE)
 		Magnetide.apply_label_font(unlock_button)
 		_connect_dynamic_entry_detail_hover(unlock_button, entry)
 		unlock_button.pressed.connect(_on_dynamic_entry_unlock_pressed.bind(entry))
@@ -1710,6 +1737,53 @@ func _is_next_locked_catalog_entry(entry: Resource) -> bool:
 		if _catalog_entry_locked(candidate):
 			return candidate == entry
 	return false
+
+
+## An entry's unlock dependency is the item immediately before it in its unlock
+## group (ordered by research_unlock_order): it can only be revealed once that
+## predecessor is unlocked. The first entry in a group has no dependency, and a
+## non-locked entry is trivially satisfied. Items in single-item groups (e.g. the
+## augments, each in their own group) therefore always have their deps met.
+func _are_catalog_entry_dependencies_met(entry: Resource) -> bool:
+	if entry == null:
+		return false
+	var group := _catalog_entry_unlock_group(entry)
+	var order := _catalog_entry_unlock_order(entry)
+	var predecessor: Resource = null
+	var predecessor_order := 0
+	for candidate in _get_active_catalog_entries():
+		if candidate == entry or _catalog_entry_unlock_group(candidate) != group:
+			continue
+		var candidate_order := _catalog_entry_unlock_order(candidate)
+		if candidate_order >= order:
+			continue
+		if predecessor == null or candidate_order > predecessor_order:
+			predecessor = candidate
+			predecessor_order = candidate_order
+	if predecessor == null:
+		return true
+	return not _catalog_entry_locked(predecessor)
+
+
+## A locked entry whose dependency chain isn't satisfied yet. It is listed with
+## its identity masked (silhouette icon + "???" name) and a disabled unlock button
+## until the previous item in its group is unlocked.
+func _is_catalog_entry_hidden(entry: Resource) -> bool:
+	return _catalog_entry_locked(entry) and not _are_catalog_entry_dependencies_met(entry)
+
+
+func _catalog_entry_unlock_order(entry: Resource) -> int:
+	if entry == null or not Utils.has_property(entry, "research_unlock_order"):
+		return 0
+	return int(entry.get("research_unlock_order"))
+
+
+## The name shown in the item list / detail header: real name unless the entry is
+## still hidden behind its unlock dependencies, in which case it reads "???".
+func _catalog_entry_visible_name(entry: Resource) -> String:
+	if _is_catalog_entry_hidden(entry):
+		return HIDDEN_ENTRY_NAME
+	return _catalog_entry_display_name(entry)
 
 
 func _catalog_entry_unlock_id(entry: Resource) -> StringName:

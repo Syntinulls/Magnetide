@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/equipment/equipment_data.gd" id="2_fbtnf"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="2_hitbox"]
-[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/equipment/rifle/rifle.tres" id="2_rifle"]
+[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/equipment/pistol/pistol.tres" id="2_pistol"]
 [ext_resource type="Script" uid="uid://cgymaxcdced8s" path="res://_project/player/player.gd" id="2_script"]
 [ext_resource type="Texture2D" uid="uid://dx1rtfv6p7g1o" path="res://_project/player/sprites/guy_part_body.png" id="2_unxfp"]
 [ext_resource type="Texture2D" uid="uid://vq163jt8x6as" path="res://_project/player/sprites/guy_part_legs_bend.png" id="3_6i4jc"]
@@ -12,7 +12,7 @@
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
-[ext_resource type="Texture2D" uid="uid://lj3kn1kn64j0" path="res://_project/items/equipment/shotgun/player_item_shotgun.png" id="13_4y3ad"]
+[ext_resource type="Texture2D" uid="uid://dxb6c3t28m83c" path="res://_project/items/equipment/pistol/player_item_pistol.png" id="13_4y3ad"]
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/combat/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/equipment/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/equipment/player_item_gun_effect_1.png" id="15_4y3ad"]
@@ -191,7 +191,7 @@ animations = [{
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
 script = ExtResource("2_script")
-equipment = Array[ExtResource("2_fbtnf")]([ExtResource("2_rifle"), ExtResource("3_magnet_gun")])
+equipment = Array[ExtResource("2_fbtnf")]([ExtResource("2_pistol"), ExtResource("3_magnet_gun")])
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]
 texture = ExtResource("2_unxfp")
@@ -224,10 +224,10 @@ offset = Vector2(-13.585, 8.13)
 show_behind_parent = true
 position = Vector2(-2.485, 15.465)
 texture = ExtResource("13_4y3ad")
-offset = Vector2(-18.675, 6.925)
+offset = Vector2(-17.494, 5.345)
 
 [node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
-position = Vector2(-65.311, 2.142)
+position = Vector2(-40.075, -3.5850003)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
 sprite_frames = SubResource("SpriteFrames_op25k")

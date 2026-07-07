@@ -302,6 +302,7 @@ layout_mode = 1
 
 [node name="ThreatManager" type="Node" parent="." unique_id=1026313138]
 script = ExtResource("13_threat")
+storm_countdown_seconds = 60.0
 
 [node name="StormController" type="Node" parent="." unique_id=1026313139]
 script = ExtResource("13_storm")
