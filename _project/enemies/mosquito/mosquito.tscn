@@ -20,26 +20,31 @@ script = ExtResource("1_script")
 hover_distance = 1000.0
 resume_margin = 200.0
 wing_frame_offsets = {
-&"attack": PackedVector2Array(4, 4),
-&"death": PackedVector2Array(-8, -8),
+&"attack": PackedVector2Array(8, 0),
+&"death": PackedVector2Array(0, 0),
 &"idle": PackedVector2Array(0, 0),
 &"move": PackedVector2Array(0, 0),
-&"windup": PackedVector2Array(-8, -8)
+&"windup": PackedVector2Array(-10, -10)
 }
 
 [node name="Muzzle" type="Marker2D" parent="." unique_id=1929457646]
 position = Vector2(110, -15)
 
-[node name="WingBack" type="AnimatedSprite2D" parent="." unique_id=51089519]
+[node name="Visual" type="Node2D" parent="." unique_id=1929457647]
+material = SubResource("ShaderMaterial_flash")
+
+[node name="WingBack" type="AnimatedSprite2D" parent="Visual" unique_id=51089519]
+use_parent_material = true
 sprite_frames = ExtResource("4_wing_back")
 animation = &"fly"
 
-[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=695932254]
-material = SubResource("ShaderMaterial_flash")
+[node name="Sprite" type="AnimatedSprite2D" parent="Visual" unique_id=695932254]
+use_parent_material = true
 sprite_frames = ExtResource("4_odlmr")
 animation = &"idle"
 
-[node name="WingFore" type="AnimatedSprite2D" parent="." unique_id=1247941610]
+[node name="WingFore" type="AnimatedSprite2D" parent="Visual" unique_id=1247941610]
+use_parent_material = true
 sprite_frames = ExtResource("5_wing_fore")
 animation = &"fly"
 

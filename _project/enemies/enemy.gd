@@ -37,19 +37,24 @@ var _death_timer: float = 0.0
 var _death_pop_elapsed: float = 0.0
 var _death_phase: DeathPhase = DeathPhase.NONE
 var _death_rotation_velocity: float = 0.0
-var _sprite_rest_position: Vector2 = Vector2.ZERO
+var _visual_rest_position: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
 var _hit_shake_tween: Tween = null
 var _run_ended: bool = false
 
-@onready var sprite: AnimatedSprite2D = $Sprite
+# The flash shader and hit shake are applied to this container, not the body
+# sprite, so every sprite layer (e.g. the mosquito's wings) reacts as a whole.
+# It must not be the root node: physics drives the root's position, which would
+# fight the shake tween.
+@onready var visual: Node2D = $Visual
+@onready var sprite: AnimatedSprite2D = $Visual/Sprite
 @onready var hitbox: Hitbox = $Hitbox
 @onready var hitbox_collision_shape: CollisionShape2D = $Hitbox/CollisionShape2D
 
 
 func _ready() -> void:
 	add_to_group("enemies")
-	_sprite_rest_position = sprite.position
+	_visual_rest_position = visual.position
 	if not data:
 		push_warning("Enemy has no EnemyData assigned.")
 		return
@@ -79,9 +84,9 @@ func _apply_data() -> void:
 		hitbox_shape.size = data.hitbox_size
 		hitbox_collision_shape.shape = hitbox_shape
 
-	var sprite_material := sprite.material as ShaderMaterial
-	if sprite_material:
-		sprite.material = sprite_material.duplicate()
+	var flash_material := visual.material as ShaderMaterial
+	if flash_material:
+		visual.material = flash_material.duplicate()
 
 	if data.sprite_frames:
 		sprite.sprite_frames = data.sprite_frames
@@ -586,7 +591,7 @@ func _get_proximity_switch_interval() -> float:
 func _flash_white() -> void:
 	if _flash_tween:
 		_flash_tween.kill()
-	var mat := sprite.material as ShaderMaterial
+	var mat := visual.material as ShaderMaterial
 	if mat:
 		mat.set_shader_parameter("flash_intensity", 1.0)
 		_flash_tween = create_tween()
@@ -601,7 +606,7 @@ func _play_hit_shake() -> void:
 	if _hit_shake_tween:
 		_hit_shake_tween.kill()
 
-	sprite.position = _sprite_rest_position
+	visual.position = _visual_rest_position
 	var steps := maxi(data.hit_shake_steps, 1)
 	var step_duration := shake_duration / float(steps)
 	_hit_shake_tween = create_tween()
@@ -610,8 +615,8 @@ func _play_hit_shake() -> void:
 			randf_range(-data.hit_shake_distance, data.hit_shake_distance),
 			randf_range(-data.hit_shake_distance, data.hit_shake_distance)
 		)
-		_hit_shake_tween.tween_property(sprite, "position", _sprite_rest_position + offset, step_duration)
-	_hit_shake_tween.tween_property(sprite, "position", _sprite_rest_position, minf(step_duration, 0.04))
+		_hit_shake_tween.tween_property(visual, "position", _visual_rest_position + offset, step_duration)
+	_hit_shake_tween.tween_property(visual, "position", _visual_rest_position, minf(step_duration, 0.04))
 
 
 func _launch_death_pop() -> void:

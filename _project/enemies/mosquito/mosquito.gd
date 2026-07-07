@@ -48,8 +48,8 @@ var _holding_position: bool = false
 var _wings_dead: bool = false
 var _muzzle_base_position: Vector2 = Vector2.ZERO
 
-@onready var wing_back: AnimatedSprite2D = $WingBack
-@onready var wing_fore: AnimatedSprite2D = $WingFore
+@onready var wing_back: AnimatedSprite2D = $Visual/WingBack
+@onready var wing_fore: AnimatedSprite2D = $Visual/WingFore
 @onready var muzzle: Marker2D = $Muzzle
 
 

@@ -14,8 +14,11 @@ size = Vector2(40, 40)
 [node name="Enemy" type="CharacterBody2D" unique_id=576680254]
 script = ExtResource("1_script")
 
-[node name="Sprite" type="AnimatedSprite2D" parent="." unique_id=1528223351]
+[node name="Visual" type="Node2D" parent="." unique_id=1528223352]
 material = SubResource("ShaderMaterial_flash")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Visual" unique_id=1528223351]
+use_parent_material = true
 
 [node name="Hitbox" type="Area2D" parent="." unique_id=139964733]
 collision_layer = 4
