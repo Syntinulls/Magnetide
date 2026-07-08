@@ -626,9 +626,12 @@ func _on_body_entered(body: Node) -> void:
 	# Check if touching magnet body (StaticBody2D on layer 4)
 	if body is StaticBody2D:
 		if body.collision_layer & 4:
+			var was_touching_magnet := _is_touching_magnet
 			_is_touching_magnet = true
 			# Only start settling if in BREAKAWAY phase (not SURFACE or UNDERGROUND)
 			if _pull_phase == PullPhase.BREAKAWAY:
+				if not was_touching_magnet:
+					_play_magnet_impact_sfx()
 				_is_settling_on_magnet = true
 			return
 	
@@ -663,6 +666,11 @@ func _on_body_exited(body: Node) -> void:
 				if item._is_frozen:
 					_is_touching_frozen_item = true
 					break
+
+
+func _play_magnet_impact_sfx() -> void:
+	if is_instance_valid(_magnet_target) and _magnet_target.has_method("play_pull_impact_sfx"):
+		_magnet_target.play_pull_impact_sfx()
 
 
 func _record_contacts() -> void:

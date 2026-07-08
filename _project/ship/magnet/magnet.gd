@@ -43,6 +43,15 @@ signal item_removed(item: SalvageItem)
 @export var running_sfx_filename: String = "magnet_effect.ogg"
 @export var running_sfx_volume_db: float = -12.0
 @export var running_sfx_pitch_scale: float = 1.0
+## One of these is picked at random each time a pulled item clangs onto the magnet.
+@export var impact_sfx_filenames: Array[String] = [
+	"metal_impact_1.ogg",
+	"metal_impact_2.ogg",
+	"metal_impact_3.ogg",
+]
+@export var impact_sfx_volume_db: float = -6.0
+## Each impact is pitched by a random amount in ±this range (0 = no variation).
+@export var impact_sfx_pitch_variation: float = 0.08
 
 var _is_active: bool = false
 var _attached_items: Array[SalvageItem] = []
@@ -421,6 +430,14 @@ func _stop_running_sfx() -> void:
 
 func _get_running_sfx_loop_key() -> String:
 	return "ship_magnet:%s" % get_instance_id()
+
+
+## Play a random metal-impact clang for an item that just reached the magnet.
+func play_pull_impact_sfx() -> void:
+	if impact_sfx_filenames.is_empty() or not Magnetide.sfx:
+		return
+	var pitch := 1.0 + randf_range(-impact_sfx_pitch_variation, impact_sfx_pitch_variation)
+	Magnetide.sfx.play(impact_sfx_filenames.pick_random(), impact_sfx_volume_db, pitch)
 
 
 func _on_tracked_item_frozen(item: SalvageItem) -> void:
