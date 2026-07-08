@@ -1,0 +1,24 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://cc8kmfmsfhbqx"]
+
+[ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_bullet"]
+[ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="2_weapon_data"]
+[ext_resource type="Texture2D" uid="uid://dxb6c3t28m83c" path="res://_project/items/equipment/pistol/player_item_pistol.png" id="3_pistol_sprite"]
+
+[resource]
+script = ExtResource("2_weapon_data")
+damage = 7.0
+fire_rate = 3.0
+bullet_speed = 1700.0
+bullet_sprite = ExtResource("1_bullet")
+magazine_size = 12
+reload_time = 1.0
+item_id = &"weapon_pistol"
+display_name = "Pistol"
+hotbar_icon = ExtResource("3_pistol_sprite")
+weapon_sprite = ExtResource("3_pistol_sprite")
+weapon_offset = Vector2(-17.494, 5.345)
+weapon_rotation = 0.0
+muzzle_position = Vector2(-40.075, -3.5850003)
+muzzle_effect_type = 2
+muzzle_effect_offset = Vector2(5, 0)
+metadata/_custom_type_script = "uid://dswvbat8qx1i4"

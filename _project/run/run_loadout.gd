@@ -1,7 +1,7 @@
 extends Resource
 class_name RunLoadout
 
-const DefaultWeaponData := preload("res://_project/items/equipment/rifle/rifle.tres")
+const DefaultWeaponData := preload("res://_project/items/equipment/pistol/pistol.tres")
 const DefaultMagnetToolData := preload("res://_project/items/equipment/magnet_gun.tres")
 const RunUpgradeScript := preload("res://_project/run/run_upgrade.gd")
 const RunUpgradeLevelCostScript := preload("res://_project/run/run_upgrade_level_cost.gd")
@@ -540,6 +540,10 @@ func _ensure_equipped_defaults() -> void:
 				break
 	if equipped_weapon == null:
 		equipped_weapon = DefaultWeaponData
+	# An equipped weapon is unlocked by definition; keep its unlock state honest so
+	# the station catalog never shows the active weapon as locked (e.g. a save made
+	# before a weapon became gated behind an unlock chain).
+	set_item_unlocked(equipped_weapon, true)
 
 	if equipped_magnet_tool == null:
 		for equipment_data in player_equipment:

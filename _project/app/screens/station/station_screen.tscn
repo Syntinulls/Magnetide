@@ -7,6 +7,7 @@
 [ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/ui/sprites/ui_icon_ship.png" id="12_4e5bg"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/equipment/rifle/rifle.tres" id="12_rifle_data"]
 [ext_resource type="Resource" uid="uid://bmsp4hjbiegi" path="res://_project/items/equipment/shotgun/shotgun.tres" id="13_shotgun_data"]
+[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/equipment/pistol/pistol.tres" id="26_pistol_data"]
 [ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/ui/sprites/ui_icon_player.png" id="14_h7pqf"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/ui/sprites/scrap_metal.png" id="16_pln3h"]
 [ext_resource type="PackedScene" uid="uid://b6k44pcvew4j2" path="res://_project/app/screens/station/station_upgrade_slot.tscn" id="17_upgrade_slot"]
@@ -19,16 +20,26 @@
 [ext_resource type="PackedScene" uid="uid://xhec0qwauhh1" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
 [ext_resource type="PackedScene" uid="uid://bgjkqi6c2xoc7" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
 
+[sub_resource type="Resource" id="Resource_station_weapon_pistol"]
+script = ExtResource("11_equipment_catalog_entry")
+equipment_data = ExtResource("26_pistol_data")
+research_unlock_id = &"weapon_pistol"
+research_unlock_order = 0
+
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_equipment_catalog_entry")
 equipment_data = ExtResource("12_rifle_data")
+locked = true
+research_unlock_id = &"weapon_rifle"
+research_unlock_order = 10
+research_point_cost = 1
 
 [sub_resource type="Resource" id="Resource_station_weapon_shotgun"]
 script = ExtResource("11_equipment_catalog_entry")
 equipment_data = ExtResource("13_shotgun_data")
 locked = true
 research_unlock_id = &"weapon_shotgun"
-research_unlock_order = 10
+research_unlock_order = 20
 research_point_cost = 1
 
 [sub_resource type="Resource" id="Resource_station_augment_regeneration"]
@@ -66,7 +77,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
-weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_shotgun")])
+weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_shotgun")])
 player_augment_catalog = Array[Resource]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="Backdrop" type="ColorRect" parent="." unique_id=1722779487]
