@@ -9,6 +9,18 @@ class_name WeaponData
 @export var bullet_sprite: Texture2D
 @export var fire_behavior: Resource = null
 
+@export_group("Fire Sound")
+## Sound(s) played when this weapon fires. When more than one is supplied, one is
+## chosen at random per shot to avoid repetition. Leave empty to use the default.
+@export var fire_sfx: Array[AudioStream] = []
+## Volume of the fire sound, in decibels (0 = unchanged, negative = quieter).
+@export var fire_sfx_volume_db: float = 0.0
+## Sound(s) played when firing the final round in the magazine. Leave empty to reuse
+## the normal fire sound; set it to distinguish the last shot before a reload.
+@export var last_shot_sfx: Array[AudioStream] = []
+## Volume of the last-shot sound, in decibels (0 = unchanged, negative = quieter).
+@export var last_shot_sfx_volume_db: float = 0.0
+
 @export_group("Ammo")
 ## Rounds available before a reload is required.
 @export var magazine_size: int = 30:

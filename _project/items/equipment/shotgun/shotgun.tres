@@ -3,7 +3,10 @@
 [ext_resource type="Texture2D" uid="uid://dwyl5e1wioava" path="res://_project/items/equipment/shotgun/bullet_shotgun.png" id="1_ocsqx"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="1_weapon_data"]
 [ext_resource type="Script" uid="uid://bwa44jt60lssd" path="res://_project/items/equipment/shotgun/shotgun_fire_behavior.gd" id="2_fire_behavior"]
+[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/shotgun_shoot.ogg" id="3_m1fjq"]
 [ext_resource type="Texture2D" uid="uid://lj3kn1kn64j0" path="res://_project/items/equipment/shotgun/player_item_shotgun.png" id="3_tjpe0"]
+[ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/shotgun_reload.ogg" id="5_ausdr"]
+[ext_resource type="AudioStream" uid="uid://gjurcvjgjo2x" path="res://_project/audio/sfx/shotgun_shoot_noammo.ogg" id="5_wegy8"]
 
 [sub_resource type="Resource" id="Resource_shotgun_fire_behavior"]
 script = ExtResource("2_fire_behavior")
@@ -16,8 +19,11 @@ bullet_speed = 1550.0
 pierce = 2
 bullet_sprite = ExtResource("1_ocsqx")
 fire_behavior = SubResource("Resource_shotgun_fire_behavior")
+fire_sfx = Array[AudioStream]([ExtResource("3_m1fjq")])
+last_shot_sfx = Array[AudioStream]([ExtResource("5_wegy8")])
 magazine_size = 6
 reload_time = 2.0
+reload_sfx = ExtResource("5_ausdr")
 item_id = &"weapon_shotgun"
 display_name = "Shotgun"
 hotbar_icon = ExtResource("3_tjpe0")

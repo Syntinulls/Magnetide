@@ -1,4 +1,4 @@
-[gd_resource type="AudioBusLayout" format=3 uid="uid://dhme4vtdcrg1w"]
+[gd_resource type="AudioBusLayout" format=3 uid="uid://dsioirs0e3nw6"]
 
 [sub_resource type="AudioEffectHighPassFilter" id="HighPass_music"]
 cutoff_hz = 30.0

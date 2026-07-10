@@ -492,7 +492,7 @@ func shoot() -> void:
 	_fire_cooldown = 1.0 / maxf(wpn.fire_rate, 0.01)
 	if muzzle_effect:
 		muzzle_effect.play_effect(_get_current_muzzle_effect_type())
-	_play_machine_gun_shoot_sfx()
+	_play_weapon_fire_sfx(wpn)
 	if wpn.fire_behavior and wpn.fire_behavior.has_method("fire"):
 		wpn.fire_behavior.fire(self, wpn)
 	else:
@@ -627,6 +627,21 @@ func _process_reload(delta: float) -> void:
 		RELOAD_BAR_TEXT,
 		PROGRESS_BAR_PRIORITY_RELOAD
 	)
+
+
+func _play_weapon_fire_sfx(wpn: WeaponData) -> void:
+	if Magnetide.sfx == null or wpn == null:
+		return
+	var use_last := get_current_ammo() <= wpn.ammo_consumption and not wpn.last_shot_sfx.is_empty()
+	var pool := wpn.last_shot_sfx if use_last else wpn.fire_sfx
+	if pool.is_empty():
+		_play_machine_gun_shoot_sfx()
+		return
+	var stream: AudioStream = pool[randi() % pool.size()]
+	if stream == null:
+		return
+	var volume_db := wpn.last_shot_sfx_volume_db if use_last else wpn.fire_sfx_volume_db
+	Magnetide.sfx.play(stream, volume_db)
 
 
 func _play_machine_gun_shoot_sfx() -> void:

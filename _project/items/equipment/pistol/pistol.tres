@@ -1,8 +1,10 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://cc8kmfmsfhbqx"]
 
 [ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_bullet"]
+[ext_resource type="AudioStream" uid="uid://cctssv68bu0wi" path="res://_project/audio/sfx/pistol_shoot.ogg" id="2_u3rwr"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="2_weapon_data"]
 [ext_resource type="Texture2D" uid="uid://dxb6c3t28m83c" path="res://_project/items/equipment/pistol/player_item_pistol.png" id="3_pistol_sprite"]
+[ext_resource type="AudioStream" uid="uid://bfwbkg0flmuib" path="res://_project/audio/sfx/pistol_reload.ogg" id="4_oa0lu"]
 
 [resource]
 script = ExtResource("2_weapon_data")
@@ -10,8 +12,11 @@ damage = 7.0
 fire_rate = 3.0
 bullet_speed = 1700.0
 bullet_sprite = ExtResource("1_bullet")
+fire_sfx = Array[AudioStream]([ExtResource("2_u3rwr")])
+last_shot_sfx = Array[AudioStream]([ExtResource("2_u3rwr")])
 magazine_size = 12
 reload_time = 1.0
+reload_sfx = ExtResource("4_oa0lu")
 item_id = &"weapon_pistol"
 display_name = "Pistol"
 hotbar_icon = ExtResource("3_pistol_sprite")
