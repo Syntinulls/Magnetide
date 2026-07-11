@@ -5,16 +5,17 @@
 
 [resource]
 script = ExtResource("1_script")
-weapon_sprite = ExtResource("3_x47ok")
 hold_distance = 50.0
 pull_base_speed = 600.0
 pull_max_speed = 2000.0
 pull_ramp_time = 0.4
 trash_scrap_chance_percent = 30.0
-weapon_rotation = 0.0
-muzzle_position = Vector2(-46.22568, -2.3631382)
 item_id = &"magnet_gun"
 display_name = "Magnet Gun"
 hotbar_icon = ExtResource("3_x47ok")
+weapon_sprite = ExtResource("3_x47ok")
+weapon_offset = Vector2(-26.105, 17.995)
+weapon_rotation = 0.0
+muzzle_position = Vector2(-57.15, 15.8)
 muzzle_effect_type = 1
 muzzle_effect_offset = Vector2(-13.25, 0)
