@@ -8,8 +8,6 @@ const StorageSlotScene := preload("res://_project/app/screens/station/station_st
 const StationUpgradeSlotScript := preload("res://_project/app/screens/station/station_upgrade_slot.gd")
 const StationUpgradeSlotScene := preload("res://_project/app/screens/station/station_upgrade_slot.tscn")
 const SlottableCatalogEntryScript := preload("res://_project/items/slottable_catalog_entry.gd")
-## Accent color for the research-points readout.
-const RESEARCH_POINTS_COLOR: Color = Color("4fffe8")
 const DEFAULT_AUGMENT_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_player.png")
 const DEFAULT_HEALTH_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_health.png")
 const DEFAULT_SHIELD_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_shield.png")
@@ -83,7 +81,7 @@ const UPGRADEABLE_SLOT_IDS: Array[StringName] = [
 
 const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 const PLAYER_SHIELD_UNLOCK_RESEARCH_ID := &"player_shield"
-const PLAYER_SHIELD_RESEARCH_POINT_COST := 1
+const PLAYER_SHIELD_RESEARCH_COST := {SalvageItemData.ItemRarity.COMMON: 2}
 const UPGRADE_POPUP_MIN_WIDTH := 260.0
 const UPGRADE_POPUP_MAX_WIDTH := 430.0
 const UPGRADE_POPUP_HORIZONTAL_PADDING := 24.0
@@ -101,7 +99,13 @@ var _current_page_index: int = 0
 var _is_panning: bool = false
 var _page_tween: Tween = null
 var _is_ready: bool = false
-var _research_points_label: Label = null
+## Rarity -> Count-label node path, relative to the authored ResearchPointsDisplay.
+const _RESEARCH_COUNT_NODES := {
+	SalvageItemData.ItemRarity.COMMON: "Row/Common/Count",
+	SalvageItemData.ItemRarity.RARE: "Row/Rare/Count",
+	SalvageItemData.ItemRarity.EPIC: "Row/Epic/Count",
+}
+@onready var _research_points_display: ColorRect = $TopBar/ResearchPointsDisplay
 var _station_slots: Dictionary = {}
 var _static_slot_icons: Dictionary = {}
 var _player_augment_1_row: HBoxContainer = null
@@ -179,7 +183,7 @@ func _ready() -> void:
 	if _run_loadout:
 		_run_loadout.prepare_for_run()
 
-	_ensure_research_points_display()
+	_refresh_research_points_display()
 	_ensure_station_header()
 	Magnetide.apply_label_fonts(self)
 	_dynamic_slot_popup.visible = false
@@ -261,10 +265,27 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
+	if event.is_action_pressed("debug_add_research_points"):
+		if not (event is InputEventKey and event.echo):
+			_debug_grant_research_points()
+			get_viewport().set_input_as_handled()
+		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _dynamic_slot_popup.visible and not _dynamic_slot_popup.get_global_rect().has_point(event.global_position):
 			if _active_dynamic_slot_button == null or not _active_dynamic_slot_button.get_global_rect().has_point(event.global_position):
 				_close_dynamic_slot_popup()
+
+
+## Debug ("P"): grant one research point of every rarity, then refresh the UI so
+## the readout and unlock affordability update immediately.
+func _debug_grant_research_points() -> void:
+	var save_data := _save_data as AppSaveData
+	if save_data == null:
+		return
+	save_data.add_research_points(SalvageItemData.ItemRarity.COMMON, 1)
+	save_data.add_research_points(SalvageItemData.ItemRarity.RARE, 1)
+	save_data.add_research_points(SalvageItemData.ItemRarity.EPIC, 1)
+	_refresh_loadout_ui()
 
 
 func _layout_pages() -> void:
@@ -667,10 +688,10 @@ func _get_static_slot_unlock_research_id(slot_id: StringName) -> StringName:
 	return &""
 
 
-func _get_static_slot_unlock_research_point_cost(slot_id: StringName) -> int:
+func _get_static_slot_unlock_research_cost(slot_id: StringName) -> Dictionary:
 	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return PLAYER_SHIELD_RESEARCH_POINT_COST
-	return 0
+		return PLAYER_SHIELD_RESEARCH_COST
+	return {}
 
 
 func _get_static_slot_unlock_title(slot_id: StringName) -> String:
@@ -711,20 +732,18 @@ func _build_static_slot_unlock_detail_text(slot_id: StringName) -> String:
 
 
 func _build_static_slot_unlock_cost_text(slot_id: StringName) -> String:
-	var cost := _get_static_slot_unlock_research_point_cost(slot_id)
-	return "Unlock Cost\n%s" % _format_research_point_cost_text(cost)
+	var cost := _get_static_slot_unlock_research_cost(slot_id)
+	return "Unlock Cost\n%s" % _format_research_cost_text(cost, true)
 
 
 func _unlock_static_slot(slot_id: StringName) -> void:
 	if not _is_static_slot_unlockable(slot_id):
 		return
-	var cost := _get_static_slot_unlock_research_point_cost(slot_id)
+	var cost := _get_static_slot_unlock_research_cost(slot_id)
 	var research_id := _get_static_slot_unlock_research_id(slot_id)
 	var save_data := _save_data as AppSaveData
 	if save_data != null:
-		if not save_data.can_spend_research_points(cost):
-			return
-		if not save_data.spend_research_points(cost):
+		if not save_data.spend_research_cost(cost):
 			return
 		save_data.unlock_research_id(research_id)
 
@@ -818,36 +837,6 @@ func _refresh_storage_scrap_counter() -> void:
 	_storage_scrap_count_label.text = str(scrap_count)
 
 
-func _ensure_research_points_display() -> void:
-	if _research_points_label != null or _top_bar == null:
-		return
-
-	var panel := ColorRect.new()
-	panel.name = "ResearchPointsPanel"
-	panel.color = Color(0.09, 0.12, 0.17, 0.88)
-	panel.custom_minimum_size = Vector2(260.0, 60.0)
-	panel.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.set_anchors_preset(Control.PRESET_TOP_RIGHT)
-	panel.offset_left = -292.0
-	panel.offset_top = 24.0
-	panel.offset_right = -24.0
-	panel.offset_bottom = 84.0
-	_top_bar.add_child(panel)
-
-	_research_points_label = Label.new()
-	_research_points_label.name = "ResearchPointsLabel"
-	_research_points_label.horizontal_alignment = HORIZONTAL_ALIGNMENT_CENTER
-	_research_points_label.vertical_alignment = VERTICAL_ALIGNMENT_CENTER
-	_research_points_label.add_theme_color_override("font_color", RESEARCH_POINTS_COLOR)
-	_research_points_label.add_theme_color_override("font_outline_color", Color.BLACK)
-	_research_points_label.add_theme_constant_override("outline_size", 4)
-	_research_points_label.add_theme_font_size_override("font_size", 34)
-	_research_points_label.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_research_points_label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	panel.add_child(_research_points_label)
-	_refresh_research_points_display()
-
-
 ## Persistent "Space Station" title to the right of the Menu button. Lives on
 ## the TopBar (a sibling of the page viewport), so it stays put when panning
 ## between the player and ship pages.
@@ -872,13 +861,12 @@ func _ensure_station_header() -> void:
 
 
 func _refresh_research_points_display() -> void:
-	if _research_points_label == null:
+	if _research_points_display == null:
 		return
-	var points := 0
 	var save_data := _save_data as AppSaveData
-	if save_data:
-		points = save_data.research_points
-	_research_points_label.text = "RESEARCH: %d" % points
+	for rarity in _RESEARCH_COUNT_NODES:
+		var label := _research_points_display.get_node(_RESEARCH_COUNT_NODES[rarity]) as Label
+		label.text = str(save_data.get_research_points(rarity)) if save_data != null else "0"
 
 
 func _toggle_weapon_slot_popup() -> void:
@@ -1033,15 +1021,12 @@ func _build_catalog_status_row(entry: Resource) -> String:
 	]
 
 
-## "UNLOCK: <cost>" with the cost colored green (affordable) or red (not).
+## "UNLOCK:" followed by one requirement row per required rarity, each colored
+## green (that rarity's balance covers it) or red (it doesn't).
 func _build_unlock_requirement_bbcode(entry: Resource) -> String:
 	var research_cost := _catalog_entry_research_cost(entry)
-	if research_cost > 0:
-		var owned := 0
-		var save_data := _save_data as AppSaveData
-		if save_data != null:
-			owned = save_data.research_points
-		return "UNLOCK: " + _colorize_requirement(_format_research_point_cost_text(research_cost), owned >= research_cost)
+	if not research_cost.is_empty():
+		return "UNLOCK:\n" + _format_research_cost_text(research_cost, true)
 	var costs := _catalog_entry_unlock_costs(entry)
 	if not costs.is_empty():
 		return "UNLOCK: " + _format_salvage_costs_text(costs, true)
@@ -1709,7 +1694,7 @@ func _can_unlock_catalog_entry(entry: Resource) -> bool:
 	if not _is_next_locked_catalog_entry(entry):
 		return false
 	var cost := _catalog_entry_research_cost(entry)
-	return cost > 0 and save_data.can_spend_research_points(cost)
+	return not cost.is_empty() and save_data.can_afford_research_cost(cost)
 
 
 func _unlock_catalog_entry(entry: Resource) -> void:
@@ -1718,7 +1703,7 @@ func _unlock_catalog_entry(entry: Resource) -> void:
 		return
 
 	var cost := _catalog_entry_research_cost(entry)
-	if not save_data.spend_research_points(cost):
+	if not save_data.spend_research_cost(cost):
 		return
 
 	save_data.unlock_research_id(_catalog_entry_unlock_id(entry))
@@ -1807,12 +1792,10 @@ func _catalog_entry_unlock_group(entry: Resource) -> StringName:
 	return entry.get("research_unlock_group") as StringName
 
 
-func _catalog_entry_research_cost(entry: Resource) -> int:
-	if entry == null:
-		return 0
-	if not Utils.has_property(entry, "research_point_cost"):
-		return 0
-	return maxi(int(entry.get("research_point_cost")), 0)
+func _catalog_entry_research_cost(entry: Resource) -> Dictionary:
+	if entry != null and entry.has_method("get_research_cost"):
+		return entry.call("get_research_cost")
+	return {}
 
 
 func _catalog_entry_display_name(entry: Resource) -> String:
@@ -1836,8 +1819,8 @@ func _catalog_entry_icon(entry: Resource) -> Texture2D:
 
 func _catalog_entry_unlock_cost_text(entry: Resource) -> String:
 	var research_cost := _catalog_entry_research_cost(entry)
-	if research_cost > 0:
-		return _format_research_point_cost_text(research_cost)
+	if not research_cost.is_empty():
+		return _format_research_cost_text(research_cost, false)
 	var costs := _catalog_entry_unlock_costs(entry)
 	if not costs.is_empty():
 		return _format_salvage_costs_text(costs)
@@ -2164,12 +2147,23 @@ func _build_scrap_cost_section(level_cost: Resource, colorize: bool = false) -> 
 	return "Scrap Metal\n%s" % amount
 
 
-func _format_research_point_cost_text(required: int) -> String:
-	var owned := 0
+## One text row per required rarity, e.g. "1x Common RP (0 / 1)". When colorize
+## is set, each row is green/red by whether that rarity's balance covers it.
+func _format_research_cost_text(cost: Dictionary, colorize: bool = false) -> String:
+	if cost.is_empty():
+		return "Free"
 	var save_data := _save_data as AppSaveData
-	if save_data != null:
-		owned = save_data.research_points
-	return "%d RP (%d / %d)" % [required, owned, required]
+	var lines := PackedStringArray()
+	for rarity in cost:
+		var required := int(cost[rarity])
+		var owned := save_data.get_research_points(int(rarity)) if save_data != null else 0
+		var line := "%dx %s RP (%d / %d)" % [
+			required, SalvageItemData.get_name_for_rarity(int(rarity)), owned, required,
+		]
+		if colorize:
+			line = _colorize_requirement(line, owned >= required)
+		lines.append(line)
+	return "\n".join(lines)
 
 
 func _format_salvage_costs_text(costs: Array, colorize: bool = false) -> String:

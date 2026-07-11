@@ -68,6 +68,11 @@ const LEFT_LASER := &"left"
 const RIGHT_LASER := &"right"
 const ARTIFACT_HIT_RADIUS: float = 34.0
 const SELECTED_LASER_COLOR := Color("f7f1a3")
+## Keycap tints: A/D turn yellow for the selected laser; W/S turn green while that
+## direction is being driven. Neutral keys stay white.
+const KEY_SELECT_COLOR := Color("f7f1a3")
+const KEY_MOVE_COLOR := Color("5bff8e")
+const KEY_NEUTRAL_COLOR := Color.WHITE
 
 ## Drift-direction arrow shown next to each emitter (up = drifting up).
 ## Horizontal offset is inward (left laser -> to its right, right laser -> to its
@@ -115,8 +120,6 @@ var _left_drift_speed_bonus: float = 0.0
 var _right_drift_speed_bonus: float = 0.0
 var _drift_speed_bonuses_initialized: bool = false
 var _rng := RandomNumberGenerator.new()
-var _hint_label: Label = null
-var _prompt_label: Label = null
 var _status_label: Label = null
 var _failure_result_laser: StringName = &""
 var _success_result_active: bool = false
@@ -153,6 +156,10 @@ var _right_drift_arrow: Node2D = null
 @onready var _left_ticker: Node2D = %LeftTicker
 @onready var _right_ticker: Node2D = %RightTicker
 @onready var _dim_overlay: ColorRect = %DimOverlay
+@onready var _key_w: Panel = %KeyW
+@onready var _key_a: Panel = %KeyA
+@onready var _key_s: Panel = %KeyS
+@onready var _key_d: Panel = %KeyD
 
 
 func _ready() -> void:
@@ -193,7 +200,9 @@ func start_minigame(context) -> void:
 	_active = true
 	_paused = true
 	_awaiting_start = true
-	_play_elapsed = 0.0
+	# The drift ramp only restarts for a fresh attempt; a resume keeps its progress.
+	if not _is_resuming_altered_state:
+		_play_elapsed = 0.0
 	_resume_countdown = 0.0
 	_has_started_state = true
 	grab_focus()
@@ -214,7 +223,9 @@ func begin_play() -> void:
 		return
 	_awaiting_start = false
 	_paused = false
-	_play_elapsed = 0.0
+	# Fresh attempt starts the drift ramp from zero; a resume keeps its progress.
+	if not _is_resuming_altered_state:
+		_play_elapsed = 0.0
 	_resume_countdown = resume_delay
 	set_process(true)
 	_update_labels()
@@ -258,6 +269,7 @@ func save_state() -> Dictionary:
 		"right_direction_change_remaining": _right_direction_change_remaining,
 		"left_drift_speed_bonus": _left_drift_speed_bonus,
 		"right_drift_speed_bonus": _right_drift_speed_bonus,
+		"play_elapsed": _play_elapsed,
 		"has_started": _has_started_state,
 		"rng_state": _rng.state,
 	}
@@ -271,6 +283,8 @@ func load_state(state: Dictionary) -> void:
 		return
 	_has_started_state = bool(state.get("has_started", _is_saved_state_altered(state)))
 	_is_resuming_altered_state = _has_started_state
+	# Preserve the drift ramp-up progress so a pause/resume doesn't restart it.
+	_play_elapsed = maxf(float(state.get("play_elapsed", _play_elapsed)), 0.0)
 	progress = clampf(float(state.get("progress", progress)), 0.0, 1.0)
 	selected_laser = StringName(str(state.get("selected_laser", selected_laser)))
 	left_laser_offset = clampf(float(state.get("left_laser_offset", left_laser_offset)), -max_laser_offset, max_laser_offset)
@@ -360,6 +374,7 @@ func _unhandled_input(event: InputEvent) -> void:
 # ---------------------------------------------------------------------------
 
 func _update_visuals(delta: float = 0.0) -> void:
+	_update_control_keys()
 	if _left_beam == null:
 		return
 
@@ -632,22 +647,13 @@ func _raycast_rect(origin: Vector2, direction: Vector2, rect: Rect2) -> Dictiona
 
 
 # ---------------------------------------------------------------------------
-# Labels (still built in code; anchored within the reference rect).
+# Labels (the top status/goal line is built in code; the WASD control legend is
+# authored in the scene and only recolored from here).
 # ---------------------------------------------------------------------------
 
 func _build_labels() -> void:
-	_hint_label = _create_label("KEEP LASERS ON THE ARTIFACT", 28, HORIZONTAL_ALIGNMENT_LEFT)
-	_hint_label.anchor_left = 0.12
-	_hint_label.anchor_top = 0.77
-	_hint_label.anchor_right = 0.52
-	_hint_label.anchor_bottom = 0.88
-
-	_prompt_label = _create_label("A/D SELECT   W/S TUNE", 30, HORIZONTAL_ALIGNMENT_CENTER)
-	_prompt_label.anchor_left = 0.34
-	_prompt_label.anchor_top = 0.84
-	_prompt_label.anchor_right = 0.66
-	_prompt_label.anchor_bottom = 0.96
-
+	# Top-center line: the persistent "Stabilize the artifact!" goal, swapped for
+	# the start/pause/countdown prompt when the round isn't actively running.
 	_status_label = _create_label("", 28, HORIZONTAL_ALIGNMENT_CENTER)
 	_status_label.anchor_left = 0.34
 	_status_label.anchor_top = 0.05
@@ -992,15 +998,6 @@ func _set_failed_emitter_shake_offset(value: float) -> void:
 
 
 func _update_labels() -> void:
-	if _hint_label:
-		if _failure_result_laser != &"":
-			_hint_label.text = "LASER OVERHEATED"
-		elif _success_result_active:
-			_hint_label.text = "ARTIFACT STABLE"
-		else:
-			_hint_label.text = "ALIGN BOTH LASERS"
-	if _prompt_label:
-		_prompt_label.text = "A/D SELECT   W/S TUNE"
 	if _status_label:
 		if _awaiting_start:
 			var start_action := "RESUME" if _is_resuming_altered_state else "START"
@@ -1011,5 +1008,22 @@ func _update_labels() -> void:
 			var countdown_action := "RESUME" if _is_resuming_altered_state else "START"
 			_status_label.text = "%s IN %.1f" % [countdown_action, _resume_countdown]
 		else:
-			var selected := "LEFT" if selected_laser == LEFT_LASER else "RIGHT"
-			_status_label.text = "%s LASER" % selected
+			_status_label.text = "Stabilize the artifact!"
+
+
+## Recolor the authored WASD keycaps: A/D yellow for the selected laser, and
+## W/S green while that direction is actively driving the selected laser.
+func _update_control_keys() -> void:
+	if _key_a == null:
+		return
+	var left_selected := selected_laser == LEFT_LASER
+	_key_a.modulate = KEY_SELECT_COLOR if left_selected else KEY_NEUTRAL_COLOR
+	_key_d.modulate = KEY_SELECT_COLOR if not left_selected else KEY_NEUTRAL_COLOR
+
+	var driving := not Engine.is_editor_hint() and _active and not _paused \
+		and not _awaiting_start and _resume_countdown <= 0.0 \
+		and _failure_result_laser == &"" and not _success_result_active
+	var w_down := driving and Input.is_key_pressed(KEY_W)
+	var s_down := driving and Input.is_key_pressed(KEY_S) and not w_down
+	_key_w.modulate = KEY_MOVE_COLOR if w_down else KEY_NEUTRAL_COLOR
+	_key_s.modulate = KEY_MOVE_COLOR if s_down else KEY_NEUTRAL_COLOR

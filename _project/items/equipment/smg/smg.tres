@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://dsmg8w1pk3n0x"]
+
+[ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_bullet"]
+[ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="2_weapon_data"]
+[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/rifle_reload.ogg" id="3_lc1si"]
+[ext_resource type="Texture2D" uid="uid://ndf8qmq35kuf" path="res://_project/items/equipment/smg/player_item_smg.png" id="3_smg_sprite"]
+
+[resource]
+script = ExtResource("2_weapon_data")
+damage = 6.0
+fire_rate = 8.0
+bullet_sprite = ExtResource("1_bullet")
+bullet_spread_min = 4.0
+bullet_spread_max = 9.0
+magazine_size = 40
+reload_time = 1.4
+item_id = &"weapon_smg"
+display_name = "SMG"
+hotbar_icon = ExtResource("3_smg_sprite")
+weapon_sprite = ExtResource("3_smg_sprite")
+weapon_offset = Vector2(-11.564, 22.24)
+weapon_rotation = 0.0
+muzzle_position = Vector2(-51.56, 13.88)
+muzzle_effect_type = 2
+muzzle_effect_offset = Vector2(5, 0)
+metadata/_custom_type_script = "uid://dswvbat8qx1i4"

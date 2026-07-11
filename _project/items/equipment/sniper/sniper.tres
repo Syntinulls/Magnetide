@@ -1,0 +1,26 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bsnp7w2qk4m1y"]
+
+[ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_bullet"]
+[ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="2_weapon_data"]
+[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/rifle_reload.ogg" id="3_akd4b"]
+[ext_resource type="Texture2D" uid="uid://b3mc0kehlu0pc" path="res://_project/items/equipment/sniper/player_item_sniper.png" id="3_sniper_sprite"]
+
+[resource]
+script = ExtResource("2_weapon_data")
+damage = 45.0
+fire_rate = 1.0
+bullet_speed = 2400.0
+pierce = 4
+bullet_sprite = ExtResource("1_bullet")
+magazine_size = 5
+reload_time = 2.0
+item_id = &"weapon_sniper"
+display_name = "Sniper"
+hotbar_icon = ExtResource("3_sniper_sprite")
+weapon_sprite = ExtResource("3_sniper_sprite")
+weapon_offset = Vector2(-26.105, 17.995)
+weapon_rotation = 0.0
+muzzle_position = Vector2(-76.56, 14.88)
+muzzle_effect_type = 2
+muzzle_effect_offset = Vector2(5, 0)
+metadata/_custom_type_script = "uid://dswvbat8qx1i4"

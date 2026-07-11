@@ -20,6 +20,15 @@ class_name WeaponData
 @export var last_shot_sfx: Array[AudioStream] = []
 ## Volume of the last-shot sound, in decibels (0 = unchanged, negative = quieter).
 @export var last_shot_sfx_volume_db: float = 0.0
+@export_group("Bullet Spread")
+## Minimum spread cone width, in degrees. 0 = perfectly accurate.
+@export_range(0.0, 90.0, 0.1, "degrees") var bullet_spread_min: float = 0.0:
+	set(value):
+		bullet_spread_min = maxf(value, 0.0)
+## Maximum spread cone width, in degrees. Clamped to be >= bullet_spread_min.
+@export_range(0.0, 90.0, 0.1, "degrees") var bullet_spread_max: float = 0.0:
+	set(value):
+		bullet_spread_max = maxf(value, 0.0)
 
 @export_group("Ammo")
 ## Rounds available before a reload is required.
@@ -38,3 +47,15 @@ class_name WeaponData
 @export var reload_sfx: AudioStream = preload("res://_project/audio/sfx/rifle_reload.ogg")
 ## Volume of the reload sound, in decibels (0 = unchanged, negative = quieter).
 @export var reload_sfx_volume_db: float = 0.0
+
+
+## Per-bullet angular offset in radians. Rolls a spread magnitude in
+## [bullet_spread_min, bullet_spread_max] degrees, then a random angle within
+## that cone (±magnitude/2). Returns 0 when spread is disabled (0/0).
+func roll_bullet_spread_offset() -> float:
+	var lo := maxf(bullet_spread_min, 0.0)
+	var hi := maxf(bullet_spread_max, lo)
+	if hi <= 0.0:
+		return 0.0
+	var magnitude := randf_range(lo, hi)
+	return deg_to_rad(randf_range(-magnitude * 0.5, magnitude * 0.5))

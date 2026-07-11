@@ -1,6 +1,8 @@
 [gd_scene format=3 uid="uid://uyaj1fkbdsto"]
 
 [ext_resource type="Script" uid="uid://dw6fuqou4gt6p" path="res://_project/ship/research/minigames/alignment_a_minigame.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://r6ybvpr7spme" path="res://_project/ui/fonts/Super Wonder.ttf" id="font_key"]
+[ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/ui/fonts/Maneuver-Bold.otf" id="font_text"]
 [ext_resource type="Texture2D" uid="uid://d30bi53l0boih" path="res://_project/ship/research/minigames/sprites/artifact_1.png" id="tex_artifact"]
 [ext_resource type="Texture2D" uid="uid://deokso20fep40" path="res://_project/ship/research/minigames/sprites/minigame_laser_barrel.png" id="tex_barrel"]
 [ext_resource type="Texture2D" uid="uid://mhpknbl1y8gr" path="res://_project/ship/research/minigames/sprites/minigame_laser_body.png" id="tex_body"]
@@ -20,6 +22,18 @@ border_width_right = 5
 border_width_bottom = 5
 border_color = Color(0.145098, 0.145098, 0.145098, 1)
 
+[sub_resource type="StyleBoxFlat" id="sb_keycap"]
+bg_color = Color(0.12, 0.13, 0.16, 0.92)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.92, 0.94, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
 [node name="AlignmentAMinigame" type="Control" unique_id=891026119]
 clip_contents = true
 custom_minimum_size = Vector2(980, 590)
@@ -29,7 +43,6 @@ offset_right = 980.0
 offset_bottom = 590.0
 mouse_filter = 2
 script = ExtResource("1_script")
-window_border_inset = null
 
 [node name="Background" type="Panel" parent="." unique_id=649758343]
 unique_name_in_owner = true
@@ -70,7 +83,6 @@ unique_name_in_owner = true
 texture_repeat = 2
 points = PackedVector2Array(51, 295, 456, 295)
 width = 32.0
-default_color = Color(0.45882353, 1, 0.9098039, 1)
 texture = ExtResource("tex_frame1")
 texture_mode = 1
 end_cap_mode = 2
@@ -80,7 +92,6 @@ unique_name_in_owner = true
 texture_repeat = 2
 points = PackedVector2Array(924, 295, 524, 295)
 width = 32.0
-default_color = Color(0.45882353, 1, 0.9098039, 1)
 texture = ExtResource("tex_frame1")
 texture_mode = 1
 end_cap_mode = 2
@@ -205,3 +216,164 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 color = Color(0, 0, 0, 0.28)
+
+[node name="ControlLegend" type="Control" parent="." unique_id=2042978183]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="KeyW" type="Panel" parent="ControlLegend" unique_id=57883771]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 467.0
+offset_top = 454.0
+offset_right = 513.0
+offset_bottom = 500.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyW" unique_id=1862034576]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyA" type="Panel" parent="ControlLegend" unique_id=998321266]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+layout_mode = 0
+offset_left = 413.0
+offset_top = 506.0
+offset_right = 459.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyA" unique_id=337641759]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyS" type="Panel" parent="ControlLegend" unique_id=1715671227]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 467.0
+offset_top = 506.0
+offset_right = 513.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyS" unique_id=751584648]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyD" type="Panel" parent="ControlLegend" unique_id=112652375]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 521.0
+offset_top = 506.0
+offset_right = 567.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyD" unique_id=1102896743]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "D"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ControlLegend" unique_id=1658741673]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -184.0
+offset_top = -40.0
+offset_right = 184.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+
+[node name="SelectLeftText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=1988188344]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "A - Select Left Laser"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoveText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=311513107]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "W/S - Move Laser"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SelectRightText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=1783734532]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "D - Select Right Laser"
+horizontal_alignment = 1
+vertical_alignment = 1

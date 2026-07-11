@@ -153,7 +153,7 @@ func _award_research_points(item_data: SalvageItemData) -> void:
 	var save_data := app_root.call("get_save_data") as AppSaveData
 	if save_data == null:
 		return
-	save_data.add_research_points(reward)
+	save_data.add_research_points(item_data.rarity, reward)
 
 
 func _ensure_research_ui() -> ResearchStationUI:

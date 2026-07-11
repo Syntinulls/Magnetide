@@ -179,7 +179,45 @@ Everything else is noise and must not be committed:
   corresponding rewrite rule to `AppSaveData._migrate_legacy_resource_paths()`.
 - `project.godot` `folder_colors` should track the top-level concept folders.
 
-## 8. Specs
+## 8. Scenes over code for node structure
+
+When a feature needs a node/scene structure — several nodes wired together, a
+reusable UI component, a widget with children — author it as a `.tscn` scene
+file, not by constructing and configuring nodes in code (`Node.new()`,
+`add_child`, setting anchors/offsets/theme overrides imperatively). Scene files
+are the developer-facing source of truth: they can be opened, previewed, and
+tuned directly in the Godot editor without running the game.
+
+Rules of thumb:
+
+- **Large, clearly-defined concepts/scenes** (a HUD panel, a station widget, a
+  popup, an item display, a minigame) get their own `.tscn` under the owning
+  concept's folder, with a script sharing the scene's stem (see §3). Instance
+  the scene — either authored directly into its parent scene, or `preload` +
+  instantiate at the single point it's added.
+- The script's job is behavior and data binding (populate labels, tint by
+  rarity, react to signals), not building the layout. Structure lives in the
+  scene; per-instance data the scene can't know is applied in `_ready`/refresh.
+- **Superficial or purely-dynamic bits stay in code**: a lone label, a
+  throwaway separator, or a list whose items are generated at runtime from data
+  (N rows for N entries) don't need a scene. When a runtime list's row is itself
+  non-trivial, make the *row* a `.tscn` and instance it per item.
+
+If a change adds imperative node-tree construction for something that is really
+a defined component, that's a smell — move it to a scene in the same change.
+
+**But keep the file count down, too.** Prioritizing scenes over code does *not*
+mean every component earns its own `.tscn`. A small UI component — the station's
+research-points readout, say — isn't large enough to justify a standalone scene
+file. Author it as a node structure **inside its parent scene** (the readout
+lives directly under `station_screen.tscn`'s TopBar) rather than as a separate
+`.tscn` that gets instanced in. It's still fully editor-tunable, just without
+adding a file to the tree, and any behavior it needs lives on the parent scene's
+script referencing the authored nodes by path. Reserve standalone `.tscn` files
+for structures that are genuinely large, reused in more than one place, or
+instanced many times at runtime; otherwise nest the nodes in the owning scene.
+
+## 9. Specs
 
 Each nontrivial feature gets a spec in `specs/` before/while it is built. Specs are
 design history — they are not updated retroactively when code moves; this document is

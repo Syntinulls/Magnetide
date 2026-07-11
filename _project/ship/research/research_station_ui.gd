@@ -14,6 +14,8 @@ const DEFAULT_MINIGAME_SCENE: PackedScene = preload("res://_project/ship/researc
 const OVERALL_BG: Texture2D = preload("res://_project/ship/research/minigames/sprites/minigame_overall_bg.png")
 const OVERALL_PROGRESS: Texture2D = preload("res://_project/ship/research/minigames/sprites/minigame_overall_progress.png")
 const OVERALL_BAR: Texture2D = preload("res://_project/ship/research/minigames/sprites/minigame_overall_bar.png")
+## Research-point icon shown (tinted to the artifact's rarity) on the completion screen.
+const RESEARCH_POINT_ICON: Texture2D = preload("res://_project/ui/sprites/ui_icon_research_point.png")
 
 ## Pool of minigame scenes the station can present. A random one is selected per
 ## research stage. Empty falls back to DEFAULT_MINIGAME_SCENE.
@@ -62,6 +64,9 @@ var _status_label: Label = null
 var _close_button: Button = null
 var _result_overlay: PanelContainer = null
 var _result_title_label: Label = null
+var _result_reward_row: HBoxContainer = null
+var _result_reward_icon: TextureRect = null
+var _result_reward_label: Label = null
 var _result_body_label: Label = null
 var _result_countdown_label: Label = null
 
@@ -373,6 +378,27 @@ func _build_result_overlay() -> void:
 
 	_result_title_label = _create_result_label(42, Color("73f7cf"))
 	vbox.add_child(_result_title_label)
+
+	# Rarity-tinted research-point icon + reward, shown on the completion screen.
+	_result_reward_row = HBoxContainer.new()
+	_result_reward_row.alignment = BoxContainer.ALIGNMENT_CENTER
+	_result_reward_row.add_theme_constant_override("separation", 10)
+	_result_reward_row.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_result_reward_row.visible = false
+	_result_reward_icon = TextureRect.new()
+	_result_reward_icon.texture = RESEARCH_POINT_ICON
+	_result_reward_icon.custom_minimum_size = Vector2(44.0, 44.0)
+	_result_reward_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+	_result_reward_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+	_result_reward_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	_result_reward_row.add_child(_result_reward_icon)
+	_result_reward_label = _create_result_label(34, Color("f0f0f0"))
+	# In the HBox the label is sized to its minimum; autowrap would shrink that to
+	# near-zero and wrap the reward to one glyph per line, so keep it single-line.
+	_result_reward_label.autowrap_mode = TextServer.AUTOWRAP_OFF
+	_result_reward_row.add_child(_result_reward_label)
+	vbox.add_child(_result_reward_row)
+
 	_result_body_label = _create_result_label(28, Color("f0f0f0"))
 	vbox.add_child(_result_body_label)
 	_result_countdown_label = _create_result_label(54, Color("f7f1a3"))
@@ -400,10 +426,30 @@ func _show_result_overlay(title: String, body: String, countdown_text: String = 
 	_result_overlay.move_to_front()
 	if _result_title_label:
 		_result_title_label.text = title
+	_update_result_reward_row()
 	if _result_body_label:
 		_result_body_label.text = body
 	if _result_countdown_label:
 		_result_countdown_label.text = countdown_text
+
+
+## The reward row (rarity icon + points) is only shown on the final completion
+## screen, tinted to the researched artifact's rarity.
+func _update_result_reward_row() -> void:
+	if _result_reward_row == null:
+		return
+	var show_reward := _display_state == DisplayState.FINAL_RESULTS and artifact_data != null
+	_result_reward_row.visible = show_reward
+	if not show_reward:
+		return
+	var rarity := int(artifact_data.rarity)
+	var rarity_color := SalvageItemData.get_color_for_rarity(rarity)
+	if _result_reward_icon:
+		_result_reward_icon.modulate = rarity_color
+	if _result_reward_label:
+		var reward := maxi(artifact_data.research_point_reward, 0)
+		_result_reward_label.text = "+%d %s RP" % [reward, SalvageItemData.get_name_for_rarity(rarity)]
+		_result_reward_label.add_theme_color_override("font_color", rarity_color)
 
 
 func _hide_result_overlay() -> void:
@@ -498,11 +544,7 @@ func _display_final_results() -> void:
 
 
 func _build_final_result_text() -> String:
-	var reward := 0
-	if artifact_data:
-		reward = maxi(artifact_data.research_point_reward, 0)
-	return "RESEARCH POINTS: %d\nFAILURES: %d / %d\nTIME: %s" % [
-		reward,
+	return "FAILURES: %d / %d\nTIME: %s" % [
 		total_fail_count,
 		max_fail_count,
 		Utils.format_elapsed_time(elapsed_seconds),

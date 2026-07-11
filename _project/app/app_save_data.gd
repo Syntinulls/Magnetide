@@ -6,6 +6,11 @@ const SAVE_PATH := "user://magnetide_save.tres"
 @export var current_run_loadout: RunLoadout = null
 @export var storage_entries: Array[Dictionary] = []
 @export var total_scrap_metal: int = 0
+@export var research_points_common: int = 0
+@export var research_points_rare: int = 0
+@export var research_points_epic: int = 0
+## Legacy single-currency balance. Folded into common on load, then zeroed.
+## Kept for one migration pass so pre-rarity saves don't lose progress.
 @export var research_points: int = 0
 @export var unlocked_research_ids: Array[StringName] = []
 
@@ -58,9 +63,13 @@ func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:
 	if reset:
 		storage_entries.clear()
 		total_scrap_metal = 0
+		research_points_common = 0
+		research_points_rare = 0
+		research_points_epic = 0
 		research_points = 0
 		unlocked_research_ids.clear()
 		current_run_loadout = null
+	_migrate_legacy_research_points()
 	if current_run_loadout == null and default_run_loadout != null:
 		current_run_loadout = default_run_loadout.duplicate(true) as RunLoadout
 	if current_run_loadout != null:
@@ -86,6 +95,8 @@ func is_default(default_run_loadout: RunLoadout) -> bool:
 	if not storage_entries.is_empty():
 		return false
 	if total_scrap_metal != 0:
+		return false
+	if research_points_common != 0 or research_points_rare != 0 or research_points_epic != 0:
 		return false
 	if research_points != 0:
 		return false
@@ -150,25 +161,87 @@ func add_scrap_metal(amount: int) -> void:
 	save_to_disk()
 
 
-func add_research_points(amount: int) -> void:
+## Folds a legacy pre-rarity research_points balance into common, once.
+func _migrate_legacy_research_points() -> void:
+	if research_points > 0:
+		research_points_common += research_points
+		research_points = 0
+
+
+## Only common/rare/epic currencies exist; legendary folds into epic.
+func _normalize_research_rarity(rarity: int) -> int:
+	if rarity == SalvageItemData.ItemRarity.RARE:
+		return SalvageItemData.ItemRarity.RARE
+	if rarity == SalvageItemData.ItemRarity.EPIC or rarity == SalvageItemData.ItemRarity.LEGENDARY:
+		return SalvageItemData.ItemRarity.EPIC
+	return SalvageItemData.ItemRarity.COMMON
+
+
+func get_research_points(rarity: int) -> int:
+	match _normalize_research_rarity(rarity):
+		SalvageItemData.ItemRarity.RARE:
+			return research_points_rare
+		SalvageItemData.ItemRarity.EPIC:
+			return research_points_epic
+		_:
+			return research_points_common
+
+
+func add_research_points(rarity: int, amount: int) -> void:
 	if amount <= 0:
 		return
-	research_points += amount
+	match _normalize_research_rarity(rarity):
+		SalvageItemData.ItemRarity.RARE:
+			research_points_rare += amount
+		SalvageItemData.ItemRarity.EPIC:
+			research_points_epic += amount
+		_:
+			research_points_common += amount
 	save_to_disk()
 
 
-func can_spend_research_points(amount: int) -> bool:
-	return amount >= 0 and research_points >= amount
+func can_spend_research_points(rarity: int, amount: int) -> bool:
+	return amount >= 0 and get_research_points(rarity) >= amount
 
 
-func spend_research_points(amount: int) -> bool:
+func spend_research_points(rarity: int, amount: int) -> bool:
 	if amount < 0:
 		return false
-	if not can_spend_research_points(amount):
+	if not can_spend_research_points(rarity, amount):
 		return false
-	research_points -= amount
+	_deduct_research_points(rarity, amount)
 	save_to_disk()
 	return true
+
+
+## True if every rarity balance covers its amount. `cost` maps rarity -> amount.
+func can_afford_research_cost(cost: Dictionary) -> bool:
+	for rarity in cost:
+		if get_research_points(int(rarity)) < int(cost[rarity]):
+			return false
+	return true
+
+
+## Deducts a full multi-rarity cost atomically: all covered or nothing spent.
+func spend_research_cost(cost: Dictionary) -> bool:
+	if not can_afford_research_cost(cost):
+		return false
+	for rarity in cost:
+		var amount := int(cost[rarity])
+		if amount > 0:
+			_deduct_research_points(int(rarity), amount)
+	save_to_disk()
+	return true
+
+
+func _deduct_research_points(rarity: int, amount: int) -> void:
+	match _normalize_research_rarity(rarity):
+		SalvageItemData.ItemRarity.RARE:
+			research_points_rare = maxi(research_points_rare - amount, 0)
+		SalvageItemData.ItemRarity.EPIC:
+			research_points_epic = maxi(research_points_epic - amount, 0)
+		_:
+			research_points_common = maxi(research_points_common - amount, 0)
 
 
 func is_research_unlocked(unlock_id: StringName) -> bool:

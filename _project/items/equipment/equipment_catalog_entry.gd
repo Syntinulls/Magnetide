@@ -7,7 +7,40 @@ class_name EquipmentCatalogEntry
 @export var research_unlock_id: StringName = &""
 @export var research_unlock_group: StringName = &"weapons"
 @export var research_unlock_order: int = 0
-@export var research_point_cost: int = 0
+@export_group("Research Cost")
+@export var research_cost_common: int = 0
+@export var research_cost_rare: int = 0
+@export var research_cost_epic: int = 0
+@export_group("")
+
+
+## Non-zero per-rarity costs as a rarity -> amount map (empty when free).
+func get_research_cost() -> Dictionary:
+	return EquipmentCatalogEntry.build_research_cost(
+		research_cost_common, research_cost_rare, research_cost_epic
+	)
+
+
+## Shared builder so the two catalog-entry classes format costs identically.
+static func build_research_cost(common: int, rare: int, epic: int) -> Dictionary:
+	var cost := {}
+	if common > 0:
+		cost[SalvageItemData.ItemRarity.COMMON] = common
+	if rare > 0:
+		cost[SalvageItemData.ItemRarity.RARE] = rare
+	if epic > 0:
+		cost[SalvageItemData.ItemRarity.EPIC] = epic
+	return cost
+
+
+## Compact single-line cost text, e.g. "1x Common, 1x Rare".
+static func format_research_cost(cost: Dictionary) -> String:
+	if cost.is_empty():
+		return ""
+	var parts := PackedStringArray()
+	for rarity in cost:
+		parts.append("%dx %s" % [int(cost[rarity]), SalvageItemData.get_name_for_rarity(int(rarity))])
+	return ", ".join(parts)
 
 
 func get_display_name() -> String:
@@ -23,8 +56,9 @@ func get_icon() -> Texture2D:
 
 
 func get_unlock_cost_text() -> String:
-	if research_point_cost > 0:
-		return "%d RP" % research_point_cost
+	var research_cost := get_research_cost()
+	if not research_cost.is_empty():
+		return EquipmentCatalogEntry.format_research_cost(research_cost)
 	if unlock_cost.is_empty():
 		return "No unlock cost"
 

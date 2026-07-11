@@ -26,6 +26,13 @@ const ITEM_RARITY_COLORS := {
 	ItemRarity.LEGENDARY: Color("f0d23c"),
 }
 
+const ITEM_RARITY_NAMES := {
+	ItemRarity.COMMON: "Common",
+	ItemRarity.RARE: "Rare",
+	ItemRarity.EPIC: "Epic",
+	ItemRarity.LEGENDARY: "Legendary",
+}
+
 ## Predetermined per-weight-class physics profile. Each class drives:
 ## - weight: internal mass float (pull velocity/acceleration + dwell scaling;
 ##   higher = slower to accelerate, longer to break free from a pile)
@@ -161,3 +168,7 @@ static func get_weight_for_rarity(item_rarity: int) -> float:
 
 static func get_color_for_rarity(item_rarity: int) -> Color:
 	return ITEM_RARITY_COLORS.get(item_rarity, Color.WHITE)
+
+
+static func get_name_for_rarity(item_rarity: int) -> String:
+	return ITEM_RARITY_NAMES.get(item_rarity, "Common")

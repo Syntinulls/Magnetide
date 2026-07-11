@@ -514,6 +514,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 	var bullet_direction := direction.normalized()
 	if bullet_direction.length_squared() <= 0.0001:
 		bullet_direction = get_weapon_aim_direction()
+	bullet_direction = bullet_direction.rotated(weapon_data.roll_bullet_spread_offset())
 
 	var world_root := Magnetide.world_root
 	if world_root:

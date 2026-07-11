@@ -21,5 +21,4 @@ offset = Vector2(-13.585, 8.13)
 
 [node name="Weapon" type="Sprite2D" parent="ArmSprite" unique_id=1858018707]
 show_behind_parent = true
-position = Vector2(-2.485, 15.465)
 offset = Vector2(-15.125, 0)
