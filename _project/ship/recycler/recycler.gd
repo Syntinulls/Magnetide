@@ -9,6 +9,9 @@ signal trash_recycled(scrap_origin: Vector2)
 @export var recycle_blade_contact_duration: float = 0.1
 @export var recycle_blade_pass_duration: float = 0.85
 @export var blade_spin_speed: float = 6.0
+@export_group("Audio")
+@export var grind_sfx_filename: String = "recycler_grind.ogg"
+@export var grind_sfx_volume_db: float = -2.0
 
 const RENDER_Z_MAX: int = 0
 const RENDER_Z_BACK: int = -3
@@ -71,6 +74,7 @@ func recycle_trash(item: SalvageItem) -> bool:
 		return false
 
 	_is_recycling = true
+	_play_grind_sfx()
 	set_highlighted(false)
 	item.set_outlined(false)
 	item.z_as_relative = false
@@ -104,6 +108,12 @@ func _finish_recycling(item: SalvageItem, scrap_origin: Vector2) -> void:
 	if _trash_particles:
 		_trash_particles.emitting = false
 	trash_recycled.emit(scrap_origin)
+
+
+func _play_grind_sfx() -> void:
+	if grind_sfx_filename.is_empty() or not Magnetide.sfx:
+		return
+	Magnetide.sfx.play(grind_sfx_filename, grind_sfx_volume_db)
 
 
 func _setup_outline_material() -> void:
