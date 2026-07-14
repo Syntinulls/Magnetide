@@ -11,10 +11,14 @@ config_version=5
 [application]
 
 config/name="Magnetide"
-config/version="0.1.1"
+config/version="0.2.0"
 run/main_scene="res://_project/app/app_root.tscn"
 config/features=PackedStringArray("4.6", "GL Compatibility")
 config/icon="res://icon.svg"
+
+[audio]
+
+buses/default_bus_layout="uid://dhme4vtdcrg1w"
 
 [autoload]
 

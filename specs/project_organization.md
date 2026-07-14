@@ -258,3 +258,69 @@ instanced many times at runtime; otherwise nest the nodes in the owning scene.
 Each nontrivial feature gets a spec in `specs/` before/while it is built. Specs are
 design history — they are not updated retroactively when code moves; this document is
 the single source of truth for structure.
+
+## 10. Changelog
+
+`CHANGELOG.md` at the repo root is the **player-facing** record of what changed between
+builds. It is written for someone who plays the game, not someone who works on it. Git
+history already records the engineering; the changelog records the experience.
+
+### Audience rule
+
+Every entry must answer: *"what does this change about playing the game?"* If it can't,
+it doesn't go in. Concretely:
+
+**Include** — new content (weapons, enemies, augments, salvage, levels), new systems and
+mechanics, balance changes (buffs, nerfs, spawn/scaling tuning), control and input changes,
+UI/UX changes the player sees, audio and visual/feel changes, bug fixes with a visible
+symptom.
+
+**Exclude** — refactors, file/folder reorganization, renames, class extraction, dead-code
+removal, resource-path migrations, build/tooling/CI changes, spec documents, comment
+cleanup, and anything whose only description is "how the code is arranged." A commit whose
+message is entirely technical may still contain player-facing changes bundled in — read the
+diff, don't trust the subject line.
+
+### Write net state, not commit history
+
+The changelog is **not** a commit log. It describes the difference between the previous
+build and this one, as the player will experience it:
+
+- **Collapse churn.** A value tuned three times across five commits gets one line with the
+  final number. A system added in one commit and refined in three more is one entry.
+- **Omit reverted or disabled work.** If a feature was added and then turned off before the
+  build ships, it does not appear — the player never sees it. It appears in the changelog
+  for the build that actually enables it.
+- **Omit debug values and their corrections.** A timer temporarily shortened for testing and
+  then restored is not a change. But if the debug value actually shipped in the previous
+  build, the correction *is* a player-facing change and gets an entry.
+- **Group by theme, not by commit.** Suggested sections, in order:
+  `New Content` → `New Systems` → `Balance` → `Feel, Audio & Visuals` → `Fixes`.
+  Drop any section with nothing in it.
+
+### Voice and specificity
+
+- Address the player in second person ("You start with the Pistol"), present tense.
+- **Balance entries carry real numbers**, and show the delta when a value changed:
+  "Worm health 30 → 50", "enemies spawn 3× as often once a storm is imminent".
+  Vague entries ("improved balance", "various tweaks") are not acceptable.
+- Say what a change *means*, not just what it is. "Enemies spawn 2× as often while the
+  magnet minigame runs — looting is no longer free" beats "adjusted magnet spawn multiplier".
+- Lead each section with the changes a player will notice first. A new weapon outranks a
+  louder footstep.
+- Tables are for enumerable stat comparisons (weapon stat lines, tier costs). Everything
+  else is prose and bullets.
+- Bold the subject of an entry so the file is skimmable at a glance.
+
+### Structure
+
+One `## Version X.Y.Z` section per build, newest first, matching `application/config/version`
+in `project.godot` and the binary in `releases/`. A section covers every player-facing change
+since the previous version's section — not since the last commit.
+
+### Producing a changelog
+
+Given a starting commit or tag, walk the full commit range and read the **diffs**, not the
+subject lines: `.tres` resources and exported `@export` defaults are where balance actually
+lives, and a reorg commit will happily hide a new pause menu in the middle of 500 moved files.
+Then apply the net-state rules above before writing a single line.

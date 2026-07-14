@@ -1,3 +1,5 @@
 .godot/
 .vscode/
 .codex/
+# Build artifacts / release binaries (upload to GitHub Releases instead)
+releases/
