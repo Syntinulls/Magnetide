@@ -35,13 +35,13 @@ folder_colors={
 "res://_project/combat/": "pink",
 "res://_project/common/": "gray",
 "res://_project/enemies/": "red",
+"res://_project/hud/": "purple",
 "res://_project/items/": "gray",
 "res://_project/level/": "green",
 "res://_project/player/": "blue",
 "res://_project/run/": "teal",
 "res://_project/salvage/": "orange",
-"res://_project/ship/": "yellow",
-"res://_project/ui/": "purple"
+"res://_project/ship/": "yellow"
 }
 
 [global_group]
@@ -50,7 +50,7 @@ target_high=""
 
 [gui]
 
-theme/custom="res://_project/ui/magnetide_theme.tres"
+theme/custom="res://_project/hud/magnetide_theme.tres"
 
 [importer_defaults]
 

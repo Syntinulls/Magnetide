@@ -10,8 +10,8 @@ const ENTRY_COUNT_WIDTH := 84.0
 const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
 const LOST_STAT_COLOR: Color = Color(0.52, 0.52, 0.58, 1.0)
 const LOST_STRIKE_HEIGHT: float = 3.0
-const SALVAGED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_salvaged.png")
-const COLLECTED_ICON_TEXTURE: Texture2D = preload("res://_project/ui/sprites/summary_icon_collected.png")
+const SALVAGED_ICON_TEXTURE: Texture2D = preload("res://_project/app/screens/salvage/sprites/summary_icon_salvaged.png")
+const COLLECTED_ICON_TEXTURE: Texture2D = preload("res://_project/app/screens/salvage/sprites/summary_icon_collected.png")
 
 var _run_result: RunResult = null
 var _result_entries: Array[Dictionary] = []

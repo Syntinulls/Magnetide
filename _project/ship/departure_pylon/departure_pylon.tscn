@@ -1,0 +1,15 @@
+[gd_scene format=3 uid="uid://cbjj3u6hbmydw"]
+
+[ext_resource type="Script" uid="uid://cmne7y5mcthko" path="res://_project/ship/departure_pylon/departure_pylon.gd" id="1_script"]
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_body"]
+size = Vector2(90, 150)
+
+[node name="DeparturePylon" type="Area2D" unique_id=1245038825]
+script = ExtResource("1_script")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=2043155098]
+shape = SubResource("RectangleShape2D_body")
+
+[node name="UIAnchor" type="Marker2D" parent="." unique_id=1895179345]
+position = Vector2(0, -92)

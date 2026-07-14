@@ -1,7 +1,7 @@
 extends Node
 
-const DIGITAL_FONT: Font = preload("res://_project/ui/fonts/Maneuver-Bold.otf")
-const LABEL_FONT: Font = preload("res://_project/ui/fonts/Super Wonder.ttf")
+const DIGITAL_FONT: Font = preload("res://_project/hud/fonts/Maneuver-Bold.otf")
+const LABEL_FONT: Font = preload("res://_project/hud/fonts/Super Wonder.ttf")
 const SFX_PLAYER_SCRIPT: Script = preload("res://_project/audio/sfx_player.gd")
 const BGM_PLAYER_SCRIPT: Script = preload("res://_project/audio/bgm_player.gd")
 

@@ -3,7 +3,7 @@
 [ext_resource type="Script" uid="uid://5kgnhphl5jei" path="res://_project/ship/magnet/magnet.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://cdvmasewgya5d" path="res://_project/ship/magnet/sprites/magnet_effect_animation.png" id="2_effect_sprite"]
 [ext_resource type="Shader" uid="uid://b5fe2fkb5a2dc" path="res://_project/ship/magnet/nine_patch_sprite.gdshader" id="2_hmfyq"]
-[ext_resource type="Texture2D" uid="uid://c6mo1y4lj2to2" path="res://_project/ship/sprites/ship_magnet_stretch.png" id="3_cwwmf"]
+[ext_resource type="Texture2D" uid="uid://c6mo1y4lj2to2" path="res://_project/ship/magnet/sprites/magnet_stretch.png" id="3_cwwmf"]
 [ext_resource type="Script" uid="uid://dk71qlnibm401" path="res://_project/ship/magnet/nine_patch_sprite.gd" id="4_2c23r"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="6_cwwmf"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="7_2c23r"]

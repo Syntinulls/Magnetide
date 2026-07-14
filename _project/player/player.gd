@@ -20,7 +20,7 @@ signal damaged(amount: float, source: Node)
 
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 const ProjectileScript: Script = preload("res://_project/combat/projectile.gd")
-const ScrapMetalTexture: Texture2D = preload("res://_project/ui/sprites/scrap_metal.png")
+const ScrapMetalTexture: Texture2D = preload("res://_project/common/sprites/scrap_metal.png")
 const MACHINE_GUN_SHOOT_SFX: Array[String] = [
 	"machine_gun_shot_1.ogg",
 	"machine_gun_shot_2.ogg",
@@ -1417,7 +1417,7 @@ const DEPART_BAR_COLOR: Color = Color("6ad1ff")
 const RELOAD_BAR_COLOR: Color = Color("ffffff")
 const RELOAD_BAR_TEXT: String = "Reloading..."
 
-const PlayerProgressBarScene: PackedScene = preload("res://_project/ui/player_progress_bar.tscn")
+const PlayerProgressBarScene: PackedScene = preload("res://_project/hud/player_progress_bar.tscn")
 
 const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
 const SCRAP_LABEL_OFFSET_Y: float = -86.0

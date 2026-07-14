@@ -1,0 +1,379 @@
+[gd_scene format=3 uid="uid://uyaj1fkbdsto"]
+
+[ext_resource type="Script" uid="uid://dw6fuqou4gt6p" path="res://_project/ship/research_station/minigames/alignment_a/alignment_a_minigame.gd" id="1_script"]
+[ext_resource type="FontFile" uid="uid://r6ybvpr7spme" path="res://_project/hud/fonts/Super Wonder.ttf" id="font_key"]
+[ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/hud/fonts/Maneuver-Bold.otf" id="font_text"]
+[ext_resource type="Texture2D" uid="uid://d30bi53l0boih" path="res://_project/ship/research_station/minigames/alignment_a/sprites/artifact_1.png" id="tex_artifact"]
+[ext_resource type="Texture2D" uid="uid://deokso20fep40" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_barrel.png" id="tex_barrel"]
+[ext_resource type="Texture2D" uid="uid://mhpknbl1y8gr" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_body.png" id="tex_body"]
+[ext_resource type="Texture2D" uid="uid://o3xjjxle3fh6" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_1_frame_1.png" id="tex_frame1"]
+[ext_resource type="Texture2D" uid="uid://bu3wm042af5ic" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_gear.png" id="tex_gear"]
+[ext_resource type="Texture2D" uid="uid://n047vboph778" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_bar.png" id="tex_tbar"]
+[ext_resource type="Texture2D" uid="uid://b7w82xa2ccrlp" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_bg.png" id="tex_tbg"]
+[ext_resource type="Texture2D" uid="uid://dy10pgsjs5t6v" path="res://_project/ship/research_station/minigames/alignment_a/sprites/ticker_color.png" id="tex_tcolor"]
+[ext_resource type="Texture2D" uid="uid://lof2lrdcna7p" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_progress.png" id="tex_tprog"]
+[ext_resource type="Texture2D" uid="uid://bu56ep7lab2sc" path="res://_project/ship/research_station/minigames/alignment_a/sprites/ticker_shape.png" id="tex_tshape"]
+
+[sub_resource type="StyleBoxFlat" id="sb_bg"]
+bg_color = Color(0.682353, 0.690196, 0.690196, 1)
+border_width_left = 5
+border_width_top = 5
+border_width_right = 5
+border_width_bottom = 5
+border_color = Color(0.145098, 0.145098, 0.145098, 1)
+
+[sub_resource type="StyleBoxFlat" id="sb_keycap"]
+bg_color = Color(0.12, 0.13, 0.16, 0.92)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0.92, 0.94, 1, 1)
+corner_radius_top_left = 12
+corner_radius_top_right = 12
+corner_radius_bottom_right = 12
+corner_radius_bottom_left = 12
+
+[node name="AlignmentAMinigame" type="Control" unique_id=891026119]
+clip_contents = true
+custom_minimum_size = Vector2(980, 590)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 980.0
+offset_bottom = 590.0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="Background" type="Panel" parent="." unique_id=649758343]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_bg")
+
+[node name="Artifact" type="Sprite2D" parent="." unique_id=1221605801]
+unique_name_in_owner = true
+position = Vector2(490, 295)
+scale = Vector2(0.58, 0.58)
+texture = ExtResource("tex_artifact")
+
+[node name="LeftBeamGlow" type="Line2D" parent="." unique_id=1602397088]
+unique_name_in_owner = true
+points = PackedVector2Array(51, 295, 456, 295)
+width = 34.0
+default_color = Color(0.968627, 0.945098, 0.639216, 0.45)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="RightBeamGlow" type="Line2D" parent="." unique_id=38755706]
+unique_name_in_owner = true
+visible = false
+points = PackedVector2Array(924, 295, 524, 295)
+width = 34.0
+default_color = Color(0.968627, 0.945098, 0.639216, 0.45)
+begin_cap_mode = 2
+end_cap_mode = 2
+
+[node name="LeftBeam" type="Line2D" parent="." unique_id=1132620629]
+unique_name_in_owner = true
+texture_repeat = 2
+points = PackedVector2Array(51, 295, 456, 295)
+width = 32.0
+texture = ExtResource("tex_frame1")
+texture_mode = 1
+end_cap_mode = 2
+
+[node name="RightBeam" type="Line2D" parent="." unique_id=1192287932]
+unique_name_in_owner = true
+texture_repeat = 2
+points = PackedVector2Array(924, 295, 524, 295)
+width = 32.0
+texture = ExtResource("tex_frame1")
+texture_mode = 1
+end_cap_mode = 2
+
+[node name="LeftEmitter" type="Node2D" parent="." unique_id=1840176533]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+position = Vector2(5, 295)
+
+[node name="Barrel" type="Sprite2D" parent="LeftEmitter" unique_id=882988884]
+position = Vector2(12, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_barrel")
+
+[node name="Body" type="Sprite2D" parent="LeftEmitter" unique_id=1655300626]
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("tex_body")
+
+[node name="LeftGear" type="Sprite2D" parent="LeftEmitter" unique_id=1711544275]
+unique_name_in_owner = true
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("tex_gear")
+
+[node name="LeftMuzzle" type="Marker2D" parent="LeftEmitter" unique_id=1715239889]
+unique_name_in_owner = true
+position = Vector2(46, 0)
+
+[node name="RightEmitter" type="Node2D" parent="." unique_id=91620970]
+unique_name_in_owner = true
+position = Vector2(975, 295)
+
+[node name="Barrel" type="Sprite2D" parent="RightEmitter" unique_id=1724633610]
+position = Vector2(-12, 0)
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_barrel")
+flip_h = true
+
+[node name="Body" type="Sprite2D" parent="RightEmitter" unique_id=1771994782]
+scale = Vector2(0.65, 0.65)
+texture = ExtResource("tex_body")
+
+[node name="RightGear" type="Sprite2D" parent="RightEmitter" unique_id=481003988]
+unique_name_in_owner = true
+scale = Vector2(0.7, 0.7)
+texture = ExtResource("tex_gear")
+
+[node name="RightMuzzle" type="Marker2D" parent="RightEmitter" unique_id=613752868]
+unique_name_in_owner = true
+position = Vector2(-51, 0)
+
+[node name="LeftHeat" type="TextureProgressBar" parent="." unique_id=653025645]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+layout_mode = 0
+offset_left = 30.0
+offset_top = 15.0
+offset_right = 72.0
+offset_bottom = 207.0
+scale = Vector2(0.5, 0.5)
+max_value = 1.0
+step = 0.0
+fill_mode = 3
+texture_under = ExtResource("tex_tbg")
+texture_over = ExtResource("tex_tbar")
+texture_progress = ExtResource("tex_tprog")
+tint_progress = Color(0.41960785, 0.8627451, 1, 1)
+
+[node name="RightHeat" type="TextureProgressBar" parent="." unique_id=1329383625]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 929.0
+offset_top = 15.0
+offset_right = 971.0
+offset_bottom = 207.0
+scale = Vector2(0.5, 0.5)
+max_value = 1.0
+step = 0.0
+fill_mode = 3
+texture_under = ExtResource("tex_tbg")
+texture_over = ExtResource("tex_tbar")
+texture_progress = ExtResource("tex_tprog")
+tint_progress = Color(0.41960785, 0.8627451, 1, 1)
+
+[node name="LeftTicker" type="Node2D" parent="." unique_id=330398814]
+unique_name_in_owner = true
+modulate = Color(0.41960785, 0.8627451, 1, 1)
+position = Vector2(44, 111)
+
+[node name="Color" type="Sprite2D" parent="LeftTicker" unique_id=851535596]
+texture = ExtResource("tex_tcolor")
+offset = Vector2(-12, 0)
+flip_h = true
+
+[node name="Shape" type="Sprite2D" parent="LeftTicker" unique_id=1248409296]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_tshape")
+offset = Vector2(-24, 0)
+flip_h = true
+
+[node name="RightTicker" type="Node2D" parent="." unique_id=1495373013]
+unique_name_in_owner = true
+modulate = Color(0.41960785, 0.8627451, 1, 1)
+position = Vector2(936, 111)
+
+[node name="Color" type="Sprite2D" parent="RightTicker" unique_id=717222846]
+texture = ExtResource("tex_tcolor")
+offset = Vector2(12, 0)
+
+[node name="Shape" type="Sprite2D" parent="RightTicker" unique_id=1904418367]
+scale = Vector2(0.5, 0.5)
+texture = ExtResource("tex_tshape")
+offset = Vector2(24, 0)
+
+[node name="DimOverlay" type="ColorRect" parent="." unique_id=2136396125]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.28)
+
+[node name="ControlLegend" type="Control" parent="." unique_id=2042978183]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="KeyW" type="Panel" parent="ControlLegend" unique_id=57883771]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 467.0
+offset_top = 454.0
+offset_right = 513.0
+offset_bottom = 500.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyW" unique_id=1862034576]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "W"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyA" type="Panel" parent="ControlLegend" unique_id=998321266]
+unique_name_in_owner = true
+modulate = Color(0.96862745, 0.94509804, 0.6392157, 1)
+layout_mode = 0
+offset_left = 413.0
+offset_top = 506.0
+offset_right = 459.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyA" unique_id=337641759]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "A"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyS" type="Panel" parent="ControlLegend" unique_id=1715671227]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 467.0
+offset_top = 506.0
+offset_right = 513.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyS" unique_id=751584648]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "S"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="KeyD" type="Panel" parent="ControlLegend" unique_id=112652375]
+unique_name_in_owner = true
+layout_mode = 0
+offset_left = 521.0
+offset_top = 506.0
+offset_right = 567.0
+offset_bottom = 552.0
+mouse_filter = 2
+theme_override_styles/panel = SubResource("sb_keycap")
+
+[node name="Label" type="Label" parent="ControlLegend/KeyD" unique_id=1102896743]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("font_key")
+theme_override_font_sizes/font_size = 30
+text = "D"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="ControlLegend" unique_id=1658741673]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_left = -184.0
+offset_top = -40.0
+offset_right = 184.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_constants/separation = 20
+
+[node name="SelectLeftText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=1988188344]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "A - Select Left Laser"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="MoveText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=311513107]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "W/S - Move Laser"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SelectRightText" type="Label" parent="ControlLegend/HBoxContainer" unique_id=1783734532]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.164706, 0.164706, 0.164706, 1)
+theme_override_colors/font_outline_color = Color(0.839216, 0.839216, 0.839216, 1)
+theme_override_constants/outline_size = 2
+theme_override_fonts/font = ExtResource("font_text")
+theme_override_font_sizes/font_size = 18
+text = "D - Select Right Laser"
+horizontal_alignment = 1
+vertical_alignment = 1

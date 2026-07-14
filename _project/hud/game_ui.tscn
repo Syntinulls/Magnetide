@@ -1,0 +1,730 @@
+[gd_scene format=3 uid="uid://4p6nir6m115b"]
+
+[ext_resource type="Texture2D" uid="uid://dd3rdls7x4miy" path="res://_project/hud/sprites/ship_hp_bg.png" id="1_0iwrd"]
+[ext_resource type="Texture2D" uid="uid://2n1fcn020y6g" path="res://_project/hud/sprites/ship_hp_hull.png" id="2_bsnt1"]
+[ext_resource type="PackedScene" path="res://_project/level/magnet_minigame/warning_icon.tscn" id="2_warning"]
+[ext_resource type="Texture2D" uid="uid://dgrocedjnu8rf" path="res://_project/hud/sprites/ship_hp_magnet.png" id="3_7b8vq"]
+[ext_resource type="Script" uid="uid://b5ttv5el343xe" path="res://_project/level/magnet_minigame/activation_minigame.gd" id="3_activation"]
+[ext_resource type="Texture2D" uid="uid://dt5dctgu3oiui" path="res://_project/level/magnet_minigame/sprites/alert_y.png" id="4_alert"]
+[ext_resource type="PackedScene" uid="uid://xvdq1n1dmdxy" path="res://_project/hud/threat/threat_ui.tscn" id="5_threat_ui"]
+[ext_resource type="FontFile" uid="uid://c6t476jpjhddk" path="res://_project/hud/fonts/Maneuver-Bold.otf" id="7_pqqpn"]
+[ext_resource type="Texture2D" uid="uid://c2ac5cijo4oxe" path="res://_project/hud/sprites/player_icon.png" id="16_si552"]
+[ext_resource type="Texture2D" uid="uid://bsjh8klbucwvl" path="res://_project/hud/sprites/player_hp_back.png" id="17_si552"]
+[ext_resource type="Texture2D" uid="uid://dthmieu1ukrex" path="res://_project/hud/sprites/player_hp_fore.png" id="18_s0nsh"]
+[ext_resource type="Texture2D" uid="uid://cd42vx545sgxe" path="res://_project/hud/sprites/player_hp_health.png" id="19_a5bm7"]
+[ext_resource type="Script" uid="uid://b8fg0vsqnib1y" path="res://_project/hud/hotbar/hotbar.gd" id="20_hotbar"]
+[ext_resource type="Texture2D" uid="uid://cqbqeddkhsrrl" path="res://_project/hud/hotbar/sprites/item_slot.png" id="21_a5bm7"]
+[ext_resource type="Shader" uid="uid://dc4veltos4jti" path="res://_project/hud/hotbar/hotbar_gradient.gdshader" id="22_gradient"]
+[ext_resource type="Script" uid="uid://bfwl2ho2imvfr" path="res://_project/hud/game_ui.gd" id="24_game_ui"]
+[ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/common/sprites/scrap_metal.png" id="24_pqqpn"]
+[ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/app/screens/station/sprites/icon_shield.png" id="25_shield_icon"]
+[ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/hud/event_text_display.tscn" id="26_event_text"]
+[ext_resource type="Script" uid="uid://cver2thb56t61" path="res://_project/hud/control_prompt_stack.gd" id="27_prompts"]
+[ext_resource type="Texture2D" uid="uid://dijcob8i8yu8u" path="res://_project/hud/sprites/bullet.png" id="28_bullet"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
+shader = ExtResource("22_gradient")
+
+[node name="GameUI" type="Control" unique_id=1333566747]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+script = ExtResource("24_game_ui")
+
+[node name="TopRight_UI" type="MarginContainer" parent="." unique_id=1147719616]
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -320.0
+offset_bottom = 80.0
+grow_horizontal = 0
+theme_override_constants/margin_top = 10
+theme_override_constants/margin_right = 10
+
+[node name="VBoxContainer" type="VBoxContainer" parent="TopRight_UI" unique_id=848010941]
+layout_mode = 2
+theme_override_constants/separation = 8
+
+[node name="ShipHealthUI" type="TextureRect" parent="TopRight_UI/VBoxContainer" unique_id=51726717]
+layout_mode = 2
+texture = ExtResource("1_0iwrd")
+
+[node name="ShipHPHull" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=759997521]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("2_bsnt1")
+
+[node name="ShipHPMagnet" type="TextureRect" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=1168552077]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("3_7b8vq")
+
+[node name="ShipHullIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=127456711]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 30.0
+offset_bottom = 70.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 24
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ShipMagnetIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=146327803]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_top = 94.0
+offset_bottom = 134.0
+grow_horizontal = 2
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 30
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="WarningIconAnchor" type="Control" parent="." unique_id=255438115]
+layout_mode = 1
+anchor_left = 0.95
+anchor_top = 0.5
+anchor_right = 0.95
+anchor_bottom = 0.5
+mouse_filter = 2
+
+[node name="WarningIcon" parent="WarningIconAnchor" unique_id=746767526 instance=ExtResource("2_warning")]
+texture = ExtResource("4_alert")
+
+[node name="ThreatUIAnchor" type="Control" parent="." unique_id=255438200]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="ThreatUI" parent="ThreatUIAnchor" unique_id=1071300406 instance=ExtResource("5_threat_ui")]
+layout_mode = 0
+offset_right = 0.0
+offset_bottom = 0.0
+
+[node name="EventTextDisplay" parent="." unique_id=104122633 instance=ExtResource("26_event_text")]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -320.0
+offset_top = 118.0
+offset_right = 320.0
+offset_bottom = 172.0
+grow_horizontal = 2
+
+[node name="ControlPromptStack" type="VBoxContainer" parent="." unique_id=255438300]
+layout_mode = 1
+anchors_preset = 7
+anchor_left = 0.5
+anchor_top = 1.0
+anchor_right = 0.5
+anchor_bottom = 1.0
+offset_top = -40.0
+offset_bottom = -40.0
+grow_horizontal = 2
+grow_vertical = 0
+mouse_filter = 2
+script = ExtResource("27_prompts")
+
+[node name="ActivationMinigame" type="Control" parent="." unique_id=747004123]
+anchors_preset = 0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("3_activation")
+marker_appear_delay = 0.2
+cog_max_speed_ratio = 0.8
+cog_accel_time = 4.0
+result_display_time = 0.75
+
+[node name="PlayerStatus" type="MarginContainer" parent="." unique_id=954909846]
+layout_mode = 1
+offset_right = 355.0
+offset_bottom = 123.0
+theme_override_constants/margin_left = 10
+theme_override_constants/margin_top = 10
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PlayerStatus" unique_id=186683031]
+layout_mode = 2
+
+[node name="PlayerIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer" unique_id=1649901788]
+layout_mode = 2
+size_flags_horizontal = 3
+texture = ExtResource("16_si552")
+stretch_mode = 2
+
+[node name="PlayerBars" type="VBoxContainer" parent="PlayerStatus/HBoxContainer" unique_id=467069703]
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 0
+
+[node name="HealthShieldRow" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=1887190161]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=2133808651]
+layout_mode = 2
+theme_override_constants/margin_left = -32
+
+[node name="PlayerHPBar" type="TextureProgressBar" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/MarginContainer" unique_id=884906908]
+layout_mode = 2
+size_flags_horizontal = 0
+size_flags_vertical = 0
+value = 100.0
+texture_under = ExtResource("17_si552")
+texture_over = ExtResource("18_s0nsh")
+texture_progress = ExtResource("19_a5bm7")
+texture_progress_offset = Vector2(12, 0)
+
+[node name="ShieldIcon" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=1207828494]
+custom_minimum_size = Vector2(60, 0)
+layout_mode = 2
+mouse_filter = 2
+
+[node name="ShieldPulseMarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon" unique_id=7161352]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ShieldTexture" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer" unique_id=1588303475]
+custom_minimum_size = Vector2(60, 60)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("25_shield_icon")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ShieldCountLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer" unique_id=467598105]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.917647, 0.964706, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 32
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="PlayerAugmentIcons" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=256267152]
+visible = false
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+mouse_filter = 2
+theme_override_constants/separation = 4
+alignment = 1
+
+[node name="ItemSlotContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=526615491]
+layout_mode = 2
+
+[node name="Hotbar" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer" unique_id=827461523]
+custom_minimum_size = Vector2(288, 72)
+layout_mode = 2
+mouse_filter = 2
+script = ExtResource("20_hotbar")
+
+[node name="HotbarItemName" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=846761520]
+layout_mode = 1
+anchors_preset = 12
+anchor_top = 1.0
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_top = 2.0
+offset_bottom = 30.0
+grow_horizontal = 2
+grow_vertical = 0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 22
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HotbarMask" type="SubViewportContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar" unique_id=827461524]
+material = SubResource("ShaderMaterial_hotbar_gradient")
+custom_minimum_size = Vector2(288, 72)
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+stretch = true
+
+[node name="SubViewport" type="SubViewport" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask" unique_id=1821687198]
+transparent_bg = true
+handle_input_locally = false
+size = Vector2i(288, 72)
+render_target_update_mode = 4
+
+[node name="HotbarStrip" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport" unique_id=827461525]
+anchors_preset = 4
+anchor_top = 0.5
+anchor_bottom = 0.5
+offset_top = -24.0
+offset_right = 480.0
+offset_bottom = 48.0
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 0
+
+[node name="Slot0" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461530]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1647201080]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1451714845]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0/MarginContainer" unique_id=827461532]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0" unique_id=1762474811]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot0/SlotNumberContainer" unique_id=361961231]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot1" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461540]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=944645037]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=1932971827]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1/MarginContainer" unique_id=1411466109]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1" unique_id=320346799]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot1/SlotNumberContainer" unique_id=896681503]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+text = "1"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot2" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461550]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=335140841]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=1061687076]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2/MarginContainer" unique_id=2133265605]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2" unique_id=871942949]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot2/SlotNumberContainer" unique_id=678578121]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+text = "2"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot3" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461560]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=864315287]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=785942895]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3/MarginContainer" unique_id=1708987239]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3" unique_id=1097802775]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot3/SlotNumberContainer" unique_id=565172974]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+text = "3"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Slot4" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip" unique_id=827461570]
+custom_minimum_size = Vector2(96, 72)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="SlotBackground" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=839025272]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_bottom = 48.0
+grow_horizontal = 2
+mouse_filter = 2
+texture = ExtResource("21_a5bm7")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MarginContainer" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=334406349]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_bottom = -24.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_constants/margin_left = 8
+theme_override_constants/margin_top = 8
+theme_override_constants/margin_right = 8
+theme_override_constants/margin_bottom = 8
+
+[node name="ItemIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4/MarginContainer" unique_id=45771146]
+layout_mode = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="SlotNumberContainer" type="Control" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4" unique_id=503464414]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_left = -16.0
+offset_top = 32.0
+offset_right = 16.0
+offset_bottom = 56.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="SlotNumber" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarMask/SubViewport/HotbarStrip/Slot4/SlotNumberContainer" unique_id=116601764]
+layout_mode = 1
+anchors_preset = 8
+anchor_left = 0.5
+anchor_top = 0.5
+anchor_right = 0.5
+anchor_bottom = 0.5
+offset_left = -16.0
+offset_top = -12.0
+offset_right = 16.0
+offset_bottom = 12.0
+grow_horizontal = 2
+grow_vertical = 2
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="HBoxContainer" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars" unique_id=1750649897]
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 4
+
+[node name="VBoxContainer" type="VBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer" unique_id=413187490]
+layout_mode = 2
+
+[node name="MagazineCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer" unique_id=846761530]
+layout_mode = 2
+theme_override_constants/margin_left = -105
+theme_override_constants/margin_top = 0
+
+[node name="MagazineCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin" unique_id=364917320]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="BulletIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter" unique_id=136974720]
+custom_minimum_size = Vector2(40, 32)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("28_bullet")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="MagazineLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter" unique_id=1395657360]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "0 / 0"
+vertical_alignment = 1
+
+[node name="ScrapCounterMargin" type="MarginContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer" unique_id=846761521]
+layout_mode = 2
+theme_override_constants/margin_left = -105
+theme_override_constants/margin_top = 0
+
+[node name="ScrapCounter" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin" unique_id=364917313]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ScrapIcon" type="TextureRect" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter" unique_id=136974712]
+custom_minimum_size = Vector2(40, 32)
+layout_mode = 2
+mouse_filter = 2
+texture = ExtResource("24_pqqpn")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="ScrapCountLabel" type="Label" parent="PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter" unique_id=1395657352]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.86, 0.86, 0.86, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 30
+text = "0"
+vertical_alignment = 1
+
+[node name="PlayerAugmentTooltip" type="ColorRect" parent="." unique_id=414856661]
+visible = false
+z_index = 100
+layout_mode = 0
+offset_right = 300.0
+offset_bottom = 158.0
+mouse_filter = 2
+color = Color(0.09, 0.12, 0.17, 0.96)
+
+[node name="NameLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=373961281]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 12.0
+offset_right = 286.0
+offset_bottom = 44.0
+theme_override_colors/font_color = Color(1, 1, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 28
+text = "Augment"
+
+[node name="BodyLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=162456594]
+layout_mode = 0
+offset_left = 14.0
+offset_top = 54.0
+offset_right = 286.0
+offset_bottom = 146.0
+theme_override_colors/font_color = Color(0.9, 0.94, 1, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_fonts/font = ExtResource("7_pqqpn")
+theme_override_font_sizes/font_size = 20
+autowrap_mode = 3

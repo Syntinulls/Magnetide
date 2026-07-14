@@ -8,8 +8,8 @@
 [ext_resource type="PackedScene" path="res://_project/level/decoration/trash_skyline.tscn" id="7_skyline"]
 [ext_resource type="PackedScene" uid="uid://dship00001" path="res://_project/ship/ship.tscn" id="9_rr5ri"]
 [ext_resource type="PackedScene" uid="uid://dplayer00001" path="res://_project/player/player.tscn" id="10_5p64y"]
-[ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/ship/magnet/minigame/magnet_minigame.tscn" id="11_minigame"]
-[ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/ui/game_ui.tscn" id="12_game_ui"]
+[ext_resource type="PackedScene" uid="uid://b515agjrpm56a" path="res://_project/level/magnet_minigame/magnet_minigame.tscn" id="11_minigame"]
+[ext_resource type="PackedScene" uid="uid://4p6nir6m115b" path="res://_project/hud/game_ui.tscn" id="12_game_ui"]
 [ext_resource type="Script" uid="uid://co7fiiw0csmn1" path="res://_project/level/threat/storm_controller.gd" id="13_storm"]
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/enemies/spawning/enemy_spawner.gd" id="17_enemy_spawner"]
@@ -19,7 +19,7 @@
 [ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/enemies/worm/worm_spawn_profile.tres" id="22_x74ax"]
 [ext_resource type="Resource" uid="uid://dt1qcniioijon" path="res://_project/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 [ext_resource type="Resource" uid="uid://dg8vx2ya4b0w3" path="res://_project/enemies/mosquito/mosquito_spawn_profile.tres" id="23_mosquito"]
-[ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/ui/magnet_capacity.gd" id="24_magnet_capacity"]
+[ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/hud/magnet_capacity.gd" id="24_magnet_capacity"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)

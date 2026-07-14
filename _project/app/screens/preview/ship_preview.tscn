@@ -1,12 +1,12 @@
 [gd_scene load_steps=8 format=3 uid="uid://cshippreview01"]
 
 [ext_resource type="Script" path="res://_project/app/screens/preview/ship_preview.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/ship_back.png" id="2_back"]
-[ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/ship_fore.png" id="3_fore"]
-[ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/ship_ff_gens.png" id="4_gens"]
+[ext_resource type="Texture2D" uid="uid://c4p7x8xbbinan" path="res://_project/ship/sprites/hull_back.png" id="2_back"]
+[ext_resource type="Texture2D" uid="uid://chv2plvrw8sql" path="res://_project/ship/sprites/hull_fore.png" id="3_fore"]
+[ext_resource type="Texture2D" uid="uid://dktn7c6phe1hq" path="res://_project/ship/sprites/force_field_gens.png" id="4_gens"]
 [ext_resource type="Texture2D" uid="uid://bvpl86d7qmb6e" path="res://_project/ship/sprites/pattern_hazard.png" id="5_hazard"]
 [ext_resource type="PackedScene" uid="uid://magnet00001" path="res://_project/ship/magnet/magnet.tscn" id="6_magnet"]
-[ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster.tscn" id="7_thruster"]
+[ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster/thruster.tscn" id="7_thruster"]
 
 [node name="ShipPreview" type="Node2D"]
 script = ExtResource("1_script")

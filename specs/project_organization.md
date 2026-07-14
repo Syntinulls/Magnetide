@@ -19,7 +19,7 @@ Rules of thumb:
   instantiate it at runtime (e.g. enemy spawning config lives in `enemies/spawning/`
   even though the level instantiates the spawner).
 - A world object and the UI it exclusively owns live together
-  (e.g. the research station and its minigame UI are both `ship/research/`).
+  (e.g. the research station and its minigame UI are both `ship/research_station/`).
 - Code used by two or more concepts moves to `combat/` (gameplay primitives) or
   `common/` (generic helpers). A helper with a single consumer stays with its consumer.
 
@@ -31,11 +31,13 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── app_root.*           Top-level state machine (menu ↔ station ↔ map ↔ run ↔ salvage).
 │   ├── app_save_data.gd     Persistent save resource + legacy path migration.
 │   ├── magnetide.gd         The `Magnetide` autoload: run-context service locator, fonts, sfx.
-│   └── screens/             One folder per out-of-run screen.
+│   └── screens/             One folder per out-of-run screen. A screen keeps the sprites it
+│       │                    alone uses in its own sprites/ subfolder.
 │       ├── main_menu/
 │       ├── map/             Level-select screen + its roster data + its sprites.
-│       ├── station/         Station hub screen + slot widgets + popups.
-│       ├── salvage/         Salvage-processing minigame screen + run summary popup.
+│       ├── station/         Station hub screen + slot widgets + popups + its sprites.
+│       ├── salvage/         Salvage-processing minigame screen + run summary popup
+│       │                    + its sprites.
 │       └── preview/         Render-only player/ship preview stages (shared by screens).
 ├── audio/                   Audio playback services + assets: sfx_player.gd + sfx/,
 │                            bgm_player.gd + bgm/ (looping background music, own bus).
@@ -44,6 +46,10 @@ _project/                    All game content. (Root level is reserved for engin
 ├── common/                  Generic, game-agnostic building blocks:
 │                            utils.gd (static helpers), weighted_random, interaction_hitbox,
 │                            shared outline shaders (border_outline, composite_outline).
+│   └── sprites/             Sprites with no single owner: reusable chrome (panel_border) and
+│                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
+│                            icon_crate, icon_research_point). A sprite used by exactly one
+│                            concept belongs to that concept, not here.
 ├── enemies/                 Enemy entity, data, AI, and spawning.
 │   ├── enemy.*              The enemy body + state machine.
 │   ├── enemy_data.gd        Stats/config resource.
@@ -60,7 +66,11 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── level.*              Root run scene; level_definition.gd (playable-level data).
 │   ├── viewport_anchor.gd   Viewport-relative positioning helper.
 │   ├── decoration/          Parallax layers, skyline, bands, decoration shaders + sprites.
-│   └── threat/              Threat simulation: ThreatManager, StormController.
+│   ├── threat/              Threat simulation: ThreatManager, StormController.
+│   └── magnet_minigame/     The looting-cycle minigame + its activation overlay, warning icon,
+│                            vignette shader, sprites. Lives here, not under ship/magnet/:
+│                            level.tscn instances it and game_ui.tscn owns its overlay — it
+│                            never touches the ship, and exists only inside a run.
 ├── player/                  The player character: player.* + sprites.
 ├── run/                     One run's lifecycle & mutable state: RunController, RunLoadout,
 │                            RunResult, upgrade definitions/costs, item/slot states,
@@ -73,14 +83,30 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── pile/                World salvage piles (scene, shader, pile data).
 │   ├── loot/                Loot generation config: pools, rarity weights, artifact pools.
 │   └── salvage_spawner.*    Timed pile spawning.
-├── ship/                    The salvage platform and everything mounted on it.
-│   ├── ship.*               Hull, storage zone, thruster driver, combat surface.
-│   ├── thruster.*, departure_pylon.*, recycler.*
-│   ├── magnet/              Ship magnet + lever + minigame/ (looting cycle) + nine-patch shader.
-│   └── research/            Research station + its UI + research minigames.
-└── ui/                      In-run HUD and shared UI: game_ui, hotbar, threat_ui,
-                             magnet_capacity, event_text_display, control prompts,
-                             player_progress_bar, theme, fonts/, sprites/.
+├── ship/                    The salvage platform and everything mounted on it. Every mounted
+│   │                        object is a folder owning its own scene, scripts and sprites;
+│   │                        ship/ root holds only the hull. ship.tscn instances each one.
+│   ├── ship.*               Hull, storage zone, combat surface; storage_zone_fade.gdshader.
+│   ├── sprites/             Hull art only (hull_back/fore, force_field_*, pattern_hazard).
+│   ├── magnet/              Ship magnet + lever + nine-patch shader + sprites.
+│   ├── research_station/    Research station + its UI + minigame_docker + sprites.
+│   │   └── minigames/       One folder per self-contained minigame (alignment_a/), each
+│   │                        owning its scene, script and sprites/. Art used by the station
+│   │                        UI shell rather than by a minigame stays in research_station/sprites/.
+│   ├── recycler/            Recycler + sprites.
+│   ├── thruster/            Thruster + thruster_audio + sprites.
+│   └── departure_pylon/     Departure pylon.
+└── hud/                     The in-run heads-up display (only the HUD — not "anything drawn
+    │                        on the UI layer"; screens live in app/screens/, and a world
+    │                        object's own UI lives with that object).
+    ├── game_ui.*            HUD shell: player/ship status bars, augment icons, counters.
+    ├── magnet_capacity.gd, event_text_display.*, control_prompt*.gd,
+    │   player_progress_bar.*, pause_menu.gd
+    ├── magnetide_theme.tres, fonts/
+    ├── sprites/             Sprites owned by game_ui.tscn itself (player/ship HP bars,
+    │                        player icon, bullet icon).
+    ├── hotbar/              Hotbar script + gradient shader + its sprites/.
+    └── threat/              Threat bar scene/script + its sprites/.
 ```
 
 Top-level support folders outside `_project/`:
@@ -94,9 +120,19 @@ Top-level support folders outside `_project/`:
 1. Is it a new screen? → `app/screens/<screen_name>/`.
 2. Is it content for an existing concept? → that concept's folder (new enemy → `enemies/<name>/`,
    new weapon → `items/equipment/<name>/`, new salvage item → `salvage/catalog/` + `salvage/sprites/`).
-3. Is it a world object mounted on the ship? → `ship/<name>/` (with its UI if it owns one).
+3. Is it a world object mounted on the ship? → `ship/<name>/` (with its UI and sprites if it
+   owns them). "Mounted" means `ship.tscn` instances it — not merely that it is *about* the
+   ship. A system that only exists during a run and is instanced by `level.tscn` belongs in
+   `level/`, however ship-flavored its name (the magnet minigame is `level/magnet_minigame/`).
 4. Is it used by 2+ concepts? → `combat/` if it's a gameplay primitive, `common/` otherwise.
 5. None of the above → new top-level concept folder, added to the map above in the same commit.
+
+A sprite follows the same rules as code: it belongs to the concept that **displays** it, which
+is rarely "the UI". A sprite drawn only by the HUD goes under `hud/`; one drawn only by a screen
+goes under that screen's `sprites/`; one drawn only by a world object goes with that object
+(the magnet minigame's alert icons live in `ship/magnet/minigame/sprites/`). Only a sprite with
+two or more consumers across different concepts belongs in `common/sprites/`. Sprite file names
+do not repeat their folder (`hud/sprites/player_hp_back.png`, not `ui_hud_player_hp_back.png`).
 
 ## 3. Naming conventions
 
