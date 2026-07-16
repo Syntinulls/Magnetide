@@ -16,7 +16,7 @@ signal damaged(amount: float, source: Node)
 @export var shield_break_recharge_delay: float = 10.0
 
 ## Equipment slots - indices match hotbar slots
-@export var equipment: Array[EquipmentData] = []
+@export var equipment: Array[HeldItemData] = []
 
 const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 const ProjectileScript: Script = preload("res://_project/combat/projectile.gd")
@@ -83,7 +83,7 @@ var outgoing_damage_multiplier: float = 1.0
 var recycler_double_scrap_chance_percent: float = 0.0
 
 ## Currently selected equipment
-var current_equipment: EquipmentData:
+var current_equipment: HeldItemData:
 	get:
 		if _selected_equipment_index >= 0 and _selected_equipment_index < equipment.size():
 			return equipment[_selected_equipment_index]

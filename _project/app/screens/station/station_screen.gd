@@ -5,26 +5,11 @@ signal map_requested
 signal main_menu_requested
 
 const StorageSlotScene := preload("res://_project/app/screens/station/station_storage_slot.tscn")
-const StationUpgradeSlotScript := preload("res://_project/app/screens/station/station_upgrade_slot.gd")
-const StationUpgradeSlotScene := preload("res://_project/app/screens/station/station_upgrade_slot.tscn")
-const SlottableCatalogEntryScript := preload("res://_project/items/slottable_catalog_entry.gd")
-const DEFAULT_AUGMENT_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_player.png")
-const DEFAULT_HEALTH_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_health.png")
-const DEFAULT_SHIELD_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_shield.png")
-const DEFAULT_UPGRADE_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_upgrade.png")
-const DEFAULT_SHIP_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_ship.png")
-const DEFAULT_MAGNET_ICON: Texture2D = preload("res://_project/common/sprites/icon_magnet.png")
-const DEFAULT_CAPACITY_ICON: Texture2D = preload("res://_project/common/sprites/icon_crate.png")
+const UpgradeCatalogEntryScript := preload("res://_project/items/upgrade_catalog_entry.gd")
 
 @export var page_pan_duration: float = 0.35
 @export var run_loadout: RunLoadout = null
-const EquipmentCatalogEntryScript := preload("res://_project/items/equipment/equipment_catalog_entry.gd")
 
-@export var weapon_catalog: Array[Resource] = []
-@export var player_augment_catalog: Array[Resource] = []
-
-const ACTIVE_TICK_COLOR := Color(0.82, 0.87, 0.95, 1.0)
-const INACTIVE_TICK_COLOR := Color(0.35, 0.4, 0.5, 1.0)
 const LOCKED_ENTRY_MODULATE := Color(0.58, 0.62, 0.68, 1.0)
 ## Icons of locked entries whose unlock dependencies aren't met are rendered as a
 ## solid-black silhouette (RGB multiplied to zero, alpha shape preserved).
@@ -59,29 +44,6 @@ const DETAIL_EQUIPPED_SEPARATION := 8.0
 const DETAIL_EQUIPPED_RIGHT_MARGIN := 12.0     # gap between EQUIPPED and panel edge
 const DYNAMIC_ENTRY_LEVEL_COLOR := Color(0.68, 0.72, 0.78, 1.0)
 
-## Every dynamic slot upgrades through one generic path. Stat / equipment slots
-## map here to their RunUpgrade id; any slot NOT in this map upgrades the item
-## currently equipped in it (augments, via per-item level state).
-const SLOT_UPGRADE_IDS := {
-	&"weapon": &"weapon_damage",
-	&"magnet_tool": &"magnet_tool_pull",
-	&"player_health": &"player_health",
-	&"player_shield": &"player_shield",
-	&"ship_integrity": &"ship_hull",
-	&"ship_storage_size": &"ship_storage_size",
-	&"magnet_integrity": &"ship_magnet_health",
-	&"magnet_capacity": &"ship_magnet_capacity",
-}
-## Slots whose upgrade button should be wired (all dynamic slots).
-const UPGRADEABLE_SLOT_IDS: Array[StringName] = [
-	&"weapon", &"magnet_tool", &"player_health", &"player_shield",
-	&"ship_integrity", &"ship_storage_size", &"magnet_integrity", &"magnet_capacity",
-	&"PlayerAugment1", &"PlayerAugment2", &"ShipAugment", &"MagnetAugment",
-]
-
-const PLAYER_SHIELD_SLOT_ID := &"player_shield"
-const PLAYER_SHIELD_UNLOCK_RESEARCH_ID := &"player_shield"
-const PLAYER_SHIELD_RESEARCH_COST := {SalvageItemData.ItemRarity.COMMON: 2}
 const UPGRADE_POPUP_MIN_WIDTH := 260.0
 const UPGRADE_POPUP_MAX_WIDTH := 430.0
 const UPGRADE_POPUP_HORIZONTAL_PADDING := 24.0
@@ -107,17 +69,8 @@ const _RESEARCH_COUNT_NODES := {
 }
 @onready var _research_points_display: ColorRect = $TopBar/ResearchPointsDisplay
 var _station_slots: Dictionary = {}
-var _static_slot_icons: Dictionary = {}
-var _player_augment_1_row: HBoxContainer = null
-var _player_augment_2_row: HBoxContainer = null
-var _player_augment_1_button: Button = null
-var _player_augment_2_button: Button = null
-var _ship_augment_button: Button = null
-var _magnet_augment_button: Button = null
-var _ship_integrity_upgrade_button: Button = null
-var _storage_size_upgrade_button: Button = null
-var _magnet_integrity_upgrade_button: Button = null
-var _magnet_capacity_upgrade_button: Button = null
+## slot_id -> RunUpgrade id, built at discovery from each authored slot's upgrade.
+var _slot_upgrade_ids: Dictionary = {}
 var _active_dynamic_slot_id: StringName = &""
 var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
@@ -132,26 +85,8 @@ var _active_detail_entry: Resource = null
 @onready var _menu_button: Button = $TopBar/MenuButton
 @onready var _pan_to_ship_button: Button = $PageViewport/PageContainer/PlayerPage/PanToShipButton
 @onready var _pan_to_player_button: Button = $PageViewport/PageContainer/ShipPage/PanToPlayerButton
-@onready var _weapon_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow/EquipmentButton") as Button
-@onready var _magnet_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/EquipmentButton") as Button
-@onready var _weapon_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow
-@onready var _magnet_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow
-@onready var _health_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow
-@onready var _shield_row: HBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow
-@onready var _left_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn
-@onready var _right_slot_stack: VBoxContainer = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair
-@onready var _ship_integrity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow
-@onready var _storage_size_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow
-@onready var _magnet_integrity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow
-@onready var _magnet_capacity_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow
-@onready var _ship_augment_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow
-@onready var _magnet_augment_row: HBoxContainer = $PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow
 @onready var _player_preview_stage: PreviewStage = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/PlayerPreviewStage
 @onready var _ship_preview_stage: PreviewStage = $PageViewport/PageContainer/ShipPage/ShipPreviewStage
-@onready var _weapon_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow/UpgradeButton") as Button
-@onready var _magnet_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow/UpgradeButton") as Button
-@onready var _health_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow/UpgradeButton") as Button
-@onready var _shield_upgrade_button: Button = get_node_or_null("PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow/UpgradeButton") as Button
 @onready var _dynamic_slot_popup: Control = $DynamicSlotPopup
 @onready var _dynamic_slot_popup_current_cutout: ColorRect = $DynamicSlotPopup/CurrentItemPanel/CurrentIconFrame
 @onready var _dynamic_slot_popup_current_stats: Label = $DynamicSlotPopup/CurrentItemPanel/CurrentStatsLabel
@@ -168,7 +103,6 @@ var _active_detail_entry: Resource = null
 @onready var _stats_body_label: Label = $SharedBottomArea/StatsPanel/BodyLabel
 @onready var _storage_grid: GridContainer = $SharedBottomArea/StoragePanel/StorageScroll/StorageGrid
 @onready var _storage_scrap_count_label: Label = $SharedBottomArea/StoragePanel/ScrapCounter/ScrapCountLabel
-@onready var _storage_detail_panel: Control = $SharedBottomArea/StorageDetailPanel
 @onready var _storage_detail_icon: TextureRect = $SharedBottomArea/StorageDetailPanel/ItemIcon
 @onready var _storage_detail_name: Label = $SharedBottomArea/StorageDetailPanel/NameLabel
 @onready var _storage_detail_body: Label = $SharedBottomArea/StorageDetailPanel/BodyLabel
@@ -191,37 +125,19 @@ func _ready() -> void:
 	if _dynamic_slot_popup_current_stats:
 		_dynamic_slot_popup_current_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
 	_upgrade_cost_popup.visible = false
-	_storage_detail_panel.visible = false
+	_clear_storage_detail()
 	_dynamic_slot_popup.z_index = 30
 	_upgrade_cost_popup.z_index = 5
 	_configure_dynamic_popup_mouse_blocking()
 	_configure_upgrade_popup_layout()
 	_ensure_dynamic_slot_popup_current_icon()
-	_install_compact_slot_rows()
-	if _weapon_button != null:
-		_weapon_button.z_index = 3
+	_discover_slots()
+	_sync_research_unlocks_to_loadout()
 
 	_map_button.pressed.connect(_on_map_pressed)
 	_menu_button.pressed.connect(_on_menu_pressed)
 	_pan_to_ship_button.pressed.connect(_on_pan_to_ship_pressed)
 	_pan_to_player_button.pressed.connect(_on_pan_to_player_pressed)
-	if _weapon_button != null:
-		_weapon_button.pressed.connect(_toggle_weapon_slot_popup)
-	if _magnet_button != null:
-		_magnet_button.pressed.connect(_close_dynamic_slot_popup)
-	if _player_augment_1_button != null:
-		_player_augment_1_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment1", 0))
-	if _player_augment_2_button != null:
-		_player_augment_2_button.pressed.connect(_toggle_player_augment_popup.bind(&"PlayerAugment2", 1))
-	if _ship_augment_button != null:
-		_ship_augment_button.pressed.connect(_toggle_owner_augment_popup.bind(&"ShipAugment", &"ship_augment", "Ship Augments"))
-	if _magnet_augment_button != null:
-		_magnet_augment_button.pressed.connect(_toggle_owner_augment_popup.bind(&"MagnetAugment", &"magnet_augment", "Magnet Augments"))
-
-	# Every slot's upgrade button is wired identically; the shared handler
-	# dispatches by slot to the right upgrade mechanism (RunUpgrade vs augment).
-	for upgrade_slot_id in UPGRADEABLE_SLOT_IDS:
-		_connect_slot_upgrade(upgrade_slot_id)
 
 	_populate_storage_slots(_get_storage_entries())
 
@@ -254,7 +170,10 @@ func _sync_research_unlocks_to_loadout() -> void:
 	var save_data := _save_data as AppSaveData
 	if save_data == null:
 		return
-	for slot_id in _get_unlockable_static_slot_ids():
+	for slot_id in _station_slots:
+		var slot := _station_slots[slot_id] as UpgradeSlot
+		if slot == null or not slot.locked:
+			continue
 		if save_data.is_research_unlocked(_get_static_slot_unlock_research_id(slot_id)):
 			_run_loadout.set_slot_unlocked(slot_id, true)
 
@@ -303,67 +222,52 @@ func _get_page_width() -> float:
 	return size.x
 
 
-func _install_compact_slot_rows() -> void:
-	if _left_slot_stack != null:
-		_left_slot_stack.add_theme_constant_override("separation", 22)
-	if _right_slot_stack != null:
-		_right_slot_stack.add_theme_constant_override("separation", 22)
-
-	_static_slot_icons[&"weapon"] = _get_row_slot_icon(_weapon_row, _weapon_button)
-	_static_slot_icons[&"magnet_tool"] = _get_row_slot_icon(_magnet_row, _magnet_button)
-	_static_slot_icons[&"player_health"] = DEFAULT_HEALTH_ICON
-	_static_slot_icons[&"player_shield"] = DEFAULT_SHIELD_ICON
-	_static_slot_icons[&"ship_integrity"] = DEFAULT_SHIP_ICON
-	_static_slot_icons[&"ship_storage_size"] = DEFAULT_CAPACITY_ICON
-	_static_slot_icons[&"magnet_integrity"] = DEFAULT_MAGNET_ICON
-	_static_slot_icons[&"magnet_capacity"] = DEFAULT_CAPACITY_ICON
-
-	_player_augment_1_row = _create_compact_row(_right_slot_stack, "PlayerAugment1Row")
-	_player_augment_2_row = _create_compact_row(_right_slot_stack, "PlayerAugment2Row")
-
-	_install_compact_slot_row(_weapon_row, &"weapon", true)
-	_install_compact_slot_row(_magnet_row, &"magnet_tool", false)
-	_install_compact_slot_row(_health_row, &"player_health", false)
-	_install_compact_slot_row(_shield_row, &"player_shield", false)
-	_install_compact_slot_row(_player_augment_1_row, &"PlayerAugment1", true)
-	_install_compact_slot_row(_player_augment_2_row, &"PlayerAugment2", true)
-	_install_compact_slot_row(_ship_integrity_row, &"ship_integrity", false)
-	_install_compact_slot_row(_storage_size_row, &"ship_storage_size", false)
-	_install_compact_slot_row(_magnet_integrity_row, &"magnet_integrity", false)
-	_install_compact_slot_row(_magnet_capacity_row, &"magnet_capacity", false)
-	_install_compact_slot_row(_ship_augment_row, &"ShipAugment", true)
-	_install_compact_slot_row(_magnet_augment_row, &"MagnetAugment", true)
-
-	_weapon_button = _get_compact_slot_select_button(&"weapon")
-	_magnet_button = _get_compact_slot_select_button(&"magnet_tool")
-	_player_augment_1_button = _get_compact_slot_select_button(&"PlayerAugment1")
-	_player_augment_2_button = _get_compact_slot_select_button(&"PlayerAugment2")
-	_ship_augment_button = _get_compact_slot_select_button(&"ShipAugment")
-	_magnet_augment_button = _get_compact_slot_select_button(&"MagnetAugment")
-	_weapon_upgrade_button = _get_compact_slot_upgrade_button(&"weapon")
-	_magnet_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_tool")
-	_health_upgrade_button = _get_compact_slot_upgrade_button(&"player_health")
-	_shield_upgrade_button = _get_compact_slot_upgrade_button(&"player_shield")
-	_ship_integrity_upgrade_button = _get_compact_slot_upgrade_button(&"ship_integrity")
-	_storage_size_upgrade_button = _get_compact_slot_upgrade_button(&"ship_storage_size")
-	_magnet_integrity_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_integrity")
-	_magnet_capacity_upgrade_button = _get_compact_slot_upgrade_button(&"magnet_capacity")
+## Discover every authored UpgradeSlot and index it by its own slot_id. Slots
+## self-configure from their exports (@export config, applied in _ready); code only
+## builds the lookup maps and caches the buttons the popup/pan wiring still references.
+func _discover_slots() -> void:
+	for slot in _find_all_upgrade_slots():
+		var sid: StringName = slot.slot_id
+		if sid == &"":
+			continue
+		slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
+		_station_slots[sid] = slot
+		var uid: StringName = slot.get_upgrade_id()
+		if uid != &"":
+			_slot_upgrade_ids[sid] = uid
+		if not slot.upgrade_requested.is_connected(_on_slot_upgrade_pressed):
+			slot.upgrade_requested.connect(_on_slot_upgrade_pressed)
+		if slot is DynamicUpgradeSlot:
+			if not slot.selection_requested.is_connected(_on_slot_selected):
+				slot.selection_requested.connect(_on_slot_selected)
+			var select_button := slot.get_select_button()
+			if select_button != null:
+				select_button.z_index = 3
+		_connect_slot_upgrade(sid)
 
 
-func _create_compact_row(parent: VBoxContainer, row_name: String) -> HBoxContainer:
-	if parent == null:
-		return null
-	var existing := parent.get_node_or_null(row_name) as HBoxContainer
-	if existing != null:
-		return existing
+## Opens the item-selection popup for a dynamic slot, driven entirely by that slot's
+## authored kind / index / catalog / title — no per-slot code.
+func _on_slot_selected(slot_id: StringName) -> void:
+	var slot := _station_slots.get(slot_id, null) as DynamicUpgradeSlot
+	if slot == null:
+		return
+	var title := slot.popup_title if not slot.popup_title.is_empty() else slot.display_name
+	_toggle_dynamic_slot_popup(slot_id, slot.get_select_button(), slot.slot_kind, slot.slot_index, title)
 
-	var row := HBoxContainer.new()
-	row.name = row_name
-	row.custom_minimum_size = Vector2(0.0, 112.0)
-	row.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	row.add_theme_constant_override("separation", 0)
-	parent.add_child(row)
-	return row
+
+func _find_all_upgrade_slots() -> Array[UpgradeSlot]:
+	var slots: Array[UpgradeSlot] = []
+	_collect_upgrade_slots(self, slots)
+	return slots
+
+
+func _collect_upgrade_slots(node: Node, out: Array[UpgradeSlot]) -> void:
+	for child in node.get_children():
+		if child is UpgradeSlot:
+			out.append(child)
+		else:
+			_collect_upgrade_slots(child, out)
 
 
 func _configure_upgrade_popup_layout() -> void:
@@ -539,58 +443,14 @@ func _ensure_dynamic_slot_popup_current_icon() -> void:
 	_dynamic_slot_popup_current_cutout.add_child(_dynamic_slot_popup_current_icon)
 
 
-func _install_compact_slot_row(row: HBoxContainer, slot_id: StringName, can_select: bool) -> void:
-	if row == null:
-		return
-
-	row.custom_minimum_size = Vector2(0.0, 112.0)
-	row.add_theme_constant_override("separation", 0)
-	var slot := _get_compact_slot_for_row(row)
-	if slot == null:
-		for child in row.get_children():
-			row.remove_child(child)
-			child.queue_free()
-		slot = StationUpgradeSlotScene.instantiate() as StationUpgradeSlot
-		if slot == null:
-			slot = StationUpgradeSlotScript.new() as StationUpgradeSlot
-		slot.name = "%sSlot" % String(slot_id).capitalize().replace(" ", "")
-		row.add_child(slot)
-	slot.size_flags_horizontal = Control.SIZE_EXPAND_FILL
-	_station_slots[slot_id] = slot
-	slot.setup(slot_id, "Loading", null, 0, 0, can_select, _get_upgrade_icon())
-
-
-func _get_row_slot_icon(row: HBoxContainer, fallback_button: Button = null) -> Texture2D:
-	var slot := _get_compact_slot_for_row(row)
-	if slot != null:
-		var select_button := slot.get_select_button()
-		if select_button != null and select_button.icon != null:
-			return select_button.icon
-	if fallback_button != null:
-		return fallback_button.icon
-	return null
-
-
 func _get_compact_slot_select_button(slot_id: StringName) -> Button:
-	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
 	return slot.get_select_button() if slot != null else null
 
 
 func _get_compact_slot_upgrade_button(slot_id: StringName) -> Button:
-	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
 	return slot.get_upgrade_button() if slot != null else null
-
-
-func _get_upgrade_icon() -> Texture2D:
-	if _weapon_upgrade_button != null and _weapon_upgrade_button.icon != null:
-		return _weapon_upgrade_button.icon
-	if _magnet_upgrade_button != null and _magnet_upgrade_button.icon != null:
-		return _magnet_upgrade_button.icon
-	if _health_upgrade_button != null and _health_upgrade_button.icon != null:
-		return _health_upgrade_button.icon
-	if _shield_upgrade_button != null and _shield_upgrade_button.icon != null:
-		return _shield_upgrade_button.icon
-	return DEFAULT_UPGRADE_ICON
 
 
 ## Wire one dynamic slot's upgrade button. All slots use this same path; the
@@ -603,21 +463,39 @@ func _connect_slot_upgrade(slot_id: StringName) -> void:
 	button.mouse_exited.connect(_hide_upgrade_cost_popup)
 	button.focus_entered.connect(_show_slot_cost_popup.bind(button, slot_id))
 	button.focus_exited.connect(_hide_upgrade_cost_popup)
-	button.pressed.connect(_on_slot_upgrade_pressed.bind(slot_id))
 
 
 func _on_slot_upgrade_pressed(slot_id: StringName) -> void:
-	if SLOT_UPGRADE_IDS.has(slot_id):
-		_on_upgrade_pressed(SLOT_UPGRADE_IDS[slot_id])
-	else:
+	if _slot_upgrade_ids.has(slot_id):
+		_on_upgrade_pressed(_slot_upgrade_ids[slot_id])
+		return
+	var item := _slot_item(slot_id)
+	if item is AugmentData:
 		_on_augment_upgrade_pressed(slot_id)
+	elif item != null and item.upgrade_data != null:
+		_on_upgrade_pressed(item.item_id)
 
 
 func _show_slot_cost_popup(button: Button, slot_id: StringName) -> void:
-	if SLOT_UPGRADE_IDS.has(slot_id):
-		_show_upgrade_cost_popup(button, SLOT_UPGRADE_IDS[slot_id])
-	else:
+	if _slot_upgrade_ids.has(slot_id):
+		_show_upgrade_cost_popup(button, _slot_upgrade_ids[slot_id])
+		return
+	var item := _slot_item(slot_id)
+	if item is AugmentData:
 		_show_augment_cost_popup(button, slot_id)
+	elif item != null and item.upgrade_data != null:
+		_show_upgrade_cost_popup(button, item.item_id)
+
+
+## The item a slot currently upgrades: a static slot's fixed item, or a dynamic slot's equipped
+## catalog item.
+func _slot_item(slot_id: StringName) -> ItemData:
+	var slot: UpgradeSlot = _station_slots.get(slot_id, null)
+	if slot is StaticUpgradeSlot:
+		return (slot as StaticUpgradeSlot).item
+	if slot is DynamicUpgradeSlot:
+		return _get_equipped_item_for_slot(slot) as ItemData
+	return null
 
 
 func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
@@ -656,21 +534,17 @@ func _hide_upgrade_cost_popup() -> void:
 	_upgrade_cost_popup.visible = false
 
 
-func _get_unlockable_static_slot_ids() -> Array[StringName]:
-	var slot_ids: Array[StringName] = []
-	slot_ids.append(PLAYER_SHIELD_SLOT_ID)
-	return slot_ids
-
-
 func _get_unlockable_static_slot_id_for_upgrade(upgrade_id: StringName) -> StringName:
-	match upgrade_id:
-		&"player_shield":
-			return PLAYER_SHIELD_SLOT_ID
+	for sid in _station_slots:
+		var slot := _station_slots[sid] as UpgradeSlot
+		if slot != null and slot.locked and _slot_upgrade_ids.get(sid, &"") == upgrade_id:
+			return sid
 	return &""
 
 
 func _is_static_slot_unlockable(slot_id: StringName) -> bool:
-	return _get_unlockable_static_slot_ids().has(slot_id)
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot != null and slot.locked
 
 
 func _is_static_slot_unlocked(slot_id: StringName) -> bool:
@@ -683,39 +557,33 @@ func _is_static_slot_unlocked(slot_id: StringName) -> bool:
 
 
 func _get_static_slot_unlock_research_id(slot_id: StringName) -> StringName:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return PLAYER_SHIELD_UNLOCK_RESEARCH_ID
-	return &""
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot.unlock_research_id if slot != null else &""
 
 
 func _get_static_slot_unlock_research_cost(slot_id: StringName) -> Dictionary:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return PLAYER_SHIELD_RESEARCH_COST
-	return {}
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot.get_unlock_cost() if slot != null else {}
 
 
 func _get_static_slot_unlock_title(slot_id: StringName) -> String:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return "Unlock Shield"
-	return "Unlock Slot"
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return "Unlock %s" % slot.display_name if slot != null else "Unlock Slot"
 
 
 func _get_static_slot_display_name(slot_id: StringName) -> String:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return "Player Shield"
-	return "Static Slot"
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot.display_name if slot != null else "Static Slot"
 
 
 func _get_static_slot_description(slot_id: StringName) -> String:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return "Adds rechargeable shield hits that absorb damage before health is lost."
-	return ""
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot.unlock_description if slot != null else ""
 
 
 func _get_static_slot_unlock_gain_text(slot_id: StringName) -> String:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return "+2 Shield Hits"
-	return ""
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	return slot.unlock_gain_text if slot != null else ""
 
 
 func _build_static_slot_unlock_detail_text(slot_id: StringName) -> String:
@@ -760,9 +628,7 @@ func _unlock_static_slot(slot_id: StringName) -> void:
 
 
 func _get_static_slot_upgrade_id(slot_id: StringName) -> StringName:
-	if slot_id == PLAYER_SHIELD_SLOT_ID:
-		return &"player_shield"
-	return &""
+	return _slot_upgrade_ids.get(slot_id, &"")
 
 
 func _on_map_pressed() -> void:
@@ -788,7 +654,7 @@ func _pan_to_page(page_index: int) -> void:
 	_is_panning = true
 	_close_dynamic_slot_popup()
 	_hide_upgrade_cost_popup()
-	_hide_storage_detail()
+	_clear_storage_detail()
 	_clear_stats_panel()
 	_pan_to_ship_button.visible = false
 	_pan_to_player_button.visible = false
@@ -869,20 +735,6 @@ func _refresh_research_points_display() -> void:
 		label.text = str(save_data.get_research_points(rarity)) if save_data != null else "0"
 
 
-func _toggle_weapon_slot_popup() -> void:
-	_toggle_dynamic_slot_popup(&"weapon", _weapon_button, &"weapon", -1, "Weapons")
-
-
-func _toggle_player_augment_popup(slot_id: StringName, augment_index: int) -> void:
-	var button := _get_compact_slot_select_button(slot_id)
-	_toggle_dynamic_slot_popup(slot_id, button, &"player_augment", augment_index, "Augments")
-
-
-func _toggle_owner_augment_popup(slot_id: StringName, slot_kind: StringName, list_title: String) -> void:
-	var button := _get_compact_slot_select_button(slot_id)
-	_toggle_dynamic_slot_popup(slot_id, button, slot_kind, 0, list_title)
-
-
 func _toggle_dynamic_slot_popup(
 	slot_id: StringName,
 	button: Button,
@@ -905,7 +757,7 @@ func _toggle_dynamic_slot_popup(
 		_dynamic_item_list_title.text = list_title
 	if should_show:
 		_hide_upgrade_cost_popup()
-		_hide_storage_detail()
+		_clear_storage_detail()
 		_position_dynamic_slot_popup()
 		_populate_dynamic_item_list()
 		_refresh_current_dynamic_item_stats()
@@ -1082,22 +934,24 @@ func _populate_storage_slots(storage_entries: Array[Dictionary]) -> void:
 		_storage_grid.add_child(slot)
 		slot.setup(item_data, quantity)
 		slot.item_hovered.connect(_show_storage_detail)
-		slot.item_unhovered.connect(_hide_storage_detail)
+		slot.item_unhovered.connect(_clear_storage_detail)
 
 
 func _show_storage_detail(_slot: StationStorageSlot, item_data: SalvageItemData, quantity: int) -> void:
 	if item_data == null:
-		_hide_storage_detail()
+		_clear_storage_detail()
 		return
 
 	_storage_detail_icon.texture = item_data.sprite
 	_storage_detail_name.text = item_data.item_name if not item_data.item_name.is_empty() else "Unknown Item"
 	_storage_detail_body.text = _build_storage_detail_text(item_data, quantity)
-	_storage_detail_panel.visible = true
 
 
-func _hide_storage_detail(_slot: StationStorageSlot = null) -> void:
-	_storage_detail_panel.visible = false
+## Blanks the always-visible detail panel; no item hovered means empty icon and text.
+func _clear_storage_detail(_slot: StationStorageSlot = null) -> void:
+	_storage_detail_icon.texture = null
+	_storage_detail_name.text = ""
+	_storage_detail_body.text = ""
 
 
 func _build_storage_detail_text(item_data: SalvageItemData, quantity: int) -> String:
@@ -1110,9 +964,7 @@ func _build_storage_detail_text(item_data: SalvageItemData, quantity: int) -> St
 func _refresh_loadout_ui() -> void:
 	if _run_loadout:
 		_run_loadout.prepare_for_run()
-	_update_equipment_buttons()
-	_update_augment_slots()
-	_update_upgrade_rows()
+	_refresh_all_slots()
 	_update_previews()
 	if _dynamic_slot_popup != null and _dynamic_slot_popup.visible:
 		_populate_dynamic_item_list()
@@ -1123,34 +975,73 @@ func _refresh_loadout_ui() -> void:
 	_refresh_research_points_display()
 
 
-func _update_equipment_buttons() -> void:
-	if _run_loadout == null:
+## Reactive pass: every slot updates from live state via its own authored config.
+## Static slots pull their level from the loadout (keyed by their upgrade id) and their
+## unlock state; dynamic slots reflect the currently-equipped item (name/icon/level).
+func _refresh_all_slots() -> void:
+	for sid in _station_slots:
+		var slot := _station_slots[sid] as UpgradeSlot
+		if slot == null:
+			continue
+		if slot is DynamicUpgradeSlot:
+			_refresh_dynamic_slot(sid, slot)
+		else:
+			_refresh_static_slot(sid, slot)
+
+
+func _refresh_static_slot(sid: StringName, slot: UpgradeSlot) -> void:
+	if slot.locked:
+		var unlocked := _is_static_slot_unlocked(sid)
+		slot.set_unlock_mode(not unlocked)
+		if not unlocked:
+			return
+	var uid: StringName = _slot_upgrade_ids.get(sid, &"")
+	if uid != &"":
+		slot.set_level(_get_upgrade_current_level(uid), _get_upgrade_current_max_level(uid))
+
+
+func _refresh_dynamic_slot(_sid: StringName, slot: DynamicUpgradeSlot) -> void:
+	var item := _get_equipped_item_for_slot(slot)
+	if item == null:
+		slot.set_current_name(slot.display_name)
+		slot.set_current_icon(slot.static_icon)
+		slot.set_level_text("None")
 		return
+	slot.set_current_name(_get_dynamic_item_name(item))
+	slot.set_current_icon(_get_dynamic_item_icon(item, slot.static_icon))
+	var idata := item as ItemData
+	if idata != null and idata.upgrade_data != null and _run_loadout != null:
+		slot.set_level(_run_loadout.get_upgrade_level(idata.item_id), idata.get_max_level())
+	else:
+		slot.set_level(0, 0)
 
-	var weapon := _run_loadout.equipped_weapon
-	if weapon and _has_compact_slot(&"weapon"):
-		_refresh_compact_slot(
-			&"weapon",
-			_get_equipment_name(weapon),
-			_get_equipment_icon(weapon),
-			&"weapon_damage",
-			true
-		)
-	elif weapon:
-		_weapon_button.icon = _get_equipment_icon(weapon)
-		_weapon_button.text = ""
 
-	var magnet_tool := _run_loadout.equipped_magnet_tool
-	if magnet_tool and _has_compact_slot(&"magnet_tool"):
-		_refresh_compact_slot(
-			&"magnet_tool",
-			_get_equipment_name(magnet_tool),
-			_get_equipment_icon(magnet_tool),
-			&"magnet_tool_pull",
-			false
-		)
-	elif magnet_tool:
-		_magnet_button.icon = _get_equipment_icon(magnet_tool)
+## The item currently equipped in a dynamic slot, dispatched on its authored kind.
+func _get_equipped_item_for_slot(slot: DynamicUpgradeSlot) -> Resource:
+	if _run_loadout == null:
+		return null
+	match slot.slot_kind:
+		&"weapon":
+			return _run_loadout.equipped_weapon
+		&"player_augment":
+			return _get_player_augment(slot.slot_index)
+		&"ship_augment":
+			return _get_ship_augment(slot.slot_index)
+		&"magnet_augment":
+			return _get_magnet_augment(slot.slot_index)
+	return null
+
+
+func _get_dynamic_item_name(item: Resource) -> String:
+	if item is HeldItemData:
+		return _get_equipment_name(item)
+	return _get_upgradeable_item_name(item)
+
+
+func _get_dynamic_item_icon(item: Resource, fallback: Texture2D) -> Texture2D:
+	if item is HeldItemData:
+		return _get_equipment_icon(item)
+	return _get_upgradeable_item_icon(item, fallback)
 
 
 func _update_previews() -> void:
@@ -1160,107 +1051,6 @@ func _update_previews() -> void:
 		_player_preview_stage.set_loadout(_run_loadout)
 	if _ship_preview_stage != null:
 		_ship_preview_stage.set_loadout(_run_loadout)
-
-
-func _update_augment_slots() -> void:
-	_refresh_augment_slot(&"PlayerAugment1", _get_player_augment(0), _get_player_augment_slot_name(0), DEFAULT_AUGMENT_ICON)
-	_refresh_augment_slot(&"PlayerAugment2", _get_player_augment(1), _get_player_augment_slot_name(1), DEFAULT_AUGMENT_ICON)
-	_refresh_augment_slot(&"ShipAugment", _get_ship_augment(0), "Ship Augment", DEFAULT_SHIP_ICON)
-	_refresh_augment_slot(&"MagnetAugment", _get_magnet_augment(0), "Magnet Augment", DEFAULT_MAGNET_ICON)
-
-
-func _refresh_augment_slot(slot_id: StringName, augment: AugmentData, empty_name: String, empty_icon: Texture2D) -> void:
-	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
-	if slot == null:
-		return
-
-	if augment == null:
-		slot.setup(slot_id, empty_name, empty_icon, 0, 0, true, _get_upgrade_icon())
-		slot.set_level_text("None")
-		return
-
-	var level := _run_loadout.get_item_level(augment) if _run_loadout != null else 0
-	slot.setup(
-		slot_id,
-		_get_upgradeable_item_name(augment),
-		_get_upgradeable_item_icon(augment, empty_icon),
-		level,
-		int(augment.max_level),
-		true,
-		_get_upgrade_icon()
-	)
-
-
-func _get_player_augment_slot_name(augment_index: int) -> String:
-	return "Augment %d" % (augment_index + 1)
-
-
-func _update_upgrade_rows() -> void:
-	_refresh_compact_slot(
-		&"player_health",
-		"Health",
-		_static_slot_icons.get(&"player_health", null) as Texture2D,
-		&"player_health",
-		false
-	)
-	_refresh_compact_slot(
-		&"player_shield",
-		"Shield",
-		_static_slot_icons.get(&"player_shield", null) as Texture2D,
-		&"player_shield",
-		false
-	)
-	_refresh_compact_slot(
-		&"ship_integrity",
-		"Integrity",
-		_static_slot_icons.get(&"ship_integrity", null) as Texture2D,
-		&"ship_hull",
-		false
-	)
-	_refresh_compact_slot(
-		&"ship_storage_size",
-		"Storage Size",
-		_static_slot_icons.get(&"ship_storage_size", null) as Texture2D,
-		&"ship_storage_size",
-		false
-	)
-	_refresh_compact_slot(
-		&"magnet_integrity",
-		"Integrity",
-		_static_slot_icons.get(&"magnet_integrity", null) as Texture2D,
-		&"ship_magnet_health",
-		false
-	)
-	_refresh_compact_slot(
-		&"magnet_capacity",
-		"Capacity",
-		_static_slot_icons.get(&"magnet_capacity", null) as Texture2D,
-		&"ship_magnet_capacity",
-		false
-	)
-	_set_upgrade_row_level(_weapon_row, &"weapon_damage")
-	_set_upgrade_row_level(_magnet_row, &"magnet_tool_pull")
-	_set_upgrade_row_level(_health_row, &"player_health")
-	_set_upgrade_row_level(_shield_row, &"player_shield")
-
-
-func _set_upgrade_row_level(row: HBoxContainer, upgrade_id: StringName) -> void:
-	if row == null:
-		return
-	var slot := _get_compact_slot_for_row(row)
-	if slot != null:
-		slot.set_level(_get_upgrade_current_level(upgrade_id), _get_upgrade_current_max_level(upgrade_id))
-		return
-
-	var level := _get_upgrade_current_level(upgrade_id)
-	var max_level := _get_upgrade_current_max_level(upgrade_id)
-	var tick_index := 0
-	for child in row.get_children():
-		if child is ColorRect and String(child.name).begins_with("Tick"):
-			tick_index += 1
-			var tick := child as ColorRect
-			tick.visible = tick_index <= max_level
-			tick.color = ACTIVE_TICK_COLOR if tick_index <= level else INACTIVE_TICK_COLOR
 
 
 func _on_upgrade_pressed(upgrade_id: StringName) -> void:
@@ -1293,16 +1083,10 @@ func _on_upgrade_pressed(upgrade_id: StringName) -> void:
 # ---------------------------------------------------------------------------
 
 func _get_augment_for_slot(slot_id: StringName) -> AugmentData:
-	match slot_id:
-		&"PlayerAugment1":
-			return _get_player_augment(0)
-		&"PlayerAugment2":
-			return _get_player_augment(1)
-		&"ShipAugment":
-			return _get_ship_augment(0)
-		&"MagnetAugment":
-			return _get_magnet_augment(0)
-	return null
+	var slot := _station_slots.get(slot_id, null) as DynamicUpgradeSlot
+	if slot == null:
+		return null
+	return _get_equipped_item_for_slot(slot) as AugmentData
 
 
 func _on_augment_upgrade_pressed(slot_id: StringName) -> void:
@@ -1337,7 +1121,7 @@ func _show_augment_cost_popup(button: Button, slot_id: StringName) -> void:
 	var credits := _upgrade_cost_popup.get_node_or_null("CreditsLabel") as Label
 	var secondary := _upgrade_cost_popup.get_node_or_null("SecondaryLabel") as RichTextLabel
 	var level := _run_loadout.get_item_level(augment)
-	var max_lvl := int(augment.max_level)
+	var max_lvl := augment.get_max_level()
 	if level >= max_lvl:
 		if title: title.text = "MAX LEVEL"
 		if credits: credits.text = ""
@@ -1476,6 +1260,14 @@ func _connect_dynamic_entry_detail_hover(control: Control, entry: Resource) -> v
 	control.focus_entered.connect(_show_dynamic_item_stats.bind(entry))
 
 
+## The authored catalog (item list) of the dynamic slot whose popup is currently open.
+func _active_slot_catalog() -> Array[UpgradeCatalogEntry]:
+	var slot := _station_slots.get(_active_dynamic_slot_id, null) as DynamicUpgradeSlot
+	if slot == null:
+		return []
+	return slot.catalog
+
+
 func _get_active_catalog_entries() -> Array[Resource]:
 	match _active_dynamic_slot_kind:
 		&"player_augment":
@@ -1531,7 +1323,7 @@ func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked:
 	if is_hidden:
 		icon.modulate = HIDDEN_ENTRY_ICON_MODULATE
 	else:
-		icon.modulate = LOCKED_ENTRY_MODULATE if is_locked else UNLOCKED_ENTRY_MODULATE
+		icon.modulate = UNLOCKED_ENTRY_MODULATE
 	icon_frame.add_child(icon)
 
 	var name_label := Label.new()
@@ -1602,7 +1394,7 @@ func _on_dynamic_entry_unlock_pressed(entry: Resource) -> void:
 
 func _get_weapon_catalog_entries() -> Array[Resource]:
 	var entries: Array[Resource] = []
-	for entry in weapon_catalog:
+	for entry in _active_slot_catalog():
 		if entry != null and _catalog_entry_equipment(entry) is WeaponData:
 			entries.append(entry)
 
@@ -1613,8 +1405,8 @@ func _get_weapon_catalog_entries() -> Array[Resource]:
 				has_equipped_weapon = true
 				break
 		if not has_equipped_weapon:
-			var equipped_entry := EquipmentCatalogEntryScript.new()
-			equipped_entry.set("equipment_data", _run_loadout.equipped_weapon)
+			var equipped_entry := UpgradeCatalogEntryScript.new()
+			equipped_entry.set("item_data", _run_loadout.equipped_weapon)
 			equipped_entry.set("locked", false)
 			entries.insert(0, equipped_entry)
 
@@ -1628,7 +1420,7 @@ func _get_weapon_catalog_entries() -> Array[Resource]:
 
 func _get_player_augment_catalog_entries() -> Array[Resource]:
 	var entries: Array[Resource] = []
-	for entry in player_augment_catalog:
+	for entry in _active_slot_catalog():
 		var augment := _catalog_entry_item_data(entry) as AugmentData
 		if augment == null:
 			continue
@@ -1639,11 +1431,11 @@ func _get_player_augment_catalog_entries() -> Array[Resource]:
 	if equipped_augment != null:
 		var has_equipped_augment := false
 		for entry in entries:
-			if UpgradeableItemData.is_same_item(_catalog_entry_item_data(entry) as UpgradeableItemData, equipped_augment):
+			if ItemData.is_same_item(_catalog_entry_item_data(entry) as ItemData, equipped_augment):
 				has_equipped_augment = true
 				break
 		if not has_equipped_augment:
-			var equipped_entry := SlottableCatalogEntryScript.new()
+			var equipped_entry := UpgradeCatalogEntryScript.new()
 			equipped_entry.set("item_data", equipped_augment)
 			equipped_entry.set("locked", false)
 			entries.insert(0, equipped_entry)
@@ -1656,18 +1448,14 @@ func _get_player_augment_catalog_entries() -> Array[Resource]:
 	return entries
 
 
-func _catalog_entry_equipment(entry: Resource) -> EquipmentData:
-	if entry == null:
-		return null
-	return entry.get("equipment_data") as EquipmentData
-
-
 func _catalog_entry_item_data(entry: Resource) -> Resource:
 	if entry == null:
 		return null
-	if Utils.has_property(entry, "item_data"):
-		return entry.get("item_data") as Resource
-	return _catalog_entry_equipment(entry)
+	return entry.get("item_data") as Resource
+
+
+func _catalog_entry_equipment(entry: Resource) -> HeldItemData:
+	return _catalog_entry_item_data(entry) as HeldItemData
 
 
 func _catalog_entry_locked(entry: Resource) -> bool:
@@ -1856,27 +1644,16 @@ func _get_catalog_entry_detail_level_text(entry: Resource) -> String:
 
 
 func _get_catalog_entry_level_progress(entry: Resource) -> Dictionary:
-	var item_data := _catalog_entry_item_data(entry)
-	if item_data == null:
+	var item_data := _catalog_entry_item_data(entry) as ItemData
+	if item_data == null or item_data.upgrade_data == null or _run_loadout == null:
 		return {"level": 0, "max_level": 0}
-
-	if Utils.has_property(item_data, "max_level"):
-		return {
-			"level": _run_loadout.get_item_level(item_data) if _run_loadout != null else 0,
-			"max_level": int(item_data.get("max_level")),
-		}
-
-	if item_data is EquipmentData and _run_loadout != null:
-		var upgrade_id := &"weapon_damage" if item_data is WeaponData else &"magnet_tool_pull"
-		return {
-			"level": _run_loadout.get_equipment_item_level(item_data),
-			"max_level": _run_loadout.get_upgrade_max_level(upgrade_id),
-		}
-
-	return {"level": 0, "max_level": 0}
+	return {
+		"level": _run_loadout.get_upgrade_level(item_data.item_id),
+		"max_level": item_data.get_max_level(),
+	}
 
 
-func _same_equipment_data(left: EquipmentData, right: EquipmentData) -> bool:
+func _same_equipment_data(left: HeldItemData, right: HeldItemData) -> bool:
 	if left == null or right == null:
 		return false
 	if left == right:
@@ -1893,17 +1670,17 @@ func _is_catalog_entry_equipped(entry: Resource) -> bool:
 		&"player_augment":
 			var item_data := _catalog_entry_item_data(entry)
 			for augment in _run_loadout.player_augments:
-				if UpgradeableItemData.is_same_item(augment, item_data as UpgradeableItemData):
+				if ItemData.is_same_item(augment, item_data as ItemData):
 					return true
 		&"ship_augment":
 			var ship_item_data := _catalog_entry_item_data(entry)
 			for augment in _run_loadout.ship_augments:
-				if UpgradeableItemData.is_same_item(augment, ship_item_data as UpgradeableItemData):
+				if ItemData.is_same_item(augment, ship_item_data as ItemData):
 					return true
 		&"magnet_augment":
 			var magnet_item_data := _catalog_entry_item_data(entry)
 			for augment in _run_loadout.magnet_augments:
-				if UpgradeableItemData.is_same_item(augment, magnet_item_data as UpgradeableItemData):
+				if ItemData.is_same_item(augment, magnet_item_data as ItemData):
 					return true
 	return false
 
@@ -1993,8 +1770,8 @@ func _refresh_current_dynamic_item_stats() -> void:
 		return
 
 	if _dynamic_slot_popup_current_icon != null:
-		if item_data is EquipmentData:
-			_dynamic_slot_popup_current_icon.icon = _get_equipment_icon(item_data as EquipmentData)
+		if item_data is HeldItemData:
+			_dynamic_slot_popup_current_icon.icon = _get_equipment_icon(item_data as HeldItemData)
 		else:
 			_dynamic_slot_popup_current_icon.icon = _get_upgradeable_item_icon(item_data, null)
 
@@ -2006,8 +1783,8 @@ func _refresh_current_dynamic_item_stats() -> void:
 		if item_data.has_method("get_current_effect_summary"):
 			body = String(item_data.call("get_current_effect_summary", state))
 	var item_name := _get_upgradeable_item_name(item_data)
-	if item_data is EquipmentData:
-		item_name = _get_equipment_name(item_data as EquipmentData)
+	if item_data is HeldItemData:
+		item_name = _get_equipment_name(item_data as HeldItemData)
 	_dynamic_slot_popup_current_stats.text = "%s\n%s" % [item_name, body]
 
 
@@ -2030,55 +1807,11 @@ func _is_upgrade_maxed(upgrade_id: StringName) -> bool:
 	return _run_loadout != null and _run_loadout.is_upgrade_maxed(upgrade_id)
 
 
-func _has_compact_slot(slot_id: StringName) -> bool:
-	return _station_slots.has(slot_id) and _station_slots[slot_id] is StationUpgradeSlot
-
-
-func _refresh_compact_slot(
-	slot_id: StringName,
-	item_name: String,
-	icon: Texture2D,
-	upgrade_id: StringName,
-	can_select: bool
-) -> void:
-	var slot := _station_slots.get(slot_id, null) as StationUpgradeSlot
-	if slot == null:
-		return
-
-	var level := _get_upgrade_current_level(upgrade_id)
-	var max_level := _get_upgrade_current_max_level(upgrade_id)
-	slot.setup(slot_id, item_name, icon, level, max_level, can_select, _get_upgrade_icon())
-	if _is_static_slot_unlockable(slot_id):
-		slot.set_unlock_mode(not _is_static_slot_unlocked(slot_id), "Unlock")
-
-
-func _get_compact_slot_for_row(row: HBoxContainer) -> StationUpgradeSlot:
-	if row == null:
-		return null
-	for child in row.get_children():
-		if child is StationUpgradeSlot:
-			return child as StationUpgradeSlot
-	return null
-
-
 func _get_upgrade_button(upgrade_id: StringName) -> Button:
-	match upgrade_id:
-		&"weapon_damage":
-			return _weapon_upgrade_button
-		&"magnet_tool_pull":
-			return _magnet_upgrade_button
-		&"player_health":
-			return _health_upgrade_button
-		&"player_shield":
-			return _shield_upgrade_button
-		&"ship_hull":
-			return _ship_integrity_upgrade_button
-		&"ship_storage_size":
-			return _storage_size_upgrade_button
-		&"ship_magnet_health":
-			return _magnet_integrity_upgrade_button
-		&"ship_magnet_capacity":
-			return _magnet_capacity_upgrade_button
+	for sid in _station_slots:
+		if _slot_upgrade_ids.get(sid, &"") == upgrade_id:
+			var slot := _station_slots[sid] as UpgradeSlot
+			return slot.get_upgrade_button() if slot != null else null
 	return null
 
 
@@ -2213,7 +1946,8 @@ func _build_upgrade_gain_text(upgrade_id: StringName) -> String:
 	# resulting rectangle rather than a scalar "+N".
 	if upgrade_id == &"ship_storage_size":
 		return _build_storage_size_gain_text()
-	return _run_loadout.get_upgrade_next_gain_text(upgrade_id, _get_upgrade_stat_name(upgrade))
+	# Each effect labels itself from its own target_property; no per-upgrade mapping.
+	return _run_loadout.get_upgrade_next_gain_text(upgrade_id, "")
 
 
 func _build_storage_size_gain_text() -> String:
@@ -2224,37 +1958,13 @@ func _build_storage_size_gain_text() -> String:
 	return "%d×%d Storage" % [int(next_size.x), int(next_size.y)]
 
 
-func _get_upgrade_stat_name(upgrade: Resource) -> String:
-	if upgrade == null:
-		return ""
-	var target_property := String(upgrade.get("target_property"))
-	match target_property:
-		"player_max_health":
-			return "Health"
-		"player_max_shield":
-			return "Shield Hit"
-		"damage":
-			return "Damage"
-		"fire_rate":
-			return "Fire Rate"
-		"pull_max_speed":
-			return "Pull Speed"
-		"ship_max_health":
-			return "Ship Integrity"
-		"magnet_hold_capacity":
-			return "Magnet Capacity"
-		"magnet_max_health":
-			return "Magnet Integrity"
-	return _prettify_property_name(target_property).capitalize()
-
-
 func _get_weapon_preview(weapon_data: WeaponData) -> WeaponData:
 	if _run_loadout == null:
 		return weapon_data
 	return _run_loadout.get_upgraded_weapon_preview(weapon_data)
 
 
-func _get_equipment_icon(equipment_data: EquipmentData) -> Texture2D:
+func _get_equipment_icon(equipment_data: HeldItemData) -> Texture2D:
 	if equipment_data == null:
 		return null
 	if equipment_data.hotbar_icon:
@@ -2266,7 +1976,7 @@ func _get_equipment_icon(equipment_data: EquipmentData) -> Texture2D:
 	return null
 
 
-func _get_equipment_name(equipment_data: EquipmentData) -> String:
+func _get_equipment_name(equipment_data: HeldItemData) -> String:
 	if equipment_data != null and not equipment_data.display_name.is_empty():
 		return equipment_data.display_name
 	return "Unknown Equipment"
@@ -2416,8 +2126,8 @@ func _stringify_object_stat(value: Variant) -> String:
 	if value is Texture2D:
 		var texture := value as Texture2D
 		return texture.resource_path.get_file() if not texture.resource_path.is_empty() else "Texture"
-	if value is EquipmentData:
-		return _get_equipment_name(value as EquipmentData)
+	if value is HeldItemData:
+		return _get_equipment_name(value as HeldItemData)
 	if value is SalvageItemData:
 		var item := value as SalvageItemData
 		return item.item_name if not item.item_name.is_empty() else "Unknown Item"

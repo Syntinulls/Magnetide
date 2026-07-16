@@ -1,0 +1,161 @@
+[gd_scene format=3 uid="uid://b6k44pcvew4j2"]
+
+[ext_resource type="Script" path="res://_project/app/screens/station/upgrade_slot.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://dqupglgt00002" path="res://_project/app/screens/station/sprites/upgrade_light_off.png" id="2_light_off"]
+[ext_resource type="Texture2D" uid="uid://dqupgbtn00001" path="res://_project/app/screens/station/sprites/upgrade_button.png" id="3_upg_button"]
+[ext_resource type="Texture2D" uid="uid://dqupgbtn00002" path="res://_project/app/screens/station/sprites/upgrade_button_pressed.png" id="4_upg_button_pressed"]
+[ext_resource type="Texture2D" uid="uid://dqupgarw00001" path="res://_project/app/screens/station/sprites/upgrade_arrow.png" id="5_upg_arrow"]
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_upg_normal"]
+texture = ExtResource("3_upg_button")
+
+[sub_resource type="StyleBoxTexture" id="StyleBoxTexture_upg_pressed"]
+texture = ExtResource("4_upg_button_pressed")
+
+[node name="UpgradeSlot" type="VBoxContainer"]
+custom_minimum_size = Vector2(0, 112)
+offset_right = 232.0
+offset_bottom = 112.0
+theme_override_constants/separation = 8
+script = ExtResource("1_script")
+
+[node name="HeaderRow" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 22)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="NameLabel" type="Label" parent="HeaderRow"]
+custom_minimum_size = Vector2(152, 22)
+layout_mode = 2
+size_flags_vertical = 8
+theme_override_font_sizes/font_size = 24
+text = "Item"
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="BodyRow" type="HBoxContainer" parent="."]
+custom_minimum_size = Vector2(0, 66)
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_constants/separation = 8
+
+[node name="SelectButton" type="Button" parent="BodyRow"]
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+expand_icon = true
+
+[node name="StaticSlot" type="Panel" parent="BodyRow"]
+visible = false
+custom_minimum_size = Vector2(80, 80)
+layout_mode = 2
+size_flags_horizontal = 4
+size_flags_vertical = 4
+mouse_filter = 2
+
+[node name="StaticIcon" type="TextureRect" parent="BodyRow/StaticSlot"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 10.0
+offset_top = 8.0
+offset_right = -10.0
+offset_bottom = -8.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+expand_mode = 1
+stretch_mode = 5
+
+[node name="TickColumn" type="VBoxContainer" parent="BodyRow"]
+custom_minimum_size = Vector2(76, 66)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_constants/separation = 0
+alignment = 1
+
+[node name="LevelLabel" type="Label" parent="BodyRow/TickColumn"]
+custom_minimum_size = Vector2(76, 24)
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_colors/font_color = Color(0.68, 0.75, 0.84, 1)
+theme_override_font_sizes/font_size = 18
+text = "Lv 0/5"
+horizontal_alignment = 1
+vertical_alignment = 1
+clip_text = true
+text_overrun_behavior = 3
+
+[node name="TickContainer" type="HBoxContainer" parent="BodyRow/TickColumn"]
+layout_mode = 2
+size_flags_horizontal = 4
+theme_override_constants/separation = 4
+
+[node name="Tick1" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("2_light_off")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick2" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("2_light_off")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick3" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("2_light_off")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick4" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("2_light_off")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Tick5" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+custom_minimum_size = Vector2(12, 34)
+layout_mode = 2
+size_flags_vertical = 4
+mouse_filter = 2
+texture = ExtResource("2_light_off")
+expand_mode = 1
+stretch_mode = 5
+
+[node name="Control" type="Control" parent="BodyRow/TickColumn"]
+custom_minimum_size = Vector2(0, 24)
+layout_mode = 2
+
+[node name="ActionCell" type="CenterContainer" parent="BodyRow"]
+custom_minimum_size = Vector2(52, 66)
+layout_mode = 2
+size_flags_vertical = 4
+
+[node name="UpgradeButton" type="Button" parent="BodyRow/ActionCell"]
+custom_minimum_size = Vector2(52, 52)
+layout_mode = 2
+theme_override_styles/normal = SubResource("StyleBoxTexture_upg_normal")
+theme_override_styles/pressed = SubResource("StyleBoxTexture_upg_pressed")
+theme_override_styles/hover = SubResource("StyleBoxTexture_upg_normal")
+theme_override_styles/disabled = SubResource("StyleBoxTexture_upg_normal")
+theme_override_styles/focus = SubResource("StyleBoxTexture_upg_normal")
+icon = ExtResource("5_upg_arrow")
+expand_icon = true

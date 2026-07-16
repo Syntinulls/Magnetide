@@ -57,10 +57,12 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── spawning/            EnemySpawner + EnemySpawnProfile (threat-scaled spawn rules).
 │   └── worm/                Per-enemy content: data .tres, spawn profile, sprites.
 ├── items/                   Meta-progression item data model (definitions, not world objects).
-│   ├── upgradeable_item_data.gd, stat_upgradeable_item_data.gd,
-│   │   upgrade_slot_definition.gd, slottable_catalog_entry.gd
-│   ├── equipment/           EquipmentData/WeaponData/MagnetToolData + fire behaviors
-│   │                        + per-weapon folders (rifle/, shotgun/) with their .tres + sprites.
+│   ├── item_data.gd         ItemData: base (identity + leveling) for every upgradeable item.
+│   ├── held_item_data.gd    HeldItemData: hotbar/mounting base for weapons + the magnet tool.
+│   ├── upgrade_catalog_entry.gd  UpgradeCatalogEntry: one selectable item in a dynamic slot.
+│   ├── weapons/             WeaponData + weapon_fire_behavior + per-weapon folders
+│   │                        (pistol/, rifle/, ...) with their .tres + sprites.
+│   ├── magnet_tool/         MagnetToolData + magnet_gun.tres + sprites.
 │   └── augments/            AugmentData + behavior scripts + augment .tres + sprites.
 ├── level/                   The world during a run (presentation + simulation, not spawnable content).
 │   ├── level.*              Root run scene; level_definition.gd (playable-level data).
@@ -73,8 +75,7 @@ _project/                    All game content. (Root level is reserved for engin
 │                            never touches the ship, and exists only inside a run.
 ├── player/                  The player character: player.* + sprites.
 ├── run/                     One run's lifecycle & mutable state: RunController, RunLoadout,
-│                            RunResult, upgrade definitions/costs, item/slot states,
-│                            RunArtifactTracker.
+│                            RunResult, RunUpgrade, item/slot states, RunArtifactTracker.
 ├── salvage/                 The salvage domain, end to end:
 │   ├── salvage_item.gd      In-world salvage RigidBody2D (pull/freeze/storage behavior).
 │   ├── salvage_item_data.gd + salvage_part_entry.gd + salvage_item_cost.gd (data model).
@@ -96,6 +97,9 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── recycler/            Recycler + sprites.
 │   ├── thruster/            Thruster + thruster_audio + sprites.
 │   └── departure_pylon/     Departure pylon.
+├── upgrades/                Authored upgrade definitions (data-driven, §9): upgrade_effect.gd +
+│                            upgrade_level_cost.gd + per-domain .tres grouped in player/, ship/,
+│                            magnet/, weapon/.
 └── hud/                     The in-run heads-up display (only the HUD — not "anything drawn
     │                        on the UI layer"; screens live in app/screens/, and a world
     │                        object's own UI lives with that object).
@@ -150,6 +154,12 @@ do not repeat their folder (`hud/sprites/player_hp_back.png`, not `ui_hud_player
 | Behavior/strategy resources | end in `_behavior` | `default_move_behavior.gd` |
 | UI scripts | suffix says what it is: `_screen`, `_popup`, `_bar`, `_display`, `_ui` (composite shells only) | `map_screen.gd`, `run_summary_popup.gd`, `game_ui.gd` |
 | Autoload | registered name = PascalCase of script | `Magnetide` ← `magnetide.gd` |
+| Run state | `Run*` prefix = mutable per-run save/state; authored *definitions* never take it | `RunLoadout`, `RunUpgrade` (state) vs `UpgradeData`, `UpgradeEffect` (definitions) |
+
+A `Run`-prefixed class is per-run save/state (`RunLoadout`, `RunUpgrade`, `RunResult`). Authored
+definition resources — what a designer tunes — are never `Run`-prefixed (`UpgradeData`,
+`UpgradeEffect`, `UpgradeLevelCost`, `WeaponData`, `AugmentData`). Naming a definition `Run*`, or a
+state object without it, is the smell this rule prevents.
 
 File/class naming is 1:1: every `.gd` intended for reuse declares a `class_name`
 matching its file name. Scene-only glue scripts may omit `class_name` only if nothing
@@ -199,6 +209,14 @@ Everything else is noise and must not be committed:
 - Dead code is deleted, not commented out and not kept "just in case". Unused signals,
   exports, and public functions count as dead code. If a system is worth keeping as an
   idea, describe it in `specs/` and delete the code.
+- No backwards-compatibility or legacy shims. When a system is replaced or restructured, the
+  old implementation is deleted in the same change — no parallel old/new paths, compatibility
+  wrappers, deprecated aliases, or "kept just in case" code. Overlapping functionality is
+  consolidated onto the single new system.
+- No pre-release save compatibility. Until an official release, saved-game formats are not kept
+  backwards-compatible: a change that alters the save shape or resource paths lets old saves
+  reset and does not add `AppSaveData._migrate_legacy_resource_paths()` rules. (Post-release,
+  migration rules return.)
 - Accepted duplication (kept deliberately; consolidate only with a structural reason):
   ship/magnet combat-surface boilerplate (same shape, different node types and groups);
   parallax scroll/recycle logic (visually tuned per layer);
@@ -253,13 +271,36 @@ script referencing the authored nodes by path. Reserve standalone `.tscn` files
 for structures that are genuinely large, reused in more than one place, or
 instanced many times at runtime; otherwise nest the nodes in the owning scene.
 
-## 9. Specs
+## 9. Data-driven systems
+
+New systems default to **data-driven**: their content, tuning, and per-instance
+configuration live in authored data — `@export` fields, `.tres` resources, catalogs,
+and scenes — not baked into scripts. Code defines *behavior* and reads the data; it
+does not hardcode the *content*.
+
+- Prefer an authored resource/scene over a hardcoded table, a `match` on ids, or
+  per-case branches. Adding or tuning content (a new upgrade, weapon, enemy, cost,
+  stat curve) should be inspector/`.tres` work, not a code edit.
+- Reuse an existing data type when one already models the thing (an upgrade track is a
+  `RunUpgrade`, a per-level cost is a `RunUpgradeLevelCost`); introduce a new resource
+  only when none fits (see §6).
+- Values a designer would tune — costs, amounts, level counts, spawn weights, names,
+  icons — are `@export`s or resource fields with sensible defaults, never magic numbers
+  buried in logic.
+- Code discovers and iterates authored data generically rather than referencing each
+  item by name. A per-item `match`/if-chain that grows with content is a smell — drive
+  it from the data instead.
+
+This is the companion to §8: §8 keeps *structure* in scenes; this keeps *content and
+tuning* in data. Both exist so the game grows through authoring, not code churn.
+
+## 10. Specs
 
 Each nontrivial feature gets a spec in `specs/` before/while it is built. Specs are
 design history — they are not updated retroactively when code moves; this document is
 the single source of truth for structure.
 
-## 10. Changelog
+## 11. Changelog
 
 `CHANGELOG.md` at the repo root is the **player-facing** record of what changed between
 builds. It is written for someone who plays the game, not someone who works on it. Git

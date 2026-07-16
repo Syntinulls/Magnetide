@@ -1,0 +1,13 @@
+[gd_scene format=3 uid="uid://cm85vm647wrlv"]
+
+[ext_resource type="PackedScene" uid="uid://b6k44pcvew4j2" path="res://_project/app/screens/station/upgrade_slot.tscn" id="1_base"]
+[ext_resource type="Script" path="res://_project/app/screens/station/static_upgrade_slot.gd" id="2_script"]
+
+[node name="StaticUpgradeSlot" instance=ExtResource("1_base")]
+script = ExtResource("2_script")
+
+[node name="SelectButton" parent="BodyRow" index="0"]
+visible = false
+
+[node name="StaticSlot" parent="BodyRow" index="1"]
+visible = true

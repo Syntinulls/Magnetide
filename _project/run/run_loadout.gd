@@ -1,20 +1,22 @@
 extends Resource
 class_name RunLoadout
 
-const DefaultWeaponData := preload("res://_project/items/equipment/pistol/pistol.tres")
-const DefaultMagnetToolData := preload("res://_project/items/equipment/magnet_gun.tres")
-const RunUpgradeScript := preload("res://_project/run/run_upgrade.gd")
-const RunUpgradeLevelCostScript := preload("res://_project/run/run_upgrade_level_cost.gd")
+const DefaultWeaponData := preload("res://_project/items/weapons/pistol/pistol.tres")
+const DefaultMagnetToolData := preload("res://_project/items/magnet_tool/magnet_gun.tres")
 const UpgradeableItemStateScript := preload("res://_project/run/upgradeable_item_state.gd")
 const UpgradeSlotStateScript := preload("res://_project/run/upgrade_slot_state.gd")
-const SalvageItemCostScript := preload("res://_project/salvage/salvage_item_cost.gd")
-const CostGearData := preload("res://_project/salvage/catalog/gear.tres")
-const CostMagnetData := preload("res://_project/salvage/catalog/magnet.tres")
-const CostBatteryData := preload("res://_project/salvage/catalog/battery.tres")
-const CostSpringData := preload("res://_project/salvage/catalog/spring.tres")
-const CostProcessorData := preload("res://_project/salvage/catalog/processor.tres")
-const CostCircuitryData := preload("res://_project/salvage/catalog/circuitry.tres")
-const CostPowerCoreData := preload("res://_project/salvage/catalog/power_core.tres")
+## Static loadout-stat items (data-driven; see specs/project_organization.md §9): each is a
+## StatItemData whose upgrade_data effects target loadout properties. Together with the equipped
+## weapon / magnet tool / augments, these are the upgradeable items in a loadout — progress for all
+## of them is tracked in item_states, keyed by item_id.
+const STAT_ITEMS := [
+	preload("res://_project/items/stats/player_health.tres"),
+	preload("res://_project/items/stats/player_shield.tres"),
+	preload("res://_project/items/stats/ship_hull.tres"),
+	preload("res://_project/items/stats/ship_storage_size.tres"),
+	preload("res://_project/items/stats/magnet_capacity.tres"),
+	preload("res://_project/items/stats/magnet_health.tres"),
+]
 const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
 const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
 const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
@@ -56,23 +58,48 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 @export var player_shield_recharge_duration: float = 1.0
 @export var player_shield_break_recharge_delay: float = 10.0
 
-@export_group("Equipment")
-@export var equipped_weapon: WeaponData = null
-@export var equipped_magnet_tool: MagnetToolData = null
-@export var player_equipment: Array[EquipmentData] = []
-@export var player_selected_equipment_index: int = 0
-@export var player_augments: Array[AugmentData] = []
-@export var ship_augments: Array[AugmentData] = []
-@export var magnet_augments: Array[AugmentData] = []
+@export_group("State")
+## The saved per-run state: what's equipped in every slot + each item's upgrade progress. The
+## fields below delegate into it so consumers read/write loadout.equipped_weapon etc. transparently.
+@export var run_upgrade: RunUpgrade = null
 
-@export_group("Upgrade State")
-@export var equipment_upgrades: Array[Resource] = []
-@export var player_upgrades: Array[Resource] = []
-@export var ship_upgrades: Array[Resource] = []
-@export var magnet_upgrades: Array[Resource] = []
-@export var upgrade_base_values: Dictionary = {}
-@export var item_states: Array[Resource] = []
-@export var slot_states: Array[Resource] = []
+var equipped_weapon: WeaponData:
+	get: return _state().equipped_weapon
+	set(v): _state().equipped_weapon = v
+var equipped_magnet_tool: MagnetToolData:
+	get: return _state().equipped_magnet_tool
+	set(v): _state().equipped_magnet_tool = v
+var player_equipment: Array[HeldItemData]:
+	get: return _state().player_equipment
+	set(v): _state().player_equipment = v
+var player_selected_equipment_index: int:
+	get: return _state().player_selected_equipment_index
+	set(v): _state().player_selected_equipment_index = v
+var player_augments: Array[AugmentData]:
+	get: return _state().player_augments
+	set(v): _state().player_augments = v
+var ship_augments: Array[AugmentData]:
+	get: return _state().ship_augments
+	set(v): _state().ship_augments = v
+var magnet_augments: Array[AugmentData]:
+	get: return _state().magnet_augments
+	set(v): _state().magnet_augments = v
+var item_states: Array[Resource]:
+	get: return _state().item_states
+	set(v): _state().item_states = v
+var slot_states: Array[Resource]:
+	get: return _state().slot_states
+	set(v): _state().slot_states = v
+var upgrade_base_values: Dictionary:
+	get: return _state().upgrade_base_values
+	set(v): _state().upgrade_base_values = v
+
+
+## The run-state container, created on first use so a fresh loadout is never null.
+func _state() -> RunUpgrade:
+	if run_upgrade == null:
+		run_upgrade = RunUpgrade.new()
+	return run_upgrade
 
 
 ## Upward launch velocity (negative Y) of a full-hold jump: reaches
@@ -109,117 +136,92 @@ func equip_weapon(weapon_data: WeaponData) -> void:
 	prepare_for_run()
 
 
-func increase_upgrade(upgrade_id: StringName, amount: int = 1) -> bool:
-	ensure_upgrade_state()
-	var upgrade := get_upgrade(upgrade_id)
-	if upgrade == null:
-		return false
+# ---------------------------------------------------------------------------
+# Upgrade accessors: every upgrade is an item (weapon / magnet gun / augment /
+# static stat item) with an upgrade_data definition; progress is tracked per
+# item_id in item_states. The station drives all of these by item_id.
+# ---------------------------------------------------------------------------
 
-	# Equipment-scoped upgrades track their level per equipped item, not globally,
-	# so each weapon / magnet tool has its own upgrade path.
-	if _is_equipment_scoped(upgrade):
-		return _increase_equipment_upgrade(upgrade, amount)
-
-	var level_changed := bool(upgrade.call("increase_level", amount))
-	if level_changed:
-		prepare_for_run()
-	return level_changed
-
-
-func _is_equipment_scoped(upgrade: Resource) -> bool:
-	var scope := int(upgrade.get("target_scope"))
-	return scope == RunUpgradeScript.TargetScope.EQUIPPED_WEAPON \
-		or scope == RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL
+## Every upgradeable item in the loadout: static stat items + equipped weapon / magnet tool /
+## augments. Each carries its own upgrade_data.
+func _get_upgradeable_items() -> Array:
+	var items: Array = []
+	items.append_array(STAT_ITEMS)
+	if equipped_weapon != null:
+		items.append(equipped_weapon)
+	if equipped_magnet_tool != null:
+		items.append(equipped_magnet_tool)
+	items.append_array(get_equipped_augments())
+	return items
 
 
-func _get_equipped_for_scope(scope: int) -> EquipmentData:
-	match scope:
-		RunUpgradeScript.TargetScope.EQUIPPED_WEAPON:
-			return equipped_weapon
-		RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL:
-			return equipped_magnet_tool
+func _find_upgradeable_item(item_id: StringName) -> ItemData:
+	if item_id == &"":
+		return null
+	for item in _get_upgradeable_items():
+		if item != null and item.item_id == item_id:
+			return item
 	return null
 
 
-func _equipment_item_id(equipment: EquipmentData) -> StringName:
-	if equipment == null:
-		return &""
-	if equipment.has_method("get_upgrade_item_id"):
-		return equipment.call("get_upgrade_item_id")
-	return &""
-
-
-func _increase_equipment_upgrade(upgrade: Resource, amount: int) -> bool:
-	var equip := _get_equipped_for_scope(int(upgrade.get("target_scope")))
-	var item_id := _equipment_item_id(equip)
-	if item_id == &"":
+## Raise an item's upgrade level by one (clamped to its upgrade_data.max_level). Returns true if
+## the level changed.
+func increase_upgrade(item_id: StringName, amount: int = 1) -> bool:
+	ensure_upgrade_state()
+	var item := _find_upgradeable_item(item_id)
+	if item == null or item.upgrade_data == null:
 		return false
 	var state := get_or_create_item_state(item_id)
 	if state == null:
 		return false
-	var level_changed := bool(state.call("increase_level", int(upgrade.get("max_level")), amount))
+	var level_changed := bool(state.call("increase_level", item.upgrade_data.max_level, amount))
 	if level_changed:
 		prepare_for_run()
 	return level_changed
 
 
-## Per-item upgrade level for a specific equipment (keyed by its upgrade item id).
-func get_equipment_item_level(equipment: EquipmentData) -> int:
-	var item_id := _equipment_item_id(equipment)
-	if item_id == &"":
-		return 0
+## Per-item upgrade level for a specific equipment (keyed by its item id).
+func get_equipment_item_level(equipment: HeldItemData) -> int:
+	return get_item_level(equipment)
+
+
+func get_upgrade_level(item_id: StringName) -> int:
 	var state := get_item_state(item_id)
 	if state != null and Utils.has_property(state, "current_level"):
 		return int(state.get("current_level"))
 	return 0
 
 
-# ---------------------------------------------------------------------------
-# Context-aware upgrade accessors used by the station UI. Equipment upgrades
-# resolve to the equipped item's per-item level; everything else uses the
-# global upgrade's current_level.
-# ---------------------------------------------------------------------------
-
-func get_upgrade_level(upgrade_id: StringName) -> int:
-	var upgrade := get_upgrade(upgrade_id)
-	if upgrade == null:
-		return 0
-	if _is_equipment_scoped(upgrade):
-		return get_equipment_item_level(_get_equipped_for_scope(int(upgrade.get("target_scope"))))
-	return int(upgrade.get("current_level"))
+func get_upgrade_max_level(item_id: StringName) -> int:
+	var item := _find_upgradeable_item(item_id)
+	return item.get_max_level() if item != null else 0
 
 
-func get_upgrade_max_level(upgrade_id: StringName) -> int:
-	var upgrade := get_upgrade(upgrade_id)
-	return int(upgrade.get("max_level")) if upgrade != null else 0
-
-
-func is_upgrade_maxed(upgrade_id: StringName) -> bool:
-	var upgrade := get_upgrade(upgrade_id)
-	if upgrade == null:
+func is_upgrade_maxed(item_id: StringName) -> bool:
+	var item := _find_upgradeable_item(item_id)
+	if item == null:
 		return true
-	return get_upgrade_level(upgrade_id) >= int(upgrade.get("max_level"))
+	return get_upgrade_level(item_id) >= item.get_max_level()
 
 
-func get_upgrade_next_level_cost(upgrade_id: StringName) -> Resource:
-	var upgrade := get_upgrade(upgrade_id)
-	if upgrade == null:
+func get_upgrade_next_level_cost(item_id: StringName) -> Resource:
+	var item := _find_upgradeable_item(item_id)
+	if item == null or item.upgrade_data == null:
 		return null
-	return upgrade.call("get_cost_for_level", get_upgrade_level(upgrade_id))
+	return item.upgrade_data.get_cost_for_level(get_upgrade_level(item_id))
 
 
-func get_upgrade_next_gain_text(upgrade_id: StringName, stat_name: String) -> String:
-	var upgrade := get_upgrade(upgrade_id)
-	if upgrade == null:
+func get_upgrade_next_gain_text(item_id: StringName, stat_name: String) -> String:
+	var item := _find_upgradeable_item(item_id)
+	if item == null or item.upgrade_data == null:
 		return ""
-	return String(upgrade.call("get_gain_text_for_level", stat_name, get_upgrade_level(upgrade_id)))
+	return item.upgrade_data.get_gain_text_for_level(stat_name, get_upgrade_level(item_id))
 
 
-func get_upgrade(upgrade_id: StringName) -> Resource:
-	for upgrade in _get_all_upgrades():
-		if upgrade != null and upgrade.get("upgrade_id") == upgrade_id:
-			return upgrade
-	return null
+## The UpgradeData definition for an item id (null if not upgradeable).
+func get_upgrade(item_id: StringName) -> Resource:
+	var item := _find_upgradeable_item(item_id)
+	return item.upgrade_data if item != null else null
 
 
 func prepare_for_run() -> void:
@@ -237,110 +239,28 @@ func prepare_for_run() -> void:
 func ensure_upgrade_state() -> void:
 	_ensure_equipped_defaults()
 	_migrate_player_shield_defaults()
-	_ensure_upgrade(equipment_upgrades, _create_upgrade(
-		&"weapon_damage",
-		"Weapon Damage",
-		RunUpgradeScript.TargetScope.EQUIPPED_WEAPON,
-		&"damage",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostGearData, CostCircuitryData)
-	))
-	_ensure_upgrade(equipment_upgrades, _create_upgrade(
-		&"magnet_tool_pull",
-		"Magnet Tool Pull",
-		RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL,
-		&"pull_max_speed",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostMagnetData, CostBatteryData)
-	))
-	_ensure_upgrade(player_upgrades, _create_upgrade(
-		&"player_health",
-		"Player Health",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"player_max_health",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostSpringData, CostProcessorData)
-	))
-	_ensure_upgrade(player_upgrades, _create_upgrade(
-		&"player_shield",
-		"Player Shield",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"player_max_shield",
-		1.0,
-		RunUpgradeScript.IncreaseMode.FLAT,
-		_create_default_level_costs(CostBatteryData, CostPowerCoreData),
-		[1.0, 1.0, 1.0, 1.0, 1.0]
-	))
-	_ensure_upgrade(ship_upgrades, _create_upgrade(
-		&"ship_hull",
-		"Ship Hull",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"ship_max_health",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostGearData, CostSpringData)
-	))
-	# Storage size is a single 5-level upgrade that grows both width and height.
-	# The dimensions are looked up from STORAGE_SIZE_BY_LEVEL by the upgrade's
-	# current level (target_property is empty; the generic scalar path skips it).
-	_ensure_upgrade(ship_upgrades, _create_upgrade(
-		&"ship_storage_size",
-		"Ship Storage Size",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"",
-		0.0,
-		RunUpgradeScript.IncreaseMode.FLAT,
-		_create_default_level_costs(CostGearData, CostSpringData, 5),
-		[],
-		5
-	))
-	_ensure_upgrade(magnet_upgrades, _create_upgrade(
-		&"ship_magnet_capacity",
-		"Ship Magnet Capacity",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"magnet_hold_capacity",
-		1.0,
-		RunUpgradeScript.IncreaseMode.FLAT,
-		_create_default_level_costs(CostMagnetData, CostProcessorData)
-	))
-	_ensure_upgrade(magnet_upgrades, _create_upgrade(
-		&"ship_magnet_health",
-		"Ship Magnet Health",
-		RunUpgradeScript.TargetScope.LOADOUT,
-		&"magnet_max_health",
-		0.05,
-		RunUpgradeScript.IncreaseMode.PERCENT_OF_BASE,
-		_create_default_level_costs(CostBatteryData, CostCircuitryData)
-	))
-	_migrate_player_shield_defaults()
 
 
 func get_upgraded_weapon_preview(weapon_data: WeaponData = null) -> WeaponData:
 	var source := weapon_data if weapon_data != null else equipped_weapon
-	return get_upgraded_equipment_preview(source, RunUpgradeScript.TargetScope.EQUIPPED_WEAPON) as WeaponData
+	return _upgraded_item_preview(source, UpgradeEffect.Target.WEAPON) as WeaponData
 
 
 func get_upgraded_magnet_tool_preview(tool_data: MagnetToolData = null) -> MagnetToolData:
 	var source := tool_data if tool_data != null else equipped_magnet_tool
-	return get_upgraded_equipment_preview(source, RunUpgradeScript.TargetScope.EQUIPPED_MAGNET_TOOL) as MagnetToolData
+	return _upgraded_item_preview(source, UpgradeEffect.Target.MAGNET_GUN) as MagnetToolData
 
 
-func get_upgraded_equipment_preview(equipment_data: EquipmentData, target_scope: int) -> EquipmentData:
-	if equipment_data == null:
+## Duplicates `item` and applies its upgrade_data's `effect_target` effects at the item's current
+## per-item level, so the returned resource carries its upgraded stats.
+func _upgraded_item_preview(item: HeldItemData, effect_target: int) -> HeldItemData:
+	if item == null:
 		return null
-
-	var preview := equipment_data.duplicate(true) as EquipmentData
+	var preview := item.duplicate(true) as HeldItemData
 	if preview == null:
-		return equipment_data
-
-	var level := get_equipment_item_level(equipment_data)
-	for upgrade in equipment_upgrades:
-		if upgrade == null or int(upgrade.get("target_scope")) != target_scope:
-			continue
-		_apply_upgrade_level_to_resource(preview, equipment_data, upgrade, level)
+		return item
+	if item.upgrade_data != null:
+		item.upgrade_data.apply_for_level(preview, item, get_item_level(item), effect_target)
 	return preview
 
 
@@ -408,35 +328,21 @@ func get_item_level(item_data: Resource) -> int:
 	return 0
 
 
-## Cost (RunUpgradeLevelCost) to raise this augment/item to its next level, or
-## null if it is maxed or has no cost defined for that level.
+## Cost (UpgradeLevelCost) to raise this augment/item to its next level, via its upgrade_data.
 func get_augment_next_level_cost(augment_data: Resource) -> Resource:
-	if augment_data == null or not Utils.has_property(augment_data, "max_level"):
+	var item := augment_data as ItemData
+	if item == null or item.upgrade_data == null:
 		return null
-	var level := get_item_level(augment_data)
-	if level >= int(augment_data.get("max_level")):
-		return null
-	var costs := augment_data.get("level_costs") as Array
-	if costs == null or level < 0 or level >= costs.size():
-		return null
-	return costs[level] as Resource
+	return item.upgrade_data.get_cost_for_level(get_item_level(augment_data))
 
 
-## Raise an augment's per-item level by one (clamped to max_level). Returns true
+## Raise an augment's per-item level by one (clamped to its upgrade_data.max_level). Returns true
 ## if the level changed.
 func increase_augment_level(augment_data: Resource) -> bool:
-	if augment_data == null or not Utils.has_property(augment_data, "item_id"):
+	var item := augment_data as ItemData
+	if item == null:
 		return false
-	var level := get_item_level(augment_data)
-	if not Utils.has_property(augment_data, "max_level") or level >= int(augment_data.get("max_level")):
-		return false
-	var state := get_or_create_item_state(augment_data.get("item_id") as StringName)
-	if state == null:
-		return false
-	state.set("current_level", level + 1)
-	state.set("unlocked", true)
-	prepare_for_run()
-	return true
+	return increase_upgrade(item.item_id)
 
 
 func is_item_unlocked(item_data: Resource, default_unlocked: bool = false) -> bool:
@@ -501,7 +407,7 @@ func equip_player_augment(slot_index: int, augment_data: AugmentData) -> void:
 		# If this augment already occupies another slot, swap: move whatever is in
 		# the target slot into that other slot (rather than just clearing it).
 		for index in player_augments.size():
-			if index != slot_index and UpgradeableItemData.is_same_item(player_augments[index], augment_data):
+			if index != slot_index and ItemData.is_same_item(player_augments[index], augment_data):
 				player_augments[index] = player_augments[slot_index]
 				break
 
@@ -525,7 +431,7 @@ func _equip_augment_into(augments: Array[AugmentData], slot_index: int, augment_
 	if augment_data != null:
 		# Swap with the target slot if this augment already occupies another slot.
 		for index in augments.size():
-			if index != slot_index and UpgradeableItemData.is_same_item(augments[index], augment_data):
+			if index != slot_index and ItemData.is_same_item(augments[index], augment_data):
 				augments[index] = augments[slot_index]
 				break
 
@@ -569,8 +475,8 @@ func _migrate_player_shield_defaults() -> void:
 		player_shield_recharge_duration = DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT
 
 
-func _build_runtime_equipment() -> Array[EquipmentData]:
-	var runtime_equipment: Array[EquipmentData] = []
+func _build_runtime_equipment() -> Array[HeldItemData]:
+	var runtime_equipment: Array[HeldItemData] = []
 	var weapon := get_upgraded_weapon_preview()
 	var magnet_tool := get_upgraded_magnet_tool_preview()
 	if weapon:
@@ -611,61 +517,47 @@ func _apply_augment_loadout_modifiers() -> void:
 		augment.behavior.apply_to_loadout(self, get_item_level(augment))
 
 
+## True for effects whose target is a stat on this loadout (player / ship / magnet),
+## as opposed to on an equipped item (weapon / magnet gun).
+func _effect_targets_loadout(effect: Resource) -> bool:
+	var t := int(effect.get("target"))
+	return t == UpgradeEffect.Target.PLAYER \
+		or t == UpgradeEffect.Target.SHIP \
+		or t == UpgradeEffect.Target.MAGNET
+
+
 func _apply_loadout_upgrades() -> void:
 	var target_properties := {}
-	for upgrade in _get_all_upgrades():
-		if upgrade == null:
+	for item in STAT_ITEMS:
+		if item == null or item.upgrade_data == null:
 			continue
-		if upgrade.get("target_scope") != RunUpgradeScript.TargetScope.LOADOUT:
-			continue
-		if String(upgrade.get("target_property")).is_empty():
-			continue
-		var property_name := String(upgrade.get("target_property"))
-		if not Utils.has_property(self, property_name):
-			continue
-		if not upgrade_base_values.has(property_name):
-			upgrade_base_values[property_name] = get(property_name)
-		target_properties[property_name] = true
+		for effect in item.upgrade_data.effects:
+			if not _effect_targets_loadout(effect):
+				continue
+			var property_name := String(effect.target_property)
+			if property_name.is_empty() or not Utils.has_property(self, property_name):
+				continue
+			if not upgrade_base_values.has(property_name):
+				upgrade_base_values[property_name] = get(property_name)
+			target_properties[property_name] = true
 
 	for property_name in target_properties.keys():
 		set(property_name, upgrade_base_values[property_name])
 
-	for upgrade in _get_all_upgrades():
-		if upgrade == null or upgrade.get("target_scope") != RunUpgradeScript.TargetScope.LOADOUT:
+	for item in STAT_ITEMS:
+		if item == null or item.upgrade_data == null:
 			continue
-		var property_name := String(upgrade.get("target_property"))
-		if not target_properties.has(property_name):
-			continue
-		var base_value: Variant = upgrade_base_values[property_name]
-		var delta := float(upgrade.call("get_delta_from_base", base_value))
-		_add_numeric_delta(property_name, base_value, delta)
-
-
-func _apply_upgrade_level_to_resource(
-	target_resource: Resource,
-	base_resource: Resource,
-	upgrade: Resource,
-	level: int
-) -> void:
-	if target_resource == null or base_resource == null or upgrade == null:
-		return
-	var property_name := String(upgrade.get("target_property"))
-	if property_name.is_empty():
-		return
-	if not Utils.has_property(base_resource, property_name) or not Utils.has_property(target_resource, property_name):
-		return
-
-	var base_value: Variant = base_resource.get(property_name)
-	var delta := float(upgrade.call("get_delta_for_level", base_value, level))
-	var current_value: Variant = target_resource.get(property_name)
-	if typeof(current_value) != TYPE_INT and typeof(current_value) != TYPE_FLOAT:
-		return
-
-	var upgraded_value := float(current_value) + delta
-	if typeof(base_value) == TYPE_INT:
-		target_resource.set(property_name, int(round(upgraded_value)))
-	else:
-		target_resource.set(property_name, upgraded_value)
+		var level := get_item_level(item)
+		var max_level: int = item.upgrade_data.max_level
+		for effect in item.upgrade_data.effects:
+			if not _effect_targets_loadout(effect):
+				continue
+			var property_name := String(effect.target_property)
+			if not target_properties.has(property_name):
+				continue
+			var base_value: Variant = upgrade_base_values[property_name]
+			var delta: float = effect.get_delta_for_level(base_value, level, max_level)
+			_add_numeric_delta(property_name, base_value, delta)
 
 
 func _add_numeric_delta(property_name: String, base_value: Variant, delta: float) -> void:
@@ -678,81 +570,3 @@ func _add_numeric_delta(property_name: String, base_value: Variant, delta: float
 		set(property_name, int(round(upgraded_value)))
 	else:
 		set(property_name, upgraded_value)
-
-
-func _get_all_upgrades() -> Array[Resource]:
-	var all_upgrades: Array[Resource] = []
-	all_upgrades.append_array(equipment_upgrades)
-	all_upgrades.append_array(player_upgrades)
-	all_upgrades.append_array(ship_upgrades)
-	all_upgrades.append_array(magnet_upgrades)
-	return all_upgrades
-
-
-func _ensure_upgrade(upgrade_array: Array[Resource], default_upgrade: Resource) -> void:
-	if default_upgrade == null:
-		return
-	for upgrade in upgrade_array:
-		if upgrade != null and upgrade.get("upgrade_id") == default_upgrade.get("upgrade_id"):
-			_sync_upgrade_definition(upgrade, default_upgrade)
-			return
-	upgrade_array.append(default_upgrade)
-
-
-func _create_upgrade(
-	upgrade_id: StringName,
-	display_name: String,
-	target_scope: int,
-	target_property: StringName,
-	amount_per_level: float,
-	increase_mode: int,
-	upgrade_costs: Array[Resource],
-	level_amounts: Array[float] = [],
-	max_level: int = 5
-) -> Resource:
-	var upgrade := RunUpgradeScript.new()
-	upgrade.upgrade_id = upgrade_id
-	upgrade.display_name = display_name
-	upgrade.target_scope = target_scope as RunUpgrade.TargetScope
-	upgrade.target_property = target_property
-	upgrade.amount_per_level = amount_per_level
-	upgrade.level_amounts = level_amounts.duplicate()
-	upgrade.increase_mode = increase_mode as RunUpgrade.IncreaseMode
-	upgrade.max_level = max_level
-	upgrade.upgrade_costs = upgrade_costs.duplicate()
-	return upgrade
-
-
-func _sync_upgrade_definition(upgrade: Resource, default_upgrade: Resource) -> void:
-	var current_level := int(upgrade.get("current_level"))
-	upgrade.set("display_name", default_upgrade.get("display_name"))
-	upgrade.set("target_scope", default_upgrade.get("target_scope"))
-	upgrade.set("target_property", default_upgrade.get("target_property"))
-	upgrade.set("amount_per_level", default_upgrade.get("amount_per_level"))
-	upgrade.set("level_amounts", default_upgrade.get("level_amounts"))
-	upgrade.set("increase_mode", default_upgrade.get("increase_mode"))
-	upgrade.set("max_level", default_upgrade.get("max_level"))
-	upgrade.set("upgrade_costs", default_upgrade.get("upgrade_costs"))
-	upgrade.set("current_level", current_level)
-
-
-## Scrap metal required at the first upgrade level; scales linearly per level.
-const SCRAP_COST_PER_LEVEL_STEP: int = 10
-
-func _create_default_level_costs(primary_item: SalvageItemData, secondary_item: SalvageItemData = null, level_count: int = 5) -> Array[Resource]:
-	var level_costs: Array[Resource] = []
-	for level_index in range(level_count):
-		var level_cost := RunUpgradeLevelCostScript.new()
-		level_cost.costs.append(_create_item_cost(primary_item, level_index + 1))
-		if secondary_item != null and level_index >= 1:
-			level_cost.costs.append(_create_item_cost(secondary_item, level_index))
-		level_cost.scrap_cost = SCRAP_COST_PER_LEVEL_STEP * (level_index + 1)
-		level_costs.append(level_cost)
-	return level_costs
-
-
-func _create_item_cost(item_data: SalvageItemData, quantity: int) -> Resource:
-	var item_cost := SalvageItemCostScript.new()
-	item_cost.item_data = item_data
-	item_cost.quantity = quantity
-	return item_cost

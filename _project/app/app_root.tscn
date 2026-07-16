@@ -6,9 +6,9 @@
 [ext_resource type="PackedScene" path="res://_project/app/screens/main_menu/main_menu_screen.tscn" id="4_main_menu"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/salvage/salvage_process_screen.tscn" id="5_salvage_screen"]
 [ext_resource type="Script" path="res://_project/run/run_loadout.gd" id="6_run_loadout"]
-[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/equipment/equipment_data.gd" id="7_equipment_data"]
-[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/equipment/magnet_gun.tres" id="9_magnet_gun"]
-[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/equipment/pistol/pistol.tres" id="12_pistol"]
+[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/held_item_data.gd" id="7_equipment_data"]
+[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/magnet_tool/magnet_gun.tres" id="9_magnet_gun"]
+[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="12_pistol"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/station/station_screen.tscn" id="10_station_screen"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/map/map_screen.tscn" id="11_map_screen"]
 

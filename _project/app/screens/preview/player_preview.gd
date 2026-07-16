@@ -35,7 +35,7 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	_apply_equipment(_get_preview_equipment(loadout))
 
 
-func _get_preview_equipment(loadout: RunLoadout) -> EquipmentData:
+func _get_preview_equipment(loadout: RunLoadout) -> HeldItemData:
 	# Mirror the player's default in-run selection (the equipped weapon).
 	if loadout.equipped_weapon != null:
 		return loadout.equipped_weapon
@@ -44,7 +44,7 @@ func _get_preview_equipment(loadout: RunLoadout) -> EquipmentData:
 	return null
 
 
-func _apply_equipment(equip: EquipmentData) -> void:
+func _apply_equipment(equip: HeldItemData) -> void:
 	if _weapon_sprite == null:
 		return
 	if equip == null:
@@ -54,7 +54,7 @@ func _apply_equipment(equip: EquipmentData) -> void:
 	_apply_equipment_positioning(equip, _facing_mult())
 
 
-func _equipment_sprite(equip: EquipmentData) -> Texture2D:
+func _equipment_sprite(equip: HeldItemData) -> Texture2D:
 	if equip is WeaponData:
 		return (equip as WeaponData).weapon_sprite
 	if equip is MagnetToolData:
@@ -79,7 +79,7 @@ func _apply_facing(facing_right: bool) -> void:
 	_arm_sprite.position.x = ARM_POSITION_X * offset_mult
 
 
-func _apply_equipment_positioning(equip: EquipmentData, offset_mult: float) -> void:
+func _apply_equipment_positioning(equip: HeldItemData, offset_mult: float) -> void:
 	if _weapon_sprite == null or equip == null:
 		return
 	var w_offset := Vector2.ZERO

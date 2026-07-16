@@ -18,45 +18,11 @@ const SAVE_PATH := "user://magnetide_save.tres"
 static func load_or_create(default_run_loadout: RunLoadout) -> AppSaveData:
 	var save_data: AppSaveData = null
 	if ResourceLoader.exists(SAVE_PATH):
-		_migrate_legacy_resource_paths()
 		save_data = ResourceLoader.load(SAVE_PATH) as AppSaveData
 	if save_data == null:
 		save_data = AppSaveData.new()
 	save_data.setup(default_run_loadout)
 	return save_data
-
-
-static func _migrate_legacy_resource_paths() -> void:
-	if not FileAccess.file_exists(SAVE_PATH):
-		return
-
-	var file := FileAccess.open(SAVE_PATH, FileAccess.READ)
-	if file == null:
-		return
-	var text := file.get_as_text()
-	file.close()
-
-	# Ordered oldest-layout-first; later rules assume earlier ones already ran.
-	var migrated := text
-	migrated = migrated.replace("res://_project/player/equipment/", "res://_project/items/equipment/")
-	migrated = migrated.replace("res://_project/items/resources/", "res://_project/salvage/catalog/")
-	migrated = migrated.replace("res://_project/items/sprites/", "res://_project/salvage/sprites/")
-	migrated = migrated.replace("res://_project/items/salvage_item", "res://_project/salvage/salvage_item")
-	migrated = migrated.replace("res://_project/items/salvage_part", "res://_project/salvage/salvage_part")
-	migrated = migrated.replace("res://_project/items/salvage/salvage/", "res://_project/items/salvage/")
-	migrated = migrated.replace("res://_project/items/salvage/equipment/", "res://_project/items/equipment/")
-	# 2026-07 reorganization: the salvage domain moved to res://_project/salvage/.
-	migrated = migrated.replace("res://_project/items/salvage/resources/", "res://_project/salvage/catalog/")
-	migrated = migrated.replace("res://_project/items/salvage/", "res://_project/salvage/")
-	migrated = migrated.replace("res://_project/level/salvage/", "res://_project/salvage/")
-	if migrated == text:
-		return
-
-	file = FileAccess.open(SAVE_PATH, FileAccess.WRITE)
-	if file == null:
-		return
-	file.store_string(migrated)
-	file.close()
 
 
 func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:
@@ -350,26 +316,24 @@ func _loadout_state_key(loadout: RunLoadout) -> String:
 	var parts := PackedStringArray()
 	parts.append(_resource_key(loadout.equipped_weapon))
 	parts.append(_resource_key(loadout.equipped_magnet_tool))
-	for upgrade in _get_loadout_upgrades(loadout):
-		if upgrade == null:
+	for state in _get_loadout_upgrades(loadout):
+		if state == null:
 			continue
 		parts.append("%s:%d" % [
-			String(upgrade.get("upgrade_id")),
-			int(upgrade.get("current_level")),
+			String(state.get("item_id")),
+			int(state.get("current_level")),
 		])
 	return "|".join(parts)
 
 
+## Per-item upgrade progress records, sorted by item id, used to build the change-detection key.
 func _get_loadout_upgrades(loadout: RunLoadout) -> Array[Resource]:
-	var upgrades: Array[Resource] = []
-	upgrades.append_array(loadout.equipment_upgrades)
-	upgrades.append_array(loadout.player_upgrades)
-	upgrades.append_array(loadout.ship_upgrades)
-	upgrades.append_array(loadout.magnet_upgrades)
-	upgrades.sort_custom(func(a: Resource, b: Resource) -> bool:
-		return String(a.get("upgrade_id")) < String(b.get("upgrade_id"))
+	var states: Array[Resource] = []
+	states.append_array(loadout.item_states)
+	states.sort_custom(func(a: Resource, b: Resource) -> bool:
+		return String(a.get("item_id")) < String(b.get("item_id"))
 	)
-	return upgrades
+	return states
 
 
 func _resource_key(resource: Resource) -> String:

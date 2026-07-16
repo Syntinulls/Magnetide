@@ -449,7 +449,10 @@ func _initialize_augments() -> void:
 		var behavior := augment.behavior.duplicate(true) as AugmentBehavior
 		if behavior == null:
 			continue
-		behavior.initialize_for_run(context, _run_loadout.get_item_level(augment))
+		var level := _run_loadout.get_item_level(augment)
+		if augment.upgrade_data != null:
+			augment.upgrade_data.apply_for_level(behavior, augment.behavior, level, UpgradeEffect.Target.BEHAVIOR)
+		behavior.initialize_for_run(context, level)
 		_active_augment_behaviors.append(behavior)
 
 

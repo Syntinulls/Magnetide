@@ -3,69 +3,62 @@
 [ext_resource type="Script" uid="uid://be85jd8hol6ol" path="res://_project/app/screens/station/station_screen.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://boxg8omke0fl7" path="res://_project/salvage/sprites/part_gear.png" id="6_gear"]
 [ext_resource type="Texture2D" uid="uid://bm60dsyc5rlug" path="res://_project/app/screens/station/sprites/icon_galaxy.png" id="7_galaxy_icon"]
-[ext_resource type="Script" uid="uid://poj3ou2ycfhc" path="res://_project/items/equipment/equipment_catalog_entry.gd" id="11_equipment_catalog_entry"]
+[ext_resource type="Script" path="res://_project/items/upgrade_catalog_entry.gd" id="11_upgrade_entry"]
 [ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/app/screens/station/sprites/icon_ship.png" id="12_4e5bg"]
-[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/equipment/rifle/rifle.tres" id="12_rifle_data"]
-[ext_resource type="Resource" uid="uid://bmsp4hjbiegi" path="res://_project/items/equipment/shotgun/shotgun.tres" id="13_shotgun_data"]
-[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/equipment/pistol/pistol.tres" id="26_pistol_data"]
-[ext_resource type="Resource" uid="uid://dsmg8w1pk3n0x" path="res://_project/items/equipment/smg/smg.tres" id="28_smg_data"]
-[ext_resource type="Resource" uid="uid://bsnp7w2qk4m1y" path="res://_project/items/equipment/sniper/sniper.tres" id="29_sniper_data"]
+[ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/weapons/rifle/rifle.tres" id="12_rifle_data"]
+[ext_resource type="Resource" uid="uid://bmsp4hjbiegi" path="res://_project/items/weapons/shotgun/shotgun.tres" id="13_shotgun_data"]
 [ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/app/screens/station/sprites/icon_player.png" id="14_h7pqf"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/common/sprites/scrap_metal.png" id="16_pln3h"]
-[ext_resource type="PackedScene" uid="uid://b6k44pcvew4j2" path="res://_project/app/screens/station/station_upgrade_slot.tscn" id="17_upgrade_slot"]
-[ext_resource type="Script" uid="uid://c5xt7c2x8t6xp" path="res://_project/items/slottable_catalog_entry.gd" id="18_slottable_catalog_entry"]
+[ext_resource type="PackedScene" uid="uid://cm85vm647wrlv" path="res://_project/app/screens/station/static_upgrade_slot.tscn" id="17_upgrade_slot"]
+[ext_resource type="PackedScene" uid="uid://dxo551l46yk8i" path="res://_project/app/screens/station/dynamic_upgrade_slot.tscn" id="52_dynamic_slot"]
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="19_regeneration"]
-[ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
-[ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
 [ext_resource type="PackedScene" uid="uid://deheo7vkoke2n" path="res://_project/app/screens/station/station_dynamic_slot_popup.tscn" id="20_dynamic_slot_popup"]
 [ext_resource type="Script" uid="uid://c0f3hfjp6xlvp" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
 [ext_resource type="PackedScene" uid="uid://xhec0qwauhh1" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
 [ext_resource type="PackedScene" uid="uid://bgjkqi6c2xoc7" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
+[ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
+[ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
+[ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="26_pistol_data"]
 [ext_resource type="Texture2D" uid="uid://0qevonhftyj2" path="res://_project/common/sprites/icon_research_point.png" id="27_rp_icon"]
+[ext_resource type="Resource" uid="uid://dsmg8w1pk3n0x" path="res://_project/items/weapons/smg/smg.tres" id="28_smg_data"]
+[ext_resource type="Resource" uid="uid://bsnp7w2qk4m1y" path="res://_project/items/weapons/sniper/sniper.tres" id="29_sniper_data"]
+[ext_resource type="Texture2D" uid="uid://cdxoat3a5aomv" path="res://_project/app/screens/station/sprites/station_back_color.png" id="30_back_color"]
+[ext_resource type="Texture2D" uid="uid://wgaayv1l0vvh" path="res://_project/app/screens/station/sprites/station_floor_color.png" id="31_floor_color"]
+[ext_resource type="Texture2D" uid="uid://dy6fd34xra0nt" path="res://_project/app/screens/station/sprites/station_horizon.png" id="32_horizon"]
+[ext_resource type="Texture2D" uid="uid://b4xgmwmp26fp4" path="res://_project/app/screens/station/sprites/station_ceiling_line.png" id="33_ceiling_line"]
+[ext_resource type="Texture2D" uid="uid://bu6ihviltjyq5" path="res://_project/app/screens/station/sprites/station_floor_line.png" id="34_floor_line"]
+[ext_resource type="Texture2D" uid="uid://b2pkbswqn8aro" path="res://_project/app/screens/station/sprites/station_fore_dollie_crates.png" id="35_dollie_crates"]
+[ext_resource type="Shader" uid="uid://cn2rwlbq1g8c0" path="res://_project/level/decoration/perspective_scroll.gdshader" id="36_perspective"]
+[ext_resource type="Texture2D" uid="uid://b7ebjmexj2v8n" path="res://_project/common/sprites/panel_border.png" id="37_border"]
+[ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="40_upg_weapon"]
+[ext_resource type="Resource" uid="uid://lqf0nruwvlyv" path="res://_project/upgrades/magnet/magnet_tool.tres" id="41_upg_magpull"]
+[ext_resource type="Resource" uid="uid://bupgplayerhp" path="res://_project/upgrades/player/player_health.tres" id="42_upg_health"]
+[ext_resource type="Resource" uid="uid://lqjch3uux7yn" path="res://_project/upgrades/player/player_shield.tres" id="43_upg_shield"]
+[ext_resource type="Resource" uid="uid://bupgshiphull" path="res://_project/upgrades/ship/ship_hull.tres" id="44_upg_hull"]
+[ext_resource type="Resource" uid="uid://d0shjqgfp3v7u" path="res://_project/upgrades/ship/ship_storage_size.tres" id="45_upg_storage"]
+[ext_resource type="Resource" uid="uid://bupgmagnetcap" path="res://_project/upgrades/magnet/ship_magnet_capacity.tres" id="46_upg_magcap"]
+[ext_resource type="Resource" uid="uid://bupgmagnethp" path="res://_project/upgrades/magnet/ship_magnet_health.tres" id="47_upg_maghp"]
+[ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/app/screens/station/sprites/icon_health.png" id="48_ic_health"]
+[ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/app/screens/station/sprites/icon_shield.png" id="49_ic_shield"]
+[ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/common/sprites/icon_magnet.png" id="50_ic_magnet"]
+[ext_resource type="Texture2D" uid="uid://cb2kp4138chs5" path="res://_project/common/sprites/icon_crate.png" id="51_ic_crate"]
+[ext_resource type="Resource" uid="uid://cstat0health00" path="res://_project/items/stats/player_health.tres" id="60_health_item"]
+[ext_resource type="Resource" uid="uid://cstat0shield00" path="res://_project/items/stats/player_shield.tres" id="61_shield_item"]
+[ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/magnet_tool/magnet_gun.tres" id="62_magnet_gun"]
+[ext_resource type="Resource" uid="uid://cstat0hull0000" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
+[ext_resource type="Resource" uid="uid://cstat0storage0" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
+[ext_resource type="Resource" uid="uid://cstat0maghp000" path="res://_project/items/stats/magnet_health.tres" id="65_maghp_item"]
+[ext_resource type="Resource" uid="uid://cstat0magcap00" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
 
-[sub_resource type="Resource" id="Resource_station_weapon_pistol"]
-script = ExtResource("11_equipment_catalog_entry")
-equipment_data = ExtResource("26_pistol_data")
-research_unlock_id = &"weapon_pistol"
-research_unlock_order = 0
-
-[sub_resource type="Resource" id="Resource_station_weapon_smg"]
-script = ExtResource("11_equipment_catalog_entry")
-equipment_data = ExtResource("28_smg_data")
-locked = true
-research_unlock_id = &"weapon_smg"
-research_unlock_order = 10
-research_cost_common = 1
-
-[sub_resource type="Resource" id="Resource_station_weapon_rifle"]
-script = ExtResource("11_equipment_catalog_entry")
-equipment_data = ExtResource("12_rifle_data")
-locked = true
-research_unlock_id = &"weapon_rifle"
-research_unlock_order = 30
-research_cost_common = 2
-research_cost_rare = 1
-
-[sub_resource type="Resource" id="Resource_station_weapon_sniper"]
-script = ExtResource("11_equipment_catalog_entry")
-equipment_data = ExtResource("29_sniper_data")
-locked = true
-research_unlock_id = &"weapon_sniper"
-research_unlock_order = 40
-research_cost_rare = 2
-research_cost_epic = 1
-
-[sub_resource type="Resource" id="Resource_station_weapon_shotgun"]
-script = ExtResource("11_equipment_catalog_entry")
-equipment_data = ExtResource("13_shotgun_data")
-locked = true
-research_unlock_id = &"weapon_shotgun"
-research_unlock_order = 20
-research_cost_common = 1
-research_cost_rare = 1
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
+shader = ExtResource("36_perspective")
+shader_parameter/scroll_offset = 0.0
+shader_parameter/bottom_width_ratio = 2.0
+shader_parameter/x_tiles = 2.0
+shader_parameter/y_tiles = 1.0227
 
 [sub_resource type="Resource" id="Resource_station_augment_regeneration"]
-script = ExtResource("18_slottable_catalog_entry")
+script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("19_regeneration")
 locked = true
 research_unlock_id = &"augment_regeneration"
@@ -74,7 +67,7 @@ research_unlock_order = 10
 research_cost_common = 1
 
 [sub_resource type="Resource" id="Resource_station_augment_adrenaline"]
-script = ExtResource("18_slottable_catalog_entry")
+script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("24_adrenaline")
 locked = true
 research_unlock_id = &"augment_adrenaline"
@@ -83,7 +76,7 @@ research_unlock_order = 20
 research_cost_common = 2
 
 [sub_resource type="Resource" id="Resource_station_augment_increased_recycling"]
-script = ExtResource("18_slottable_catalog_entry")
+script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("25_increased_recycling")
 locked = true
 research_unlock_id = &"augment_increased_recycling"
@@ -91,6 +84,51 @@ research_unlock_group = &"player_augment_increased_recycling"
 research_unlock_order = 30
 research_cost_common = 1
 research_cost_rare = 1
+
+[sub_resource type="Resource" id="Resource_station_weapon_pistol"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("26_pistol_data")
+upgrade = ExtResource("40_upg_weapon")
+research_unlock_id = &"weapon_pistol"
+
+[sub_resource type="Resource" id="Resource_station_weapon_smg"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("28_smg_data")
+upgrade = ExtResource("40_upg_weapon")
+locked = true
+research_unlock_id = &"weapon_smg"
+research_unlock_order = 10
+research_cost_common = 1
+
+[sub_resource type="Resource" id="Resource_station_weapon_shotgun"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("13_shotgun_data")
+upgrade = ExtResource("40_upg_weapon")
+locked = true
+research_unlock_id = &"weapon_shotgun"
+research_unlock_order = 20
+research_cost_common = 1
+research_cost_rare = 1
+
+[sub_resource type="Resource" id="Resource_station_weapon_rifle"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("12_rifle_data")
+upgrade = ExtResource("40_upg_weapon")
+locked = true
+research_unlock_id = &"weapon_rifle"
+research_unlock_order = 30
+research_cost_common = 2
+research_cost_rare = 1
+
+[sub_resource type="Resource" id="Resource_station_weapon_sniper"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("29_sniper_data")
+upgrade = ExtResource("40_upg_weapon")
+locked = true
+research_unlock_id = &"weapon_sniper"
+research_unlock_order = 40
+research_cost_rare = 2
+research_cost_epic = 1
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -100,8 +138,6 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_script")
-weapon_catalog = Array[Resource]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
-player_augment_catalog = Array[Resource]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="Backdrop" type="ColorRect" parent="." unique_id=1722779487]
 layout_mode = 1
@@ -110,7 +146,7 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0470588, 0.0588235, 0.0862745, 1)
+color = Color(0.11939434, 0.13760918, 0.13760999, 1)
 
 [node name="PageViewport" type="Control" parent="." unique_id=1739282224]
 clip_contents = true
@@ -131,37 +167,121 @@ anchors_preset = 0
 offset_right = 2560.0
 offset_bottom = 1440.0
 
-[node name="StageGlow" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=168230021]
+[node name="BackColor" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=929466581]
+texture_repeat = 2
 layout_mode = 0
-offset_left = 860.0
-offset_top = 245.0
-offset_right = 1700.0
-offset_bottom = 760.0
-color = Color(0.117647, 0.14902, 0.196078, 0.45)
-
-[node name="GroundLine" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=1850669307]
-layout_mode = 0
-offset_top = 810.0
+offset_top = 128.0
 offset_right = 2560.0
-offset_bottom = 816.0
-color = Color(0.72, 0.78, 0.86, 0.75)
+offset_bottom = 495.0
+mouse_filter = 2
+texture = ExtResource("30_back_color")
+stretch_mode = 1
+
+[node name="FloorColor" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=216187995]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_floor")
+layout_mode = 0
+offset_top = 495.0
+offset_right = 2560.0
+offset_bottom = 810.0
+mouse_filter = 2
+texture = ExtResource("31_floor_color")
+stretch_mode = 1
+
+[node name="Horizon" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=395639080]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 437.0
+offset_right = 2560.0
+offset_bottom = 495.0
+mouse_filter = 2
+texture = ExtResource("32_horizon")
+stretch_mode = 1
+
+[node name="CeilingLine" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=403411988]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 122.0
+offset_right = 2560.0
+offset_bottom = 134.0
+mouse_filter = 2
+texture = ExtResource("33_ceiling_line")
+stretch_mode = 1
+
+[node name="FloorLine" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=1856814800]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 806.0
+offset_right = 2560.0
+offset_bottom = 815.0
+mouse_filter = 2
+texture = ExtResource("34_floor_line")
+stretch_mode = 1
+
+[node name="DollieCrates" type="TextureRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=1824881524]
+layout_mode = 0
+offset_left = 40.0
+offset_top = 550.0
+offset_right = 384.0
+offset_bottom = 810.0
+mouse_filter = 2
+texture = ExtResource("35_dollie_crates")
+expand_mode = 1
+stretch_mode = 5
 
 [node name="UpgradeLayer" type="Control" parent="PageViewport/PageContainer/PlayerPage" unique_id=555834022]
 anchors_preset = 0
 offset_right = 2560.0
 offset_bottom = 810.0
 
+[node name="UpgradePanel" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=475936908]
+layout_mode = 0
+offset_left = 140.0
+offset_top = 154.0
+offset_right = 730.0
+offset_bottom = 786.0
+mouse_filter = 2
+color = Color(0.17341736, 0.19632047, 0.19633034, 0)
+
+[node name="Fill" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/UpgradePanel" unique_id=798621972]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.17341736, 0.19632047, 0.19633034, 1)
+
+[node name="Border" type="NinePatchRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/UpgradePanel" unique_id=1883154249]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=1748560142]
 layout_mode = 0
-offset_left = 180.0
-offset_top = 180.0
-offset_right = 1900.0
-offset_bottom = 810.0
+offset_left = 140.0
+offset_top = 154.0
+offset_right = 730.0
+offset_bottom = 786.0
 theme_override_constants/separation = 100
 
 [node name="LeftPanel" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout" unique_id=1553734224]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 6
+size_flags_vertical = 4
 alignment = 1
 
 [node name="SlotColumns" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel" unique_id=868229046]
@@ -192,6 +312,10 @@ theme_override_constants/separation = 0
 
 [node name="HealthSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow" unique_id=593406363 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"player_health"
+display_name = "Health"
+static_icon = ExtResource("48_ic_health")
+item = ExtResource("60_health_item")
 
 [node name="ShieldRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair" unique_id=1388604532]
 custom_minimum_size = Vector2(0, 112)
@@ -201,6 +325,15 @@ theme_override_constants/separation = 0
 
 [node name="ShieldSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow" unique_id=750752536 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"player_shield"
+display_name = "Shield"
+static_icon = ExtResource("49_ic_shield")
+item = ExtResource("61_shield_item")
+locked = true
+unlock_research_id = &"player_shield"
+unlock_cost_common = 2
+unlock_description = "Adds rechargeable shield hits that absorb damage before health is lost."
+unlock_gain_text = "+2 Shield Hits"
 
 [node name="AugmentPair" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn" unique_id=1693277576]
 layout_mode = 2
@@ -220,8 +353,13 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="PlayerAugment1Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment1Row" unique_id=1166402739 instance=ExtResource("17_upgrade_slot")]
+[node name="PlayerAugment1Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment1Row" unique_id=1166402739 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
+slot_id = &"PlayerAugment1"
+display_name = "Augment 1"slot_kind = &"player_augment"
+popup_title = "Augments"
+static_icon = ExtResource("14_h7pqf")
+catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="PlayerAugment2Row" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair" unique_id=1223693037]
 custom_minimum_size = Vector2(0, 112)
@@ -229,12 +367,17 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="PlayerAugment2Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment2Row" unique_id=893353439 instance=ExtResource("17_upgrade_slot")]
+[node name="PlayerAugment2Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment2Row" unique_id=893353439 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
+slot_id = &"PlayerAugment2"
+display_name = "Augment 2"slot_kind = &"player_augment"
+slot_index = 1
+popup_title = "Augments"
+static_icon = ExtResource("14_h7pqf")
+catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="EquipmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns" unique_id=2122133003]
 layout_mode = 2
-size_flags_vertical = 0
 theme_override_constants/separation = 10
 
 [node name="Header" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn" unique_id=1058229068]
@@ -251,8 +394,12 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="WeaponSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow" unique_id=1409044575 instance=ExtResource("17_upgrade_slot")]
+[node name="WeaponSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow" unique_id=1409044575 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
+slot_id = &"weapon"
+display_name = "Weapon"slot_kind = &"weapon"
+popup_title = "Weapons"
+catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
 
 [node name="MagnetRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn" unique_id=212504377]
 custom_minimum_size = Vector2(0, 112)
@@ -262,6 +409,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow" unique_id=1640128356 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"magnet_tool"
+display_name = "Magnet Gun"
+static_icon = ExtResource("50_ic_magnet")
+item = ExtResource("62_magnet_gun")
 
 [node name="PlayerPreviewStage" type="SubViewportContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=763171482]
 layout_mode = 0
@@ -293,7 +444,34 @@ offset_left = 1720.0
 offset_top = 160.0
 offset_right = 1980.0
 offset_bottom = 300.0
-color = Color(0.09, 0.12, 0.17, 0.96)
+color = Color(0.372549, 0.411765, 0.411765, 0)
+
+[node name="Fill" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=1414747565]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=701613887]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=963301196]
 layout_mode = 0
@@ -320,10 +498,9 @@ offset_top = 108.0
 offset_right = 236.0
 offset_bottom = 146.0
 bbcode_enabled = true
+text = "0 / 5"
 fit_content = true
 scroll_active = false
-autowrap_mode = 3
-text = "0 / 5"
 
 [node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
 anchors_preset = 0
@@ -331,20 +508,68 @@ offset_left = 2560.0
 offset_right = 5120.0
 offset_bottom = 1440.0
 
-[node name="StageGlow" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=566812811]
+[node name="BackColor" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=67647672]
+texture_repeat = 2
 layout_mode = 0
-offset_left = 860.0
-offset_top = 245.0
-offset_right = 1700.0
-offset_bottom = 760.0
-color = Color(0.117647, 0.14902, 0.196078, 0.45)
-
-[node name="GroundLine" type="ColorRect" parent="PageViewport/PageContainer/ShipPage" unique_id=278510309]
-layout_mode = 0
-offset_top = 810.0
+offset_top = 128.0
 offset_right = 2560.0
-offset_bottom = 816.0
-color = Color(0.72, 0.78, 0.86, 0.75)
+offset_bottom = 495.0
+mouse_filter = 2
+texture = ExtResource("30_back_color")
+stretch_mode = 1
+
+[node name="FloorColor" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=338520736]
+texture_repeat = 2
+material = SubResource("ShaderMaterial_floor")
+layout_mode = 0
+offset_top = 495.0
+offset_right = 2560.0
+offset_bottom = 810.0
+mouse_filter = 2
+texture = ExtResource("31_floor_color")
+stretch_mode = 1
+
+[node name="Horizon" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=1298099848]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 437.0
+offset_right = 2560.0
+offset_bottom = 495.0
+mouse_filter = 2
+texture = ExtResource("32_horizon")
+stretch_mode = 1
+
+[node name="CeilingLine" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=250284496]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 122.0
+offset_right = 2560.0
+offset_bottom = 134.0
+mouse_filter = 2
+texture = ExtResource("33_ceiling_line")
+stretch_mode = 1
+
+[node name="FloorLine" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=1159737692]
+texture_repeat = 2
+layout_mode = 0
+offset_top = 806.0
+offset_right = 2560.0
+offset_bottom = 815.0
+mouse_filter = 2
+texture = ExtResource("34_floor_line")
+stretch_mode = 1
+
+[node name="DollieCrates" type="TextureRect" parent="PageViewport/PageContainer/ShipPage" unique_id=1227676219]
+layout_mode = 0
+offset_left = 2176.0
+offset_top = 550.0
+offset_right = 2520.0
+offset_bottom = 810.0
+mouse_filter = 2
+texture = ExtResource("35_dollie_crates")
+expand_mode = 1
+stretch_mode = 5
+flip_h = true
 
 [node name="ShipPreviewStage" type="SubViewportContainer" parent="PageViewport/PageContainer/ShipPage" unique_id=833998602]
 layout_mode = 0
@@ -362,17 +587,54 @@ anchors_preset = 0
 offset_right = 2560.0
 offset_bottom = 810.0
 
+[node name="UpgradePanel" type="ColorRect" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer" unique_id=1326563949]
+layout_mode = 0
+offset_left = 1830.0
+offset_top = 154.0
+offset_right = 2420.0
+offset_bottom = 786.0
+mouse_filter = 2
+color = Color(0.17341736, 0.19632047, 0.19633034, 0)
+
+[node name="Fill" type="ColorRect" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/UpgradePanel" unique_id=717518399]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.17341736, 0.19632047, 0.19633034, 1)
+
+[node name="Border" type="NinePatchRect" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/UpgradePanel" unique_id=1254009927]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer" unique_id=778651480]
 layout_mode = 0
-offset_left = 1805.0
-offset_top = 180.0
-offset_right = 2505.0
-offset_bottom = 810.0
+offset_left = 1830.0
+offset_top = 154.0
+offset_right = 2420.0
+offset_bottom = 786.0
 theme_override_constants/separation = 100
 
 [node name="RightPanel" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout" unique_id=197548948]
 layout_mode = 2
-size_flags_vertical = 3
+size_flags_horizontal = 6
+size_flags_vertical = 4
 alignment = 1
 
 [node name="SlotColumns" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel" unique_id=1302392932]
@@ -403,6 +665,10 @@ theme_override_constants/separation = 0
 
 [node name="ShipIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow" unique_id=1360064570 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"ship_integrity"
+display_name = "Hull"
+static_icon = ExtResource("12_4e5bg")
+item = ExtResource("63_hull_item")
 
 [node name="StorageSizeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=31795759]
 custom_minimum_size = Vector2(0, 112)
@@ -412,6 +678,10 @@ theme_override_constants/separation = 0
 
 [node name="StorageSizeSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow" unique_id=863753347 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"ship_storage_size"
+display_name = "Storage"
+static_icon = ExtResource("51_ic_crate")
+item = ExtResource("64_storage_item")
 
 [node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=1181292761]
 layout_mode = 2
@@ -433,6 +703,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow" unique_id=471185732 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"magnet_integrity"
+display_name = "Integrity"
+static_icon = ExtResource("50_ic_magnet")
+item = ExtResource("65_maghp_item")
 
 [node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=265744000]
 custom_minimum_size = Vector2(0, 112)
@@ -442,10 +716,13 @@ theme_override_constants/separation = 0
 
 [node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow" unique_id=1503082511 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+slot_id = &"magnet_capacity"
+display_name = "Capacity"
+static_icon = ExtResource("51_ic_crate")
+item = ExtResource("66_magcap_item")
 
 [node name="AugmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
 layout_mode = 2
-size_flags_vertical = 0
 theme_override_constants/separation = 10
 
 [node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=1335478386]
@@ -462,8 +739,12 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("17_upgrade_slot")]
+[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
+slot_id = &"ShipAugment"
+display_name = "Augment"slot_kind = &"ship_augment"
+popup_title = "Ship Augments"
+static_icon = ExtResource("12_4e5bg")
 
 [node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=952612685]
 custom_minimum_size = Vector2(0, 112)
@@ -471,8 +752,12 @@ layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("17_upgrade_slot")]
+[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
+slot_id = &"MagnetAugment"
+display_name = "Augment"slot_kind = &"magnet_augment"
+popup_title = "Magnet Augments"
+static_icon = ExtResource("14_h7pqf")
 
 [node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]
 custom_minimum_size = Vector2(200, 125)
@@ -488,7 +773,7 @@ expand_icon = true
 [node name="TopBar" type="Control" parent="." unique_id=482022141]
 anchors_preset = 0
 offset_right = 2560.0
-offset_bottom = 180.0
+offset_bottom = 130.0
 
 [node name="MenuButton" type="Button" parent="TopBar" unique_id=1838080946]
 custom_minimum_size = Vector2(160, 60)
@@ -503,13 +788,14 @@ text = "Menu"
 custom_minimum_size = Vector2(100, 100)
 layout_mode = 0
 offset_left = 1230.0
-offset_top = 20.0
+offset_top = 15.0
 offset_right = 1330.0
-offset_bottom = 120.0
+offset_bottom = 115.0
 icon = ExtResource("7_galaxy_icon")
 expand_icon = true
 
-[node name="ResearchPointsDisplay" type="ColorRect" parent="TopBar"]
+[node name="ResearchPointsDisplay" type="ColorRect" parent="TopBar" unique_id=294777484]
+layout_mode = 0
 anchor_left = 1.0
 anchor_right = 1.0
 offset_left = -392.0
@@ -517,34 +803,62 @@ offset_top = 24.0
 offset_right = -24.0
 offset_bottom = 84.0
 mouse_filter = 2
-color = Color(0.09, 0.12, 0.17, 0.88)
+color = Color(0.372549, 0.411765, 0.411765, 0)
 
-[node name="Row" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay"]
+[node name="Fill" type="ColorRect" parent="TopBar/ResearchPointsDisplay" unique_id=1272126631]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="TopBar/ResearchPointsDisplay" unique_id=92003134]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="Row" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay" unique_id=235527973]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
 mouse_filter = 2
 theme_override_constants/separation = 16
 alignment = 1
 
-[node name="Common" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row"]
+[node name="Common" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row" unique_id=232456504]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Common"]
+[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Common" unique_id=608489385]
+self_modulate = Color(0.352941, 0.941176, 0.235294, 1)
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 mouse_filter = 2
-self_modulate = Color(0.352941, 0.941176, 0.235294, 1)
 texture = ExtResource("27_rp_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Common"]
+[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Common" unique_id=33116000]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.352941, 0.941176, 0.235294, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -552,23 +866,22 @@ theme_override_font_sizes/font_size = 34
 text = "0"
 vertical_alignment = 1
 
-[node name="Rare" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row"]
+[node name="Rare" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row" unique_id=1425007916]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Rare"]
+[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Rare" unique_id=427104299]
+self_modulate = Color(0.494118, 0.729412, 1, 1)
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 mouse_filter = 2
-self_modulate = Color(0.494118, 0.729412, 1, 1)
 texture = ExtResource("27_rp_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Rare"]
+[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Rare" unique_id=912579631]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.494118, 0.729412, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -576,23 +889,22 @@ theme_override_font_sizes/font_size = 34
 text = "0"
 vertical_alignment = 1
 
-[node name="Epic" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row"]
+[node name="Epic" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay/Row" unique_id=1943220232]
 layout_mode = 2
 mouse_filter = 2
 theme_override_constants/separation = 4
 
-[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Epic"]
+[node name="Icon" type="TextureRect" parent="TopBar/ResearchPointsDisplay/Row/Epic" unique_id=1454813593]
+self_modulate = Color(0.882353, 0.490196, 1, 1)
 custom_minimum_size = Vector2(34, 34)
 layout_mode = 2
 mouse_filter = 2
-self_modulate = Color(0.882353, 0.490196, 1, 1)
 texture = ExtResource("27_rp_icon")
 expand_mode = 1
 stretch_mode = 5
 
-[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Epic"]
+[node name="Count" type="Label" parent="TopBar/ResearchPointsDisplay/Row/Epic" unique_id=1700533277]
 layout_mode = 2
-mouse_filter = 2
 theme_override_colors/font_color = Color(0.882353, 0.490196, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
@@ -611,7 +923,34 @@ layout_mode = 0
 offset_left = 40.0
 offset_right = 610.0
 offset_bottom = 560.0
-color = Color(0.09, 0.12, 0.17, 0.86)
+color = Color(0.372549, 0.411765, 0.411765, 0)
+
+[node name="Fill" type="ColorRect" parent="SharedBottomArea/StatsPanel" unique_id=747325621]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="SharedBottomArea/StatsPanel" unique_id=230915767]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StatsPanel" unique_id=1707857102]
 layout_mode = 0
@@ -637,7 +976,34 @@ layout_mode = 0
 offset_left = 650.0
 offset_right = 1845.0
 offset_bottom = 560.0
-color = Color(0.09, 0.12, 0.17, 0.86)
+color = Color(0.372549, 0.411765, 0.411765, 0)
+
+[node name="Fill" type="ColorRect" parent="SharedBottomArea/StoragePanel" unique_id=1344933143]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="SharedBottomArea/StoragePanel" unique_id=530661621]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StoragePanel" unique_id=1374877275]
 layout_mode = 0
@@ -687,12 +1053,38 @@ theme_override_constants/v_separation = 16
 columns = 7
 
 [node name="StorageDetailPanel" type="ColorRect" parent="SharedBottomArea" unique_id=1605012258]
-visible = false
 layout_mode = 0
 offset_left = 1880.0
 offset_right = 2520.0
 offset_bottom = 560.0
-color = Color(0.09, 0.12, 0.17, 0.92)
+color = Color(0.372549, 0.411765, 0.411765, 0)
+
+[node name="Fill" type="ColorRect" parent="SharedBottomArea/StorageDetailPanel" unique_id=1031688829]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 4.0
+offset_top = 4.0
+offset_right = -4.0
+offset_bottom = -4.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="SharedBottomArea/StorageDetailPanel" unique_id=1388173870]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="ItemIcon" type="TextureRect" parent="SharedBottomArea/StorageDetailPanel" unique_id=1606379290]
 layout_mode = 0

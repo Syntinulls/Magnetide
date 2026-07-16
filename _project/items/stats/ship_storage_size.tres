@@ -1,0 +1,10 @@
+[gd_resource type="Resource" script_class="StatItemData" format=3 uid="uid://cstat0storage0"]
+
+[ext_resource type="Script" path="res://_project/items/stat_item_data.gd" id="1"]
+[ext_resource type="Resource" uid="uid://d0shjqgfp3v7u" path="res://_project/upgrades/ship/ship_storage_size.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"ship_storage_size"
+display_name = "Storage"
+upgrade_data = ExtResource("2")
