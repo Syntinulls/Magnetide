@@ -16,5 +16,5 @@ item_id = &"augment_increased_recycling"
 display_name = "Increased Recycling"
 description = "Recycling a trash item has an extra chance to yield double scrap."
 icon = ExtResource("3_increased_recycling_icon")
-upgrade_data = ExtResource("4_upgrade")
 tags = Array[StringName]([&"augment", &"player_augment"])
+upgrade_data = ExtResource("4_upgrade")

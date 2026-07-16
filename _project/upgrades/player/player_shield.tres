@@ -85,5 +85,5 @@ scrap_cost = 50
 [resource]
 script = ExtResource("1_upg")
 display_name = "Player Shield"
-level_costs = Array[UpgradeLevelCost]([SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("L4"), SubResource("L5")])
-effects = Array[UpgradeEffect]([SubResource("Effect")])
+level_costs = Array[ExtResource("2_lvl")]([SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("L4"), SubResource("L5")])
+effects = Array[ExtResource("6_eff")]([SubResource("Effect")])

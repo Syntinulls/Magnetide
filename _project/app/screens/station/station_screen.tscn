@@ -3,14 +3,13 @@
 [ext_resource type="Script" uid="uid://be85jd8hol6ol" path="res://_project/app/screens/station/station_screen.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://boxg8omke0fl7" path="res://_project/salvage/sprites/part_gear.png" id="6_gear"]
 [ext_resource type="Texture2D" uid="uid://bm60dsyc5rlug" path="res://_project/app/screens/station/sprites/icon_galaxy.png" id="7_galaxy_icon"]
-[ext_resource type="Script" path="res://_project/items/upgrade_catalog_entry.gd" id="11_upgrade_entry"]
+[ext_resource type="Script" uid="uid://vtujeqyhldbh" path="res://_project/items/upgrade_catalog_entry.gd" id="11_upgrade_entry"]
 [ext_resource type="Texture2D" uid="uid://ckv7pe6aescgu" path="res://_project/app/screens/station/sprites/icon_ship.png" id="12_4e5bg"]
 [ext_resource type="Resource" uid="uid://c3i6j83w7ausi" path="res://_project/items/weapons/rifle/rifle.tres" id="12_rifle_data"]
 [ext_resource type="Resource" uid="uid://bmsp4hjbiegi" path="res://_project/items/weapons/shotgun/shotgun.tres" id="13_shotgun_data"]
 [ext_resource type="Texture2D" uid="uid://cvla5c34oom08" path="res://_project/app/screens/station/sprites/icon_player.png" id="14_h7pqf"]
 [ext_resource type="Texture2D" uid="uid://bcsnxpib7wd3f" path="res://_project/common/sprites/scrap_metal.png" id="16_pln3h"]
 [ext_resource type="PackedScene" uid="uid://cm85vm647wrlv" path="res://_project/app/screens/station/static_upgrade_slot.tscn" id="17_upgrade_slot"]
-[ext_resource type="PackedScene" uid="uid://dxo551l46yk8i" path="res://_project/app/screens/station/dynamic_upgrade_slot.tscn" id="52_dynamic_slot"]
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="19_regeneration"]
 [ext_resource type="PackedScene" uid="uid://deheo7vkoke2n" path="res://_project/app/screens/station/station_dynamic_slot_popup.tscn" id="20_dynamic_slot_popup"]
 [ext_resource type="Script" uid="uid://c0f3hfjp6xlvp" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
@@ -31,24 +30,18 @@
 [ext_resource type="Shader" uid="uid://cn2rwlbq1g8c0" path="res://_project/level/decoration/perspective_scroll.gdshader" id="36_perspective"]
 [ext_resource type="Texture2D" uid="uid://b7ebjmexj2v8n" path="res://_project/common/sprites/panel_border.png" id="37_border"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="40_upg_weapon"]
-[ext_resource type="Resource" uid="uid://lqf0nruwvlyv" path="res://_project/upgrades/magnet/magnet_tool.tres" id="41_upg_magpull"]
-[ext_resource type="Resource" uid="uid://bupgplayerhp" path="res://_project/upgrades/player/player_health.tres" id="42_upg_health"]
-[ext_resource type="Resource" uid="uid://lqjch3uux7yn" path="res://_project/upgrades/player/player_shield.tres" id="43_upg_shield"]
-[ext_resource type="Resource" uid="uid://bupgshiphull" path="res://_project/upgrades/ship/ship_hull.tres" id="44_upg_hull"]
-[ext_resource type="Resource" uid="uid://d0shjqgfp3v7u" path="res://_project/upgrades/ship/ship_storage_size.tres" id="45_upg_storage"]
-[ext_resource type="Resource" uid="uid://bupgmagnetcap" path="res://_project/upgrades/magnet/ship_magnet_capacity.tres" id="46_upg_magcap"]
-[ext_resource type="Resource" uid="uid://bupgmagnethp" path="res://_project/upgrades/magnet/ship_magnet_health.tres" id="47_upg_maghp"]
 [ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/app/screens/station/sprites/icon_health.png" id="48_ic_health"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/app/screens/station/sprites/icon_shield.png" id="49_ic_shield"]
 [ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/common/sprites/icon_magnet.png" id="50_ic_magnet"]
 [ext_resource type="Texture2D" uid="uid://cb2kp4138chs5" path="res://_project/common/sprites/icon_crate.png" id="51_ic_crate"]
-[ext_resource type="Resource" uid="uid://cstat0health00" path="res://_project/items/stats/player_health.tres" id="60_health_item"]
-[ext_resource type="Resource" uid="uid://cstat0shield00" path="res://_project/items/stats/player_shield.tres" id="61_shield_item"]
+[ext_resource type="PackedScene" uid="uid://dxo551l46yk8i" path="res://_project/app/screens/station/dynamic_upgrade_slot.tscn" id="52_dynamic_slot"]
+[ext_resource type="Resource" uid="uid://bsbo075p6d8c6" path="res://_project/items/stats/player_health.tres" id="60_health_item"]
+[ext_resource type="Resource" uid="uid://bsbo1j8xx44c6" path="res://_project/items/stats/player_shield.tres" id="61_shield_item"]
 [ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/magnet_tool/magnet_gun.tres" id="62_magnet_gun"]
-[ext_resource type="Resource" uid="uid://cstat0hull0000" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
-[ext_resource type="Resource" uid="uid://cstat0storage0" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
-[ext_resource type="Resource" uid="uid://cstat0maghp000" path="res://_project/items/stats/magnet_health.tres" id="65_maghp_item"]
-[ext_resource type="Resource" uid="uid://cstat0magcap00" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
+[ext_resource type="Resource" uid="uid://bsbo08m16krc6" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
+[ext_resource type="Resource" uid="uid://bsbo1kl5cs6p6" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
+[ext_resource type="Resource" uid="uid://bsbo1d1v2arc6" path="res://_project/items/stats/magnet_health.tres" id="65_maghp_item"]
+[ext_resource type="Resource" uid="uid://bsbo1d1vvthc6" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 shader = ExtResource("36_perspective")
@@ -312,10 +305,10 @@ theme_override_constants/separation = 0
 
 [node name="HealthSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/HealthRow" unique_id=593406363 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("60_health_item")
 slot_id = &"player_health"
 display_name = "Health"
 static_icon = ExtResource("48_ic_health")
-item = ExtResource("60_health_item")
 
 [node name="ShieldRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair" unique_id=1388604532]
 custom_minimum_size = Vector2(0, 112)
@@ -325,10 +318,10 @@ theme_override_constants/separation = 0
 
 [node name="ShieldSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/StaticPair/ShieldRow" unique_id=750752536 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("61_shield_item")
 slot_id = &"player_shield"
 display_name = "Shield"
 static_icon = ExtResource("49_ic_shield")
-item = ExtResource("61_shield_item")
 locked = true
 unlock_research_id = &"player_shield"
 unlock_cost_common = 2
@@ -355,11 +348,12 @@ theme_override_constants/separation = 0
 
 [node name="PlayerAugment1Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment1Row" unique_id=1166402739 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
-slot_id = &"PlayerAugment1"
-display_name = "Augment 1"slot_kind = &"player_augment"
+slot_kind = &"player_augment"
 popup_title = "Augments"
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
+slot_id = &"PlayerAugment1"
+display_name = "Augment 1"
 static_icon = ExtResource("14_h7pqf")
-catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="PlayerAugment2Row" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair" unique_id=1223693037]
 custom_minimum_size = Vector2(0, 112)
@@ -369,12 +363,13 @@ theme_override_constants/separation = 0
 
 [node name="PlayerAugment2Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment2Row" unique_id=893353439 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
-slot_id = &"PlayerAugment2"
-display_name = "Augment 2"slot_kind = &"player_augment"
+slot_kind = &"player_augment"
 slot_index = 1
 popup_title = "Augments"
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
+slot_id = &"PlayerAugment2"
+display_name = "Augment 2"
 static_icon = ExtResource("14_h7pqf")
-catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 
 [node name="EquipmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns" unique_id=2122133003]
 layout_mode = 2
@@ -396,10 +391,11 @@ theme_override_constants/separation = 0
 
 [node name="WeaponSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow" unique_id=1409044575 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
-slot_id = &"weapon"
-display_name = "Weapon"slot_kind = &"weapon"
+slot_kind = &"weapon"
 popup_title = "Weapons"
-catalog = Array[UpgradeCatalogEntry]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
+slot_id = &"weapon"
+display_name = "Weapon"
 
 [node name="MagnetRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn" unique_id=212504377]
 custom_minimum_size = Vector2(0, 112)
@@ -409,10 +405,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/MagnetRow" unique_id=1640128356 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("62_magnet_gun")
 slot_id = &"magnet_tool"
 display_name = "Magnet Gun"
 static_icon = ExtResource("50_ic_magnet")
-item = ExtResource("62_magnet_gun")
 
 [node name="PlayerPreviewStage" type="SubViewportContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=763171482]
 layout_mode = 0
@@ -665,10 +661,10 @@ theme_override_constants/separation = 0
 
 [node name="ShipIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/ShipIntegrityRow" unique_id=1360064570 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("63_hull_item")
 slot_id = &"ship_integrity"
 display_name = "Hull"
 static_icon = ExtResource("12_4e5bg")
-item = ExtResource("63_hull_item")
 
 [node name="StorageSizeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=31795759]
 custom_minimum_size = Vector2(0, 112)
@@ -678,10 +674,10 @@ theme_override_constants/separation = 0
 
 [node name="StorageSizeSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair/StorageSizeRow" unique_id=863753347 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("64_storage_item")
 slot_id = &"ship_storage_size"
 display_name = "Storage"
 static_icon = ExtResource("51_ic_crate")
-item = ExtResource("64_storage_item")
 
 [node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=1181292761]
 layout_mode = 2
@@ -703,10 +699,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow" unique_id=471185732 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("65_maghp_item")
 slot_id = &"magnet_integrity"
 display_name = "Integrity"
 static_icon = ExtResource("50_ic_magnet")
-item = ExtResource("65_maghp_item")
 
 [node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=265744000]
 custom_minimum_size = Vector2(0, 112)
@@ -716,10 +712,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow" unique_id=1503082511 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
+item = ExtResource("66_magcap_item")
 slot_id = &"magnet_capacity"
 display_name = "Capacity"
 static_icon = ExtResource("51_ic_crate")
-item = ExtResource("66_magcap_item")
 
 [node name="AugmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
 layout_mode = 2
@@ -741,9 +737,10 @@ theme_override_constants/separation = 0
 
 [node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
-slot_id = &"ShipAugment"
-display_name = "Augment"slot_kind = &"ship_augment"
+slot_kind = &"ship_augment"
 popup_title = "Ship Augments"
+slot_id = &"ShipAugment"
+display_name = "Augment"
 static_icon = ExtResource("12_4e5bg")
 
 [node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=952612685]
@@ -754,9 +751,10 @@ theme_override_constants/separation = 0
 
 [node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
-slot_id = &"MagnetAugment"
-display_name = "Augment"slot_kind = &"magnet_augment"
+slot_kind = &"magnet_augment"
 popup_title = "Magnet Augments"
+slot_id = &"MagnetAugment"
+display_name = "Augment"
 static_icon = ExtResource("14_h7pqf")
 
 [node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]

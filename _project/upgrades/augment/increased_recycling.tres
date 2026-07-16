@@ -4,6 +4,12 @@
 [ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/upgrades/upgrade_level_cost.gd" id="2_lvl"]
 [ext_resource type="Script" uid="uid://dlgmwb8mm2ot0" path="res://_project/upgrades/upgrade_effect.gd" id="3_eff"]
 
+[sub_resource type="Resource" id="eff_scrap"]
+script = ExtResource("3_eff")
+target = 5
+target_property = &"double_scrap_chance_percent"
+amount_per_level = 5.0
+
 [sub_resource type="Resource" id="c0"]
 script = ExtResource("2_lvl")
 scrap_cost = 20
@@ -24,15 +30,8 @@ scrap_cost = 80
 script = ExtResource("2_lvl")
 scrap_cost = 110
 
-[sub_resource type="Resource" id="eff_scrap"]
-script = ExtResource("3_eff")
-target = 5
-target_property = &"double_scrap_chance_percent"
-amount_per_level = 5.0
-
 [resource]
 script = ExtResource("1_aud")
 display_name = "Increased Recycling"
-max_level = 5
-level_costs = Array[UpgradeLevelCost]([SubResource("c0"), SubResource("c1"), SubResource("c2"), SubResource("c3"), SubResource("c4")])
-effects = Array[UpgradeEffect]([SubResource("eff_scrap")])
+level_costs = Array[ExtResource("2_lvl")]([SubResource("c0"), SubResource("c1"), SubResource("c2"), SubResource("c3"), SubResource("c4")])
+effects = Array[ExtResource("3_eff")]([SubResource("eff_scrap")])

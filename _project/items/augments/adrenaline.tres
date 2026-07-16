@@ -16,5 +16,5 @@ item_id = &"augment_adrenaline"
 display_name = "Adrenaline"
 description = "The lower your health, the more damage you deal. Reaches its full bonus at 10% health or below."
 icon = ExtResource("3_adrenaline_icon")
-upgrade_data = ExtResource("4_upgrade")
 tags = Array[StringName]([&"augment", &"player_augment"])
+upgrade_data = ExtResource("4_upgrade")

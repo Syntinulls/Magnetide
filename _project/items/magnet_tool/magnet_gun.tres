@@ -2,18 +2,15 @@
 
 [ext_resource type="Script" uid="uid://luveqohme7eo" path="res://_project/items/magnet_tool/magnet_tool_data.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://d1ly2sv5d6n6q" path="res://_project/items/magnet_tool/player_item_magnet.png" id="3_x47ok"]
-
 [ext_resource type="Resource" uid="uid://lqf0nruwvlyv" path="res://_project/upgrades/magnet/magnet_tool.tres" id="90_upg"]
+
 [resource]
 script = ExtResource("1_script")
-upgrade_data = ExtResource("90_upg")
 hold_distance = 50.0
 pull_base_speed = 600.0
 pull_max_speed = 2000.0
 pull_ramp_time = 0.4
 trash_scrap_chance_percent = 30.0
-item_id = &"magnet_gun"
-display_name = "Magnet Gun"
 hotbar_icon = ExtResource("3_x47ok")
 weapon_sprite = ExtResource("3_x47ok")
 weapon_offset = Vector2(-26.105, 17.995)
@@ -21,3 +18,6 @@ weapon_rotation = 0.0
 muzzle_position = Vector2(-57.15, 15.8)
 muzzle_effect_type = 1
 muzzle_effect_offset = Vector2(-13.25, 0)
+item_id = &"magnet_gun"
+display_name = "Magnet Gun"
+upgrade_data = ExtResource("90_upg")

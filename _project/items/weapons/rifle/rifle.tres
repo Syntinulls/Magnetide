@@ -7,19 +7,16 @@
 [ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/rifle_reload.ogg" id="3_s025t"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/items/weapons/rifle/player_item_rifle.png" id="4_02vt3"]
 [ext_resource type="AudioStream" uid="uid://blccv5n4fy5eh" path="res://_project/audio/sfx/machine_gun_shot_3.ogg" id="4_5mfk1"]
-
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
+
 [resource]
 script = ExtResource("1_kecvl")
-upgrade_data = ExtResource("90_upg")
 bullet_sprite = ExtResource("1_0akki")
 fire_sfx = Array[AudioStream]([ExtResource("2_isxej"), ExtResource("3_jjplp"), ExtResource("4_5mfk1")])
 last_shot_sfx = Array[AudioStream]([ExtResource("2_isxej"), ExtResource("3_jjplp"), ExtResource("4_5mfk1")])
 bullet_spread_min = 4.0
 bullet_spread_max = 8.0
 reload_sfx_volume_db = 3.0
-item_id = &"weapon_rifle"
-display_name = "Rifle"
 hotbar_icon = ExtResource("4_02vt3")
 weapon_sprite = ExtResource("4_02vt3")
 weapon_offset = Vector2(-12.784, 20.36)
@@ -27,4 +24,7 @@ weapon_rotation = 0.0
 muzzle_position = Vector2(-59.56, 13.88)
 muzzle_effect_type = 2
 muzzle_effect_offset = Vector2(5, 0)
+item_id = &"weapon_rifle"
+display_name = "Rifle"
+upgrade_data = ExtResource("90_upg")
 metadata/_custom_type_script = "uid://dswvbat8qx1i4"
