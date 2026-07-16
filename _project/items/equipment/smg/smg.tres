@@ -1,19 +1,25 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://dsmg8w1pk3n0x"]
 
 [ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/equipment/rifle/bullet_s_1.png" id="1_bullet"]
+[ext_resource type="AudioStream" uid="uid://dktme3sc6n1hl" path="res://_project/audio/sfx/machine_gun_shot_1.ogg" id="2_tg63g"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/equipment/weapon_data.gd" id="2_weapon_data"]
-[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/rifle_reload.ogg" id="3_lc1si"]
+[ext_resource type="AudioStream" uid="uid://jseq7elf0gtn" path="res://_project/audio/sfx/machine_gun_shot_2.ogg" id="3_jtigy"]
 [ext_resource type="Texture2D" uid="uid://ndf8qmq35kuf" path="res://_project/items/equipment/smg/player_item_smg.png" id="3_smg_sprite"]
+[ext_resource type="AudioStream" uid="uid://blccv5n4fy5eh" path="res://_project/audio/sfx/machine_gun_shot_3.ogg" id="4_0h2pc"]
+[ext_resource type="AudioStream" uid="uid://d2mo71ig1kkt8" path="res://_project/audio/sfx/smg_reload.ogg" id="5_jtigy"]
 
 [resource]
 script = ExtResource("2_weapon_data")
 damage = 6.0
 fire_rate = 8.0
 bullet_sprite = ExtResource("1_bullet")
+fire_sfx = Array[AudioStream]([ExtResource("2_tg63g"), ExtResource("3_jtigy"), ExtResource("4_0h2pc")])
+last_shot_sfx = Array[AudioStream]([ExtResource("2_tg63g"), ExtResource("3_jtigy"), ExtResource("4_0h2pc")])
 bullet_spread_min = 8.0
 bullet_spread_max = 15.0
 magazine_size = 40
 reload_time = 1.4
+reload_sfx = ExtResource("5_jtigy")
 item_id = &"weapon_smg"
 display_name = "SMG"
 hotbar_icon = ExtResource("3_smg_sprite")
