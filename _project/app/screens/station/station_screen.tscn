@@ -21,6 +21,7 @@
 [ext_resource type="Texture2D" uid="uid://0qevonhftyj2" path="res://_project/common/sprites/icon_research_point.png" id="27_rp_icon"]
 [ext_resource type="Resource" uid="uid://dsmg8w1pk3n0x" path="res://_project/items/weapons/smg/smg.tres" id="28_smg_data"]
 [ext_resource type="Resource" uid="uid://bsnp7w2qk4m1y" path="res://_project/items/weapons/sniper/sniper.tres" id="29_sniper_data"]
+[ext_resource type="Resource" uid="uid://e8grndlnchr001" path="res://_project/items/weapons/grenade_launcher/grenade_launcher.tres" id="29_grenade_data"]
 [ext_resource type="Texture2D" uid="uid://cdxoat3a5aomv" path="res://_project/app/screens/station/sprites/station_back_color.png" id="30_back_color"]
 [ext_resource type="Texture2D" uid="uid://wgaayv1l0vvh" path="res://_project/app/screens/station/sprites/station_floor_color.png" id="31_floor_color"]
 [ext_resource type="Texture2D" uid="uid://dy6fd34xra0nt" path="res://_project/app/screens/station/sprites/station_horizon.png" id="32_horizon"]
@@ -122,6 +123,16 @@ research_unlock_id = &"weapon_sniper"
 research_unlock_order = 40
 research_cost_rare = 2
 research_cost_epic = 1
+
+[sub_resource type="Resource" id="Resource_station_weapon_grenade_launcher"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("29_grenade_data")
+upgrade = ExtResource("40_upg_weapon")
+locked = true
+research_unlock_id = &"weapon_grenade_launcher"
+research_unlock_order = 50
+research_cost_rare = 1
+research_cost_epic = 2
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -395,7 +406,7 @@ layout_mode = 2
 slot_kind = &"weapon"
 slot_index = 0
 popup_title = "Weapons"
-catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper"), SubResource("Resource_station_weapon_grenade_launcher")])
 slot_id = &"weapon"
 display_name = "Weapon"
 

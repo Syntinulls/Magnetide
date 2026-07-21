@@ -1,0 +1,53 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://x501hs1qiu35"]
+
+[ext_resource type="Texture2D" uid="uid://cl4a5bkjii0bt" path="res://_project/items/weapons/grenade_launcher/effect_explosion_1.png" id="1_explosion"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_0"]
+atlas = ExtResource("1_explosion")
+region = Rect2(0, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_1"]
+atlas = ExtResource("1_explosion")
+region = Rect2(224, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_2"]
+atlas = ExtResource("1_explosion")
+region = Rect2(448, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_3"]
+atlas = ExtResource("1_explosion")
+region = Rect2(672, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_4"]
+atlas = ExtResource("1_explosion")
+region = Rect2(896, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_explode_5"]
+atlas = ExtResource("1_explosion")
+region = Rect2(1120, 0, 224, 224)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_explode_5")
+}],
+"loop": false,
+"name": &"explode",
+"speed": 16.0
+}]

@@ -529,6 +529,9 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"collision_mask": 4,
 			&"source": self,
 			&"pierce": weapon_data.pierce,
+			&"gravity": weapon_data.projectile_gravity,
+			&"impact_damage": weapon_data.impact_damage,
+			&"impact_effect": weapon_data.impact_effect,
 		})
 	return null
 

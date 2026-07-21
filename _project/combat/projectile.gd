@@ -20,12 +20,25 @@ const REQUIRED_CONFIG_FIELDS: Array[StringName] = [
 	set(value):
 		pierce = maxi(value, 1)
 		_remaining_pierce = pierce
+## Downward acceleration (px/s^2). 0 keeps the projectile on a straight line; a
+## positive value gives it a ballistic arc (grenades, lobbed shots).
+@export var projectile_gravity: float = 0.0
+## When true, striking an enemy deals this projectile's damage (and consumes pierce).
+## Turn it off for projectiles whose damage comes entirely from their impact effect —
+## the grenade, where only the explosion hurts.
+@export var impact_damage: bool = true
 
 var direction: Vector2 = Vector2.RIGHT
 var source: Node = null
 
 var _remaining_pierce: int = 1
 var _damaged_targets: Array[Node] = []
+var _velocity: Vector2 = Vector2.ZERO
+var _detonated: bool = false
+## Optional effect scene spawned at the point of impact (e.g. an explosion). It owns its
+## own area/animation and any AoE damage; the projectile just hands it this projectile's
+## damage and source. Spawning it consumes the projectile.
+var _impact_effect: PackedScene = null
 
 
 static func create(config: Dictionary) -> Area2D:
@@ -56,12 +69,16 @@ func configure(config: Dictionary) -> void:
 	collision_mask = int(config[&"collision_mask"])
 	source = config[&"source"] as Node
 	pierce = int(config.get(&"pierce", 1))
+	projectile_gravity = float(config.get(&"gravity", 0.0))
+	impact_damage = bool(config.get(&"impact_damage", true))
+	_impact_effect = config.get(&"impact_effect", null) as PackedScene
 	_build_visual(config[&"sprite"])
 	_build_collision()
 
 
 func _ready() -> void:
 	_remaining_pierce = maxi(pierce, 1)
+	_velocity = direction * speed
 	rotation = direction.angle() + PI / 2.0
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
@@ -70,7 +87,12 @@ func _ready() -> void:
 
 
 func _physics_process(delta: float) -> void:
-	position += direction * speed * delta
+	if projectile_gravity != 0.0:
+		_velocity.y += projectile_gravity * delta
+		position += _velocity * delta
+		rotation = _velocity.angle() + PI / 2.0
+	else:
+		position += direction * speed * delta
 
 
 func _validate_config(config: Dictionary) -> void:
@@ -123,13 +145,48 @@ func _on_area_entered(area: Area2D) -> void:
 func _apply_damage_to(receiver: Node, target: Node) -> void:
 	if receiver == null or target == null:
 		return
-	if _damaged_targets.has(target):
-		return
+	# Only damageable targets (enemy hitboxes) count as an impact. Solid world colliders
+	# that merely share the projectile's collision layer — the magnet's body — are passed
+	# through, so a grenade doesn't detonate on the ship's own structures.
 	if not receiver.has_method("take_damage"):
 		return
-
-	receiver.call("take_damage", damage, source)
+	if _damaged_targets.has(target):
+		return
 	_damaged_targets.append(target)
-	_remaining_pierce -= 1
-	if _remaining_pierce <= 0:
+
+	if impact_damage:
+		receiver.call("take_damage", damage, source)
+		_remaining_pierce -= 1
+
+	# An impact effect consumes the projectile on the first enemy it touches, regardless
+	# of pierce (the explosion, not the projectile, carries the payload).
+	if _impact_effect != null:
+		_spawn_impact_effect()
 		queue_free()
+		return
+
+	if impact_damage and _remaining_pierce <= 0:
+		queue_free()
+
+
+## Instantiates the impact effect (e.g. an explosion) at the current position. The effect
+## owns its own area-of-effect damage and animation; the projectile only hands it this
+## projectile's damage and source. Guarded so overlapping hits spawn a single effect.
+func _spawn_impact_effect() -> void:
+	if _detonated:
+		return
+	_detonated = true
+	var parent := get_parent()
+	if _impact_effect == null or parent == null:
+		return
+	var effect := _impact_effect.instantiate()
+	# Position and configure before add_child: adding to the tree runs the effect's
+	# _ready() synchronously, and it reads both to place and power its blast.
+	if effect is Node2D:
+		(effect as Node2D).global_position = global_position
+	if effect.has_method("configure"):
+		effect.call("configure", {
+			&"damage": damage,
+			&"source": source,
+		})
+	parent.add_child(effect)

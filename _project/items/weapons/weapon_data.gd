@@ -9,6 +9,21 @@ class_name WeaponData
 @export var bullet_sprite: Texture2D
 @export var fire_behavior: Resource = null
 
+@export_group("Projectile Physics")
+## Downward acceleration applied to this weapon's projectiles (px/s^2). 0 = straight-
+## line bullet; a positive value arcs the shot (grenade launcher).
+@export var projectile_gravity: float = 0.0
+
+@export_group("Impact")
+## When true, hitting an enemy deals this weapon's damage (and pierce) directly. Turn it
+## off for weapons whose damage comes entirely from their impact effect — the grenade
+## launcher, where only the explosion hurts.
+@export var impact_damage: bool = true
+## Optional effect spawned where a projectile lands (e.g. an explosion). Spawned on the
+## first enemy the projectile touches; the effect owns its own area/animation and inherits
+## this weapon's damage.
+@export var impact_effect: PackedScene = null
+
 @export_group("Fire Sound")
 ## Sound(s) played when this weapon fires. When more than one is supplied, one is
 ## chosen at random per shot to avoid repetition. Leave empty to use the default.
