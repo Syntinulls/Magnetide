@@ -4,7 +4,7 @@
 
 ### New Content
 
-**Five weapons, one arsenal.** The Rifle and Shotgun are joined by three new guns, each
+**Six weapons, one arsenal.** The Rifle and Shotgun are joined by four new guns, each
 with a distinct role:
 
 | Weapon | Damage | Fire Rate | Magazine | Reload | Notes |
@@ -14,6 +14,12 @@ with a distinct role:
 | Shotgun | 15 | 1.0/s | 6 | 2.0s | Pierces 2 enemies per pellet. |
 | Rifle | 10 | — | 30 | 1.5s | Solid all-rounder. |
 | Sniper | 45 | 1.0/s | 5 | 2.0s | Pierces 4 enemies. Pinpoint accurate. |
+| Grenade Launcher | 25 | 1.3/s | 5 | 2.5s | Lobs an arcing grenade that explodes on impact, dealing its damage to every enemy caught in the blast. |
+
+**The Grenade Launcher.** Unlike every other gun, its rounds fall under gravity — you
+*arc* them onto targets rather than aiming a straight line. A grenade detonates the
+moment it strikes an enemy, and the explosion hits everything nearby for the weapon's full
+damage. It's the last weapon in the unlock chain and your answer to a crowd.
 
 **New enemy: the Mosquito.** A flying ranged attacker that hunts *you*, not the ship. It
 closes to hovering distance, holds position, then fires needles at you with a slow windup
@@ -38,7 +44,7 @@ cone, and each weapon has its own accuracy profile — the Sniper and Shotgun ar
 the Pistol drifts slightly, and the SMG sprays hard. Shoot accordingly.
 
 **Weapons now unlock in a chain.** You start with the Pistol and unlock forward:
-**Pistol → SMG → Shotgun → Rifle → Sniper.** You can only see and buy the *next* weapon in
+**Pistol → SMG → Shotgun → Rifle → Sniper → Grenade Launcher.** You can only see and buy the *next* weapon in
 the chain; anything further ahead shows as a blacked-out silhouette marked "???" until you
 earn your way to it.
 
