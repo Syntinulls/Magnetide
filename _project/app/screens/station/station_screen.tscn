@@ -349,6 +349,7 @@ theme_override_constants/separation = 0
 [node name="PlayerAugment1Slot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/LeftColumn/AugmentPair/PlayerAugment1Row" unique_id=1166402739 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"player_augment"
+slot_index = 0
 popup_title = "Augments"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
 slot_id = &"PlayerAugment1"
@@ -392,6 +393,7 @@ theme_override_constants/separation = 0
 [node name="WeaponSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/WeaponRow" unique_id=1409044575 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"weapon"
+slot_index = 0
 popup_title = "Weapons"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper")])
 slot_id = &"weapon"
@@ -738,7 +740,9 @@ theme_override_constants/separation = 0
 [node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"ship_augment"
+slot_index = 0
 popup_title = "Ship Augments"
+catalog = Array[ExtResource("11_upgrade_entry")]([])
 slot_id = &"ShipAugment"
 display_name = "Augment"
 static_icon = ExtResource("12_4e5bg")
@@ -752,7 +756,9 @@ theme_override_constants/separation = 0
 [node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"magnet_augment"
+slot_index = 0
 popup_title = "Magnet Augments"
+catalog = Array[ExtResource("11_upgrade_entry")]([])
 slot_id = &"MagnetAugment"
 display_name = "Augment"
 static_icon = ExtResource("14_h7pqf")

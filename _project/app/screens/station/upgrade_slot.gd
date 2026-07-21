@@ -15,6 +15,11 @@ const UPGRADE_ARROW: Texture2D = preload("res://_project/app/screens/station/spr
 const UPGRADE_ARROW_PRESSED: Texture2D = preload("res://_project/app/screens/station/sprites/upgrade_arrow_pressed.png")
 const TICK_LIGHT_ON: Texture2D = preload("res://_project/app/screens/station/sprites/upgrade_light_on.png")
 const TICK_LIGHT_OFF: Texture2D = preload("res://_project/app/screens/station/sprites/upgrade_light_off.png")
+## Lock-open icon shown as the unlock affordance (static slots here, catalog entries in
+## the station screen). Owned by the slot widgets; StationScreen reads it as UpgradeSlot.UNLOCK_ICON.
+## The static-slot overlay is authored as UpgradeButton/UnlockIcon in upgrade_slot.tscn; code
+## only toggles its visibility.
+const UNLOCK_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_lock_open.png")
 
 ## Unique id for this slot (e.g. &"player_health", &"weapon"). Authored per instance.
 @export var slot_id: StringName = &""
@@ -54,6 +59,7 @@ var _header_row: HBoxContainer = null
 var _tick_column: VBoxContainer = null
 var _tick_container: HBoxContainer = null
 var _upgrade_button: Button = null
+var _unlock_icon: TextureRect = null
 var _upgrade_style_normal: StyleBox = null
 var _upgrade_style_pressed: StyleBox = null
 var _can_select: bool = false
@@ -135,7 +141,7 @@ func set_level_text(text: String) -> void:
 	_level_label.text = text
 
 
-func set_unlock_mode(enabled: bool, button_text: String = "Unlock") -> void:
+func set_unlock_mode(enabled: bool) -> void:
 	_build_once()
 	_is_unlock_mode = enabled
 	if enabled:
@@ -143,16 +149,20 @@ func set_unlock_mode(enabled: bool, button_text: String = "Unlock") -> void:
 		_tick_column.visible = false
 		_upgrade_button.visible = true
 		_upgrade_button.disabled = false
-		# Drop the upgrade-arrow sprite styling so the unlock action reads as a
-		# normal themed button, not a stretched arrow.
+		# Drop the upgrade-arrow sprite styling so the unlock action reads as a plain themed
+		# button, with the lock-open icon (an overlay TextureRect) carried on top of it.
 		for state in ["normal", "hover", "focus", "disabled", "pressed"]:
 			_upgrade_button.remove_theme_stylebox_override(state)
+		_upgrade_button.remove_theme_font_size_override("font_size")
+		_upgrade_button.text = ""
 		_upgrade_button.icon = null
 		_upgrade_button.expand_icon = false
-		_upgrade_button.add_theme_font_size_override("font_size", 18)
-		_upgrade_button.custom_minimum_size = Vector2(0.0, 44.0)
-		_upgrade_button.text = button_text
+		_upgrade_button.custom_minimum_size = Vector2(52.0, 52.0)
+		if _unlock_icon != null:
+			_unlock_icon.visible = true
 	else:
+		if _unlock_icon != null:
+			_unlock_icon.visible = false
 		_tick_column.visible = true
 		_upgrade_button.remove_theme_font_size_override("font_size")
 		_upgrade_button.text = ""
@@ -328,6 +338,7 @@ func _bind_existing_nodes() -> void:
 	_tick_column = get_node_or_null("BodyRow/TickColumn") as VBoxContainer
 	_tick_container = get_node_or_null("BodyRow/TickColumn/TickContainer") as HBoxContainer
 	_upgrade_button = get_node_or_null("BodyRow/ActionCell/UpgradeButton") as Button
+	_unlock_icon = get_node_or_null("BodyRow/ActionCell/UpgradeButton/UnlockIcon") as TextureRect
 
 
 func _connect_controls() -> void:

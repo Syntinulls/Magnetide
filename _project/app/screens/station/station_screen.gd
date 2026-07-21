@@ -18,21 +18,29 @@ const HIDDEN_ENTRY_ICON_MODULATE := Color(0.0, 0.0, 0.0, 1.0)
 const HIDDEN_ENTRY_NAME := "???"
 const UNLOCKED_ENTRY_MODULATE := Color.WHITE
 const EQUIPPED_ENTRY_TEXT_COLOR := Color(0.55, 1.0, 0.55, 1.0)
-const WEAPON_LIST_ENTRY_SIZE := Vector2(178.0, 38.0)
-const DYNAMIC_ENTRY_ICON_FRAME_SIZE := Vector2(62.0, 30.0)
+const WEAPON_LIST_ENTRY_SIZE := Vector2(178.0, 52.0)
+const DYNAMIC_ENTRY_ICON_FRAME_SIZE := Vector2(62.0, 44.0)
 const WEAPON_LIST_ENTRY_ICON_MAX_WIDTH := 62
 const WEAPON_LIST_ENTRY_ICON_MAX_HEIGHT := 30
 const WEAPON_LIST_ENTRY_FONT_SIZE := 20
 const DYNAMIC_ENTRY_LEVEL_FONT_SIZE := 16
 const DYNAMIC_ENTRY_ROW_MARGIN := 10.0        # EntryRow left+right inset (per side)
 const DYNAMIC_ENTRY_ROW_SEPARATION := 8.0     # gap between row children
-const DYNAMIC_ENTRY_UNLOCK_WIDTH := 62.0      # trailing "Unlock" button (locked)
+const DYNAMIC_ENTRY_UNLOCK_WIDTH := 44.0      # trailing lock-unlock icon button (locked)
+const DYNAMIC_ENTRY_UNLOCK_ICON_SIZE := 44.0  # square lock-unlock icon button
+const DYNAMIC_ENTRY_UNLOCK_ICON_INSET := 4.0  # lock texture inset within its button
 const DYNAMIC_ENTRY_LEVEL_WIDTH := 46.0       # trailing level label (unlocked)
 const DYNAMIC_ENTRY_NAME_SLACK := 8.0         # breathing room so nothing clips
+const DYNAMIC_ENTRY_SEPARATION := 8.0         # authored ItemList vertical gap between rows
 const DYNAMIC_LIST_PANEL_MARGIN := 14.0       # ItemList inset within its panel (per side)
-const DYNAMIC_DETAIL_GAP := 12.0              # gap between list panel and detail panel
+const DYNAMIC_LIST_VIEWPORT_HEIGHT := 226.0   # authored ItemListScroll height (never changes)
+const DYNAMIC_LIST_SCROLLBAR_ALLOWANCE := 16.0 # extra width when a vertical scrollbar shows
+const DYNAMIC_PANEL_GAP := 12.0               # gap between adjacent popup panels
 const DYNAMIC_LIST_MIN_WIDTH := 232.0         # original ItemList width (never shrink below)
 const DYNAMIC_LIST_MAX_WIDTH := 560.0
+## Gap between the slot's icon and the left edge of the popup, so the popup opens directly
+## to the right of the slot (which stays visible and reads as the current item).
+const POPUP_SLOT_MARGIN := 12.0
 const DETAIL_PANEL_MIN_WIDTH := 300.0         # original ItemDetailPanel width
 const DETAIL_PANEL_MAX_WIDTH := 620.0
 const DETAIL_PANEL_H_MARGIN := 18.0           # header/body inset per side
@@ -76,6 +84,9 @@ var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
 var _active_player_augment_index: int = -1
 var _active_detail_entry: Resource = null
+## Widest entry width measured on the last list population, reused by the panel
+## layout pass so it can size the list panel without re-measuring every entry.
+var _dynamic_list_content_width: float = DYNAMIC_LIST_MIN_WIDTH
 
 @onready var _page_viewport: Control = $PageViewport
 @onready var _page_container: Control = $PageViewport/PageContainer
@@ -88,16 +99,13 @@ var _active_detail_entry: Resource = null
 @onready var _player_preview_stage: PreviewStage = $PageViewport/PageContainer/PlayerPage/UpgradeLayer/PlayerPreviewStage
 @onready var _ship_preview_stage: PreviewStage = $PageViewport/PageContainer/ShipPage/ShipPreviewStage
 @onready var _dynamic_slot_popup: Control = $DynamicSlotPopup
-@onready var _dynamic_slot_popup_current_cutout: ColorRect = $DynamicSlotPopup/CurrentItemPanel/CurrentIconFrame
-@onready var _dynamic_slot_popup_current_stats: Label = $DynamicSlotPopup/CurrentItemPanel/CurrentStatsLabel
 @onready var _dynamic_item_list_title: Label = $DynamicSlotPopup/ItemListPanel/ItemListTitle
-@onready var _dynamic_item_list: VBoxContainer = $DynamicSlotPopup/ItemListPanel/ItemList
+@onready var _dynamic_item_list_scroll: ScrollContainer = $DynamicSlotPopup/ItemListPanel/ItemListScroll
+@onready var _dynamic_item_list: VBoxContainer = $DynamicSlotPopup/ItemListPanel/ItemListScroll/ItemList
+## Primary detail panel (the hovered item). The comparison panel (the equipped item,
+## shown only when hovering a different item) mirrors its structure.
 @onready var _dynamic_slot_popup_stats_panel: Control = $DynamicSlotPopup/ItemDetailPanel
-@onready var _dynamic_slot_popup_stats_name: Label = $DynamicSlotPopup/ItemDetailPanel/HeaderRow/NameLabel
-@onready var _dynamic_slot_popup_stats_equipped: Label = $DynamicSlotPopup/ItemDetailPanel/HeaderRow/EquippedLabel
-@onready var _dynamic_slot_popup_stats_body_column: VBoxContainer = $DynamicSlotPopup/ItemDetailPanel/BodyColumn
-@onready var _dynamic_slot_popup_stats_desc: RichTextLabel = $DynamicSlotPopup/ItemDetailPanel/BodyColumn/DescriptionLabel
-@onready var _dynamic_slot_popup_stats_status: RichTextLabel = $DynamicSlotPopup/ItemDetailPanel/BodyColumn/StatusLabel
+@onready var _dynamic_slot_popup_compare_panel: Control = $DynamicSlotPopup/ItemDetailPanelCompare
 @onready var _upgrade_cost_popup: Control = $PageViewport/PageContainer/PlayerPage/UpgradeCostPopup
 @onready var _stats_title_label: Label = $SharedBottomArea/StatsPanel/TitleLabel
 @onready var _stats_body_label: Label = $SharedBottomArea/StatsPanel/BodyLabel
@@ -106,8 +114,6 @@ var _active_detail_entry: Resource = null
 @onready var _storage_detail_icon: TextureRect = $SharedBottomArea/StorageDetailPanel/ItemIcon
 @onready var _storage_detail_name: Label = $SharedBottomArea/StorageDetailPanel/NameLabel
 @onready var _storage_detail_body: Label = $SharedBottomArea/StorageDetailPanel/BodyLabel
-
-var _dynamic_slot_popup_current_icon: Button = null
 
 
 func _ready() -> void:
@@ -122,15 +128,13 @@ func _ready() -> void:
 	Magnetide.apply_label_fonts(self)
 	_dynamic_slot_popup.visible = false
 	_dynamic_slot_popup_stats_panel.visible = false
-	if _dynamic_slot_popup_current_stats:
-		_dynamic_slot_popup_current_stats.autowrap_mode = TextServer.AUTOWRAP_WORD_SMART
+	_dynamic_slot_popup_compare_panel.visible = false
 	_upgrade_cost_popup.visible = false
 	_clear_storage_detail()
 	_dynamic_slot_popup.z_index = 30
 	_upgrade_cost_popup.z_index = 5
 	_configure_dynamic_popup_mouse_blocking()
 	_configure_upgrade_popup_layout()
-	_ensure_dynamic_slot_popup_current_icon()
 	_discover_slots()
 	_sync_research_unlocks_to_loadout()
 
@@ -415,32 +419,10 @@ func _configure_dynamic_popup_mouse_blocking() -> void:
 	var blocker := _dynamic_slot_popup.get_node_or_null("MouseBlocker") as Control
 	if blocker != null:
 		blocker.mouse_filter = Control.MOUSE_FILTER_STOP
-	for panel_name in ["CurrentItemPanel", "ItemListPanel", "ItemDetailPanel"]:
+	for panel_name in ["ItemListPanel", "ItemDetailPanel", "ItemDetailPanelCompare"]:
 		var panel := _dynamic_slot_popup.get_node_or_null(panel_name) as Control
 		if panel != null:
 			panel.mouse_filter = Control.MOUSE_FILTER_STOP
-
-
-func _ensure_dynamic_slot_popup_current_icon() -> void:
-	if _dynamic_slot_popup_current_cutout == null:
-		return
-	_dynamic_slot_popup_current_cutout.color = Color(0.09, 0.12, 0.17, 0.96)
-	_dynamic_slot_popup_current_cutout.position = Vector2(0.0, 0.0)
-	_dynamic_slot_popup_current_cutout.size = Vector2(76.0, 66.0)
-	_dynamic_slot_popup_current_cutout.custom_minimum_size = Vector2(76.0, 66.0)
-	_dynamic_slot_popup_current_icon = _dynamic_slot_popup_current_cutout.get_node_or_null("CurrentIcon") as Button
-	if _dynamic_slot_popup_current_icon != null:
-		return
-
-	_dynamic_slot_popup_current_icon = Button.new()
-	_dynamic_slot_popup_current_icon.name = "CurrentIcon"
-	_dynamic_slot_popup_current_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_dynamic_slot_popup_current_icon.set_anchors_preset(Control.PRESET_TOP_LEFT)
-	_dynamic_slot_popup_current_icon.position = Vector2(0.0, 0.0)
-	_dynamic_slot_popup_current_icon.size = Vector2(76.0, 66.0)
-	_dynamic_slot_popup_current_icon.custom_minimum_size = Vector2(76.0, 66.0)
-	_dynamic_slot_popup_current_icon.expand_icon = true
-	_dynamic_slot_popup_current_cutout.add_child(_dynamic_slot_popup_current_icon)
 
 
 func _get_compact_slot_select_button(slot_id: StringName) -> Button:
@@ -752,6 +734,7 @@ func _toggle_dynamic_slot_popup(
 	_active_player_augment_index = augment_index
 	_dynamic_slot_popup.visible = should_show
 	_dynamic_slot_popup_stats_panel.visible = false
+	_dynamic_slot_popup_compare_panel.visible = false
 	_active_detail_entry = null
 	if _dynamic_item_list_title != null:
 		_dynamic_item_list_title.text = list_title
@@ -760,12 +743,20 @@ func _toggle_dynamic_slot_popup(
 		_clear_storage_detail()
 		_position_dynamic_slot_popup()
 		_populate_dynamic_item_list()
-		_refresh_current_dynamic_item_stats()
+		# Always open scrolled to the top, regardless of where the list was left last time.
+		# The deferred set re-applies it once the container has sorted its freshly-added rows.
+		if _dynamic_item_list_scroll != null:
+			_dynamic_item_list_scroll.scroll_vertical = 0
+			_dynamic_item_list_scroll.set_deferred("scroll_vertical", 0)
+		# Re-run the layout once the list container has sorted its freshly-added rows,
+		# so the panels are aligned on the first show rather than only after a re-open.
+		call_deferred("_layout_dynamic_popup_panels")
 
 
 func _close_dynamic_slot_popup() -> void:
 	_dynamic_slot_popup.visible = false
 	_dynamic_slot_popup_stats_panel.visible = false
+	_dynamic_slot_popup_compare_panel.visible = false
 	_active_dynamic_slot_id = &""
 	_active_dynamic_slot_kind = &""
 	_active_dynamic_slot_button = null
@@ -777,9 +768,11 @@ func _position_dynamic_slot_popup() -> void:
 	if _dynamic_slot_popup == null or _active_dynamic_slot_button == null:
 		return
 
-	# The popup is a top-level child (so it renders on top of everything and wins
-	# input), so anchor it to the button's screen position directly.
-	_dynamic_slot_popup.global_position = _active_dynamic_slot_button.get_global_rect().position
+	# The popup is a top-level child (so it renders on top of everything and wins input).
+	# Open it directly to the right of the slot's icon — the slot stays visible to the left
+	# and reads as the current item — aligned to the icon's top.
+	var button_rect := _active_dynamic_slot_button.get_global_rect()
+	_dynamic_slot_popup.global_position = Vector2(button_rect.end.x + POPUP_SLOT_MARGIN, button_rect.position.y)
 
 
 func _show_dynamic_item_stats(entry: Resource) -> void:
@@ -788,38 +781,124 @@ func _show_dynamic_item_stats(entry: Resource) -> void:
 		return
 
 	_active_detail_entry = entry
-	# A hidden entry keeps its identity masked in the detail panel too: no name,
-	# stats, or description are revealed until its unlock dependency is met.
-	if _is_catalog_entry_hidden(entry):
-		_dynamic_slot_popup_stats_name.text = HIDDEN_ENTRY_NAME
-		if _dynamic_slot_popup_stats_equipped:
-			_dynamic_slot_popup_stats_equipped.visible = false
-		_dynamic_slot_popup_stats_desc.text = "Locked. Unlock the previous weapon to reveal this one."
-		_dynamic_slot_popup_stats_status.text = "[color=#%s]LOCKED[/color]\n%s" % [
-			DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
-			_colorize_requirement("Requires the previous weapon", false),
-		]
-		_resize_detail_panel_to_fit(entry)
-		_dynamic_slot_popup_stats_panel.visible = true
-		return
-
-	_dynamic_slot_popup_stats_name.text = _catalog_entry_display_name(entry)
-	# EQUIPPED lives in the header (right of the name) so it's always visible and
-	# never pushed off-screen by a long description.
-	if _dynamic_slot_popup_stats_equipped:
-		_dynamic_slot_popup_stats_equipped.visible = _is_catalog_entry_equipped(entry)
-	# Description (scrolls / expands vertically) and a pinned status row below it.
-	_dynamic_slot_popup_stats_desc.text = _format_catalog_item_description(entry)
-	_dynamic_slot_popup_stats_status.text = _build_catalog_status_row(entry)
-	_resize_detail_panel_to_fit(entry)
+	_render_detail_panel(_dynamic_slot_popup_stats_panel, entry)
 	_dynamic_slot_popup_stats_panel.visible = true
 
+	# QoL comparison: when hovering an item that isn't the one equipped in THIS slot, show
+	# the slot's equipped item in a second panel to its right for a side-by-side read. A
+	# hidden (masked) entry, or hovering this slot's own equipped item, shows no comparison.
+	var compare_entry := _get_equipped_catalog_entry()
+	var show_compare := compare_entry != null \
+		and not _is_catalog_entry_hidden(entry) \
+		and not _is_catalog_entry_equipped_in_active_slot(entry)
+	if show_compare:
+		_render_detail_panel(_dynamic_slot_popup_compare_panel, compare_entry)
+	_dynamic_slot_popup_compare_panel.visible = show_compare
 
-## Grow the detail panel so the item name (plus the EQUIPPED badge) fits at full
-## width without ellipsis; the description wraps to that width. The popup grows to
-## encompass the wider panel, which stays anchored to the right of the list.
-func _resize_detail_panel_to_fit(entry: Resource) -> void:
-	var panel := _dynamic_slot_popup_stats_panel
+	_layout_detail_panels()
+	# Re-fit deferred so the body columns re-apply their margins once the rich-text rows
+	# have sorted to the new width — otherwise the first hover shows wrong body margins.
+	call_deferred("_refit_detail_panels", entry)
+
+
+## The catalog entry for the item equipped in the CURRENTLY-OPEN slot (not one merely
+## equipped in another slot of the same kind), or null if this slot is empty. Feeds the
+## comparison panel.
+func _get_equipped_catalog_entry() -> Resource:
+	var equipped_item := _active_slot_equipped_item()
+	if equipped_item == null:
+		return null
+	for entry in _get_active_catalog_entries():
+		if _catalog_entry_matches_item(entry, equipped_item):
+			return entry
+	return null
+
+
+## The item equipped in the currently-open dynamic slot (by kind + this slot's index), or
+## null if the slot is empty.
+func _active_slot_equipped_item() -> Resource:
+	var slot := _station_slots.get(_active_dynamic_slot_id, null) as DynamicUpgradeSlot
+	if slot == null:
+		return null
+	return _get_equipped_item_for_slot(slot)
+
+
+## True when `entry`'s item is the one equipped in the currently-open slot specifically —
+## unlike _is_catalog_entry_equipped, which matches equipment in any slot of the kind.
+func _is_catalog_entry_equipped_in_active_slot(entry: Resource) -> bool:
+	return _catalog_entry_matches_item(entry, _active_slot_equipped_item())
+
+
+func _catalog_entry_matches_item(entry: Resource, item: Resource) -> bool:
+	if item == null:
+		return false
+	var item_data := _catalog_entry_item_data(entry)
+	if item_data == null:
+		return false
+	if item_data is HeldItemData and item is HeldItemData:
+		return _same_equipment_data(item_data as HeldItemData, item as HeldItemData)
+	return ItemData.is_same_item(item_data as ItemData, item as ItemData)
+
+
+## Populate one detail panel's labels for `entry` (masking a still-hidden entry) and size
+## it to fit. Works for either the primary (hovered) or comparison (equipped) panel.
+func _render_detail_panel(panel: Control, entry: Resource) -> void:
+	if panel == null or entry == null:
+		return
+	var name_label := panel.get_node_or_null("HeaderRow/NameLabel") as Label
+	var equipped_label := panel.get_node_or_null("HeaderRow/EquippedLabel") as Label
+	var desc_label := panel.get_node_or_null("BodyColumn/DescriptionLabel") as RichTextLabel
+	var status_label := panel.get_node_or_null("BodyColumn/StatusLabel") as RichTextLabel
+	# A hidden entry keeps its identity masked: no name, stats, or description are
+	# revealed until its unlock dependency is met.
+	if _is_catalog_entry_hidden(entry):
+		if name_label != null:
+			name_label.text = HIDDEN_ENTRY_NAME
+		if equipped_label != null:
+			equipped_label.visible = false
+		if desc_label != null:
+			desc_label.text = "Locked. Unlock the previous weapon to reveal this one."
+		if status_label != null:
+			status_label.text = "[color=#%s]LOCKED[/color]\n%s" % [
+				DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
+				_colorize_requirement("Requires the previous weapon", false),
+			]
+	else:
+		if name_label != null:
+			name_label.text = _catalog_entry_display_name(entry)
+		# EQUIPPED lives in the header (right of the name) so it's always visible and
+		# never pushed off-screen by a long description.
+		if equipped_label != null:
+			equipped_label.visible = _is_catalog_entry_equipped(entry)
+		# Description (scrolls / expands vertically) and a pinned status row below it.
+		if desc_label != null:
+			desc_label.text = _format_catalog_item_description(entry)
+		if status_label != null:
+			status_label.text = _build_catalog_status_row(entry)
+	_size_detail_panel(panel, entry)
+
+
+## Re-fit the currently-shown detail panels. Called deferred after a hover so the body
+## columns re-apply their margins once the rich-text rows have sorted to the new width.
+func _refit_detail_panels(entry: Resource) -> void:
+	if entry != _active_detail_entry:
+		return
+	if _dynamic_slot_popup == null or not _dynamic_slot_popup.visible:
+		return
+	if _dynamic_slot_popup_stats_panel == null or not _dynamic_slot_popup_stats_panel.visible:
+		return
+	_size_detail_panel(_dynamic_slot_popup_stats_panel, entry)
+	if _dynamic_slot_popup_compare_panel != null and _dynamic_slot_popup_compare_panel.visible:
+		var compare_entry := _get_equipped_catalog_entry()
+		if compare_entry != null:
+			_size_detail_panel(_dynamic_slot_popup_compare_panel, compare_entry)
+	_layout_detail_panels()
+
+
+## Size one detail panel so the item name (plus the EQUIPPED badge) fits at full width
+## without ellipsis; the description wraps to that width. Height is never touched. The
+## popup width is finalized separately in _layout_detail_panels.
+func _size_detail_panel(panel: Control, entry: Resource) -> void:
 	if panel == null:
 		return
 	var equipped := _is_catalog_entry_equipped(entry)
@@ -846,15 +925,12 @@ func _resize_detail_panel_to_fit(entry: Resource) -> void:
 		# it isn't flush against the panel edge.
 		var header_width := inner_width - (DETAIL_EQUIPPED_RIGHT_MARGIN if equipped else 0.0)
 		header.size = Vector2(header_width, header.size.y)
-	if _dynamic_slot_popup_stats_body_column != null:
+	var body := panel.get_node_or_null("BodyColumn") as Control
+	if body != null:
 		# Fixed height (never read back its own grown size) so the VBox stays bounded:
 		# the description fills panel_height - status_height and scrolls past that.
 		var body_height := panel.size.y - DETAIL_BODY_TOP_INSET - DETAIL_BODY_BOTTOM_INSET
-		_dynamic_slot_popup_stats_body_column.size = Vector2(inner_width, body_height)
-
-	# Grow the popup to include the (possibly wider) detail panel at its position.
-	if _dynamic_slot_popup != null:
-		_dynamic_slot_popup.size = Vector2(panel.position.x + detail_width, _dynamic_slot_popup.size.y)
+		body.size = Vector2(inner_width, body_height)
 
 
 ## Bottom status row of the detail panel: for a locked item, LOCKED + the RP
@@ -969,7 +1045,6 @@ func _refresh_loadout_ui() -> void:
 	if _dynamic_slot_popup != null and _dynamic_slot_popup.visible:
 		_populate_dynamic_item_list()
 	_populate_storage_slots(_get_storage_entries())
-	_refresh_current_dynamic_item_stats()
 	_refresh_stats_panel()
 	_refresh_storage_scrap_counter()
 	_refresh_research_points_display()
@@ -1197,7 +1272,8 @@ func _populate_dynamic_item_list() -> void:
 			button.pressed.connect(_equip_dynamic_item_from_popup.bind(entry))
 		max_needed_width = maxf(max_needed_width, _measure_dynamic_entry_width(entry, font))
 
-	_apply_dynamic_list_width(max_needed_width)
+	_dynamic_list_content_width = max_needed_width
+	_layout_dynamic_popup_panels()
 
 
 ## Width an entry button needs to show its full name alongside the fixed icon and
@@ -1222,32 +1298,80 @@ func _measure_dynamic_entry_width(entry: Resource, font: Font) -> float:
 		+ DYNAMIC_ENTRY_NAME_SLACK
 
 
-## Resize only the center list panel to `content_width`, shifting the detail panel
-## right and growing the popup container. Other panels keep their size.
-func _apply_dynamic_list_width(content_width: float) -> void:
+## Lay the popup panels out left-to-right, each sized horizontally to its own content and
+## never in height. Widths come from font metrics (not from container layout that only
+## settles a frame later), so the arrangement is correct on the very first show — no need
+## to re-open the popup for it to align. The region over the slot is left transparent so
+## the slot itself reads as the current item.
+##   • Item-list panel: fits the widest entry (measured at population) and the title.
+##   • Detail panel: anchored right of the list at its minimum width; it grows per hovered
+##     item in _size_detail_panel, and _layout_detail_panels adds the comparison panel and
+##     keeps the popup width in sync.
+func _layout_dynamic_popup_panels() -> void:
+	if _dynamic_slot_popup == null or not _dynamic_slot_popup.visible:
+		return
 	var list_panel := _dynamic_slot_popup.get_node_or_null("ItemListPanel") as Control
 	if list_panel == null or _dynamic_item_list == null:
 		return
 
-	var list_width := clampf(content_width, DYNAMIC_LIST_MIN_WIDTH, DYNAMIC_LIST_MAX_WIDTH)
-	var panel_width := list_width + DYNAMIC_LIST_PANEL_MARGIN * 2.0
-
-	list_panel.size = Vector2(panel_width, list_panel.size.y)
-	_dynamic_item_list.size = Vector2(list_width, _dynamic_item_list.size.y)
+	var content_width := _dynamic_list_content_width
 	if _dynamic_item_list_title != null:
-		_dynamic_item_list_title.size = Vector2(list_width, _dynamic_item_list_title.size.y)
+		content_width = maxf(content_width, _get_label_natural_text_width(_dynamic_item_list_title))
+	var list_width := clampf(content_width, DYNAMIC_LIST_MIN_WIDTH, DYNAMIC_LIST_MAX_WIDTH)
+	# Reserve room for a vertical scrollbar only when the rows actually overflow the
+	# fixed viewport, so the list panel keeps sizing to its content.
+	var entry_count := _dynamic_item_list.get_child_count()
+	var content_height := 0.0
+	if entry_count > 0:
+		content_height = entry_count * WEAPON_LIST_ENTRY_SIZE.y + (entry_count - 1) * DYNAMIC_ENTRY_SEPARATION
+	var scroll_width := list_width
+	if content_height > DYNAMIC_LIST_VIEWPORT_HEIGHT:
+		scroll_width += DYNAMIC_LIST_SCROLLBAR_ALLOWANCE
+	var list_panel_width := scroll_width + DYNAMIC_LIST_PANEL_MARGIN * 2.0
+	# The list is the leftmost content; the popup itself is positioned just to the right of
+	# the slot (see _position_dynamic_slot_popup), so the list starts flush at its left.
+	var list_left := 0.0
+
+	list_panel.position = Vector2(list_left, list_panel.position.y)
+	list_panel.size = Vector2(list_panel_width, list_panel.size.y)
+	if _dynamic_item_list_scroll != null:
+		_dynamic_item_list_scroll.size = Vector2(scroll_width, DYNAMIC_LIST_VIEWPORT_HEIGHT)
+	if _dynamic_item_list_title != null:
+		_dynamic_item_list_title.size = Vector2(scroll_width, _dynamic_item_list_title.size.y)
+	# Rows keep the measured content width; with a scrollbar the viewport gives them
+	# exactly that (scroll_width - scrollbar), so text never slips under the scrollbar.
 	for child in _dynamic_item_list.get_children():
 		if child is Control:
 			var entry_control := child as Control
 			entry_control.custom_minimum_size = Vector2(list_width, entry_control.custom_minimum_size.y)
 
-	# Detail panel is reset to its minimum width here (it grows per hovered item in
-	# _resize_detail_panel_to_fit) and anchored to the right of the widened list.
+	# Anchor the primary detail panel to the right of the list. It keeps its current
+	# (possibly hover-grown) width while showing so a refresh doesn't collapse it; the
+	# comparison panel and final popup width are finalized in _layout_detail_panels.
 	if _dynamic_slot_popup_stats_panel != null:
-		var detail_left := list_panel.position.x + panel_width + DYNAMIC_DETAIL_GAP
+		var detail_left := list_left + list_panel_width + DYNAMIC_PANEL_GAP
+		if not _dynamic_slot_popup_stats_panel.visible:
+			_dynamic_slot_popup_stats_panel.size = Vector2(
+				DETAIL_PANEL_MIN_WIDTH, _dynamic_slot_popup_stats_panel.size.y
+			)
 		_dynamic_slot_popup_stats_panel.position = Vector2(detail_left, _dynamic_slot_popup_stats_panel.position.y)
-		_dynamic_slot_popup_stats_panel.size = Vector2(DETAIL_PANEL_MIN_WIDTH, _dynamic_slot_popup_stats_panel.size.y)
-		_dynamic_slot_popup.size = Vector2(detail_left + DETAIL_PANEL_MIN_WIDTH, _dynamic_slot_popup.size.y)
+	_layout_detail_panels()
+
+
+## Position the comparison panel to the right of the primary detail panel (only when it's
+## shown) and grow the popup to enclose whichever panels are visible. The primary panel's
+## left edge is set by _layout_dynamic_popup_panels; this only reads it.
+func _layout_detail_panels() -> void:
+	var primary := _dynamic_slot_popup_stats_panel
+	if primary == null:
+		return
+	var right_edge := primary.position.x + primary.size.x
+	var compare := _dynamic_slot_popup_compare_panel
+	if compare != null and compare.visible:
+		compare.position = Vector2(right_edge + DYNAMIC_PANEL_GAP, primary.position.y)
+		right_edge = compare.position.x + compare.size.x
+	if _dynamic_slot_popup != null:
+		_dynamic_slot_popup.size = Vector2(right_edge, _dynamic_slot_popup.size.y)
 
 
 func _connect_dynamic_entry_detail_hover(control: Control, entry: Resource) -> void:
@@ -1348,20 +1472,32 @@ func _configure_dynamic_entry_button(button: Button, entry: Resource, is_locked:
 	if is_locked:
 		var unlock_button := Button.new()
 		unlock_button.name = "UnlockButton"
-		unlock_button.custom_minimum_size = Vector2(62.0, 28.0)
+		unlock_button.custom_minimum_size = Vector2(DYNAMIC_ENTRY_UNLOCK_ICON_SIZE, DYNAMIC_ENTRY_UNLOCK_ICON_SIZE)
 		unlock_button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 		unlock_button.mouse_filter = Control.MOUSE_FILTER_STOP
-		unlock_button.text = "Unlock"
 		# Enabled only once the dependency chain is satisfied; a hidden entry keeps a
-		# greyed, non-interactive Unlock button until its predecessor is unlocked.
+		# greyed, non-interactive lock icon until its predecessor is unlocked.
 		unlock_button.disabled = is_hidden
-		unlock_button.clip_text = true
-		unlock_button.add_theme_font_size_override("font_size", 16)
-		_set_button_font_color(unlock_button, LOCKED_ENTRY_MODULATE if is_hidden else Color.WHITE)
-		Magnetide.apply_label_font(unlock_button)
 		_connect_dynamic_entry_detail_hover(unlock_button, entry)
 		unlock_button.pressed.connect(_on_dynamic_entry_unlock_pressed.bind(entry))
 		row.add_child(unlock_button)
+
+		# The RP-unlock affordance is a lock-open icon. A nested TextureRect (rather than
+		# Button.expand_icon) fills the button reliably regardless of the theme's content
+		# margins, so the icon reads at a legible size in the small trailing button.
+		var lock_icon := TextureRect.new()
+		lock_icon.name = "LockIcon"
+		lock_icon.texture = UpgradeSlot.UNLOCK_ICON
+		lock_icon.set_anchors_preset(Control.PRESET_FULL_RECT)
+		lock_icon.offset_left = DYNAMIC_ENTRY_UNLOCK_ICON_INSET
+		lock_icon.offset_top = DYNAMIC_ENTRY_UNLOCK_ICON_INSET
+		lock_icon.offset_right = -DYNAMIC_ENTRY_UNLOCK_ICON_INSET
+		lock_icon.offset_bottom = -DYNAMIC_ENTRY_UNLOCK_ICON_INSET
+		lock_icon.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		lock_icon.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		lock_icon.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		lock_icon.self_modulate = LOCKED_ENTRY_MODULATE if is_hidden else Color.WHITE
+		unlock_button.add_child(lock_icon)
 
 	var level_label := Label.new()
 	level_label.name = "LevelLabel"
@@ -1748,46 +1884,6 @@ func _get_item_state_for_data(item_data: Resource) -> Resource:
 	return _run_loadout.get_item_state(item_data.get("item_id") as StringName)
 
 
-func _get_current_dynamic_item() -> Resource:
-	if _run_loadout == null:
-		return null
-	match _active_dynamic_slot_kind:
-		&"weapon":
-			return _run_loadout.equipped_weapon
-		&"player_augment", &"ship_augment", &"magnet_augment":
-			return _get_owner_augment(_active_dynamic_slot_kind, _active_player_augment_index)
-	return null
-
-
-func _refresh_current_dynamic_item_stats() -> void:
-	if _dynamic_slot_popup_current_stats == null:
-		return
-	var item_data := _get_current_dynamic_item()
-	if item_data == null:
-		_dynamic_slot_popup_current_stats.text = ""
-		if _dynamic_slot_popup_current_icon != null:
-			_dynamic_slot_popup_current_icon.icon = null
-		return
-
-	if _dynamic_slot_popup_current_icon != null:
-		if item_data is HeldItemData:
-			_dynamic_slot_popup_current_icon.icon = _get_equipment_icon(item_data as HeldItemData)
-		else:
-			_dynamic_slot_popup_current_icon.icon = _get_upgradeable_item_icon(item_data, null)
-
-	var body := ""
-	if item_data is WeaponData:
-		body = _format_weapon_stats(_get_weapon_preview(item_data as WeaponData))
-	elif item_data is AugmentData:
-		var state := _get_item_state_for_data(item_data)
-		if item_data.has_method("get_current_effect_summary"):
-			body = String(item_data.call("get_current_effect_summary", state))
-	var item_name := _get_upgradeable_item_name(item_data)
-	if item_data is HeldItemData:
-		item_name = _get_equipment_name(item_data as HeldItemData)
-	_dynamic_slot_popup_current_stats.text = "%s\n%s" % [item_name, body]
-
-
 func _get_upgrade(upgrade_id: StringName) -> Resource:
 	if _run_loadout == null:
 		return null
@@ -2006,17 +2102,6 @@ func _get_magnet_augment(index: int) -> AugmentData:
 	return _run_loadout.magnet_augments[index] as AugmentData
 
 
-func _get_owner_augment(slot_kind: StringName, index: int) -> AugmentData:
-	match slot_kind:
-		&"player_augment":
-			return _get_player_augment(index)
-		&"ship_augment":
-			return _get_ship_augment(index)
-		&"magnet_augment":
-			return _get_magnet_augment(index)
-	return null
-
-
 func _get_upgradeable_item_name(item_data: Resource) -> String:
 	if item_data == null:
 		return "Empty"
@@ -2070,12 +2155,6 @@ func _build_ship_stats_text() -> String:
 		"  Capacity: %s" % _stringify_stat_value(_run_loadout.magnet_hold_capacity),
 	])
 	return "\n".join(lines)
-
-
-func _format_weapon_stats(weapon: WeaponData) -> String:
-	# Current-item panel shows stats only. Upgrade cost lives on the upgrade
-	# button popup, not here.
-	return _format_resource_stats(weapon, WEAPON_STAT_PROPERTIES)
 
 
 func _format_resource_stats(resource: Resource, property_names: Array[String]) -> String:
