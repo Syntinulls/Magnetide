@@ -15,7 +15,11 @@ var _active_player: Node2D = null
 var _active_magnet: Magnet = null
 var _sfx: SfxPlayer = null
 var _bgm: BgmPlayer = null
+var _debug_panel: Node = null
 var research_ui_input_captured: bool = false
+## True while the debug panel is capturing input (pointer over the panel or one
+## of its text fields focused).
+var debug_ui_input_captured: bool = false
 
 
 func _ready() -> void:
@@ -30,6 +34,16 @@ func _ready() -> void:
 
 func register_app_root(app_root_node: Node) -> void:
 	_active_app_root = app_root_node
+
+
+func register_debug_panel(panel: Node) -> void:
+	_debug_panel = panel
+
+
+## True while an overlay UI (research station UI, debug panel) is capturing
+## input that gameplay should ignore.
+func is_ui_input_captured() -> bool:
+	return research_ui_input_captured or debug_ui_input_captured
 
 
 func register_run_context(
@@ -88,6 +102,12 @@ func apply_label_fonts(root: Node) -> void:
 var app_root: Node:
 	get:
 		return _active_app_root
+
+var debug_panel: Node:
+	get:
+		if _debug_panel and is_instance_valid(_debug_panel):
+			return _debug_panel
+		return null
 
 var digital_font: Font:
 	get:

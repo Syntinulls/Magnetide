@@ -23,7 +23,7 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 @export var thruster_near_stop_left_lead: float = 0.35
 @export var thruster_speed_change_epsilon: float = 1.0
 @export_group("Debug")
-@export var spawn_debug_research_artifact_in_storage: bool = true
+@export var spawn_debug_research_artifact_in_storage: bool = false
 ## X is 0 so the debug artifact spawns at the horizontal center of the storage
 ## area (the ship/screen center); Y is where it drops in from before settling.
 @export var debug_research_artifact_storage_offset: Vector2 = Vector2(0.0, -90.0)
@@ -78,7 +78,8 @@ func _ready() -> void:
 	current_health = max_health
 	_ensure_storage_items_root()
 	_create_storage_zone()
-	_spawn_debug_research_artifact_in_storage()
+	if spawn_debug_research_artifact_in_storage:
+		spawn_debug_research_artifact()
 	_create_thruster_audio()
 	call_deferred("_initialize_thrusters")
 	_setup_pylon_highlight()
@@ -463,13 +464,12 @@ func _commit_artifact_if_collected(item: SalvageItem) -> void:
 			tracker.mark_collected(item.rarity)
 
 
-func _spawn_debug_research_artifact_in_storage() -> void:
-	if not spawn_debug_research_artifact_in_storage:
-		return
+## Mints a generic common research artifact into storage (same path as the
+## magnet's artifact roll). Debug only.
+func spawn_debug_research_artifact() -> void:
 	if DEBUG_ARTIFACT_POOLS == null:
 		return
 
-	# Mint a generic common artifact (same path as the magnet's artifact roll).
 	var artifact_data := DEBUG_ARTIFACT_POOLS.make_artifact(SalvageItemData.ItemRarity.COMMON)
 	if artifact_data == null:
 		return

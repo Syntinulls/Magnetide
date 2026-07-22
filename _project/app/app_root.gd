@@ -297,6 +297,19 @@ func abandon_run_to_station() -> void:
 	_show_station_screen()
 
 
+## Debug-panel navigation wrappers around the private screen-flow methods.
+func show_main_menu() -> void:
+	_show_main_menu()
+
+
+func show_station_screen() -> void:
+	_show_station_screen()
+
+
+func show_map_screen() -> void:
+	_show_map_screen()
+
+
 func _collect_salvage_screen_storage() -> void:
 	if _save_data == null or _active_screen == null:
 		return

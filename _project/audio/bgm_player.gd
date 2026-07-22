@@ -8,15 +8,15 @@ extends Node
 ## the per-track fade envelope lives on the AudioStreamPlayer.volume_db (0 dB =
 ## audible, SILENT_VOLUME_DB = faded out), while the global music level the
 ## player chooses (options menu, later) lives on the Music bus. A debug scale is
-## layered on top of the bus level for the mute-cycle hotkey.
+## layered on top of the bus level for the debug panel's mute cycle.
 
 const DEFAULT_BGM_FOLDER := "res://_project/audio/bgm/"
 const MUSIC_BUS_NAME := "Music"
 const DEFAULT_FADE_SECONDS := 1.5
 ## volume_db a fully faded-out player sits at (low enough to be inaudible).
 const SILENT_VOLUME_DB := -60.0
-## Debug hotkey cycles the bus level through these scales of the options volume.
-## Starting index is the last entry so the first press lands on the first entry.
+## The debug mute cycle steps the bus level through these scales of the options
+## volume. Starting index is the last entry so the first step lands on the first.
 const DEBUG_VOLUME_SCALES: Array[float] = [0.5, 0.0, 1.0]
 
 var _current_player: AudioStreamPlayer = null
@@ -29,15 +29,6 @@ var _enabled := true
 func _ready() -> void:
 	_ensure_music_bus()
 	_apply_bus_volume()
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if not event.is_action_pressed("debug_cycle_music"):
-		return
-	if event is InputEventKey and event.echo:
-		return
-	cycle_debug_volume()
-	get_viewport().set_input_as_handled()
 
 
 ## Fade in a track and loop it. If the requested track is already the current one

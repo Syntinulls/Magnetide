@@ -50,6 +50,9 @@ _project/                    All game content. (Root level is reserved for engin
 │                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
 │                            icon_crate, icon_research_point). A sprite used by exactly one
 │                            concept belongs to that concept, not here.
+├── debug/                   Development-only tooling: the debug panel overlay
+│                            (debug_panel.*), active only in debug builds or behind the
+│                            --debug-panel launch flag. See specs/debug_panel.md.
 ├── enemies/                 Enemy entity, data, AI, and spawning.
 │   ├── enemy.*              The enemy body + state machine.
 │   ├── enemy_data.gd        Stats/config resource.

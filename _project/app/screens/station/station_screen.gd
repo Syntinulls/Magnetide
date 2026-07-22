@@ -149,6 +149,10 @@ func _ready() -> void:
 	_update_pan_buttons()
 	_refresh_loadout_ui()
 
+	var debug_panel := Magnetide.debug_panel
+	if debug_panel != null and debug_panel.has_signal("save_data_changed"):
+		debug_panel.connect("save_data_changed", _on_debug_panel_save_data_changed)
+
 
 func set_run_loadout(loadout: RunLoadout) -> void:
 	_run_loadout = loadout
@@ -166,6 +170,15 @@ func set_save_data(save_data: Resource) -> void:
 		set_run_loadout(_save_data.get("current_run_loadout") as RunLoadout)
 	elif _is_ready:
 		_refresh_loadout_ui()
+
+
+## The debug panel mutated save data (currency, storage, unlocks, upgrades)
+## behind the screen's back; re-sync and redraw everything from live state.
+func _on_debug_panel_save_data_changed() -> void:
+	_sync_research_unlocks_to_loadout()
+	if _run_loadout:
+		_run_loadout.prepare_for_run()
+	_refresh_loadout_ui()
 
 
 func _sync_research_unlocks_to_loadout() -> void:
@@ -188,27 +201,10 @@ func _notification(what: int) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if event.is_action_pressed("debug_add_research_points"):
-		if not (event is InputEventKey and event.echo):
-			_debug_grant_research_points()
-			get_viewport().set_input_as_handled()
-		return
 	if event is InputEventMouseButton and event.pressed and event.button_index == MOUSE_BUTTON_LEFT:
 		if _dynamic_slot_popup.visible and not _dynamic_slot_popup.get_global_rect().has_point(event.global_position):
 			if _active_dynamic_slot_button == null or not _active_dynamic_slot_button.get_global_rect().has_point(event.global_position):
 				_close_dynamic_slot_popup()
-
-
-## Debug ("P"): grant one research point of every rarity, then refresh the UI so
-## the readout and unlock affordability update immediately.
-func _debug_grant_research_points() -> void:
-	var save_data := _save_data as AppSaveData
-	if save_data == null:
-		return
-	save_data.add_research_points(SalvageItemData.ItemRarity.COMMON, 1)
-	save_data.add_research_points(SalvageItemData.ItemRarity.RARE, 1)
-	save_data.add_research_points(SalvageItemData.ItemRarity.EPIC, 1)
-	_refresh_loadout_ui()
 
 
 func _layout_pages() -> void:

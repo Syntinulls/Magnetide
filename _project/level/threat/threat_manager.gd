@@ -31,8 +31,6 @@ const THREAT_SEGMENT_SIZE: float = MAX_THREAT / float(LEVEL_COUNT)
 const DEFAULT_RUN_DURATION_SECONDS: float = 1200.0
 const DEFAULT_STORM_COUNTDOWN_SECONDS: float = 30.0
 
-const DEBUG_THREAT_ADD_AMOUNT: float = 20.0
-
 ## Passive threat gained per second. Constant for the whole run.
 @export var passive_threat_per_second: float = MAX_THREAT / DEFAULT_RUN_DURATION_SECONDS
 ## Seconds the player has to decide once the threat cap is reached.
@@ -97,18 +95,6 @@ func _process(delta: float) -> void:
 	if _current_threat >= _cap_ceiling():
 		return
 	add_threat(passive_threat_per_second * delta)
-
-
-func _unhandled_input(event: InputEvent) -> void:
-	if Engine.is_editor_hint():
-		return
-	if event is InputEventKey and event.pressed and not event.echo:
-		if event.keycode == KEY_T:
-			add_threat(DEBUG_THREAT_ADD_AMOUNT)
-			get_viewport().set_input_as_handled()
-		elif event.keycode == KEY_U:
-			raise_cap()
-			get_viewport().set_input_as_handled()
 
 
 func add_threat(amount: float) -> void:
