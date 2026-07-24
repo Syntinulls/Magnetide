@@ -190,6 +190,24 @@ func force_spawn_random_enemy() -> void:
 		_track_enemy(enemy)
 
 
+## Force-spawn a single enemy by its profile id, ignoring the spawn timer and
+## threat/magnet gating. Debug only.
+func force_spawn_enemy_by_id(id: StringName) -> void:
+	_cleanup_living_enemies()
+
+	for profile in enemy_profiles:
+		if profile == null or profile.id != id:
+			continue
+		var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
+		if valid_zones.is_empty():
+			return
+		var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
+		var enemy := _spawn_enemy(profile, _sample_point_in_zone(zone))
+		if enemy != null:
+			_track_enemy(enemy)
+		return
+
+
 func _spawn_enemy(profile: EnemySpawnProfile, spawn_global_position: Vector2) -> Enemy:
 	var enemy_scene := profile.enemy_scene if profile.enemy_scene != null else DEFAULT_ENEMY_SCENE
 	var enemy := enemy_scene.instantiate() as Enemy

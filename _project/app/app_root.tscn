@@ -1,6 +1,7 @@
-[gd_scene load_steps=13 format=3]
+[gd_scene load_steps=14 format=3]
 
 [ext_resource type="Script" path="res://_project/app/app_root.gd" id="1_script"]
+[ext_resource type="PackedScene" path="res://_project/debug/debug_panel.tscn" id="13_debug_panel"]
 [ext_resource type="Script" path="res://_project/level/level_definition.gd" id="2_level_definition"]
 [ext_resource type="PackedScene" path="res://_project/level/level.tscn" id="3_level_scene"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/main_menu/main_menu_screen.tscn" id="4_main_menu"]
@@ -71,3 +72,5 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
+
+[node name="DebugPanel" parent="." instance=ExtResource("13_debug_panel")]

@@ -53,6 +53,8 @@ var gravity: float = 1600.0
 var input_enabled: bool = true
 ## While true the player can neither receive nor deal damage (departure cutscene).
 var combat_disabled: bool = false
+## Debug god mode: while true the player ignores all incoming damage.
+var invulnerable: bool = false
 var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
@@ -280,7 +282,7 @@ func _physics_process(delta: float) -> void:
 
 	if _cinematic_walk_active:
 		_process_cinematic_walk(delta)
-	elif input_enabled and not Magnetide.research_ui_input_captured:
+	elif input_enabled and not Magnetide.is_ui_input_captured():
 		var mouse_pos := get_global_mouse_position()
 		
 		# Facing is purely based on mouse X vs player X
@@ -550,6 +552,12 @@ func _init_weapon_ammo() -> void:
 		if wpn and wpn.magazine_size > 0:
 			_weapon_ammo[i] = wpn.magazine_size
 	clear_progress_bar(&"reload")
+
+
+## Reseeds every weapon slot to a full magazine and cancels any reload in
+## progress (debug panel).
+func refill_ammo() -> void:
+	_init_weapon_ammo()
 
 
 ## True when the current equipment is a weapon that uses a magazine (drives the
@@ -1616,7 +1624,7 @@ func on_looting_ended() -> void:
 
 
 func take_damage(amount: float, source: Node = null) -> void:
-	if current_health <= 0.0 or combat_disabled:
+	if current_health <= 0.0 or combat_disabled or invulnerable:
 		return
 	if amount <= 0.0:
 		return
@@ -1643,7 +1651,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 ## Environmental acid-storm drain. Bypasses the kinetic shield and reduces
 ## health directly (a continuous DoT, not a discrete hit).
 func apply_storm_damage(amount: float) -> void:
-	if amount <= 0.0 or current_health <= 0.0 or combat_disabled:
+	if amount <= 0.0 or current_health <= 0.0 or combat_disabled or invulnerable:
 		return
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
