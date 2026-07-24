@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://ck1ou073l8w0e"
-path="res://.godot/imported/recycler_grind.ogg-3ce5e2b138929d912243aa62cd908298.oggvorbisstr"
+path="res://.godot/imported/recycler_grind.ogg-dceb06f26e6b663d5282fb16fa8a0955.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/recycler_grind.ogg"
-dest_files=["res://.godot/imported/recycler_grind.ogg-3ce5e2b138929d912243aa62cd908298.oggvorbisstr"]
+source_file="res://_project/audio/sfx/ship/recycler_grind.ogg"
+dest_files=["res://.godot/imported/recycler_grind.ogg-dceb06f26e6b663d5282fb16fa8a0955.oggvorbisstr"]
 
 [params]
 

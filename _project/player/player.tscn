@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
-[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/held_item_data.gd" id="2_fbtnf"]
+[ext_resource type="Script" path="res://_project/items/held_item_data.gd" id="2_fbtnf"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="2_hitbox"]
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="2_pistol"]
 [ext_resource type="Script" uid="uid://cgymaxcdced8s" path="res://_project/player/player.gd" id="2_script"]

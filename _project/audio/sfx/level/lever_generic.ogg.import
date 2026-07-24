@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://b7n43u5b6e2qa"
-path="res://.godot/imported/lever_generic.ogg-0f7ef99b9d0048fd02a43026eb389f86.oggvorbisstr"
+path="res://.godot/imported/lever_generic.ogg-b261946cb66a852fdc7d7065f37ce3fc.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/lever_generic.ogg"
-dest_files=["res://.godot/imported/lever_generic.ogg-0f7ef99b9d0048fd02a43026eb389f86.oggvorbisstr"]
+source_file="res://_project/audio/sfx/level/lever_generic.ogg"
+dest_files=["res://.godot/imported/lever_generic.ogg-b261946cb66a852fdc7d7065f37ce3fc.oggvorbisstr"]
 
 [params]
 

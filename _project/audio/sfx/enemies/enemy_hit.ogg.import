@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://ddiltgo1gan07"
-path="res://.godot/imported/enemy_hit.ogg-6b969e84cd1ce21487d31372f4f135af.oggvorbisstr"
+path="res://.godot/imported/enemy_hit.ogg-2a7704bf2b885fab6e77622bc48c1aba.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/enemy_hit.ogg"
-dest_files=["res://.godot/imported/enemy_hit.ogg-6b969e84cd1ce21487d31372f4f135af.oggvorbisstr"]
+source_file="res://_project/audio/sfx/enemies/enemy_hit.ogg"
+dest_files=["res://.godot/imported/enemy_hit.ogg-2a7704bf2b885fab6e77622bc48c1aba.oggvorbisstr"]
 
 [params]
 

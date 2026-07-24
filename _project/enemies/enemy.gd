@@ -206,7 +206,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 	_flash_white()
 	_play_hit_shake()
 	if Magnetide.sfx:
-		Magnetide.sfx.play("enemy_hit.ogg", -6)
+		Magnetide.sfx.play("enemies/enemy_hit.ogg", -6)
 
 	if current_health <= 0.0:
 		_enter_state(State.DEATH)

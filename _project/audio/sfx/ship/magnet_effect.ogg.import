@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://cxx8dkst2wx7r"
-path="res://.godot/imported/magnet_effect.ogg-9c79af4d522eae787417ee509d789e29.oggvorbisstr"
+path="res://.godot/imported/magnet_effect.ogg-5d9b83e2162ae3f288760f987883ca40.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/magnet_effect.ogg"
-dest_files=["res://.godot/imported/magnet_effect.ogg-9c79af4d522eae787417ee509d789e29.oggvorbisstr"]
+source_file="res://_project/audio/sfx/ship/magnet_effect.ogg"
+dest_files=["res://.godot/imported/magnet_effect.ogg-5d9b83e2162ae3f288760f987883ca40.oggvorbisstr"]
 
 [params]
 

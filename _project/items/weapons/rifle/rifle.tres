@@ -2,11 +2,11 @@
 
 [ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/weapons/rifle/bullet_s_1.png" id="1_0akki"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="1_kecvl"]
-[ext_resource type="AudioStream" uid="uid://dktme3sc6n1hl" path="res://_project/audio/sfx/machine_gun_shot_1.ogg" id="2_isxej"]
-[ext_resource type="AudioStream" uid="uid://jseq7elf0gtn" path="res://_project/audio/sfx/machine_gun_shot_2.ogg" id="3_jjplp"]
-[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/rifle_reload.ogg" id="3_s025t"]
+[ext_resource type="AudioStream" uid="uid://dktme3sc6n1hl" path="res://_project/audio/sfx/weapons/old/machine_gun_shot_1.ogg" id="2_isxej"]
+[ext_resource type="AudioStream" uid="uid://jseq7elf0gtn" path="res://_project/audio/sfx/weapons/old/machine_gun_shot_2.ogg" id="3_jjplp"]
+[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/weapons/old/rifle_reload.ogg" id="3_s025t"]
 [ext_resource type="Texture2D" uid="uid://dk3riqmmjuxp7" path="res://_project/items/weapons/rifle/player_item_rifle.png" id="4_02vt3"]
-[ext_resource type="AudioStream" uid="uid://blccv5n4fy5eh" path="res://_project/audio/sfx/machine_gun_shot_3.ogg" id="4_5mfk1"]
+[ext_resource type="AudioStream" uid="uid://blccv5n4fy5eh" path="res://_project/audio/sfx/weapons/old/machine_gun_shot_3.ogg" id="4_5mfk1"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
 
 [resource]

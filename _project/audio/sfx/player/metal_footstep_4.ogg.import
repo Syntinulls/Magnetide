@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://c1jv3yllr5egh"
-path="res://.godot/imported/metal_footstep_4.ogg-4a0e53ea9b5037fe37aaa8933f2002ea.oggvorbisstr"
+path="res://.godot/imported/metal_footstep_4.ogg-a6389ccd4c48975cb4a9201a5bb0bf9c.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/metal_footstep_4.ogg"
-dest_files=["res://.godot/imported/metal_footstep_4.ogg-4a0e53ea9b5037fe37aaa8933f2002ea.oggvorbisstr"]
+source_file="res://_project/audio/sfx/player/metal_footstep_4.ogg"
+dest_files=["res://.godot/imported/metal_footstep_4.ogg-a6389ccd4c48975cb4a9201a5bb0bf9c.oggvorbisstr"]
 
 [params]
 

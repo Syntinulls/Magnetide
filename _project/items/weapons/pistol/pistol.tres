@@ -1,10 +1,14 @@
 [gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://cc8kmfmsfhbqx"]
 
 [ext_resource type="Texture2D" uid="uid://gut2v7pvh6jx" path="res://_project/items/weapons/rifle/bullet_s_1.png" id="1_bullet"]
-[ext_resource type="AudioStream" uid="uid://cctssv68bu0wi" path="res://_project/audio/sfx/pistol_shoot.ogg" id="2_u3rwr"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="2_weapon_data"]
+[ext_resource type="AudioStream" uid="uid://bxyj8pim8urrx" path="res://_project/audio/sfx/weapons/gun_pistol_shot_01.wav" id="2_xgqhb"]
+[ext_resource type="AudioStream" uid="uid://dkw5w8lukjhke" path="res://_project/audio/sfx/weapons/gun_pistol_shot_02.wav" id="3_iadlh"]
 [ext_resource type="Texture2D" uid="uid://dxb6c3t28m83c" path="res://_project/items/weapons/pistol/player_item_pistol.png" id="3_pistol_sprite"]
-[ext_resource type="AudioStream" uid="uid://bfwbkg0flmuib" path="res://_project/audio/sfx/pistol_reload.ogg" id="4_oa0lu"]
+[ext_resource type="AudioStream" uid="uid://dpsqpmv6aqf0g" path="res://_project/audio/sfx/weapons/gun_pistol_shot_03.wav" id="4_q8r5n"]
+[ext_resource type="AudioStream" uid="uid://r8i86bl8e5eb" path="res://_project/audio/sfx/weapons/gun_pistol_shot_04.wav" id="5_f4i0q"]
+[ext_resource type="AudioStream" uid="uid://qv7dno14mfm4" path="res://_project/audio/sfx/weapons/gun_pistol_shot_05.wav" id="6_mcpoq"]
+[ext_resource type="AudioStream" uid="uid://ddd5xwc4kkd4h" path="res://_project/audio/sfx/weapons/gun_pistol_reload.wav" id="8_xgqhb"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
 
 [resource]
@@ -13,11 +17,14 @@ damage = 7.0
 fire_rate = 3.0
 bullet_speed = 1700.0
 bullet_sprite = ExtResource("1_bullet")
-fire_sfx = Array[AudioStream]([ExtResource("2_u3rwr")])
-last_shot_sfx = Array[AudioStream]([ExtResource("2_u3rwr")])
+fire_sfx = Array[AudioStream]([ExtResource("2_xgqhb"), ExtResource("3_iadlh"), ExtResource("4_q8r5n"), ExtResource("5_f4i0q"), ExtResource("6_mcpoq")])
+fire_sfx_volume_db = -13.0
+last_shot_sfx = Array[AudioStream]([ExtResource("2_xgqhb"), ExtResource("3_iadlh"), ExtResource("4_q8r5n"), ExtResource("5_f4i0q"), ExtResource("6_mcpoq")])
+last_shot_sfx_volume_db = -13.0
 magazine_size = 12
 reload_time = 1.0
-reload_sfx = ExtResource("4_oa0lu")
+reload_sfx = ExtResource("8_xgqhb")
+reload_sfx_volume_db = -4.0
 hotbar_icon = ExtResource("3_pistol_sprite")
 weapon_sprite = ExtResource("3_pistol_sprite")
 weapon_offset = Vector2(-18.764, 22.215)

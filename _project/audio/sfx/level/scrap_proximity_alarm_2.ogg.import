@@ -3,12 +3,12 @@
 importer="oggvorbisstr"
 type="AudioStreamOggVorbis"
 uid="uid://bn0st6scqbnuw"
-path="res://.godot/imported/scrap_proximity_alarm_2.ogg-933dfe0635a3b6cf37b8b16bc10ed5d2.oggvorbisstr"
+path="res://.godot/imported/scrap_proximity_alarm_2.ogg-ff8d04b7484a16e406aea6ee3f9215ac.oggvorbisstr"
 
 [deps]
 
-source_file="res://_project/audio/sfx/scrap_proximity_alarm_2.ogg"
-dest_files=["res://.godot/imported/scrap_proximity_alarm_2.ogg-933dfe0635a3b6cf37b8b16bc10ed5d2.oggvorbisstr"]
+source_file="res://_project/audio/sfx/level/scrap_proximity_alarm_2.ogg"
+dest_files=["res://.godot/imported/scrap_proximity_alarm_2.ogg-ff8d04b7484a16e406aea6ee3f9215ac.oggvorbisstr"]
 
 [params]
 

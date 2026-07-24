@@ -12,7 +12,7 @@ extends Node
 
 enum Mode { SLOW, NORMAL, BOOST }
 
-const THRUSTER_LOOP_PATH := "res://_project/audio/sfx/thrusters_medium.ogg"
+const THRUSTER_LOOP_PATH := "res://_project/audio/sfx/ship/thrusters_medium.ogg"
 
 ## Target pitch_scale per mode. Higher = higher-pitched and faster playback.
 const MODE_PITCH := {

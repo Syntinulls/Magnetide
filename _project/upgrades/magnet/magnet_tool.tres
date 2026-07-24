@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="WeaponUpgradeData" format=3 uid="uid://lqf0nruwvlyv"]
 
-[ext_resource type="Script" path="res://_project/upgrades/weapon_upgrade_data.gd" id="1_upg"]
+[ext_resource type="Script" uid="uid://ceah5i3ei12k2" path="res://_project/upgrades/weapon_upgrade_data.gd" id="1_upg"]
 [ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/upgrades/upgrade_level_cost.gd" id="2_lvl"]
 [ext_resource type="Script" uid="uid://dtvpm1y1ax7o6" path="res://_project/salvage/salvage_item_cost.gd" id="3_ic"]
 [ext_resource type="Resource" uid="uid://bf48rmqcheua0" path="res://_project/salvage/catalog/magnet.tres" id="4_a"]
