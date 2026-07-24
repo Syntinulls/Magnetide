@@ -45,9 +45,9 @@ signal item_removed(item: SalvageItem)
 @export var running_sfx_pitch_scale: float = 1.0
 ## One of these is picked at random each time a pulled item clangs onto the magnet.
 @export var impact_sfx_filenames: Array[String] = [
-	"ship/metal_impact_1.ogg",
-	"ship/metal_impact_2.ogg",
-	"ship/metal_impact_3.ogg",
+	"salvage/salvage_impact_3.wav",
+	"salvage/salvage_impact_4.wav",
+	"salvage/salvage_impact_5.wav",
 ]
 @export var impact_sfx_volume_db: float = -6.0
 ## Each impact is pitched by a random amount in ±this range (0 = no variation).
