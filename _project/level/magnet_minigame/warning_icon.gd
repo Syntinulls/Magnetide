@@ -12,9 +12,9 @@ const ALERT_RED: Texture2D = preload("res://_project/level/magnet_minigame/sprit
 
 ## Scrap-proximity alarm played once each time the warning escalates to a stage.
 const PROXIMITY_ALARM_SFX := {
-	Phase.YELLOW: "scrap_proximity_alarm_1.ogg",
-	Phase.ORANGE: "scrap_proximity_alarm_2.ogg",
-	Phase.RED: "scrap_proximity_alarm_3.ogg",
+	Phase.YELLOW: "level/scrap_proximity_alarm_1.ogg",
+	Phase.ORANGE: "level/scrap_proximity_alarm_2.ogg",
+	Phase.RED: "level/scrap_proximity_alarm_3.ogg",
 }
 const PROXIMITY_ALARM_VOLUME_DB := -3.0
 

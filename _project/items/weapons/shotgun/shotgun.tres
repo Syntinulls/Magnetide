@@ -3,10 +3,10 @@
 [ext_resource type="Texture2D" uid="uid://dwyl5e1wioava" path="res://_project/items/weapons/shotgun/bullet_shotgun.png" id="1_ocsqx"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="1_weapon_data"]
 [ext_resource type="Script" uid="uid://bwa44jt60lssd" path="res://_project/items/weapons/shotgun/shotgun_fire_behavior.gd" id="2_fire_behavior"]
-[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/shotgun_shoot.ogg" id="3_m1fjq"]
+[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/weapons/old/shotgun_shoot.ogg" id="3_m1fjq"]
 [ext_resource type="Texture2D" uid="uid://lj3kn1kn64j0" path="res://_project/items/weapons/shotgun/player_item_shotgun.png" id="3_tjpe0"]
-[ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/shotgun_reload.ogg" id="5_ausdr"]
-[ext_resource type="AudioStream" uid="uid://gjurcvjgjo2x" path="res://_project/audio/sfx/shotgun_shoot_noammo.ogg" id="5_wegy8"]
+[ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/weapons/old/shotgun_reload.ogg" id="5_ausdr"]
+[ext_resource type="AudioStream" uid="uid://gjurcvjgjo2x" path="res://_project/audio/sfx/weapons/old/shotgun_shoot_noammo.ogg" id="5_wegy8"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
 
 [sub_resource type="Resource" id="Resource_shotgun_fire_behavior"]

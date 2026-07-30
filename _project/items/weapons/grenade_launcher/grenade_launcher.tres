@@ -4,8 +4,8 @@
 [ext_resource type="Texture2D" uid="uid://c8xwvb45trt03" path="res://_project/items/weapons/grenade_launcher/grenadepill_s_1.png" id="2_bullet"]
 [ext_resource type="PackedScene" uid="uid://d1v2b1g1lgv81" path="res://_project/items/weapons/grenade_launcher/explosion.tscn" id="3_explosion"]
 [ext_resource type="Texture2D" uid="uid://deixaucfd5om" path="res://_project/items/weapons/grenade_launcher/player_item_launcher.png" id="4_launcher_sprite"]
-[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/shotgun_shoot.ogg" id="5_fire_sfx"]
-[ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/shotgun_reload.ogg" id="6_reload_sfx"]
+[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/weapons/old/shotgun_shoot.ogg" id="5_fire_sfx"]
+[ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/weapons/old/shotgun_reload.ogg" id="6_reload_sfx"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
 
 [resource]

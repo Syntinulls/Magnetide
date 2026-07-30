@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="UpgradeData" format=3 uid="uid://bupgmagnethp"]
 
-[ext_resource type="Script" path="res://_project/upgrades/upgrade_data.gd" id="1_upg"]
+[ext_resource type="Script" uid="uid://dx60i1yslsqy0" path="res://_project/upgrades/upgrade_data.gd" id="1_upg"]
 [ext_resource type="Script" uid="uid://cpcefwj3pxd64" path="res://_project/upgrades/upgrade_level_cost.gd" id="2_lvl"]
 [ext_resource type="Script" uid="uid://dtvpm1y1ax7o6" path="res://_project/salvage/salvage_item_cost.gd" id="3_ic"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/salvage/catalog/battery.tres" id="4_a"]

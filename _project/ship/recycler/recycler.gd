@@ -10,7 +10,7 @@ signal trash_recycled(scrap_origin: Vector2)
 @export var recycle_blade_pass_duration: float = 0.85
 @export var blade_spin_speed: float = 6.0
 @export_group("Audio")
-@export var grind_sfx_filename: String = "recycler_grind.ogg"
+@export var grind_sfx_filename: String = "ship/recycler_grind.ogg"
 @export var grind_sfx_volume_db: float = -2.0
 
 const RENDER_Z_MAX: int = 0

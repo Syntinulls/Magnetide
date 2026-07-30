@@ -40,14 +40,14 @@ signal item_removed(item: SalvageItem)
 @export var hitbox_path: NodePath = NodePath("Hitbox")
 @export var enemy_target_point_paths: Array[NodePath] = []
 @export_group("Audio")
-@export var running_sfx_filename: String = "magnet_effect.ogg"
+@export var running_sfx_filename: String = "ship/magnet_effect.ogg"
 @export var running_sfx_volume_db: float = -12.0
 @export var running_sfx_pitch_scale: float = 1.0
 ## One of these is picked at random each time a pulled item clangs onto the magnet.
 @export var impact_sfx_filenames: Array[String] = [
-	"metal_impact_1.ogg",
-	"metal_impact_2.ogg",
-	"metal_impact_3.ogg",
+	"salvage/salvage_impact_3.wav",
+	"salvage/salvage_impact_4.wav",
+	"salvage/salvage_impact_5.wav",
 ]
 @export var impact_sfx_volume_db: float = -6.0
 ## Each impact is pitched by a random amount in ±this range (0 = no variation).

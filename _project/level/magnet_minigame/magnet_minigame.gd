@@ -3,9 +3,9 @@ class_name MagnetMinigame
 
 enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACCELERATING }
 
-const LEVER_PULL_GENERIC_SFX := "lever_generic.ogg"
-const LEVER_PULL_FINAL_SFX := "lever_pull1.ogg"
-const LEVER_RELEASE_SFX := "lever_release.ogg"
+const LEVER_PULL_GENERIC_SFX := "level/lever_generic.ogg"
+const LEVER_PULL_FINAL_SFX := "level/lever_pull1.ogg"
+const LEVER_RELEASE_SFX := "level/lever_release.ogg"
 
 @export_group("Cooldown")
 ## Minimum time between magnet windows in seconds.

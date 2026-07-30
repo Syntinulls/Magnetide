@@ -22,23 +22,23 @@ const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
 const ProjectileScript: Script = preload("res://_project/combat/projectile.gd")
 const ScrapMetalTexture: Texture2D = preload("res://_project/common/sprites/scrap_metal.png")
 const MACHINE_GUN_SHOOT_SFX: Array[String] = [
-	"machine_gun_shot_1.ogg",
-	"machine_gun_shot_2.ogg",
-	"machine_gun_shot_3.ogg"
+	"weapons/machine_gun_shot_1.ogg",
+	"weapons/machine_gun_shot_2.ogg",
+	"weapons/machine_gun_shot_3.ogg"
 ]
-const MAGNET_GUN_LOOP_SFX := "magnet_effect.ogg"
+const MAGNET_GUN_LOOP_SFX := "ship/magnet_effect.ogg"
 const MAGNET_GUN_LOOP_VOLUME_DB := -10.0
 const MAGNET_GUN_LOOP_PITCH_SCALE := 1.35
-const JUMP_SFX := "jump_metal_1_1.ogg"
+const JUMP_SFX := "player/jump_metal_1_1.ogg"
 const JUMP_SFX_VOLUME_DB := -6.0
-const LAND_SFX := "jump_metal_1_2.ogg"
+const LAND_SFX := "player/jump_metal_1_2.ogg"
 const LAND_SFX_VOLUME_DB := -6.0
 const FOOTSTEP_SFX: Array[String] = [
-	"metal_footstep_1.ogg",
-	"metal_footstep_2.ogg",
-	"metal_footstep_3.ogg",
-	"metal_footstep_4.ogg",
-	"metal_footstep_5.ogg"
+	"player/metal_footstep_1.ogg",
+	"player/metal_footstep_2.ogg",
+	"player/metal_footstep_3.ogg",
+	"player/metal_footstep_4.ogg",
+	"player/metal_footstep_5.ogg"
 ]
 const FOOTSTEP_SFX_VOLUME_DB := -6.0
 const FOOTSTEP_INTERVAL_SECONDS := 0.28

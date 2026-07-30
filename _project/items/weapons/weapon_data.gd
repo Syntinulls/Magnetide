@@ -59,7 +59,7 @@ class_name WeaponData
 	set(value):
 		reload_time = maxf(value, 0.0)
 ## Sound played when a reload begins for this weapon.
-@export var reload_sfx: AudioStream = preload("res://_project/audio/sfx/rifle_reload.ogg")
+@export var reload_sfx: AudioStream = preload("res://_project/audio/sfx/weapons/old/rifle_reload.ogg")
 ## Volume of the reload sound, in decibels (0 = unchanged, negative = quieter).
 @export var reload_sfx_volume_db: float = 0.0
 
