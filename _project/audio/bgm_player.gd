@@ -3,16 +3,35 @@ extends Node
 
 ## Background-music playback service.
 ##
-## Plays a single looping track at a time on a dedicated "Music" bus and
-## crossfades between tracks. Two independent levels of volume are kept apart:
-## the per-track fade envelope lives on the AudioStreamPlayer.volume_db (0 dB =
-## audible, SILENT_VOLUME_DB = faded out), while the global music level the
-## player chooses (options menu, later) lives on the Music bus. A debug scale is
-## layered on top of the bus level for the debug panel's mute cycle.
+## Plays one category playlist at a time on a dedicated "Music" bus. Each
+## category maps to a subfolder of audio/bgm/; every audio file in that folder
+## is in the category's rotation, so adding a track is a file drop, not a code
+## edit. Tracks play once each: when one ends, a short silent gap passes, then
+## another random track from the same category fades in. Switching categories
+## crossfades immediately.
+##
+## Two independent levels of volume are kept apart: the per-track fade envelope
+## lives on the AudioStreamPlayer.volume_db (0 dB = audible, SILENT_VOLUME_DB =
+## faded out), while the global music level the player chooses (options menu,
+## later) lives on the Music bus. A debug scale is layered on top of the bus
+## level for the debug panel's mute cycle.
 
-const DEFAULT_BGM_FOLDER := "res://_project/audio/bgm/"
+enum Category { MAIN_MENU, STATION, IN_RUN, STORM, BOSS }
+
+const BGM_ROOT := "res://_project/audio/bgm/"
+const CATEGORY_FOLDERS := {
+	Category.MAIN_MENU: "main_menu",
+	Category.STATION: "station",
+	Category.IN_RUN: "run",
+	Category.STORM: "storm",
+	Category.BOSS: "boss",
+}
+const STREAM_EXTENSIONS: Array[String] = ["ogg", "mp3", "wav"]
 const MUSIC_BUS_NAME := "Music"
 const DEFAULT_FADE_SECONDS := 1.5
+## Silent gap between one track ending naturally and the next fading in.
+const TRACK_GAP_MIN_SECONDS := 3.0
+const TRACK_GAP_MAX_SECONDS := 5.0
 ## volume_db a fully faded-out player sits at (low enough to be inaudible).
 const SILENT_VOLUME_DB := -60.0
 ## The debug mute cycle steps the bus level through these scales of the options
@@ -20,56 +39,67 @@ const SILENT_VOLUME_DB := -60.0
 const DEBUG_VOLUME_SCALES: Array[float] = [0.5, 0.0, 1.0]
 
 var _current_player: AudioStreamPlayer = null
-var _current_track_key: String = ""
+var _current_track_path: String = ""
+var _current_category: int = -1
+## Shuffle-bag memory per category: tracks already played this cycle. A track
+## repeats only after every other track in its category has played. Kept per
+## category so leaving and re-entering one (run -> storm -> run) resumes its
+## cycle instead of restarting it.
+var _played_by_category: Dictionary = {}
+## Bumped on every interrupt (category switch, fade-out, stop) so in-flight
+## track-finished callbacks and gap timers from the old playlist cancel.
+var _playlist_epoch: int = 0
 var _music_volume: float = 1.0
 var _debug_scale_index: int = DEBUG_VOLUME_SCALES.size() - 1
 var _enabled := true
 
 
 func _ready() -> void:
+	# Music keeps playing (and fades keep tweening) while the tree is paused.
+	process_mode = Node.PROCESS_MODE_ALWAYS
 	_ensure_music_bus()
 	_apply_bus_volume()
 
 
-## Fade in a track and loop it. If the requested track is already the current one
-## and still playing, this is a no-op so music stays continuous across callers
-## (e.g. holding the same track between the station and map screens).
-func play_track(track: Variant, fade_in_seconds: float = DEFAULT_FADE_SECONDS) -> void:
+## Start (or continue) a category's playlist. If the category is already the
+## active one this is a no-op, so music stays continuous across callers (e.g.
+## holding station music between the station and map screens). Switching
+## categories interrupts: the current track fades out while the first track of
+## the new category fades in. A category whose folder has no tracks yet fades
+## the music out to silence.
+func play_category(category: Category, fade_seconds: float = DEFAULT_FADE_SECONDS) -> void:
 	if not _enabled:
 		return
-	var resolved := _resolve_track(track)
-	if resolved.is_empty():
+	if int(category) == _current_category:
 		return
-	var key := resolved["key"] as String
-	if key == _current_track_key and _current_player and is_instance_valid(_current_player) and _current_player.playing:
+	_current_category = int(category)
+	_playlist_epoch += 1
+	var track_path := _pick_track(_current_category)
+	if track_path.is_empty():
+		_fade_out_and_free(_current_player, fade_seconds)
+		_current_player = null
+		_current_track_path = ""
 		return
-	_crossfade_to(resolved["stream"] as AudioStream, key, fade_in_seconds)
-
-
-## Crossfade from the current track to a random other track in the bgm folder.
-## Used when the run advances out of the acid storm into the next threat level.
-func fade_to_random_track(fade_seconds: float = DEFAULT_FADE_SECONDS) -> void:
-	if not _enabled:
-		return
-	var track := _pick_random_track()
-	if track.is_empty():
-		return
-	_crossfade_to(track["stream"] as AudioStream, track["key"] as String, fade_seconds)
+	_crossfade_to(track_path, fade_seconds)
 
 
 ## Fade the current track out and stop. Called when the end-run sequence begins.
 func fade_out(fade_seconds: float = DEFAULT_FADE_SECONDS) -> void:
+	_playlist_epoch += 1
+	_current_category = -1
 	_fade_out_and_free(_current_player, fade_seconds)
 	_current_player = null
-	_current_track_key = ""
+	_current_track_path = ""
 
 
 func stop() -> void:
+	_playlist_epoch += 1
+	_current_category = -1
 	if _current_player and is_instance_valid(_current_player):
 		_current_player.stop()
 		_current_player.queue_free()
 	_current_player = null
-	_current_track_key = ""
+	_current_track_path = ""
 
 
 func set_enabled(enabled: bool) -> void:
@@ -94,24 +124,49 @@ func cycle_debug_volume() -> void:
 	_apply_bus_volume()
 
 
-func _crossfade_to(stream: AudioStream, key: String, fade_seconds: float) -> void:
+func _crossfade_to(track_path: String, fade_seconds: float) -> void:
+	var stream := ResourceLoader.load(track_path, "AudioStream") as AudioStream
+	if stream == null:
+		push_warning("BgmPlayer could not load music file: %s" % track_path)
+		return
+
 	_fade_out_and_free(_current_player, fade_seconds)
 
 	var player := AudioStreamPlayer.new()
 	player.bus = MUSIC_BUS_NAME
 	player.volume_db = SILENT_VOLUME_DB
-	player.stream = _make_looping(stream)
+	player.stream = _make_one_shot(stream)
 	add_child(player)
+	player.finished.connect(_on_track_finished.bind(_playlist_epoch))
 	player.play()
 
 	_current_player = player
-	_current_track_key = key
+	_current_track_path = track_path
 
 	if fade_seconds <= 0.0:
 		player.volume_db = 0.0
 		return
 	var tween := create_tween()
 	tween.tween_property(player, "volume_db", 0.0, fade_seconds)
+
+
+## A track ended naturally: free its player, wait out the gap, then fade in
+## another random track from the active category.
+func _on_track_finished(epoch: int) -> void:
+	if epoch != _playlist_epoch:
+		return
+	if _current_player and is_instance_valid(_current_player):
+		_current_player.queue_free()
+	_current_player = null
+
+	var gap := randf_range(TRACK_GAP_MIN_SECONDS, TRACK_GAP_MAX_SECONDS)
+	await get_tree().create_timer(gap).timeout
+	if epoch != _playlist_epoch or not _enabled:
+		return
+	var track_path := _pick_track(_current_category)
+	if track_path.is_empty():
+		return
+	_crossfade_to(track_path, DEFAULT_FADE_SECONDS)
 
 
 func _fade_out_and_free(player: AudioStreamPlayer, fade_seconds: float) -> void:
@@ -126,6 +181,52 @@ func _fade_out_and_free(player: AudioStreamPlayer, fade_seconds: float) -> void:
 	tween.tween_callback(player.queue_free)
 
 
+## Random track from the category's shuffle bag: tracks the category hasn't
+## played this cycle. When every track has played, the bag resets — avoiding an
+## immediate back-to-back repeat of the last track when there is more than one.
+func _pick_track(category: int) -> String:
+	var tracks := _scan_category_tracks(category)
+	if tracks.is_empty():
+		return ""
+
+	var played: Array = _played_by_category.get_or_add(category, [])
+	var unplayed := tracks.filter(func(track: String) -> bool: return not track in played)
+	if unplayed.is_empty():
+		played.clear()
+		unplayed = tracks.duplicate()
+		if unplayed.size() > 1:
+			unplayed.erase(_current_track_path)
+
+	var path: String = unplayed[randi() % unplayed.size()]
+	played.append(path)
+	return path
+
+
+## Lists the audio files in a category's folder. In exported builds imported
+## audio is listed via its .import/.remap stub, so those suffixes are stripped
+## before the extension check.
+func _scan_category_tracks(category: int) -> Array[String]:
+	if not CATEGORY_FOLDERS.has(category):
+		return []
+	var folder := BGM_ROOT.path_join(CATEGORY_FOLDERS[category])
+	var dir := DirAccess.open(folder)
+	if dir == null:
+		return []
+
+	var tracks: Array[String] = []
+	for file_name in dir.get_files():
+		var stream_name := file_name
+		if stream_name.ends_with(".import") or stream_name.ends_with(".remap"):
+			stream_name = stream_name.get_basename()
+		if not stream_name.get_extension().to_lower() in STREAM_EXTENSIONS:
+			continue
+		var path := folder.path_join(stream_name)
+		if path in tracks or not ResourceLoader.exists(path, "AudioStream"):
+			continue
+		tracks.append(path)
+	return tracks
+
+
 func _apply_bus_volume() -> void:
 	var bus_index := AudioServer.get_bus_index(MUSIC_BUS_NAME)
 	if bus_index == -1:
@@ -138,77 +239,15 @@ func _apply_bus_volume() -> void:
 		AudioServer.set_bus_volume_db(bus_index, linear_to_db(linear))
 
 
-## OGG/MP3 streams loop natively via their `loop` flag; duplicate so we never
-## mutate the shared cached resource other systems might reuse.
-func _make_looping(stream: AudioStream) -> AudioStream:
-	if "loop" in stream and not stream.loop:
-		var looping := stream.duplicate() as AudioStream
-		looping.loop = true
-		return looping
+## Rotation relies on the `finished` signal, which a looping stream never emits.
+## Duplicate before disabling the flag so the shared cached resource other
+## systems might reuse is never mutated.
+func _make_one_shot(stream: AudioStream) -> AudioStream:
+	if "loop" in stream and stream.loop:
+		var one_shot := stream.duplicate() as AudioStream
+		one_shot.loop = false
+		return one_shot
 	return stream
-
-
-func _pick_random_track() -> Dictionary:
-	var candidates: Array[String] = []
-	var dir := DirAccess.open(DEFAULT_BGM_FOLDER)
-	if dir == null:
-		return {}
-	for file_name in dir.get_files():
-		if file_name.get_extension().to_lower() != "ogg":
-			continue
-		var path := DEFAULT_BGM_FOLDER.path_join(file_name)
-		if path == _current_track_key:
-			continue
-		candidates.append(path)
-
-	# Only the current track exists: keep it looping rather than restart it.
-	if candidates.is_empty():
-		return {}
-
-	var path := candidates[randi() % candidates.size()]
-	if not ResourceLoader.exists(path, "AudioStream"):
-		return {}
-	var stream := ResourceLoader.load(path, "AudioStream") as AudioStream
-	if stream == null:
-		return {}
-	return {"stream": stream, "key": path}
-
-
-func _resolve_track(track: Variant) -> Dictionary:
-	if track is AudioStream:
-		var stream := track as AudioStream
-		var key := stream.resource_path
-		if key.is_empty():
-			key = "stream:%d" % stream.get_instance_id()
-		return {"stream": stream, "key": key}
-
-	if track is String or track is StringName:
-		var path := _resolve_filename(String(track).strip_edges())
-		if path.is_empty():
-			return {}
-		if not ResourceLoader.exists(path, "AudioStream"):
-			push_warning("BgmPlayer could not find music file: %s" % path)
-			return {}
-		var stream := ResourceLoader.load(path, "AudioStream") as AudioStream
-		if stream == null:
-			push_warning("BgmPlayer could not load music file: %s" % path)
-			return {}
-		return {"stream": stream, "key": path}
-
-	push_warning("BgmPlayer expected a filename or AudioStream, got: %s" % type_string(typeof(track)))
-	return {}
-
-
-func _resolve_filename(filename: String) -> String:
-	if filename.is_empty():
-		return ""
-	var root := DEFAULT_BGM_FOLDER.trim_suffix("/")
-	var resolved_path := root.path_join(filename).simplify_path()
-	if resolved_path != root and resolved_path.begins_with(root + "/"):
-		return resolved_path
-
-	push_warning("BgmPlayer filenames must resolve inside %s: %s" % [DEFAULT_BGM_FOLDER, filename])
-	return ""
 
 
 func _ensure_music_bus() -> void:

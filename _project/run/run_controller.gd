@@ -17,10 +17,6 @@ const DEPARTURE_BOOST_CAMERA_RATIO: float = 0.22
 const DEPARTURE_LEVEL_SPEED_EPSILON: float = 1.0
 const DEPARTURE_PLAYER_WALK_SPEED: float = 180.0
 
-## Track that fades in when a run is entered. Later threat levels crossfade to a
-## random track from the bgm folder as the run advances out of each acid storm.
-const LEVEL_ENTRY_BGM: String = "bgm_zone1.ogg"
-
 var _level_definition: LevelDefinition = null
 var _level: Node = null
 var _game_ui: Control = null
@@ -108,6 +104,8 @@ func _connect_runtime_signals() -> void:
 				pylon.departure_requested.connect(_on_departure_requested)
 	if _threat and not _threat.cap_raised.is_connected(_on_threat_cap_raised):
 		_threat.cap_raised.connect(_on_threat_cap_raised)
+	if _threat and not _threat.storm_arrived.is_connected(_on_storm_arrived):
+		_threat.storm_arrived.connect(_on_storm_arrived)
 
 
 func _process(delta: float) -> void:
@@ -394,12 +392,18 @@ func _on_enemy_killed(_enemy: Enemy) -> void:
 
 func _start_run_music() -> void:
 	if Magnetide.bgm:
-		Magnetide.bgm.play_track(LEVEL_ENTRY_BGM)
+		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
 
 
+func _on_storm_arrived() -> void:
+	if Magnetide.bgm:
+		Magnetide.bgm.play_category(BgmPlayer.Category.STORM)
+
+
+## Advancing out of an acid storm returns music to the in-run playlist.
 func _on_threat_cap_raised(_new_cap: int) -> void:
 	if Magnetide.bgm:
-		Magnetide.bgm.fade_to_random_track()
+		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
 
 
 func record_scrap_metal_collected(amount: int) -> void:

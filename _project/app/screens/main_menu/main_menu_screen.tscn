@@ -1,6 +1,51 @@
-[gd_scene format=3 uid="uid://dgev4ui17r143"]
+[gd_scene load_steps=9 format=3 uid="uid://dgev4ui17r143"]
 
 [ext_resource type="Script" uid="uid://c0qyxpdv63dbh" path="res://_project/app/screens/main_menu/main_menu_screen.gd" id="1_script"]
+[ext_resource type="Script" path="res://_project/app/screens/main_menu/star_field.gd" id="2_star_field"]
+[ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/common/sprites/star_particle.svg" id="3_star_particle"]
+
+[sub_resource type="Curve" id="Curve_star_alpha"]
+_data = [Vector2(0, 0), 0.0, 0.0, 0, 0, Vector2(0.12, 1), 0.0, 0.0, 0, 0, Vector2(0.88, 1), 0.0, 0.0, 0, 0, Vector2(1, 0), 0.0, 0.0, 0, 0]
+point_count = 4
+
+[sub_resource type="CurveTexture" id="CurveTexture_star_alpha"]
+curve = SubResource("Curve_star_alpha")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_far"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1420, 840, 1)
+angular_velocity_min = -500.0
+angular_velocity_max = -300.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.15
+scale_max = 0.7
+color = Color(0.72, 0.8, 1, 0.55)
+alpha_curve = SubResource("CurveTexture_star_alpha")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_mid"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1420, 840, 1)
+angular_velocity_min = 300.0
+angular_velocity_max = 500.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.2
+scale_max = 0.9
+color = Color(0.78, 0.84, 1, 0.65)
+alpha_curve = SubResource("CurveTexture_star_alpha")
+
+[sub_resource type="ParticleProcessMaterial" id="ParticleProcessMaterial_stars_near"]
+particle_flag_disable_z = true
+emission_shape = 3
+emission_box_extents = Vector3(1420, 840, 1)
+angular_velocity_min = -500.0
+angular_velocity_max = -300.0
+gravity = Vector3(0, 0, 0)
+scale_min = 0.25
+scale_max = 1.1
+color = Color(0.86, 0.9, 1, 0.85)
+alpha_curve = SubResource("CurveTexture_star_alpha")
 
 [node name="MainMenu" type="Control" unique_id=1254868277]
 layout_mode = 3
@@ -18,7 +63,38 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-color = Color(0.0431373, 0.0705882, 0.0941176, 0.92)
+color = Color(0.015, 0.02, 0.04, 1)
+
+[node name="StarField" type="Node2D" parent="."]
+position = Vector2(1280, 720)
+script = ExtResource("2_star_field")
+
+[node name="StarsFar" type="GPUParticles2D" parent="StarField"]
+amount = 150
+texture = ExtResource("3_star_particle")
+lifetime = 60.0
+preprocess = 60.0
+fixed_fps = 0
+visibility_rect = Rect2(-1500, -900, 3000, 1800)
+process_material = SubResource("ParticleProcessMaterial_stars_far")
+
+[node name="StarsMid" type="GPUParticles2D" parent="StarField"]
+amount = 90
+texture = ExtResource("3_star_particle")
+lifetime = 60.0
+preprocess = 60.0
+fixed_fps = 0
+visibility_rect = Rect2(-1500, -900, 3000, 1800)
+process_material = SubResource("ParticleProcessMaterial_stars_mid")
+
+[node name="StarsNear" type="GPUParticles2D" parent="StarField"]
+amount = 55
+texture = ExtResource("3_star_particle")
+lifetime = 60.0
+preprocess = 60.0
+fixed_fps = 0
+visibility_rect = Rect2(-1500, -900, 3000, 1800)
+process_material = SubResource("ParticleProcessMaterial_stars_near")
 
 [node name="CenterContainer" type="CenterContainer" parent="." unique_id=1789835475]
 layout_mode = 1
@@ -30,12 +106,12 @@ grow_vertical = 2
 
 [node name="VBoxContainer" type="VBoxContainer" parent="CenterContainer" unique_id=1409200106]
 layout_mode = 2
-theme_override_constants/separation = 64
+theme_override_constants/separation = 150
 
 [node name="TitleLabel" type="Label" parent="CenterContainer/VBoxContainer" unique_id=2079488368]
 layout_mode = 2
 size_flags_vertical = 3
-theme_override_font_sizes/font_size = 64
+theme_override_font_sizes/font_size = 112
 text = "Magnetide"
 horizontal_alignment = 1
 

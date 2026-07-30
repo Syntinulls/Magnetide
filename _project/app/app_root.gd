@@ -68,6 +68,7 @@ func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout
 
 func _show_main_menu() -> void:
 	_clear_run()
+	_play_screen_music(BgmPlayer.Category.MAIN_MENU)
 	var screen := _show_screen(main_menu_scene)
 	if screen and screen.has_method("set_continue_available"):
 		screen.set_continue_available(_has_continue_save())
@@ -79,6 +80,7 @@ func _show_main_menu() -> void:
 
 func _show_station_screen() -> void:
 	_clear_run()
+	_play_screen_music(BgmPlayer.Category.STATION)
 	var screen := _show_screen(station_screen_scene)
 	if screen == null:
 		return
@@ -94,6 +96,7 @@ func _show_station_screen() -> void:
 
 func _show_map_screen() -> void:
 	_clear_run()
+	_play_screen_music(BgmPlayer.Category.STATION)
 	var screen := _show_screen(map_screen_scene)
 	if screen == null:
 		return
@@ -106,6 +109,7 @@ func _show_map_screen() -> void:
 
 
 func _show_salvage_process_screen(result: RunResult) -> void:
+	_play_screen_music(BgmPlayer.Category.STATION)
 	var screen := _show_screen(salvage_process_scene)
 	if screen == null:
 		return
@@ -117,6 +121,7 @@ func _show_salvage_process_screen(result: RunResult) -> void:
 
 func _show_death_summary_screen(result: RunResult) -> void:
 	_clear_screen()
+	_play_screen_music(BgmPlayer.Category.STATION)
 
 	var popup := RunSummaryPopupScene.instantiate() as RunSummaryPopup
 	if popup == null:
@@ -144,6 +149,7 @@ func _show_run_summary_screen(result: RunResult) -> void:
 		_save_data.add_storage_entries(storage_entries)
 
 	_clear_screen()
+	_play_screen_music(BgmPlayer.Category.STATION)
 
 	var popup := RunSummaryPopupScene.instantiate() as RunSummaryPopup
 	if popup == null:
@@ -193,6 +199,11 @@ func _build_collected_entries(result: RunResult) -> Array[Dictionary]:
 				"from_salvage": false,
 			})
 	return entries
+
+
+func _play_screen_music(category: BgmPlayer.Category) -> void:
+	if Magnetide.bgm:
+		Magnetide.bgm.play_category(category)
 
 
 func _show_screen(scene: PackedScene) -> Control:

@@ -107,6 +107,17 @@ instead of 3, so it's the same number of shots with far more honest ammo readout
 
 ### Feel, Audio & Visuals
 
+**The game has music.** Every part of the game now has its own soundtrack — the main menu,
+the station (carried seamlessly across the map and salvage screens), and runs each draw from
+their own playlist of tracks. Songs play in a shuffled rotation (no repeats until you've
+heard them all), with a few seconds of quiet between tracks. When an acid storm hits, the
+run music gives way to storm music, and advancing to the next threat level brings the run
+playlist back.
+
+**The main menu is now a starry sky.** The flat backdrop is replaced with the drifting,
+twinkling star field from the departure cutscene over a deep-space black, and the Magnetide
+title stands larger and higher above the menu buttons.
+
 **Combat feels sharper.** Enemies no longer shake for half a second and pause before dying —
 they now pop instantly on death. Instead, they flinch and shake *when hit*, so damage reads
 immediately and kills are clean. Hit flashes now cover the whole enemy (a Mosquito's wings

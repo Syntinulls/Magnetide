@@ -164,6 +164,11 @@ definition resources — what a designer tunes — are never `Run`-prefixed (`Up
 `UpgradeEffect`, `UpgradeLevelCost`, `WeaponData`, `AugmentData`). Naming a definition `Run*`, or a
 state object without it, is the smell this rule prevents.
 
+Exception: music track files under `audio/bgm/` keep their source filenames
+verbatim (e.g. `1025487_Skyline.mp3`). Nothing references tracks by name — the
+BGM player scans its category folders — and preserving the original name keeps
+the track traceable to its source.
+
 File/class naming is 1:1: every `.gd` intended for reuse declares a `class_name`
 matching its file name. Scene-only glue scripts may omit `class_name` only if nothing
 references them by type.

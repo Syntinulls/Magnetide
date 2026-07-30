@@ -13,7 +13,7 @@
 [ext_resource type="Script" uid="uid://co7fiiw0csmn1" path="res://_project/level/threat/storm_controller.gd" id="13_storm"]
 [ext_resource type="Script" uid="uid://buauinykkgst" path="res://_project/level/threat/threat_manager.gd" id="13_threat"]
 [ext_resource type="Script" uid="uid://bde5lblfgvd6o" path="res://_project/enemies/spawning/enemy_spawner.gd" id="17_enemy_spawner"]
-[ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/level/decoration/sprites/star_particle.svg" id="19_star_particle"]
+[ext_resource type="Texture2D" uid="uid://c6a1q2emco2m2" path="res://_project/common/sprites/star_particle.svg" id="19_star_particle"]
 [ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/enemies/spawning/enemy_spawn_profile.gd" id="20_enemy_profile"]
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
 [ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/enemies/worm/worm_spawn_profile.tres" id="22_x74ax"]
