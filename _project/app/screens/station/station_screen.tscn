@@ -41,7 +41,6 @@
 [ext_resource type="Resource" uid="uid://7ub1wx666yjn" path="res://_project/items/magnet_tool/magnet_gun.tres" id="62_magnet_gun"]
 [ext_resource type="Resource" uid="uid://bsbo08m16krc6" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
 [ext_resource type="Resource" uid="uid://bsbo1kl5cs6p6" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
-[ext_resource type="Resource" uid="uid://bsbo1d1v2arc6" path="res://_project/items/stats/magnet_health.tres" id="65_maghp_item"]
 [ext_resource type="Resource" uid="uid://bsbo1d1vvthc6" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
@@ -703,19 +702,6 @@ theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
 theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Magnet"
-
-[node name="MagnetIntegrityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=1772654315]
-custom_minimum_size = Vector2(0, 112)
-layout_mode = 2
-size_flags_horizontal = 0
-theme_override_constants/separation = 0
-
-[node name="MagnetIntegritySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetIntegrityRow" unique_id=471185732 instance=ExtResource("17_upgrade_slot")]
-layout_mode = 2
-item = ExtResource("65_maghp_item")
-slot_id = &"magnet_integrity"
-display_name = "Integrity"
-static_icon = ExtResource("50_ic_magnet")
 
 [node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=265744000]
 custom_minimum_size = Vector2(0, 112)

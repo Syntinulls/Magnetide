@@ -132,6 +132,12 @@ layout_mode = 2
 size_flags_horizontal = 4
 text = "New Game"
 
+[node name="OptionsButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer"]
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+size_flags_horizontal = 4
+text = "Options"
+
 [node name="ExitButton" type="Button" parent="CenterContainer/VBoxContainer/VBoxContainer" unique_id=205118440]
 custom_minimum_size = Vector2(200, 48)
 layout_mode = 2

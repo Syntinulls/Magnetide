@@ -1644,6 +1644,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
+	DamageNumber.spawn(global_position, amount, DamageNumber.PLAYER_COLOR)
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
 

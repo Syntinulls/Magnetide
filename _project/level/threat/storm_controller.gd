@@ -2,15 +2,14 @@ extends Node
 class_name StormController
 
 ## Owns the acid storm. When ThreatManager's cap countdown expires (storm_arrived)
-## it continually drains the player, ship, and magnet at a slow constant rate and
-## shows a green acid vignette, until the player advances (cap_raised) or the run
-## ends. Player/ship reaching zero ends the run via their destroyed signals
-## (routed by RunController); the magnet is drained too but does not end the run.
+## it continually drains the player and ship at a slow constant rate and shows a
+## green acid vignette, until the player advances (cap_raised) or the run ends.
+## Player/ship reaching zero ends the run via their destroyed signals (routed by
+## RunController).
 
 @export_group("Drain Per Second")
 @export var player_drain_per_second: float = 5.0
 @export var ship_drain_per_second: float = 8.0
-@export var magnet_drain_per_second: float = 8.0
 
 @export_group("Vignette")
 @export var vignette_color: Color = Color(0.22, 0.85, 0.18, 0.42)
@@ -49,9 +48,6 @@ func _apply_drain(delta: float) -> void:
 	var ship := Magnetide.ship
 	if ship and ship.has_method("apply_storm_damage"):
 		ship.apply_storm_damage(ship_drain_per_second * delta)
-	var magnet := Magnetide.magnet
-	if magnet and magnet.has_method("apply_storm_damage"):
-		magnet.apply_storm_damage(magnet_drain_per_second * delta)
 
 
 func _on_storm_arrived() -> void:

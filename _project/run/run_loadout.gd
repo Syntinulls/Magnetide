@@ -15,7 +15,6 @@ const STAT_ITEMS := [
 	preload("res://_project/items/stats/ship_hull.tres"),
 	preload("res://_project/items/stats/ship_storage_size.tres"),
 	preload("res://_project/items/stats/magnet_capacity.tres"),
-	preload("res://_project/items/stats/magnet_health.tres"),
 ]
 const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
 const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
@@ -39,7 +38,6 @@ const PLAYER_SHIELD_SLOT_ID := &"player_shield"
 @export var magnet_breakaway_ramp_time: float = 0.3
 @export var magnet_breakaway_max_speed: float = 2000.0
 @export var magnet_width: float = 264.0
-@export var magnet_max_health: float = 150.0
 
 @export_group("Player")
 @export var player_speed: float = 400.0

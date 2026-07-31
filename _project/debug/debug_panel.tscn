@@ -1,4 +1,4 @@
-[gd_scene load_steps=56 format=3]
+[gd_scene load_steps=55 format=3]
 
 [ext_resource type="Script" path="res://_project/debug/debug_panel.gd" id="1_script"]
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="2_weapon_data"]
@@ -16,7 +16,6 @@
 [ext_resource type="Resource" uid="uid://cstat0hull0000" path="res://_project/items/stats/ship_hull.tres" id="22_ship_hull"]
 [ext_resource type="Resource" uid="uid://cstat0storage0" path="res://_project/items/stats/ship_storage_size.tres" id="23_ship_storage_size"]
 [ext_resource type="Resource" uid="uid://cstat0magcap00" path="res://_project/items/stats/magnet_capacity.tres" id="24_magnet_capacity"]
-[ext_resource type="Resource" uid="uid://cstat0maghp000" path="res://_project/items/stats/magnet_health.tres" id="25_magnet_health"]
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="30_regeneration"]
 [ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="31_adrenaline"]
 [ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="32_increased_recycling"]
@@ -77,7 +76,7 @@ layer = 120
 visible = false
 script = ExtResource("1_script")
 weapons = Array[ExtResource("2_weapon_data")]([ExtResource("10_pistol"), ExtResource("11_rifle"), ExtResource("12_smg"), ExtResource("13_shotgun"), ExtResource("14_sniper"), ExtResource("15_grenade_launcher")])
-upgrade_items = Array[ExtResource("3_item_data")]([ExtResource("20_player_health"), ExtResource("21_player_shield"), ExtResource("22_ship_hull"), ExtResource("23_ship_storage_size"), ExtResource("24_magnet_capacity"), ExtResource("25_magnet_health"), ExtResource("10_pistol"), ExtResource("11_rifle"), ExtResource("12_smg"), ExtResource("13_shotgun"), ExtResource("14_sniper"), ExtResource("15_grenade_launcher"), ExtResource("16_magnet_gun"), ExtResource("30_regeneration"), ExtResource("31_adrenaline"), ExtResource("32_increased_recycling")])
+upgrade_items = Array[ExtResource("3_item_data")]([ExtResource("20_player_health"), ExtResource("21_player_shield"), ExtResource("22_ship_hull"), ExtResource("23_ship_storage_size"), ExtResource("24_magnet_capacity"), ExtResource("10_pistol"), ExtResource("11_rifle"), ExtResource("12_smg"), ExtResource("13_shotgun"), ExtResource("14_sniper"), ExtResource("15_grenade_launcher"), ExtResource("16_magnet_gun"), ExtResource("30_regeneration"), ExtResource("31_adrenaline"), ExtResource("32_increased_recycling")])
 unlock_items = Array[ExtResource("3_item_data")]([ExtResource("10_pistol"), ExtResource("11_rifle"), ExtResource("12_smg"), ExtResource("13_shotgun"), ExtResource("14_sniper"), ExtResource("15_grenade_launcher"), ExtResource("30_regeneration"), ExtResource("31_adrenaline"), ExtResource("32_increased_recycling")])
 unlock_slot_ids = Array[StringName]([&"player_shield"])
 salvage_items = Array[ExtResource("4_salvage_item_data")]([ExtResource("40_air_conditioner"), ExtResource("41_battery"), ExtResource("42_camera"), ExtResource("43_cathode_ray_tube"), ExtResource("44_circuitry"), ExtResource("45_engine_block"), ExtResource("46_fan"), ExtResource("47_gear"), ExtResource("48_generator"), ExtResource("49_hose"), ExtResource("50_induction_coil"), ExtResource("51_lens"), ExtResource("52_light_bulb"), ExtResource("53_magnet"), ExtResource("54_mattress"), ExtResource("55_microscope"), ExtResource("56_microwave"), ExtResource("57_motor"), ExtResource("58_old_monitor"), ExtResource("59_piston"), ExtResource("60_portable_reactor"), ExtResource("61_power_core"), ExtResource("62_processor"), ExtResource("63_radio"), ExtResource("64_refrigerator"), ExtResource("65_rocket_thruster"), ExtResource("66_rubber"), ExtResource("67_server_rack"), ExtResource("68_spring"), ExtResource("69_tire"), ExtResource("70_transformer"), ExtResource("71_trashcan"), ExtResource("72_wires"), ExtResource("73_xray_machine")])

@@ -42,8 +42,7 @@ const PLAYER_AUGMENT_BG_INSET := 4
 @onready var _magazine_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/MagazineCounterMargin/MagazineCounter/MagazineLabel
 @onready var _ship_hull_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPHull
 @onready var _ship_magnet_rect: TextureRect = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHPMagnet
-@onready var _ship_hull_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipHullIntegrityLabel
-@onready var _ship_magnet_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipMagnetIntegrityLabel
+@onready var _ship_integrity_label: Label = $TopRight_UI/VBoxContainer/ShipHealthUI/ShipIntegrityLabel
 @onready var _event_text: EventTextDisplay = $EventTextDisplay
 
 var _bound_run_controller: RunController = null
@@ -162,16 +161,7 @@ func _on_event_countdown_finished(source: StringName) -> void:
 
 func _update_health_ui() -> void:
 	_update_player_health(Magnetide.player as Player)
-	_update_integrity_display(
-		Magnetide.ship as Ship,
-		_ship_hull_rect,
-		_ship_hull_label
-	)
-	_update_integrity_display(
-		Magnetide.magnet as Magnet,
-		_ship_magnet_rect,
-		_ship_magnet_label
-	)
+	_update_integrity_display(Magnetide.ship as Ship)
 
 
 func _update_player_health(player: Player) -> void:
@@ -723,8 +713,10 @@ func _reset_player_shield_label_animation() -> void:
 	_player_shield_label.modulate = Color.WHITE
 
 
-func _update_integrity_display(source: Node, rect: TextureRect, label: Label) -> void:
-	if not rect or not label:
+## The hull and magnet sprites share the ship's single integrity pool, so both
+## tint from the same ratio behind one percentage readout.
+func _update_integrity_display(source: Node) -> void:
+	if not _ship_hull_rect or not _ship_magnet_rect or not _ship_integrity_label:
 		return
 
 	var max_health := 0.0
@@ -734,8 +726,10 @@ func _update_integrity_display(source: Node, rect: TextureRect, label: Label) ->
 		current_health = float(source.get("current_health"))
 
 	var ratio := _get_health_ratio(current_health, max_health)
-	rect.modulate = DAMAGED_INTEGRITY_COLOR.lerp(HEALTHY_INTEGRITY_COLOR, ratio)
-	label.text = _format_percent(ratio)
+	var tint := DAMAGED_INTEGRITY_COLOR.lerp(HEALTHY_INTEGRITY_COLOR, ratio)
+	_ship_hull_rect.modulate = tint
+	_ship_magnet_rect.modulate = tint
+	_ship_integrity_label.text = _format_percent(ratio)
 
 
 func _get_health_ratio(current_health: float, max_health: float) -> float:

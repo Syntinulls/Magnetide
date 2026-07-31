@@ -72,27 +72,12 @@ grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("3_7b8vq")
 
-[node name="ShipHullIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=127456711]
+[node name="ShipIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=127456711]
 layout_mode = 1
 anchors_preset = 10
 anchor_right = 1.0
-offset_top = 30.0
-offset_bottom = 70.0
-grow_horizontal = 2
-theme_override_colors/font_color = Color(1, 1, 1, 1)
-theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
-theme_override_constants/outline_size = 8
-theme_override_font_sizes/font_size = 24
-text = "100%"
-horizontal_alignment = 1
-vertical_alignment = 1
-
-[node name="ShipMagnetIntegrityLabel" type="Label" parent="TopRight_UI/VBoxContainer/ShipHealthUI" unique_id=146327803]
-layout_mode = 1
-anchors_preset = 10
-anchor_right = 1.0
-offset_top = 94.0
-offset_bottom = 134.0
+offset_top = 62.0
+offset_bottom = 102.0
 grow_horizontal = 2
 theme_override_colors/font_color = Color(1, 1, 1, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)

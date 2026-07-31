@@ -1,0 +1,346 @@
+[gd_scene load_steps=8 format=3 uid="uid://b5optscreen0b"]
+
+[ext_resource type="Script" uid="uid://c4optscreen0a" path="res://_project/app/screens/options/options_screen.gd" id="1_script"]
+
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_tab"]
+content_margin_left = 12.0
+content_margin_top = 4.0
+content_margin_right = 12.0
+content_margin_bottom = 4.0
+
+[sub_resource type="StyleBoxLine" id="StyleBoxLine_separator"]
+color = Color(0, 0, 0, 1)
+thickness = 4
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_panel"]
+bg_color = Color(0.372549, 0.411765, 0.411765, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider_bg"]
+content_margin_left = 4.0
+content_margin_top = 18.0
+content_margin_right = 4.0
+content_margin_bottom = 18.0
+bg_color = Color(0.16, 0.18, 0.18, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider_fill"]
+content_margin_left = 4.0
+content_margin_top = 18.0
+content_margin_right = 4.0
+content_margin_bottom = 18.0
+bg_color = Color(0.454902, 0.494118, 0.494118, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_slider_fill_highlight"]
+content_margin_left = 4.0
+content_margin_top = 18.0
+content_margin_right = 4.0
+content_margin_bottom = 18.0
+bg_color = Color(0.52, 0.56, 0.56, 1)
+border_width_left = 4
+border_width_top = 4
+border_width_right = 4
+border_width_bottom = 4
+border_color = Color(0, 0, 0, 1)
+
+[node name="OptionsScreen" type="Control"]
+process_mode = 3
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_script")
+
+[node name="Backdrop" type="ColorRect" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.65)
+
+[node name="CenterContainer" type="CenterContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="Panel" type="PanelContainer" parent="CenterContainer"]
+custom_minimum_size = Vector2(1000, 640)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="CenterContainer/Panel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="Layout" type="VBoxContainer" parent="CenterContainer/Panel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="TitleLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 48
+text = "OPTIONS"
+horizontal_alignment = 1
+
+[node name="TabButtons" type="HBoxContainer" parent="CenterContainer/Panel/Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+theme_override_constants/separation = 48
+alignment = 1
+
+[node name="GeneralTabButton" type="Button" parent="CenterContainer/Panel/Margin/Layout/TabButtons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_tab")
+text = "General"
+
+[node name="VideoTabButton" type="Button" parent="CenterContainer/Panel/Margin/Layout/TabButtons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_tab")
+text = "Video"
+
+[node name="AudioTabButton" type="Button" parent="CenterContainer/Panel/Margin/Layout/TabButtons"]
+layout_mode = 2
+theme_override_font_sizes/font_size = 28
+theme_override_styles/normal = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tab")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_tab")
+text = "Audio"
+
+[node name="HeaderSeparator" type="HSeparator" parent="CenterContainer/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 4
+theme_override_styles/separator = SubResource("StyleBoxLine_separator")
+
+[node name="Tabs" type="TabContainer" parent="CenterContainer/Panel/Margin/Layout"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_vertical = 3
+tabs_visible = false
+theme_override_styles/panel = SubResource("StyleBoxEmpty_tab")
+
+[node name="General" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs"]
+layout_mode = 2
+
+[node name="PlaceholderLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/General"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.4)
+text = "No settings yet."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Video" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs"]
+visible = false
+layout_mode = 2
+
+[node name="PlaceholderLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video"]
+layout_mode = 2
+size_flags_vertical = 3
+theme_override_colors/font_color = Color(1, 1, 1, 0.4)
+text = "No settings yet."
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="Audio" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs"]
+visible = false
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="AudioMargin" type="MarginContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio"]
+layout_mode = 2
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 16
+
+[node name="AudioRows" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="MusicRow" type="HBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MusicLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/MusicRow"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "Music"
+
+[node name="MusicSlider" type="HSlider" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/MusicRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 100.0
+value = 100.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_slider_bg")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_slider_fill")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_slider_fill_highlight")
+
+[node name="MusicValueLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/MusicRow/MusicSlider"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="SfxRow" type="HBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="SfxLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/SfxRow"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "SFX"
+
+[node name="SfxSlider" type="HSlider" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/SfxRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_horizontal = 3
+size_flags_vertical = 4
+max_value = 100.0
+value = 100.0
+theme_override_styles/slider = SubResource("StyleBoxFlat_slider_bg")
+theme_override_styles/grabber_area = SubResource("StyleBoxFlat_slider_fill")
+theme_override_styles/grabber_area_highlight = SubResource("StyleBoxFlat_slider_fill_highlight")
+
+[node name="SfxValueLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Audio/AudioMargin/AudioRows/SfxRow/SfxSlider"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+text = "100%"
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="ButtonRow" type="HBoxContainer" parent="CenterContainer/Panel/Margin/Layout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 2
+
+[node name="OkButton" type="Button" parent="CenterContainer/Panel/Margin/Layout/ButtonRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "OK"
+
+[node name="CancelButton" type="Button" parent="CenterContainer/Panel/Margin/Layout/ButtonRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "Cancel"
+
+[node name="UnsavedConfirm" type="Control" parent="."]
+unique_name_in_owner = true
+visible = false
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="Dim" type="ColorRect" parent="UnsavedConfirm"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0.55)
+
+[node name="CenterContainer" type="CenterContainer" parent="UnsavedConfirm"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+
+[node name="ConfirmPanel" type="PanelContainer" parent="UnsavedConfirm/CenterContainer"]
+custom_minimum_size = Vector2(640, 0)
+layout_mode = 2
+theme_override_styles/panel = SubResource("StyleBoxFlat_panel")
+
+[node name="Margin" type="MarginContainer" parent="UnsavedConfirm/CenterContainer/ConfirmPanel"]
+layout_mode = 2
+theme_override_constants/margin_left = 24
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 24
+theme_override_constants/margin_bottom = 24
+
+[node name="ConfirmLayout" type="VBoxContainer" parent="UnsavedConfirm/CenterContainer/ConfirmPanel/Margin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="ConfirmLabel" type="Label" parent="UnsavedConfirm/CenterContainer/ConfirmPanel/Margin/ConfirmLayout"]
+layout_mode = 2
+text = "You have unsaved changes."
+horizontal_alignment = 1
+
+[node name="ConfirmButtons" type="HBoxContainer" parent="UnsavedConfirm/CenterContainer/ConfirmPanel/Margin/ConfirmLayout"]
+layout_mode = 2
+theme_override_constants/separation = 16
+alignment = 1
+
+[node name="ApplyButton" type="Button" parent="UnsavedConfirm/CenterContainer/ConfirmPanel/Margin/ConfirmLayout/ConfirmButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "Apply"
+
+[node name="DiscardButton" type="Button" parent="UnsavedConfirm/CenterContainer/ConfirmPanel/Margin/ConfirmLayout/ConfirmButtons"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(200, 48)
+layout_mode = 2
+text = "Discard"

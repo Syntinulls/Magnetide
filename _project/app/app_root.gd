@@ -4,6 +4,7 @@ class_name AppRoot
 const RunControllerScript := preload("res://_project/run/run_controller.gd")
 const AppSaveDataScript := preload("res://_project/app/app_save_data.gd")
 const RunSummaryPopupScene := preload("res://_project/app/screens/salvage/run_summary_popup.tscn")
+const OptionsScreenScene := preload("res://_project/app/screens/options/options_screen.tscn")
 
 @export var default_level: LevelDefinition
 @export var default_run_loadout: RunLoadout
@@ -16,6 +17,7 @@ var _active_screen: Control = null
 var _active_level: Node = null
 var _active_run_controller: RunController = null
 var _save_data: Resource = null
+var _options_screen: Control = null
 
 @onready var _run_root: Node = $RunRoot
 @onready var _screen_root: Control = $ScreenCanvas/ScreenRoot
@@ -298,6 +300,16 @@ func _on_run_finished(result: RunResult) -> void:
 
 func _on_death_summary_station_requested() -> void:
 	_show_station_screen()
+
+
+## Opens the options panel as an overlay above whatever is active — the main
+## menu screen or the paused run's HUD. It is not a screen swap: the panel
+## closes itself (queue_free), returning to what was beneath.
+func open_options_menu() -> void:
+	if _options_screen and is_instance_valid(_options_screen):
+		return
+	_options_screen = OptionsScreenScene.instantiate() as Control
+	_screen_root.add_child(_options_screen)
 
 
 ## Discards the active run entirely (no loot, scrap, or stats are banked) and

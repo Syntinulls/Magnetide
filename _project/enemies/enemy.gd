@@ -203,6 +203,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 		return
 
 	current_health -= amount
+	DamageNumber.spawn(global_position, amount, DamageNumber.ENEMY_COLOR)
 	_flash_white()
 	_play_hit_shake()
 	if Magnetide.sfx:

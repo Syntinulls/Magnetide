@@ -630,18 +630,29 @@ func _get_level_speed() -> float:
 	return 0.0
 
 
-func take_damage(amount: float, _source: Node = null) -> void:
+func take_damage(amount: float, source: Node = null) -> void:
+	if current_health <= 0.0 or amount <= 0.0:
+		return
+	var popup_position := global_position
+	if source is Node2D and is_instance_valid(source):
+		popup_position = (source as Node2D).global_position
+	DamageNumber.spawn(popup_position, amount, DamageNumber.SHIP_COLOR)
+	_reduce_health(amount)
+
+
+## Environmental acid-storm drain (continuous DoT on hull integrity, so no
+## per-hit damage popup).
+func apply_storm_damage(amount: float) -> void:
 	if current_health <= 0.0:
 		return
+	_reduce_health(amount)
+
+
+func _reduce_health(amount: float) -> void:
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
-
-
-## Environmental acid-storm drain (continuous DoT on hull integrity).
-func apply_storm_damage(amount: float) -> void:
-	take_damage(amount)
 
 
 func get_hitbox() -> Hitbox:

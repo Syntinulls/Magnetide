@@ -36,7 +36,6 @@ signal item_removed(item: SalvageItem)
 		magnet_width = value
 		_update_magnet_visuals()
 @export_group("Combat")
-@export var max_health: float = 150.0
 @export var hitbox_path: NodePath = NodePath("Hitbox")
 @export var enemy_target_point_paths: Array[NodePath] = []
 @export_group("Audio")
@@ -71,7 +70,6 @@ var _left_wall: StaticBody2D = null
 var _right_wall: StaticBody2D = null
 var _is_pull_suspended_by_capacity: bool = false
 var _is_spawn_paused_for_departure: bool = false
-var current_health: float = 0.0
 ## Random spawn x range as a fraction of the pile width.
 const SPAWN_WIDTH_RATIO: float = 0.50
 const WALL_THICKNESS: float = 10.0  # Thickness of edge collision walls
@@ -93,7 +91,6 @@ var is_active: bool:
 
 func _ready() -> void:
 	add_to_group("magnet")
-	current_health = max_health
 	set_process(false)
 	_area = get_node_or_null("MagnetPullArea") as Area2D
 	if not _area:
@@ -126,8 +123,6 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	breakaway_ramp_time = loadout.magnet_breakaway_ramp_time
 	breakaway_max_speed = loadout.magnet_breakaway_max_speed
 	magnet_width = loadout.magnet_width
-	max_health = loadout.magnet_max_health
-	current_health = max_health if not is_inside_tree() else minf(current_health, max_health)
 	if is_inside_tree():
 		_update_magnet_visuals()
 		_update_pull_state()
@@ -587,13 +582,12 @@ func get_surface_line() -> Line2D:
 	return null
 
 
-func take_damage(amount: float, _source: Node = null) -> void:
-	current_health = maxf(current_health - amount, 0.0)
-
-
-## Environmental acid-storm drain (continuous DoT on magnet integrity).
-func apply_storm_damage(amount: float) -> void:
-	take_damage(amount)
+## The magnet has no health pool of its own: hits on the magnet damage the
+## ship's single integrity pool.
+func take_damage(amount: float, source: Node = null) -> void:
+	var ship := Magnetide.ship
+	if ship and ship.has_method("take_damage"):
+		ship.take_damage(amount, source)
 
 
 func get_hitbox() -> Hitbox:

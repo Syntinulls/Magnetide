@@ -11,6 +11,7 @@ const CONFIRM_BUTTON_MIN_SIZE := Vector2(200.0, 48.0)
 
 @onready var _continue_button: Button = $CenterContainer/VBoxContainer/VBoxContainer/ContinueButton
 @onready var _new_game_button: Button = $CenterContainer/VBoxContainer/VBoxContainer/NewGameButton
+@onready var _options_button: Button = $CenterContainer/VBoxContainer/VBoxContainer/OptionsButton
 @onready var _exit_button: Button = $CenterContainer/VBoxContainer/VBoxContainer/ExitButton
 
 var _continue_available: bool = false
@@ -20,6 +21,7 @@ var _confirm_overlay: Control = null
 func _ready() -> void:
 	_continue_button.pressed.connect(_on_continue_pressed)
 	_new_game_button.pressed.connect(_on_new_game_pressed)
+	_options_button.pressed.connect(_on_options_pressed)
 	_exit_button.pressed.connect(_on_exit_pressed)
 
 
@@ -40,6 +42,12 @@ func _on_new_game_pressed() -> void:
 		_show_overwrite_confirm()
 	else:
 		new_game_requested.emit()
+
+
+func _on_options_pressed() -> void:
+	var app_root := Magnetide.app_root
+	if app_root and app_root.has_method("open_options_menu"):
+		app_root.call("open_options_menu")
 
 
 func _on_exit_pressed() -> void:

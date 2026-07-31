@@ -7,10 +7,23 @@ const SFX_BUS_NAME := "SFX"
 var _active_players_by_key: Dictionary = {}
 var _idle_players: Array[AudioStreamPlayer] = []
 var _enabled := true
+var _sfx_volume: float = 1.0
 
 
 func _ready() -> void:
 	_ensure_sfx_bus()
+	_apply_bus_volume()
+
+
+## Options-menu hook: linear 0..1 SFX level, mapped onto the SFX bus. Per-play
+## volume_db arguments are relative mix levels on top of this global level.
+func set_sfx_volume(linear: float) -> void:
+	_sfx_volume = clampf(linear, 0.0, 1.0)
+	_apply_bus_volume()
+
+
+func get_sfx_volume() -> float:
+	return _sfx_volume
 
 
 func play(sound: Variant, volume_db: float = 0.0, pitch_scale: float = 1.0) -> AudioStreamPlayer:
@@ -236,6 +249,17 @@ func _get_loop_playback_key(sound_key: String, loop_key: Variant) -> String:
 		return ""
 
 	return "%s#loop:%s" % [sound_key, suffix]
+
+
+func _apply_bus_volume() -> void:
+	var bus_index := AudioServer.get_bus_index(SFX_BUS_NAME)
+	if bus_index == -1:
+		return
+	if _sfx_volume <= 0.0:
+		AudioServer.set_bus_mute(bus_index, true)
+	else:
+		AudioServer.set_bus_mute(bus_index, false)
+		AudioServer.set_bus_volume_db(bus_index, linear_to_db(_sfx_volume))
 
 
 func _ensure_sfx_bus() -> void:

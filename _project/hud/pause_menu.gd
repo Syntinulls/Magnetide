@@ -3,8 +3,8 @@ class_name PauseMenu
 
 ## Full-screen pause overlay for the in-run game. ESC (the "pause" action)
 ## toggles it: the tree pauses, the screen darkens behind a PAUSED title with
-## CONTINUE and ABANDON RUN buttons. Abandoning asks for confirmation, then
-## discards all run progress and returns to the station.
+## CONTINUE, OPTIONS and ABANDON RUN buttons. Abandoning asks for confirmation,
+## then discards all run progress and returns to the station.
 
 const DIM_COLOR := Color(0.0, 0.0, 0.0, 0.65)
 const TITLE_FONT_SIZE: int = 96
@@ -72,6 +72,12 @@ func _show_main_panel() -> void:
 	_confirm_panel.visible = false
 
 
+func _on_options_pressed() -> void:
+	var app_root := Magnetide.app_root
+	if app_root and app_root.has_method("open_options_menu"):
+		app_root.call("open_options_menu")
+
+
 func _on_abandon_pressed() -> void:
 	_main_panel.visible = false
 	_confirm_panel.visible = true
@@ -95,6 +101,7 @@ func _build() -> void:
 	_main_panel = _build_center_column([
 		_make_title("PAUSED"),
 		_make_button("CONTINUE", _resume, BUTTON_MIN_SIZE, BUTTON_FONT_SIZE),
+		_make_button("OPTIONS", _on_options_pressed, BUTTON_MIN_SIZE, BUTTON_FONT_SIZE),
 		_make_button("ABANDON RUN", _on_abandon_pressed, BUTTON_MIN_SIZE, BUTTON_FONT_SIZE),
 	])
 	add_child(_main_panel)

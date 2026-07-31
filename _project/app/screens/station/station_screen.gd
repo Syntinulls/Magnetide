@@ -2147,7 +2147,6 @@ func _build_ship_stats_text() -> String:
 		"  Storage Size: %d×%d" % [int(_run_loadout.ship_storage_area_size.x), int(_run_loadout.ship_storage_area_size.y)],
 		"",
 		"MAGNET",
-		"  Integrity: %s" % _stringify_stat_value(_run_loadout.magnet_max_health),
 		"  Capacity: %s" % _stringify_stat_value(_run_loadout.magnet_hold_capacity),
 	])
 	return "\n".join(lines)
