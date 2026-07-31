@@ -137,6 +137,10 @@ var _progress_bar: PlayerProgressBar = null
 var _progress_bar_claims: Dictionary = {}
 var _hover_tooltip: Label = null
 var _active_scrap_labels: Array[Label] = []
+var _damage_flash_tween: Tween = null
+## Healing accumulated toward the next whole-point green popup, so per-frame
+## regeneration ticks batch up instead of spawning a popup every frame.
+var _pending_heal_popup: float = 0.0
 var _cinematic_walk_active: bool = false
 var _cinematic_walk_target_x: float = 0.0
 var _cinematic_walk_speed: float = 160.0
@@ -1645,6 +1649,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	DamageNumber.spawn(global_position, amount, DamageNumber.PLAYER_COLOR)
+	_flash_damage()
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
 
@@ -1663,7 +1668,30 @@ func apply_storm_damage(amount: float) -> void:
 func heal(amount: float) -> void:
 	if amount <= 0.0 or current_health <= 0.0:
 		return
-	current_health = minf(current_health + amount, max_health)
+	var healed := minf(current_health + amount, max_health) - current_health
+	current_health += healed
+	if healed <= 0.0:
+		return
+	_pending_heal_popup += healed
+	if _pending_heal_popup >= 1.0:
+		DamageNumber.spawn(global_position, floorf(_pending_heal_popup), DamageNumber.HEAL_COLOR)
+		_pending_heal_popup -= floorf(_pending_heal_popup)
+
+
+const DAMAGE_FLASH_FADE_SECONDS := 0.15
+
+
+## Red half-opacity hit flash across every player sprite layer (they share one
+## flash ShaderMaterial, so driving it through body_sprite tints all of them).
+func _flash_damage() -> void:
+	var flash_material := body_sprite.material as ShaderMaterial
+	if flash_material == null:
+		return
+	if _damage_flash_tween:
+		_damage_flash_tween.kill()
+	flash_material.set_shader_parameter("flash_intensity", 1.0)
+	_damage_flash_tween = create_tween()
+	_damage_flash_tween.tween_property(flash_material, "shader_parameter/flash_intensity", 0.0, DAMAGE_FLASH_FADE_SECONDS)
 
 
 func _process_shield_recharge(delta: float) -> void:
@@ -1725,3 +1753,14 @@ func get_hitbox() -> Hitbox:
 	if hitboxes.is_empty():
 		return null
 	return hitboxes[0] as Hitbox
+
+
+## Enemies aim here instead of the player's root (which sits at the feet). The
+## point is a child of the hitbox's collision shape, so it always tracks the
+## actual hitbox center.
+func get_enemy_target_points() -> Array[EnemyTargetPoint]:
+	var points: Array[EnemyTargetPoint] = []
+	var point := get_node_or_null("Hitbox/CollisionShape2D/EnemyTargetPoint") as EnemyTargetPoint
+	if point:
+		points.append(point)
+	return points

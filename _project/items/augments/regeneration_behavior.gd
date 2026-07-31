@@ -6,8 +6,13 @@ class_name RegenerationBehavior
 @export var out_of_combat_seconds: float = 6.0
 @export var health_per_second: float = 2.0
 
+## Healing lands in one whole health_per_second chunk each second (not smeared
+## per frame), so the heal popups the player sees match the stat's number.
+const HEAL_TICK_SECONDS := 1.0
+
 var _player: Player = null
 var _seconds_since_damage: float = 0.0
+var _heal_tick_elapsed: float = 0.0
 
 
 func initialize_for_run(context: Dictionary, _level: int) -> void:
@@ -27,6 +32,7 @@ func cleanup_after_run() -> void:
 			_player.damaged.disconnect(_on_player_damaged)
 	_player = null
 	_seconds_since_damage = 0.0
+	_heal_tick_elapsed = 0.0
 
 
 func tick(delta: float) -> void:
@@ -36,8 +42,12 @@ func tick(delta: float) -> void:
 		return
 	_seconds_since_damage += delta
 	if _seconds_since_damage < maxf(out_of_combat_seconds, 0.0):
+		_heal_tick_elapsed = 0.0
 		return
-	_player.heal(maxf(health_per_second, 0.0) * delta)
+	_heal_tick_elapsed += delta
+	if _heal_tick_elapsed >= HEAL_TICK_SECONDS:
+		_heal_tick_elapsed -= HEAL_TICK_SECONDS
+		_player.heal(maxf(health_per_second, 0.0))
 
 
 func get_current_effect_summary(_level: int) -> String:

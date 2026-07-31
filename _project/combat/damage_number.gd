@@ -8,6 +8,7 @@ class_name DamageNumber
 const ENEMY_COLOR := Color.WHITE
 const PLAYER_COLOR := Color("ff5a5a")
 const SHIP_COLOR := Color("ffd24a")
+const HEAL_COLOR := Color("9bff63")
 
 const SCENE := "res://_project/combat/damage_number.tscn"
 const SPAWN_JITTER_X := 12.0
@@ -15,7 +16,7 @@ const POP_SECONDS := 0.18
 ## Duration of the upward drift, from spawn until it halts (includes the pop).
 const RISE_SECONDS := 0.53
 ## Time spent sitting at the landing spot before shrinking away.
-const REST_SECONDS := 1.05
+const REST_SECONDS := 0.15
 const SHRINK_SECONDS := 0.3
 const DRIFT_DISTANCE := 128.0
 ## Each number's landing spot is offset by up to this much on both axes so

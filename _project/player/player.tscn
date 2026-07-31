@@ -16,6 +16,13 @@
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/combat/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/magnet_tool/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/weapons/player_item_gun_effect_1.png" id="15_4y3ad"]
+[ext_resource type="Shader" uid="uid://b6plrflash00a" path="res://_project/player/player_flash.gdshader" id="16_flash"]
+[ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="17_target_point"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_damage_flash"]
+shader = ExtResource("16_flash")
+shader_parameter/flash_intensity = 0.0
+shader_parameter/flash_color = Color(1, 0, 0, 0.5)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j86yb"]
 atlas = ExtResource("3_6i4jc")
@@ -194,9 +201,11 @@ script = ExtResource("2_script")
 equipment = Array[ExtResource("2_fbtnf")]([ExtResource("2_pistol"), ExtResource("3_magnet_gun")])
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]
+material = SubResource("ShaderMaterial_damage_flash")
 texture = ExtResource("2_unxfp")
 
 [node name="LegsSprite" type="AnimatedSprite2D" parent="." unique_id=1596657367]
+material = SubResource("ShaderMaterial_damage_flash")
 sprite_frames = SubResource("SpriteFrames_dnlrs")
 animation = &"walk_1"
 
@@ -215,13 +224,19 @@ visible = false
 position = Vector2(0, -15.5)
 shape = SubResource("RectangleShape2D_g7wmw")
 
+[node name="EnemyTargetPoint" type="Marker2D" parent="Hitbox/CollisionShape2D"]
+script = ExtResource("17_target_point")
+target_group = "player"
+
 [node name="ArmSprite" type="Sprite2D" parent="." unique_id=1625981677]
+material = SubResource("ShaderMaterial_damage_flash")
 position = Vector2(12.56, -8.88)
 texture = ExtResource("4_arm")
 offset = Vector2(-13.585, 8.13)
 
 [node name="Weapon" type="Sprite2D" parent="ArmSprite" unique_id=1625981676]
 show_behind_parent = true
+material = SubResource("ShaderMaterial_damage_flash")
 texture = ExtResource("13_4y3ad")
 offset = Vector2(-26.105, 17.995)
 
