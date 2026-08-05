@@ -1,7 +1,7 @@
 [gd_resource type="Resource" script_class="EnemySpawnProfile" format=3 uid="uid://hnrt22mrwtwi"]
 
 [ext_resource type="Script" uid="uid://clw10wa4tgrno" path="res://_project/enemies/spawning/enemy_spawn_profile.gd" id="1_profile"]
-[ext_resource type="PackedScene" uid="uid://cd6a7mxd1b7qr" path="res://_project/enemies/enemy.tscn" id="2_enemy_scene"]
+[ext_resource type="PackedScene" uid="uid://bptnnv4wsireg" path="res://_project/enemies/worm/worm.tscn" id="2_enemy_scene"]
 [ext_resource type="Resource" uid="uid://cn0vfgi3l8a37" path="res://_project/enemies/worm/worm_data.tres" id="3_enemy_data"]
 
 [resource]

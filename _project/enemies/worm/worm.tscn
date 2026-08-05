@@ -1,0 +1,32 @@
+[gd_scene format=3 uid="uid://bptnnv4wsireg"]
+
+[ext_resource type="Script" uid="uid://cdt8ev0vd8dbp" path="res://_project/enemies/worm/worm.gd" id="1_script"]
+[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+shader = ExtResource("2_shader")
+shader_parameter/flash_intensity = 0.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_worm_hitbox"]
+size = Vector2(40, 40)
+
+[node name="Worm" type="CharacterBody2D" unique_id=596254595]
+motion_mode = 1
+script = ExtResource("1_script")
+
+[node name="Visual" type="Node2D" parent="." unique_id=83427400]
+material = SubResource("ShaderMaterial_flash")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Visual" unique_id=792352186]
+use_parent_material = true
+
+[node name="Hitbox" type="Area2D" parent="." unique_id=674955159]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_hitbox")
+owner_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox" unique_id=286955009]
+visible = false
+shape = SubResource("RectangleShape2D_worm_hitbox")

@@ -525,7 +525,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 	var world_root := Magnetide.world_root
 	if world_root:
 		return ProjectileScript.spawn(world_root, {
-			&"global_position": muzzle.global_position,
+			&"global_position": _get_bullet_spawn_position(),
 			&"direction": bullet_direction,
 			&"sprite": weapon_data.bullet_sprite if weapon_data.bullet_sprite else MagnetEffectTexture,
 			&"damage": weapon_data.damage * outgoing_damage_multiplier,
@@ -540,6 +540,22 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"impact_effect": weapon_data.impact_effect,
 		})
 	return null
+
+
+## Bullets normally spawn at the muzzle, but an enemy hitbox between the
+## player's center and the muzzle (a latched worm) would sit behind the spawn
+## point and be impossible to hit. In that case the bullet spawns at the
+## player's center so it overlaps the enemy on its first physics frame.
+func _get_bullet_spawn_position() -> Vector2:
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsRayQueryParameters2D.create(global_position, muzzle.global_position, 4)
+	query.collide_with_areas = true
+	query.collide_with_bodies = false
+	# A latched enemy's hitbox usually contains the ray origin itself.
+	query.hit_from_inside = true
+	if space_state.intersect_ray(query).is_empty():
+		return muzzle.global_position
+	return global_position
 
 
 # =============================================================================

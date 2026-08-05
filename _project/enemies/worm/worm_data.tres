@@ -2,8 +2,8 @@
 
 [ext_resource type="Script" uid="uid://uiieqdlx023s" path="res://_project/enemies/enemy_data.gd" id="1_script"]
 [ext_resource type="SpriteFrames" uid="uid://cbax3ii8fygys" path="res://_project/enemies/worm/worm_sprite_frames.tres" id="2_frames"]
-[ext_resource type="Script" uid="uid://o6yeu4otjbpn" path="res://_project/enemies/behaviors/default_move_behavior.gd" id="3_move"]
-[ext_resource type="Script" uid="uid://cucvtmxqg8oty" path="res://_project/enemies/behaviors/default_attack_behavior.gd" id="4_attack"]
+[ext_resource type="Script" uid="uid://c0yrt1wun1ks0" path="res://_project/enemies/worm/worm_move_behavior.gd" id="3_move"]
+[ext_resource type="Script" uid="uid://cqj3koq55uiki" path="res://_project/enemies/worm/worm_attack_behavior.gd" id="4_attack"]
 
 [sub_resource type="Resource" id="Resource_attack_behavior"]
 script = ExtResource("4_attack")
@@ -16,7 +16,7 @@ script = ExtResource("1_script")
 enemy_name = "Worm"
 sprite_frames = ExtResource("2_frames")
 damage = 8.0
-movement_speed = 350.0
+movement_speed = 1040.0
 move_behavior = SubResource("Resource_move_behavior")
 attack_behavior = SubResource("Resource_attack_behavior")
 valid_targets = Array[String](["magnet", "ship", "player"])
@@ -25,6 +25,7 @@ target_acquire_interval = 1.0
 target_priority_mode = 1
 target_priority_order = Array[String](["magnet", "ship"])
 target_priority_random_excludes = Array[String](["player"])
-target_switching_mode = 1
+target_switching_mode = 3
 proximity_switch_interval = 1.0
+ally_death_switch_range = 750.0
 target_point_selection_mode = 1

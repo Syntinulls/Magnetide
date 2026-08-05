@@ -3,6 +3,7 @@
 [ext_resource type="Texture2D" uid="uid://cigcfq2dv8fo2" path="res://_project/enemies/worm/sprites/worm_fly.png" id="1_fly"]
 [ext_resource type="Texture2D" uid="uid://07tc0hpe8u0j" path="res://_project/enemies/worm/sprites/worm_attack.png" id="2_attack"]
 [ext_resource type="Texture2D" uid="uid://hugggu6ui3tu" path="res://_project/enemies/worm/sprites/worm_dead.png" id="3_dead"]
+[ext_resource type="Texture2D" uid="uid://bhgs6ygqs56j7" path="res://_project/enemies/worm/sprites/worm_windup.png" id="4_windup"]
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_attack_0"]
 atlas = ExtResource("2_attack")
@@ -116,4 +117,12 @@ animations = [{
 "loop": true,
 "name": &"move",
 "speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_windup")
+}],
+"loop": true,
+"name": &"windup",
+"speed": 1.0
 }]

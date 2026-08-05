@@ -12,10 +12,11 @@ enum TargetSwitchingMode {
 	DEFAULT,
 	RECEIVED_DAMAGE,
 	PROXIMITY,
+	ALLY_DEATH,
 }
 
 const TARGET_SELECTION_HINT := "ORDER,RANDOM,CLOSEST"
-const TARGET_SWITCHING_HINT := "DEFAULT,RECEIVED_DAMAGE,PROXIMITY"
+const TARGET_SWITCHING_HINT := "DEFAULT,RECEIVED_DAMAGE,PROXIMITY,ALLY_DEATH"
 const GROUP_PLAYER := "player"
 const GROUP_MAGNET := "magnet"
 const GROUP_SHIP := "ship"
@@ -55,6 +56,7 @@ var target_switching_mode: TargetSwitchingMode = TargetSwitchingMode.DEFAULT:
 		target_switching_mode = value
 		_notify_target_property_list_changed()
 var proximity_switch_interval: float = 1.0
+var ally_death_switch_range: float = 300.0
 var target_point_selection_mode: TargetSelectionMode = TargetSelectionMode.RANDOM:
 	set(value):
 		target_point_selection_mode = value
@@ -113,6 +115,15 @@ func _get_property_list() -> Array:
 		0.05,
 		"or_greater"
 	)
+	_add_float_property(
+		properties,
+		"ally_death_switch_range",
+		PROPERTY_USAGE_DEFAULT if target_switching_mode == TargetSwitchingMode.ALLY_DEATH else PROPERTY_USAGE_STORAGE,
+		0.0,
+		5000.0,
+		1.0,
+		"or_greater"
+	)
 
 	_add_group(properties, "Target Point Settings")
 	_add_enum_property(properties, "target_point_selection_mode", TARGET_SELECTION_HINT, PROPERTY_USAGE_DEFAULT)
@@ -138,6 +149,8 @@ func _get(property: StringName) -> Variant:
 			return target_switching_mode
 		&"proximity_switch_interval":
 			return proximity_switch_interval
+		&"ally_death_switch_range":
+			return ally_death_switch_range
 		&"target_point_selection_mode":
 			return target_point_selection_mode
 	return null
@@ -168,6 +181,9 @@ func _set(property: StringName, value: Variant) -> bool:
 			return true
 		&"proximity_switch_interval":
 			proximity_switch_interval = maxf(float(value), 0.05)
+			return true
+		&"ally_death_switch_range":
+			ally_death_switch_range = maxf(float(value), 0.0)
 			return true
 		&"target_point_selection_mode":
 			target_point_selection_mode = value as TargetSelectionMode

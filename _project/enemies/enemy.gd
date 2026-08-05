@@ -32,6 +32,7 @@ var damage_scale: float = 1.0
 
 var _move_behavior: Resource = null
 var _attack_behavior: Resource = null
+var _last_damage_source: Node = null
 var _target_acquire_timer: float = 0.0
 var _death_timer: float = 0.0
 var _death_pop_elapsed: float = 0.0
@@ -193,6 +194,7 @@ func _enter_death_state() -> void:
 	hitbox_collision_shape.set_deferred("disabled", true)
 	play_enemy_animation(ANIM_DEATH)
 	_launch_death_pop()
+	_notify_allies_of_death()
 	died.emit()
 
 
@@ -202,6 +204,8 @@ func take_damage(amount: float, source: Node = null) -> void:
 	if state == State.DEATH or _run_ended:
 		return
 
+	if source != null:
+		_last_damage_source = source
 	current_health -= amount
 	DamageNumber.spawn(global_position, amount, DamageNumber.ENEMY_COLOR)
 	_flash_white()
@@ -215,6 +219,23 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 	if data.target_switching_mode == EnemyData.TargetSwitchingMode.RECEIVED_DAMAGE:
 		_switch_target_to_damage_source(source)
+
+
+## Called by a dying enemy on every living enemy. Under ALLY_DEATH switching,
+## an enemy that sees an ally die within its configured range switches its
+## target to that ally's attacker (subject to _allows_ally_death_switch()).
+func notify_ally_death(dead_enemy: Enemy, attacker: Node) -> void:
+	if state == State.DEATH or _run_ended or not data:
+		return
+	if data.target_switching_mode != EnemyData.TargetSwitchingMode.ALLY_DEATH:
+		return
+	if dead_enemy == null or not is_instance_valid(dead_enemy):
+		return
+	if global_position.distance_to(dead_enemy.global_position) > data.ally_death_switch_range:
+		return
+	if not _allows_ally_death_switch():
+		return
+	_switch_target_to_damage_source(attacker)
 
 
 func get_hitbox() -> Hitbox:
@@ -312,7 +333,8 @@ func _update_targeting(delta: float) -> void:
 		return
 
 	if data.target_switching_mode == EnemyData.TargetSwitchingMode.PROXIMITY:
-		_acquire_target(true)
+		if _acquire_target(true):
+			_on_target_switched()
 		_target_acquire_timer = _get_proximity_switch_interval()
 	else:
 		_target_acquire_timer = _get_target_acquire_interval()
@@ -372,7 +394,30 @@ func _switch_target_to_damage_source(source: Node) -> bool:
 	current_target_point = resolved.get("path_target", null) as Node2D
 	current_damage_target = resolved.get("damage_target", null) as Node2D
 	_target_acquire_timer = _get_target_acquire_interval()
+	_on_target_switched()
 	return true
+
+
+## Overridable gate for ALLY_DEATH switching; subclasses can restrict when a
+## nearby ally death is allowed to pull this enemy onto the attacker.
+func _allows_ally_death_switch() -> bool:
+	return true
+
+
+## Called after an active target was replaced by a switching rule (damage
+## source or proximity), not after initial/lost-target acquisition.
+func _on_target_switched() -> void:
+	pass
+
+
+func _notify_allies_of_death() -> void:
+	if not is_inside_tree():
+		return
+	for ally in get_tree().get_nodes_in_group("enemies"):
+		var enemy_ally := ally as Enemy
+		if enemy_ally == null or enemy_ally == self:
+			continue
+		enemy_ally.notify_ally_death(self, _last_damage_source)
 
 
 func _get_damage_source_target_root(source: Node) -> Node2D:

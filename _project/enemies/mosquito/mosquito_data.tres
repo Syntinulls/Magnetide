@@ -30,4 +30,5 @@ target_priority_order = Array[String](["player"])
 target_priority_random_excludes = Array[String]([])
 target_switching_mode = 0
 proximity_switch_interval = 1.0
+ally_death_switch_range = null
 target_point_selection_mode = 2
