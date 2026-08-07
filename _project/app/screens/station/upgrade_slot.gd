@@ -28,6 +28,10 @@ const UNLOCK_ICON: Texture2D = preload("res://_project/app/screens/station/sprit
 ## Icon shown in a static slot, and the authored placeholder icon for a dynamic slot
 ## until code overrides it with the actually-equipped item at runtime.
 @export var static_icon: Texture2D = null
+## Which way this slot's popups (item list, detail/compare panels, cost popup) open. Slots on
+## the left of a page open rightward; a slot on the right of a page sets this so its popups
+## mirror and stack leftward instead of covering the page.
+@export var popups_open_left: bool = false
 
 @export_group("Progress")
 ## Display fallback until code supplies the live level. A static slot's `upgrade` overrides

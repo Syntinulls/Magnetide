@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://denem1tres0x4"]
+
+[ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
+[ext_resource type="Texture2D" uid="uid://l5o5i8opmvil" path="res://_project/items/augments/sprites/augment_enemyrepulsion.png" id="2_enemy_repulsion_icon"]
+
+[resource]
+script = ExtResource("1_augment_data")
+owner_tags = Array[StringName]([&"magnet"])
+item_id = &"augment_enemy_repulsion"
+display_name = "Enemy Repulsion"
+description = "Pushes enemies away from the magnet."
+icon = ExtResource("2_enemy_repulsion_icon")
+tags = Array[StringName]([&"augment", &"magnet_augment"])

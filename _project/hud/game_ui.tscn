@@ -218,7 +218,7 @@ text = "2"
 horizontal_alignment = 1
 vertical_alignment = 1
 
-[node name="PlayerAugmentIcons" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=256267152]
+[node name="AugmentIcons" type="HBoxContainer" parent="PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow" unique_id=256267152]
 visible = false
 custom_minimum_size = Vector2(0, 44)
 layout_mode = 2
@@ -679,7 +679,7 @@ theme_override_font_sizes/font_size = 30
 text = "0"
 vertical_alignment = 1
 
-[node name="PlayerAugmentTooltip" type="ColorRect" parent="." unique_id=414856661]
+[node name="AugmentTooltip" type="ColorRect" parent="." unique_id=414856661]
 visible = false
 z_index = 100
 layout_mode = 0
@@ -688,7 +688,7 @@ offset_bottom = 158.0
 mouse_filter = 2
 color = Color(0.09, 0.12, 0.17, 0.96)
 
-[node name="NameLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=373961281]
+[node name="NameLabel" type="Label" parent="AugmentTooltip" unique_id=373961281]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 12.0
@@ -701,7 +701,7 @@ theme_override_fonts/font = ExtResource("7_pqqpn")
 theme_override_font_sizes/font_size = 28
 text = "Augment"
 
-[node name="BodyLabel" type="Label" parent="PlayerAugmentTooltip" unique_id=162456594]
+[node name="BodyLabel" type="Label" parent="AugmentTooltip" unique_id=162456594]
 layout_mode = 0
 offset_left = 14.0
 offset_top = 54.0

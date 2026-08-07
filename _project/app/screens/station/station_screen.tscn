@@ -17,6 +17,9 @@
 [ext_resource type="PackedScene" uid="uid://bgjkqi6c2xoc7" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
 [ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
 [ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
+[ext_resource type="Resource" uid="uid://delec1tres0x3" path="res://_project/items/augments/electrified_hull.tres" id="25_electrified_hull"]
+[ext_resource type="Resource" uid="uid://denem1tres0x4" path="res://_project/items/augments/enemy_repulsion.tres" id="25_enemy_repulsion"]
+[ext_resource type="Resource" uid="uid://dkine1tres0x5" path="res://_project/items/augments/kinetic_repulsion.tres" id="25_kinetic_repulsion"]
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="26_pistol_data"]
 [ext_resource type="Texture2D" uid="uid://0qevonhftyj2" path="res://_project/common/sprites/icon_research_point.png" id="27_rp_icon"]
 [ext_resource type="Resource" uid="uid://dsmg8w1pk3n0x" path="res://_project/items/weapons/smg/smg.tres" id="28_smg_data"]
@@ -73,10 +76,43 @@ script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("25_increased_recycling")
 locked = true
 research_unlock_id = &"augment_increased_recycling"
-research_unlock_group = &"player_augment_increased_recycling"
+research_unlock_group = &"ship_augment_increased_recycling"
 research_unlock_order = 30
 research_cost_common = 1
 research_cost_rare = 1
+
+[sub_resource type="Resource" id="Resource_station_augment_kinetic_repulsion"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_kinetic_repulsion")
+locked = true
+research_unlock_id = &"augment_kinetic_repulsion"
+research_unlock_group = &"player_augment_kinetic_repulsion"
+research_unlock_order = 40
+research_cost_common = 99
+research_cost_rare = 99
+research_cost_epic = 99
+
+[sub_resource type="Resource" id="Resource_station_augment_electrified_hull"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_electrified_hull")
+locked = true
+research_unlock_id = &"augment_electrified_hull"
+research_unlock_group = &"ship_augment_electrified_hull"
+research_unlock_order = 40
+research_cost_common = 99
+research_cost_rare = 99
+research_cost_epic = 99
+
+[sub_resource type="Resource" id="Resource_station_augment_enemy_repulsion"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_enemy_repulsion")
+locked = true
+research_unlock_id = &"augment_enemy_repulsion"
+research_unlock_group = &"magnet_augment_enemy_repulsion"
+research_unlock_order = 40
+research_cost_common = 99
+research_cost_rare = 99
+research_cost_epic = 99
 
 [sub_resource type="Resource" id="Resource_station_weapon_pistol"]
 script = ExtResource("11_upgrade_entry")
@@ -361,7 +397,7 @@ layout_mode = 2
 slot_kind = &"player_augment"
 slot_index = 0
 popup_title = "Augments"
-catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_kinetic_repulsion")])
 slot_id = &"PlayerAugment1"
 display_name = "Augment 1"
 static_icon = ExtResource("14_h7pqf")
@@ -377,7 +413,7 @@ layout_mode = 2
 slot_kind = &"player_augment"
 slot_index = 1
 popup_title = "Augments"
-catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_increased_recycling")])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_regeneration"), SubResource("Resource_station_augment_adrenaline"), SubResource("Resource_station_augment_kinetic_repulsion")])
 slot_id = &"PlayerAugment2"
 display_name = "Augment 2"
 static_icon = ExtResource("14_h7pqf")
@@ -675,6 +711,7 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("63_hull_item")
 slot_id = &"ship_integrity"
+popups_open_left = true
 display_name = "Hull"
 static_icon = ExtResource("12_4e5bg")
 
@@ -688,6 +725,7 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("64_storage_item")
 slot_id = &"ship_storage_size"
+popups_open_left = true
 display_name = "Storage"
 static_icon = ExtResource("51_ic_crate")
 
@@ -713,6 +751,7 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("66_magcap_item")
 slot_id = &"magnet_capacity"
+popups_open_left = true
 display_name = "Capacity"
 static_icon = ExtResource("51_ic_crate")
 
@@ -739,8 +778,9 @@ layout_mode = 2
 slot_kind = &"ship_augment"
 slot_index = 0
 popup_title = "Ship Augments"
-catalog = Array[ExtResource("11_upgrade_entry")]([])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_increased_recycling"), SubResource("Resource_station_augment_electrified_hull")])
 slot_id = &"ShipAugment"
+popups_open_left = true
 display_name = "Augment"
 static_icon = ExtResource("12_4e5bg")
 
@@ -755,8 +795,9 @@ layout_mode = 2
 slot_kind = &"magnet_augment"
 slot_index = 0
 popup_title = "Magnet Augments"
-catalog = Array[ExtResource("11_upgrade_entry")]([])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_enemy_repulsion")])
 slot_id = &"MagnetAugment"
+popups_open_left = true
 display_name = "Augment"
 static_icon = ExtResource("14_h7pqf")
 

@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://dkine1tres0x5"]
+
+[ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
+[ext_resource type="Texture2D" uid="uid://bjv5h5p364md3" path="res://_project/items/augments/sprites/augment_kineticrepulsion.png" id="2_kinetic_repulsion_icon"]
+
+[resource]
+script = ExtResource("1_augment_data")
+owner_tags = Array[StringName]([&"player"])
+item_id = &"augment_kinetic_repulsion"
+display_name = "Kinetic Repulsion"
+description = "Repulsed trash deals damage on collision."
+icon = ExtResource("2_kinetic_repulsion_icon")
+tags = Array[StringName]([&"augment", &"player_augment"])

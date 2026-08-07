@@ -16,24 +16,24 @@ const SHIELD_PULSE_UP_SECONDS := 0.12
 const SHIELD_PULSE_DOWN_SECONDS := 0.28
 const SHIELD_BROKEN_LOOP_PAUSE_SECONDS := 0.35
 const SHIELD_BREAK_SHAKE_DEGREES := 8.0
-const PLAYER_AUGMENT_ICON_SIZE := Vector2(44.0, 44.0)
-const PLAYER_AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
-const PLAYER_AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/panel_border.png")
-const PLAYER_AUGMENT_BG_COLOR := Color("5f6969")
+const AUGMENT_ICON_SIZE := Vector2(44.0, 44.0)
+const AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
+const AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/panel_border.png")
+const AUGMENT_BG_COLOR := Color("5f6969")
 ## Border thickness in the panel_border nine-patch; icons inset by this much.
-const PLAYER_AUGMENT_BORDER_INSET := 6
+const AUGMENT_BORDER_INSET := 6
 ## Gray background inset so it doesn't show in the border's rounded corners.
-const PLAYER_AUGMENT_BG_INSET := 4
+const AUGMENT_BG_INSET := 4
 
 @onready var _player_health_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/MarginContainer/PlayerHPBar
 @onready var _player_shield_container: Control = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon
 @onready var _player_shield_pulse_container: MarginContainer = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer
 @onready var _player_shield_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer/ShieldTexture
 @onready var _player_shield_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer/ShieldCountLabel
-@onready var _player_augment_icons: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/PlayerAugmentIcons
-@onready var _player_augment_tooltip: ColorRect = $PlayerAugmentTooltip
-@onready var _player_augment_tooltip_name: Label = $PlayerAugmentTooltip/NameLabel
-@onready var _player_augment_tooltip_body: Label = $PlayerAugmentTooltip/BodyLabel
+@onready var _augment_icons: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/AugmentIcons
+@onready var _augment_tooltip: ColorRect = $AugmentTooltip
+@onready var _augment_tooltip_name: Label = $AugmentTooltip/NameLabel
+@onready var _augment_tooltip_body: Label = $AugmentTooltip/BodyLabel
 @onready var _hotbar_item_name_label: Label = $PlayerStatus/HBoxContainer/PlayerBars/ItemSlotContainer/Hotbar/HotbarItemName
 @onready var _scrap_counter: HBoxContainer = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter
 @onready var _scrap_icon: TextureRect = $PlayerStatus/HBoxContainer/PlayerBars/HBoxContainer/VBoxContainer/ScrapCounterMargin/ScrapCounter/ScrapIcon
@@ -55,7 +55,7 @@ var _displayed_shield_count: int = -1
 var _shield_pulse_tween: Tween = null
 var _shield_broken_loop_tween: Tween = null
 var _shield_break_shake_tween: Tween = null
-var _displayed_player_augment_key: String = ""
+var _displayed_augment_key: String = ""
 var _displayed_hotbar_item_name: String = ""
 
 
@@ -69,19 +69,19 @@ func _ready() -> void:
 	if _hotbar_item_name_label:
 		Magnetide.apply_label_font(_hotbar_item_name_label)
 		_hotbar_item_name_label.text = ""
-	if _player_augment_tooltip:
-		_player_augment_tooltip.visible = false
-	if _player_augment_tooltip_name:
-		Magnetide.apply_label_font(_player_augment_tooltip_name)
-	if _player_augment_tooltip_body:
-		Magnetide.apply_label_font(_player_augment_tooltip_body)
+	if _augment_tooltip:
+		_augment_tooltip.visible = false
+	if _augment_tooltip_name:
+		Magnetide.apply_label_font(_augment_tooltip_name)
+	if _augment_tooltip_body:
+		Magnetide.apply_label_font(_augment_tooltip_body)
 	set_run_scrap_metal_count(0)
 	if _event_text and not _event_text.countdown_finished.is_connected(_on_event_countdown_finished):
 		_event_text.countdown_finished.connect(_on_event_countdown_finished)
 	call_deferred("_bind_to_active_run_controller")
 	call_deferred("_bind_to_active_player")
 	_update_health_ui()
-	_refresh_player_augment_icons(true)
+	_refresh_augment_icons(true)
 
 	var pause_menu := PauseMenu.new()
 	pause_menu.name = "PauseMenu"
@@ -104,7 +104,7 @@ func _process(_delta: float) -> void:
 	_update_magazine_counter()
 	_update_health_ui()
 	_update_hotbar_item_name()
-	_refresh_player_augment_icons()
+	_refresh_augment_icons()
 
 
 func _bind_to_threat() -> void:
@@ -320,31 +320,31 @@ func bind_run_controller(run_controller: RunController) -> void:
 		set_run_scrap_metal_count(_bound_run_controller.scrap_metal_collected)
 	else:
 		set_run_scrap_metal_count(0)
-	_refresh_player_augment_icons(true)
+	_refresh_augment_icons(true)
 
 
-func _refresh_player_augment_icons(force: bool = false) -> void:
-	if _player_augment_icons == null:
+func _refresh_augment_icons(force: bool = false) -> void:
+	if _augment_icons == null:
 		return
 
 	var loadout := _get_active_run_loadout()
-	var augments := _get_equipped_player_augments(loadout)
-	var augment_key := _build_player_augment_key(loadout, augments)
-	if not force and augment_key == _displayed_player_augment_key:
+	var augments := _get_equipped_augments(loadout)
+	var augment_key := _build_augment_key(loadout, augments)
+	if not force and augment_key == _displayed_augment_key:
 		return
-	_displayed_player_augment_key = augment_key
+	_displayed_augment_key = augment_key
 
-	for child in _player_augment_icons.get_children():
+	for child in _augment_icons.get_children():
 		child.queue_free()
 
-	_player_augment_icons.visible = not augments.is_empty()
+	_augment_icons.visible = not augments.is_empty()
 	if augments.is_empty():
-		_hide_player_augment_tooltip()
+		_hide_augment_tooltip()
 		return
 
 	for augment in augments:
-		var button := _create_player_augment_icon_button(augment, loadout)
-		_player_augment_icons.add_child(button)
+		var button := _create_augment_icon_button(augment, loadout)
+		_augment_icons.add_child(button)
 
 
 func _get_active_run_loadout() -> RunLoadout:
@@ -357,17 +357,13 @@ func _get_active_run_loadout() -> RunLoadout:
 	return null
 
 
-func _get_equipped_player_augments(loadout: RunLoadout) -> Array[AugmentData]:
-	var augments: Array[AugmentData] = []
+func _get_equipped_augments(loadout: RunLoadout) -> Array[AugmentData]:
 	if loadout == null:
-		return augments
-	for augment in loadout.player_augments:
-		if augment != null:
-			augments.append(augment)
-	return augments
+		return []
+	return loadout.get_equipped_augments()
 
 
-func _build_player_augment_key(loadout: RunLoadout, augments: Array[AugmentData]) -> String:
+func _build_augment_key(loadout: RunLoadout, augments: Array[AugmentData]) -> String:
 	if loadout == null or augments.is_empty():
 		return ""
 	var parts := PackedStringArray()
@@ -379,9 +375,9 @@ func _build_player_augment_key(loadout: RunLoadout, augments: Array[AugmentData]
 	return "|".join(parts)
 
 
-func _create_player_augment_icon_button(augment: AugmentData, loadout: RunLoadout) -> Button:
+func _create_augment_icon_button(augment: AugmentData, loadout: RunLoadout) -> Button:
 	var button := Button.new()
-	button.custom_minimum_size = PLAYER_AUGMENT_ICON_SIZE
+	button.custom_minimum_size = AUGMENT_ICON_SIZE
 	button.size_flags_horizontal = Control.SIZE_SHRINK_CENTER
 	button.size_flags_vertical = Control.SIZE_SHRINK_CENTER
 	button.mouse_filter = Control.MOUSE_FILTER_STOP
@@ -397,9 +393,9 @@ func _create_player_augment_icon_button(augment: AugmentData, loadout: RunLoadou
 
 	# Gray background, inset so it never shows in the rounded border's corners.
 	var background := ColorRect.new()
-	background.color = PLAYER_AUGMENT_BG_COLOR
+	background.color = AUGMENT_BG_COLOR
 	background.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_inset_full_rect(background, PLAYER_AUGMENT_BG_INSET)
+	_inset_full_rect(background, AUGMENT_BG_INSET)
 	button.add_child(background)
 
 	# Augment icon, inset within the border frame.
@@ -408,23 +404,23 @@ func _create_player_augment_icon_button(augment: AugmentData, loadout: RunLoadou
 	icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
 	icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
 	icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_inset_full_rect(icon_rect, PLAYER_AUGMENT_BORDER_INSET)
+	_inset_full_rect(icon_rect, AUGMENT_BORDER_INSET)
 	button.add_child(icon_rect)
 
 	# Nine-patch border drawn on top; its transparent center shows the icon/bg.
 	var border := NinePatchRect.new()
-	border.texture = PLAYER_AUGMENT_BORDER_TEXTURE
-	border.patch_margin_left = PLAYER_AUGMENT_BORDER_INSET
-	border.patch_margin_top = PLAYER_AUGMENT_BORDER_INSET
-	border.patch_margin_right = PLAYER_AUGMENT_BORDER_INSET
-	border.patch_margin_bottom = PLAYER_AUGMENT_BORDER_INSET
+	border.texture = AUGMENT_BORDER_TEXTURE
+	border.patch_margin_left = AUGMENT_BORDER_INSET
+	border.patch_margin_top = AUGMENT_BORDER_INSET
+	border.patch_margin_right = AUGMENT_BORDER_INSET
+	border.patch_margin_bottom = AUGMENT_BORDER_INSET
 	border.set_anchors_preset(Control.PRESET_FULL_RECT)
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	button.add_child(border)
-	button.mouse_entered.connect(_show_player_augment_tooltip.bind(button, augment, loadout))
-	button.mouse_exited.connect(_hide_player_augment_tooltip)
-	button.focus_entered.connect(_show_player_augment_tooltip.bind(button, augment, loadout))
-	button.focus_exited.connect(_hide_player_augment_tooltip)
+	button.mouse_entered.connect(_show_augment_tooltip.bind(button, augment, loadout))
+	button.mouse_exited.connect(_hide_augment_tooltip)
+	button.focus_entered.connect(_show_augment_tooltip.bind(button, augment, loadout))
+	button.focus_exited.connect(_hide_augment_tooltip)
 	return button
 
 
@@ -436,35 +432,35 @@ func _inset_full_rect(control: Control, inset: int) -> void:
 	control.offset_bottom = -inset
 
 
-func _show_player_augment_tooltip(button: Control, augment: AugmentData, loadout: RunLoadout) -> void:
-	if _player_augment_tooltip == null or augment == null:
+func _show_augment_tooltip(button: Control, augment: AugmentData, loadout: RunLoadout) -> void:
+	if _augment_tooltip == null or augment == null:
 		return
 
-	_player_augment_tooltip_name.text = _get_augment_name(augment)
-	_player_augment_tooltip_body.text = _build_player_augment_tooltip_text(augment, loadout)
-	_resize_player_augment_tooltip()
-	_player_augment_tooltip.visible = true
+	_augment_tooltip_name.text = _get_augment_name(augment)
+	_augment_tooltip_body.text = _build_augment_tooltip_text(augment, loadout)
+	_resize_augment_tooltip()
+	_augment_tooltip.visible = true
 
-	var target_position := button.get_global_rect().position + PLAYER_AUGMENT_TOOLTIP_OFFSET
+	var target_position := button.get_global_rect().position + AUGMENT_TOOLTIP_OFFSET
 	var viewport_size := get_viewport_rect().size
-	var tooltip_size := _player_augment_tooltip.size
+	var tooltip_size := _augment_tooltip.size
 	if tooltip_size.x <= 0.0 or tooltip_size.y <= 0.0:
 		tooltip_size = Vector2(300.0, 158.0)
 	target_position.x = clampf(target_position.x, 0.0, maxf(viewport_size.x - tooltip_size.x, 0.0))
 	target_position.y = clampf(target_position.y, 0.0, maxf(viewport_size.y - tooltip_size.y, 0.0))
-	_player_augment_tooltip.position = target_position
+	_augment_tooltip.position = target_position
 
 
-func _hide_player_augment_tooltip() -> void:
-	if _player_augment_tooltip != null:
-		_player_augment_tooltip.visible = false
+func _hide_augment_tooltip() -> void:
+	if _augment_tooltip != null:
+		_augment_tooltip.visible = false
 
 
 ## Grow the tooltip panel to fit the wrapped body text so the description never
 ## spills outside the panel bounds.
-func _resize_player_augment_tooltip() -> void:
-	var body := _player_augment_tooltip_body
-	if body == null or _player_augment_tooltip == null:
+func _resize_augment_tooltip() -> void:
+	var body := _augment_tooltip_body
+	if body == null or _augment_tooltip == null:
 		return
 	var font := body.get_theme_font("font")
 	if font == null:
@@ -480,10 +476,10 @@ func _resize_player_augment_tooltip() -> void:
 	body.size = Vector2(body.size.x, body_height)
 	# Panel height = body's top offset + measured body height + bottom margin.
 	var panel_height := body.position.y + body_height + 12.0
-	_player_augment_tooltip.size = Vector2(_player_augment_tooltip.size.x, panel_height)
+	_augment_tooltip.size = Vector2(_augment_tooltip.size.x, panel_height)
 
 
-func _build_player_augment_tooltip_text(augment: AugmentData, loadout: RunLoadout) -> String:
+func _build_augment_tooltip_text(augment: AugmentData, loadout: RunLoadout) -> String:
 	var lines := PackedStringArray()
 	var description := _get_augment_description(augment)
 	if not description.is_empty():

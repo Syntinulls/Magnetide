@@ -1,0 +1,13 @@
+[gd_resource type="Resource" script_class="AugmentData" format=3 uid="uid://delec1tres0x3"]
+
+[ext_resource type="Script" uid="uid://d0mek1k7jbnkg" path="res://_project/items/augments/augment_data.gd" id="1_augment_data"]
+[ext_resource type="Texture2D" uid="uid://coforeo0y8biq" path="res://_project/items/augments/sprites/augment_electrifiedhull.png" id="2_electrified_hull_icon"]
+
+[resource]
+script = ExtResource("1_augment_data")
+owner_tags = Array[StringName]([&"ship"])
+item_id = &"augment_electrified_hull"
+display_name = "Electrified Hull"
+description = "The ship will zap enemies that physically damage it."
+icon = ExtResource("2_electrified_hull_icon")
+tags = Array[StringName]([&"augment", &"ship_augment"])

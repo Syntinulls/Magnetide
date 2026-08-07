@@ -82,11 +82,14 @@ var _slot_upgrade_ids: Dictionary = {}
 var _active_dynamic_slot_id: StringName = &""
 var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
-var _active_player_augment_index: int = -1
+var _active_augment_slot_index: int = -1
 var _active_detail_entry: Resource = null
 ## Widest entry width measured on the last list population, reused by the panel
 ## layout pass so it can size the list panel without re-measuring every entry.
 var _dynamic_list_content_width: float = DYNAMIC_LIST_MIN_WIDTH
+## Unmirrored x offset of the detail panel inside the popup, set when the list is sized and
+## reused by every re-fit so the arrangement is rebuilt rather than adjusted in place.
+var _dynamic_detail_panel_left: float = 0.0
 
 @onready var _page_viewport: Control = $PageViewport
 @onready var _page_container: Control = $PageViewport/PageContainer
@@ -501,11 +504,35 @@ func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
 		]
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_upgrade_gain_text(upgrade_id)
 		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_upgrade_requirement_text(upgrade_id)
+	_position_upgrade_cost_popup(button)
+	_upgrade_cost_popup.visible = true
+
+
+## Anchor the cost popup beside the button that opened it: offset to its right by default,
+## mirrored to its left for a slot authored to open leftward, so the popup extends away from
+## the page's slots rather than across them.
+func _position_upgrade_cost_popup(button: Button) -> void:
 	var button_rect := button.get_global_rect()
 	var page_rect := _player_page.get_global_rect()
 	_resize_upgrade_cost_popup()
-	_upgrade_cost_popup.position = (button_rect.position - page_rect.position) + UPGRADE_POPUP_OFFSET
-	_upgrade_cost_popup.visible = true
+	var popup_position := (button_rect.position - page_rect.position) + UPGRADE_POPUP_OFFSET
+	var slot := _slot_for_button(button)
+	if slot != null and slot.popups_open_left:
+		popup_position.x = (button_rect.end.x - page_rect.position.x) \
+			- UPGRADE_POPUP_OFFSET.x \
+			- _upgrade_cost_popup.size.x
+	_upgrade_cost_popup.position = popup_position
+
+
+## The slot widget that owns a popup-anchoring button (the button lives inside the slot's own
+## node tree), or null when the button isn't part of a slot.
+func _slot_for_button(button: Button) -> UpgradeSlot:
+	var node := button as Node
+	while node != null:
+		if node is UpgradeSlot:
+			return node as UpgradeSlot
+		node = node.get_parent()
+	return null
 
 
 func _hide_upgrade_cost_popup() -> void:
@@ -727,7 +754,7 @@ func _toggle_dynamic_slot_popup(
 	_active_dynamic_slot_id = slot_id
 	_active_dynamic_slot_kind = slot_kind
 	_active_dynamic_slot_button = button
-	_active_player_augment_index = augment_index
+	_active_augment_slot_index = augment_index
 	_dynamic_slot_popup.visible = should_show
 	_dynamic_slot_popup_stats_panel.visible = false
 	_dynamic_slot_popup_compare_panel.visible = false
@@ -756,7 +783,7 @@ func _close_dynamic_slot_popup() -> void:
 	_active_dynamic_slot_id = &""
 	_active_dynamic_slot_kind = &""
 	_active_dynamic_slot_button = null
-	_active_player_augment_index = -1
+	_active_augment_slot_index = -1
 	_active_detail_entry = null
 
 
@@ -765,10 +792,20 @@ func _position_dynamic_slot_popup() -> void:
 		return
 
 	# The popup is a top-level child (so it renders on top of everything and wins input).
-	# Open it directly to the right of the slot's icon — the slot stays visible to the left
-	# and reads as the current item — aligned to the icon's top.
+	# Open it directly beside the slot's icon — the slot stays visible and reads as the
+	# current item — aligned to the icon's top. A left-opening slot pins the popup's right
+	# edge to the slot instead, so its width (set by _layout_detail_panels) grows away from it.
 	var button_rect := _active_dynamic_slot_button.get_global_rect()
-	_dynamic_slot_popup.global_position = Vector2(button_rect.end.x + POPUP_SLOT_MARGIN, button_rect.position.y)
+	var popup_left := button_rect.end.x + POPUP_SLOT_MARGIN
+	if _active_slot_opens_left():
+		popup_left = button_rect.position.x - POPUP_SLOT_MARGIN - _dynamic_slot_popup.size.x
+	_dynamic_slot_popup.global_position = Vector2(popup_left, button_rect.position.y)
+
+
+## True when the open slot is authored to stack its popups leftward (the ship page).
+func _active_slot_opens_left() -> bool:
+	var slot := _station_slots.get(_active_dynamic_slot_id, null) as UpgradeSlot
+	return slot != null and slot.popups_open_left
 
 
 func _show_dynamic_item_stats(entry: Resource) -> void:
@@ -971,17 +1008,17 @@ func _equip_dynamic_item_from_popup(entry: Resource) -> void:
 			var augment_data := _catalog_entry_item_data(entry) as AugmentData
 			if augment_data == null:
 				return
-			_run_loadout.equip_player_augment(_active_player_augment_index, augment_data)
+			_run_loadout.equip_player_augment(_active_augment_slot_index, augment_data)
 		&"ship_augment":
 			var ship_augment_data := _catalog_entry_item_data(entry) as AugmentData
 			if ship_augment_data == null:
 				return
-			_run_loadout.equip_ship_augment(_active_player_augment_index, ship_augment_data)
+			_run_loadout.equip_ship_augment(_active_augment_slot_index, ship_augment_data)
 		&"magnet_augment":
 			var magnet_augment_data := _catalog_entry_item_data(entry) as AugmentData
 			if magnet_augment_data == null:
 				return
-			_run_loadout.equip_magnet_augment(_active_player_augment_index, magnet_augment_data)
+			_run_loadout.equip_magnet_augment(_active_augment_slot_index, magnet_augment_data)
 		_:
 			return
 
@@ -1094,12 +1131,8 @@ func _get_equipped_item_for_slot(slot: DynamicUpgradeSlot) -> Resource:
 	match slot.slot_kind:
 		&"weapon":
 			return _run_loadout.equipped_weapon
-		&"player_augment":
-			return _get_player_augment(slot.slot_index)
-		&"ship_augment":
-			return _get_ship_augment(slot.slot_index)
-		&"magnet_augment":
-			return _get_magnet_augment(slot.slot_index)
+		&"player_augment", &"ship_augment", &"magnet_augment":
+			return _get_equipped_augment(slot.slot_kind, slot.slot_index)
 	return null
 
 
@@ -1201,10 +1234,7 @@ func _show_augment_cost_popup(button: Button, slot_id: StringName) -> void:
 		if title: title.text = "Lv %d -> %d" % [level, level + 1]
 		if credits: credits.text = _build_augment_gain_text(augment)
 		if secondary: secondary.text = _build_augment_requirement_text(augment)
-	var button_rect := button.get_global_rect()
-	var page_rect := _player_page.get_global_rect()
-	_resize_upgrade_cost_popup()
-	_upgrade_cost_popup.position = (button_rect.position - page_rect.position) + UPGRADE_POPUP_OFFSET
+	_position_upgrade_cost_popup(button)
 	_upgrade_cost_popup.visible = true
 
 
@@ -1341,33 +1371,48 @@ func _layout_dynamic_popup_panels() -> void:
 			var entry_control := child as Control
 			entry_control.custom_minimum_size = Vector2(list_width, entry_control.custom_minimum_size.y)
 
-	# Anchor the primary detail panel to the right of the list. It keeps its current
-	# (possibly hover-grown) width while showing so a refresh doesn't collapse it; the
-	# comparison panel and final popup width are finalized in _layout_detail_panels.
-	if _dynamic_slot_popup_stats_panel != null:
-		var detail_left := list_left + list_panel_width + DYNAMIC_PANEL_GAP
-		if not _dynamic_slot_popup_stats_panel.visible:
-			_dynamic_slot_popup_stats_panel.size = Vector2(
-				DETAIL_PANEL_MIN_WIDTH, _dynamic_slot_popup_stats_panel.size.y
-			)
-		_dynamic_slot_popup_stats_panel.position = Vector2(detail_left, _dynamic_slot_popup_stats_panel.position.y)
+	# Anchor the primary detail panel after the list. It keeps its current (possibly
+	# hover-grown) width while showing so a refresh doesn't collapse it; the comparison
+	# panel, final popup width, and open direction are finalized in _layout_detail_panels.
+	_dynamic_detail_panel_left = list_left + list_panel_width + DYNAMIC_PANEL_GAP
+	if _dynamic_slot_popup_stats_panel != null and not _dynamic_slot_popup_stats_panel.visible:
+		_dynamic_slot_popup_stats_panel.size = Vector2(
+			DETAIL_PANEL_MIN_WIDTH, _dynamic_slot_popup_stats_panel.size.y
+		)
 	_layout_detail_panels()
 
 
-## Position the comparison panel to the right of the primary detail panel (only when it's
-## shown) and grow the popup to enclose whichever panels are visible. The primary panel's
-## left edge is set by _layout_dynamic_popup_panels; this only reads it.
+## Arrange the popup's panels, grow the popup to enclose whichever are visible, then place it
+## beside its slot. The panels are always laid out left-to-right from the popup's origin first
+## and mirrored in place afterwards for a left-opening slot; rebuilding that arrangement from
+## the stored offsets on every call keeps it idempotent, since each hover re-fits the panels
+## and a mirror applied to an already-mirrored layout would flip it back.
 func _layout_detail_panels() -> void:
 	var primary := _dynamic_slot_popup_stats_panel
-	if primary == null:
+	if primary == null or _dynamic_slot_popup == null:
 		return
+	var list_panel := _dynamic_slot_popup.get_node_or_null("ItemListPanel") as Control
+	if list_panel != null:
+		list_panel.position = Vector2(0.0, list_panel.position.y)
+	primary.position = Vector2(_dynamic_detail_panel_left, primary.position.y)
 	var right_edge := primary.position.x + primary.size.x
 	var compare := _dynamic_slot_popup_compare_panel
 	if compare != null and compare.visible:
 		compare.position = Vector2(right_edge + DYNAMIC_PANEL_GAP, primary.position.y)
 		right_edge = compare.position.x + compare.size.x
-	if _dynamic_slot_popup != null:
-		_dynamic_slot_popup.size = Vector2(right_edge, _dynamic_slot_popup.size.y)
+	_dynamic_slot_popup.size = Vector2(right_edge, _dynamic_slot_popup.size.y)
+	if _active_slot_opens_left():
+		_mirror_popup_panels([list_panel, primary, compare], right_edge)
+	_position_dynamic_slot_popup()
+
+
+## Flip each visible panel horizontally within the popup's width. This reverses their order,
+## so the item list ends up flush against the slot and each further panel extends away from it.
+func _mirror_popup_panels(panels: Array, total_width: float) -> void:
+	for panel: Control in panels:
+		if panel == null or not panel.visible:
+			continue
+		panel.position = Vector2(total_width - (panel.position.x + panel.size.x), panel.position.y)
 
 
 func _connect_dynamic_entry_detail_hover(control: Control, entry: Resource) -> void:
@@ -1390,11 +1435,8 @@ func _active_slot_catalog() -> Array[UpgradeCatalogEntry]:
 
 func _get_active_catalog_entries() -> Array[Resource]:
 	match _active_dynamic_slot_kind:
-		&"player_augment":
-			return _get_player_augment_catalog_entries()
-		&"ship_augment", &"magnet_augment":
-			# There is no ship/magnet augment catalog to list.
-			return []
+		&"player_augment", &"ship_augment", &"magnet_augment":
+			return _get_augment_catalog_entries()
 	return _get_weapon_catalog_entries()
 
 
@@ -1550,7 +1592,7 @@ func _get_weapon_catalog_entries() -> Array[Resource]:
 	return entries
 
 
-func _get_player_augment_catalog_entries() -> Array[Resource]:
+func _get_augment_catalog_entries() -> Array[Resource]:
 	var entries: Array[Resource] = []
 	for entry in _active_slot_catalog():
 		var augment := _catalog_entry_item_data(entry) as AugmentData
@@ -1559,7 +1601,7 @@ func _get_player_augment_catalog_entries() -> Array[Resource]:
 		entries.append(entry)
 		_ensure_catalog_item_state(entry)
 
-	var equipped_augment := _get_player_augment(_active_player_augment_index)
+	var equipped_augment := _get_equipped_augment(_active_dynamic_slot_kind, _active_augment_slot_index)
 	if equipped_augment != null:
 		var has_equipped_augment := false
 		for entry in entries:
@@ -1799,20 +1841,10 @@ func _is_catalog_entry_equipped(entry: Resource) -> bool:
 	match _active_dynamic_slot_kind:
 		&"weapon":
 			return _same_equipment_data(_catalog_entry_equipment(entry), _run_loadout.equipped_weapon)
-		&"player_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment":
 			var item_data := _catalog_entry_item_data(entry)
-			for augment in _run_loadout.player_augments:
+			for augment in _get_equipped_augments_of_kind(_active_dynamic_slot_kind):
 				if ItemData.is_same_item(augment, item_data as ItemData):
-					return true
-		&"ship_augment":
-			var ship_item_data := _catalog_entry_item_data(entry)
-			for augment in _run_loadout.ship_augments:
-				if ItemData.is_same_item(augment, ship_item_data as ItemData):
-					return true
-		&"magnet_augment":
-			var magnet_item_data := _catalog_entry_item_data(entry)
-			for augment in _run_loadout.magnet_augments:
-				if ItemData.is_same_item(augment, magnet_item_data as ItemData):
 					return true
 	return false
 
@@ -2074,28 +2106,25 @@ func _get_equipment_name(equipment_data: HeldItemData) -> String:
 	return "Unknown Equipment"
 
 
-func _get_player_augment(index: int) -> AugmentData:
+## The augment list a slot kind equips into, empty for a non-augment kind.
+func _get_equipped_augments_of_kind(slot_kind: StringName) -> Array[AugmentData]:
 	if _run_loadout == null:
-		return null
-	if index < 0 or index >= _run_loadout.player_augments.size():
-		return null
-	return _run_loadout.player_augments[index] as AugmentData
+		return []
+	match slot_kind:
+		&"player_augment":
+			return _run_loadout.player_augments
+		&"ship_augment":
+			return _run_loadout.ship_augments
+		&"magnet_augment":
+			return _run_loadout.magnet_augments
+	return []
 
 
-func _get_ship_augment(index: int) -> AugmentData:
-	if _run_loadout == null:
+func _get_equipped_augment(slot_kind: StringName, index: int) -> AugmentData:
+	var augments := _get_equipped_augments_of_kind(slot_kind)
+	if index < 0 or index >= augments.size():
 		return null
-	if index < 0 or index >= _run_loadout.ship_augments.size():
-		return null
-	return _run_loadout.ship_augments[index] as AugmentData
-
-
-func _get_magnet_augment(index: int) -> AugmentData:
-	if _run_loadout == null:
-		return null
-	if index < 0 or index >= _run_loadout.magnet_augments.size():
-		return null
-	return _run_loadout.magnet_augments[index] as AugmentData
+	return augments[index]
 
 
 func _get_upgradeable_item_name(item_data: Resource) -> String:
