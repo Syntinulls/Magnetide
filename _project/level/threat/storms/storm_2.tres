@@ -1,0 +1,96 @@
+[gd_resource type="Resource" script_class="StormData" format=3 uid="uid://cst0rm2acid00"]
+
+[ext_resource type="Script" path="res://_project/level/threat/storms/storm_data.gd" id="1_storm_data"]
+[ext_resource type="Script" path="res://_project/level/threat/storms/storm_wave.gd" id="2_storm_wave"]
+[ext_resource type="Script" path="res://_project/level/threat/storms/storm_wave_batch.gd" id="3_storm_batch"]
+[ext_resource type="Script" path="res://_project/level/threat/storms/acid_rain_weather.gd" id="4_acid_rain"]
+[ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/enemies/worm/worm_spawn_profile.tres" id="5_worm"]
+[ext_resource type="Resource" uid="uid://dg8vx2ya4b0w3" path="res://_project/enemies/mosquito/mosquito_spawn_profile.tres" id="6_mosquito"]
+
+[sub_resource type="Resource" id="Resource_weather"]
+script = ExtResource("4_acid_rain")
+vignette_color = Color(0.22, 0.85, 0.18, 0.42)
+vignette_fade_seconds = 1.5
+player_drain_per_second = 0.8
+ship_drain_per_second = 0.0
+magnet_drain_per_second = 0.0
+
+[sub_resource type="Resource" id="Resource_w1_b1"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("5_worm")
+count = 4
+
+[sub_resource type="Resource" id="Resource_w1_b2"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("6_mosquito")
+count = 2
+
+[sub_resource type="Resource" id="Resource_wave1"]
+script = ExtResource("2_storm_wave")
+batches = Array[ExtResource("3_storm_batch")]([SubResource("Resource_w1_b1"), SubResource("Resource_w1_b2")])
+batch_interval_seconds = 3.0
+next_wave_delay_seconds = 5.0
+
+[sub_resource type="Resource" id="Resource_w2_b1"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("5_worm")
+count = 5
+
+[sub_resource type="Resource" id="Resource_w2_b2"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("6_mosquito")
+count = 3
+
+[sub_resource type="Resource" id="Resource_wave2"]
+script = ExtResource("2_storm_wave")
+batches = Array[ExtResource("3_storm_batch")]([SubResource("Resource_w2_b1"), SubResource("Resource_w2_b2")])
+batch_interval_seconds = 3.0
+next_wave_delay_seconds = 5.0
+
+[sub_resource type="Resource" id="Resource_w3_b1"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("6_mosquito")
+count = 4
+
+[sub_resource type="Resource" id="Resource_w3_b2"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("5_worm")
+count = 4
+
+[sub_resource type="Resource" id="Resource_wave3"]
+script = ExtResource("2_storm_wave")
+batches = Array[ExtResource("3_storm_batch")]([SubResource("Resource_w3_b1"), SubResource("Resource_w3_b2")])
+batch_interval_seconds = 3.0
+next_wave_delay_seconds = 5.0
+
+[sub_resource type="Resource" id="Resource_w4_b1"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("5_worm")
+count = 5
+
+[sub_resource type="Resource" id="Resource_w4_b2"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("6_mosquito")
+count = 4
+
+[sub_resource type="Resource" id="Resource_w4_b3"]
+script = ExtResource("3_storm_batch")
+profile = ExtResource("5_worm")
+count = 4
+
+[sub_resource type="Resource" id="Resource_wave4"]
+script = ExtResource("2_storm_wave")
+batches = Array[ExtResource("3_storm_batch")]([SubResource("Resource_w4_b1"), SubResource("Resource_w4_b2"), SubResource("Resource_w4_b3")])
+batch_interval_seconds = 3.0
+next_wave_delay_seconds = 5.0
+
+[resource]
+script = ExtResource("1_storm_data")
+id = &"storm_2"
+display_name = "ACID STORM"
+gate_after_level = 6
+waves = Array[ExtResource("2_storm_wave")]([SubResource("Resource_wave1"), SubResource("Resource_wave2"), SubResource("Resource_wave3"), SubResource("Resource_wave4")])
+weather = SubResource("Resource_weather")
+intro_seconds = 2.0
+outro_seconds = 2.5
+enemy_stat_level = 0

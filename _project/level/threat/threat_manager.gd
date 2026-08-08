@@ -2,47 +2,76 @@
 extends Node
 class_name ThreatManager
 
-## Run-level threat state owner.
+## Run-level threat state owner and progression gate.
 ##
 ## Threat is a continuous 0-100 score driven only by passive gain at a constant
-## rate. The bar is split into 10 equal segments (one per threat level). The run
-## can only rise as far as the current Threat Level Cap; once threat fills the
-## capped segment the run enters the Cap Reached decision state and a storm
-## countdown begins. The cap can only be raised +1 by an explicit player action
-## (the ship lever) once the cap has been reached.
+## rate, split into 10 equal segments (one per threat level). The run rises only as
+## far as the current Threat Level Cap; filling the capped segment opens the
+## interlevel window — the run's one departure opportunity — which resolves when the
+## player continues (lever), departs (pylons), or the timer expires.
+##
+## At the levels an authored storm gates, continuing starts that storm instead of
+## unlocking the next level immediately; the cap rises once the storm is cleared.
+##
+## This node owns every timer in the progression. The HUD renders the state it
+## publishes and never drives it.
 
 signal threat_changed(new_value: float)
 signal threat_level_changed(new_level: int)
-## Emitted when threat fills the current cap segment and the decision state begins.
-signal cap_reached()
-## Emitted when the player advances; payload is the new cap stage index.
-signal cap_raised(new_cap: int)
-## Emitted when the Cap Reached state begins its storm countdown.
-signal storm_countdown_started(seconds: float)
-## Emitted when the storm countdown expires and the acid storm arrives.
-signal storm_arrived()
+## The interlevel window opened. `is_storm_gate` is true when continuing starts a storm.
+signal window_opened(seconds: float, is_storm_gate: bool)
+## The window resolved (continued or departed) and is no longer accepting input.
+signal window_closed()
+## The cap rose; threat resumes building into the newly unlocked segment.
+signal level_advanced(new_cap: int)
+signal storm_started(storm: StormData)
+signal storm_finished(storm: StormData)
+## The authored storm list changed, so which boundaries are storm gates changed
+## with it. The level's storms are injected after the HUD binds, so views that
+## draw the gates need this to catch up.
+signal storms_changed()
+
+enum Phase {
+	## Threat accumulating toward the cap ceiling.
+	BUILDING,
+	## Cap ceiling reached; the player is deciding.
+	WINDOW,
+	## A storm is running; threat is paused until it clears.
+	STORM,
+	## Reserved for the level 10 boss fight. Unused until the boss exists.
+	BOSS,
+}
 
 const MAX_THREAT: float = 100.0
 const LEVEL_COUNT: int = 10
 const MAX_STAGE_INDEX: int = LEVEL_COUNT - 1
 const THREAT_SEGMENT_SIZE: float = MAX_THREAT / float(LEVEL_COUNT)
-## Target run length (seconds) to fill the whole bar with no decision delays:
-## 20 minutes -> 5 points/minute -> 2 minutes per segment.
+## Reference run length (seconds) used to derive the passive rate: 10 segments of
+## 2 minutes each. Actual run length is player-driven and not budgeted.
 const DEFAULT_RUN_DURATION_SECONDS: float = 1200.0
-const DEFAULT_STORM_COUNTDOWN_SECONDS: float = 30.0
+const DEFAULT_WINDOW_SECONDS: float = 30.0
 
 ## Passive threat gained per second. Constant for the whole run.
 @export var passive_threat_per_second: float = MAX_THREAT / DEFAULT_RUN_DURATION_SECONDS
-## Seconds the player has to decide once the threat cap is reached.
-@export var storm_countdown_seconds: float = DEFAULT_STORM_COUNTDOWN_SECONDS
+## Seconds the player has to decide once a threat level fills.
+@export var interlevel_window_seconds: float = DEFAULT_WINDOW_SECONDS
 
 var _current_threat: float = 0.0
 var _threat_level_cap: int = 0
-var _is_cap_reached: bool = false
-## While true, entering the Cap Reached / storm-imminent state is deferred even if threat has filled
-## the cap segment (e.g. during an active magnet looting cycle). Threat still clamps at the ceiling.
-var _cap_hold: bool = false
-var _storm_active: bool = false
+var _phase: Phase = Phase.BUILDING
+var _window_remaining: float = 0.0
+var _window_is_storm_gate: bool = false
+## True while the open window has nothing left to advance to (level 10): it stays
+## open indefinitely so departing is still possible, and never auto-resolves.
+var _window_is_terminal: bool = false
+var _storms: Array[StormData] = []
+var _active_storm: StormData = null
+## While true, opening the window is deferred even though threat has filled the cap
+## segment (driven by the magnet minigame so a window never opens mid-loot).
+var _window_hold: bool = false
+## While true, an expired window waits instead of auto-continuing, so a departure
+## hold started in the last second still resolves.
+var _departure_hold: bool = false
 var _run_ended: bool = false
 
 var current_threat: float:
@@ -64,14 +93,31 @@ var threat_level_cap: int:
 	get:
 		return _threat_level_cap
 
-## True while threat is clamped at the cap and the decision state is active.
-var is_cap_reached: bool:
+var phase: Phase:
 	get:
-		return _is_cap_reached
+		return _phase
+
+## True only while the interlevel window is open — the run's one departure opportunity.
+var is_departure_window_open: bool:
+	get:
+		return _phase == Phase.WINDOW
 
 var is_storm_active: bool:
 	get:
-		return _storm_active
+		return _phase == Phase.STORM
+
+## True while the open window has no next level to unlock (level 10): depart only.
+var is_terminal_window: bool:
+	get:
+		return _window_is_terminal
+
+var window_seconds_remaining: float:
+	get:
+		return _window_remaining
+
+var active_storm: StormData:
+	get:
+		return _active_storm
 
 var threat_ratio: float:
 	get:
@@ -87,14 +133,20 @@ func _ready() -> void:
 func _process(delta: float) -> void:
 	if Engine.is_editor_hint():
 		return
-	# Cap reached: threat gain is fully paused. The storm countdown runs as an
-	# isolated timer owned by the event-text UI; the run waits there for the
-	# player to advance (lever) or for the storm to arrive.
-	if _is_cap_reached:
-		return
-	if _current_threat >= _cap_ceiling():
-		return
-	add_threat(passive_threat_per_second * delta)
+	match _phase:
+		Phase.BUILDING:
+			_tick_threat(delta)
+		Phase.WINDOW:
+			_tick_window(delta)
+		_:
+			pass
+
+
+## Supply the run's authored storms (injected from the level definition). Determines
+## which level boundaries are storm gates.
+func set_storms(storms: Array[StormData]) -> void:
+	_storms = storms.duplicate()
+	storms_changed.emit()
 
 
 func add_threat(amount: float) -> void:
@@ -108,31 +160,95 @@ func get_player_threat_level() -> int:
 	return threat_level + 1
 
 
-## True only when the cap has been reached and there is a higher level to unlock.
-func can_raise_cap() -> bool:
-	return _is_cap_reached and _threat_level_cap < MAX_STAGE_INDEX
+## True if a storm gates the boundary after the given player-facing level (1-10).
+func is_storm_gate_after(player_level: int) -> bool:
+	return get_storm_after(player_level) != null
 
 
-## Raise the cap +1 (used by the advance/lever flow). Threat continues smoothly
-## from its current value into the newly unlocked segment; it is not reset.
-func raise_cap() -> void:
-	if not can_raise_cap():
+func get_storm_after(player_level: int) -> StormData:
+	for storm in _storms:
+		if storm != null and storm.gate_after_level == player_level:
+			return storm
+	return null
+
+
+## Player-facing levels (1-10) that a storm gates, for the threat bar's markers.
+func get_storm_gate_levels() -> PackedInt32Array:
+	var levels := PackedInt32Array()
+	for storm in _storms:
+		if storm != null and not levels.has(storm.gate_after_level):
+			levels.append(storm.gate_after_level)
+	return levels
+
+
+## True while the window is open and there is a further level to unlock.
+func can_advance() -> bool:
+	return _phase == Phase.WINDOW and not _run_ended and _threat_level_cap < MAX_STAGE_INDEX
+
+
+## Resolve the window by continuing. At a storm gate this starts the storm and the
+## cap rises only once it is cleared; otherwise the next level unlocks immediately.
+func advance() -> void:
+	if not can_advance():
 		return
-	var old_level := threat_level
-	_threat_level_cap += 1
-	_is_cap_reached = false
-	_storm_active = false
-	cap_raised.emit(_threat_level_cap)
-	var new_level := threat_level
-	if new_level != old_level:
-		threat_level_changed.emit(new_level)
+
+	var storm: StormData = null
+	if _window_is_storm_gate:
+		storm = get_storm_after(get_player_threat_level())
+
+	_phase = Phase.BUILDING
+	_window_remaining = 0.0
+	_window_is_storm_gate = false
+	_window_is_terminal = false
+	window_closed.emit()
+
+	if storm != null:
+		_begin_storm(storm)
+	else:
+		_raise_cap()
+
+
+## Defer (or release) opening the window. Driven by the magnet minigame so a window
+## never opens mid-loot; threat still clamps at the ceiling while held.
+func set_window_hold(held: bool) -> void:
+	if _window_hold == held:
+		return
+	_window_hold = held
+	if not held:
+		_try_open_window()
+
+
+## Report an in-progress departure hold. An expired window waits for the hold to
+## resolve rather than auto-continuing, so a hold started in the last second still
+## succeeds. Releasing the hold on an already-expired window continues at once.
+func set_departure_hold(held: bool) -> void:
+	if _departure_hold == held:
+		return
+	_departure_hold = held
+	if not held and _phase == Phase.WINDOW and _window_remaining <= 0.0:
+		advance()
+
+
+## Called by the storm director once the last wave is cleared and the outro is done.
+func notify_storm_finished() -> void:
+	if _phase != Phase.STORM:
+		return
+	var storm := _active_storm
+	_active_storm = null
+	_phase = Phase.BUILDING
+	storm_finished.emit(storm)
+	_raise_cap()
 
 
 func reset() -> void:
 	_threat_level_cap = 0
-	_is_cap_reached = false
-	_cap_hold = false
-	_storm_active = false
+	_phase = Phase.BUILDING
+	_window_remaining = 0.0
+	_window_is_storm_gate = false
+	_window_is_terminal = false
+	_active_storm = null
+	_window_hold = false
+	_departure_hold = false
 	_run_ended = false
 	_current_threat = 0.0
 	threat_changed.emit(_current_threat)
@@ -145,6 +261,26 @@ func stop_for_run_end() -> void:
 	set_process(false)
 
 
+func _tick_threat(delta: float) -> void:
+	if _current_threat >= _cap_ceiling():
+		return
+	add_threat(passive_threat_per_second * delta)
+
+
+func _tick_window(delta: float) -> void:
+	if _window_is_terminal:
+		return
+	if _window_remaining <= 0.0:
+		return
+	_window_remaining = maxf(_window_remaining - delta, 0.0)
+	if _window_remaining > 0.0:
+		return
+	# Expiry never overrides a decision already in progress.
+	if _departure_hold:
+		return
+	advance()
+
+
 func _set_current_threat(value: float) -> void:
 	var ceiling := _cap_ceiling()
 	var old_level := threat_level
@@ -153,19 +289,7 @@ func _set_current_threat(value: float) -> void:
 	var new_level := threat_level
 	if new_level != old_level:
 		threat_level_changed.emit(new_level)
-	if not _is_cap_reached and _current_threat >= ceiling:
-		_try_enter_cap_reached()
-
-
-## Defer (or release) the Cap Reached / storm-imminent trigger. Driven by the magnet minigame so the
-## storm does not start mid-loot — it waits until looting finishes and the ship departs. Threat still
-## clamps at the cap ceiling while held; releasing enters Cap Reached at once if threat is there.
-func set_cap_hold(held: bool) -> void:
-	if _cap_hold == held:
-		return
-	_cap_hold = held
-	if not held:
-		_try_enter_cap_reached()
+	_try_open_window()
 
 
 ## Top of the current cap level's segment, where threat is clamped.
@@ -173,28 +297,36 @@ func _cap_ceiling() -> float:
 	return minf(float(_threat_level_cap + 1) * THREAT_SEGMENT_SIZE, MAX_THREAT)
 
 
-## Enter the Cap Reached state unless already in it, currently held, or threat is below the ceiling.
-func _try_enter_cap_reached() -> void:
-	if _is_cap_reached or _cap_hold or _run_ended:
+func _try_open_window() -> void:
+	if _phase != Phase.BUILDING or _window_hold or _run_ended:
 		return
-	if _current_threat >= _cap_ceiling():
-		_enter_cap_reached()
-
-
-func _enter_cap_reached() -> void:
-	_is_cap_reached = true
-	_storm_active = false
-	cap_reached.emit()
-	# The event-text UI owns the storm countdown timer; tell it to start one.
-	storm_countdown_started.emit(storm_countdown_seconds)
-
-
-## Begin the acid storm. Called when the event-text storm countdown expires;
-## emits storm_arrived for the StormController. No-op if the storm is already
-## active, the cap is no longer reached (e.g. the player advanced in time), or
-## the run is ending (departure cutscene).
-func trigger_storm() -> void:
-	if _storm_active or not _is_cap_reached or _run_ended:
+	if _current_threat < _cap_ceiling():
 		return
-	_storm_active = true
-	storm_arrived.emit()
+	_open_window()
+
+
+func _open_window() -> void:
+	_phase = Phase.WINDOW
+	_window_is_terminal = _threat_level_cap >= MAX_STAGE_INDEX
+	_window_is_storm_gate = (
+		not _window_is_terminal and is_storm_gate_after(get_player_threat_level())
+	)
+	_window_remaining = 0.0 if _window_is_terminal else interlevel_window_seconds
+	window_opened.emit(_window_remaining, _window_is_storm_gate)
+
+
+func _begin_storm(storm: StormData) -> void:
+	_active_storm = storm
+	_phase = Phase.STORM
+	storm_started.emit(storm)
+
+
+func _raise_cap() -> void:
+	if _threat_level_cap >= MAX_STAGE_INDEX:
+		return
+	var old_level := threat_level
+	_threat_level_cap += 1
+	level_advanced.emit(_threat_level_cap)
+	var new_level := threat_level
+	if new_level != old_level:
+		threat_level_changed.emit(new_level)

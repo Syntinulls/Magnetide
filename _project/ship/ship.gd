@@ -45,6 +45,7 @@ const STORAGE_OUTLINE_PLACEABLE_COLOR: Color = Color(0.72, 0.95, 1.0)
 const STORAGE_OUTLINE_BLOCKED_COLOR: Color = Color("ff5a5a")
 var _pylon_outline: CompositeOutline = null
 var _active_departure_pylons: Dictionary = {}
+var _armed_departure_pylons: Dictionary = {}
 
 var _stored_items: Array[SalvageItem] = []
 var _storage_color_rect: ColorRect = null
@@ -737,3 +738,17 @@ func set_departure_pylon_active(pylon: Node, active: bool) -> void:
 			prompts.set_prompt(&"end_run", "E", "END RUN", true, 10)
 		else:
 			prompts.clear_prompt(&"end_run")
+
+
+## Called by each departure pylon while departing is possible at all, regardless of
+## where the player is standing. Pulses the generators for the whole interlevel
+## window so the pylons advertise themselves from across the ship — proximity alone
+## can't teach a player who has never departed that the option exists.
+func set_departure_armed(pylon: Node, armed: bool) -> void:
+	if armed:
+		_armed_departure_pylons[pylon] = true
+	else:
+		_armed_departure_pylons.erase(pylon)
+
+	if _pylon_outline:
+		_pylon_outline.set_attention(not _armed_departure_pylons.is_empty())

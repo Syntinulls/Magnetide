@@ -21,8 +21,10 @@ func register_states(_enemy: Enemy) -> void:
 	add_state(&"bite")
 
 
+## Latching starts the interval rather than landing a hit: the first bite is due
+## one full interval after the worm attaches, so attaching is not itself damage.
 func on_enter_attack(enemy: Enemy) -> void:
-	_attack_timer = enemy.get_attack_interval()
+	_attack_timer = 0.0
 	enemy.set_desired_velocity(Vector2.ZERO)
 	enemy.play_enemy_animation(&"attack")
 

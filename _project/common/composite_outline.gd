@@ -12,9 +12,16 @@ class_name CompositeOutline
 ## Add as a child (at identity transform) of the object whose sprites should be
 ## outlined, then call configure() with the source sprites. Toggle via
 ## set_enabled(); recolor via set_color(); rebuild after the sprite set / stack
-## changes via refresh().
+## changes via refresh(). set_attention() pulses the outline to advertise that the
+## object has become usable, independently of the hover highlight.
 
 const OUTLINE_SHADER: Shader = preload("res://_project/common/composite_outline.gdshader")
+
+## Default flash color for set_attention(). Shared so every interactable that
+## advertises itself reads as the same signal.
+const ATTENTION_COLOR := Color.WHITE
+## Half-period of the flash: the outline is fully on for this long, then fully off.
+const ATTENTION_FLASH_SECONDS: float = 0.4
 
 var _sources: Array[CanvasItem] = []
 var _active_sources: Array[CanvasItem] = []
@@ -26,6 +33,9 @@ var _material: ShaderMaterial = null
 
 var _dynamic: bool = false
 var _enabled: bool = false
+var _attention: bool = false
+var _attention_color: Color = ATTENTION_COLOR
+var _attention_elapsed: float = 0.0
 var _color: Color = Color.WHITE
 var _width: float = 3.0
 var _padding: float = 6.0
@@ -87,25 +97,65 @@ func _position_after_z_source() -> void:
 
 
 func set_enabled(enabled: bool) -> void:
+	if _enabled == enabled:
+		return
+	_enabled = enabled
+	_apply_visibility()
+
+
+## Pulse the outline in `color` to advertise that the object has become usable,
+## even with nothing hovering it. Runs continuously until turned off. The hover
+## highlight takes over while active, so the two never fight over the color.
+func set_attention(enabled: bool, color: Color = ATTENTION_COLOR) -> void:
+	if _attention == enabled and _attention_color == color:
+		return
+	_attention = enabled
+	_attention_color = color
+	_attention_elapsed = 0.0
+	_apply_visibility()
+
+
+func set_color(color: Color) -> void:
+	_color = color
+	_apply_color()
+
+
+func _should_show() -> bool:
+	return _enabled or _attention
+
+
+func _apply_visibility() -> void:
 	if _layer == null:
 		_ensure_nodes()
-	_enabled = enabled
-	_layer.visible = enabled
-	if enabled:
+	var visible_now := _should_show()
+	_layer.visible = visible_now
+	if visible_now:
 		_update_geometry()
-		if _dynamic:
+		# A pulsing outline changes every frame, so it needs continuous re-rendering
+		# even when its sources are static.
+		if _dynamic or _attention:
 			_viewport.render_target_update_mode = SubViewport.UPDATE_ALWAYS
 		else:
 			_request_single_render()
 	else:
 		_viewport.render_target_update_mode = SubViewport.UPDATE_DISABLED
-	set_process(_dynamic and _enabled)
+	_apply_color()
+	set_process(visible_now and (_dynamic or _attention))
 
 
-func set_color(color: Color) -> void:
-	_color = color
-	if _material != null:
-		_material.set_shader_parameter("outline_color", color)
+## Hover wins over the attention pulse: once the player is actually on the object,
+## the steady highlight is the more useful signal.
+func _apply_color() -> void:
+	if _material == null:
+		return
+	var color := _color
+	if _attention and not _enabled:
+		# Hard on/off square wave, not a soft pulse — a blink reads as "look here"
+		# far more urgently than a fade, which can pass for ambient shimmer.
+		color = _attention_color
+		var is_on := fmod(_attention_elapsed, ATTENTION_FLASH_SECONDS * 2.0) < ATTENTION_FLASH_SECONDS
+		color.a = _attention_color.a if is_on else 0.0
+	_material.set_shader_parameter("outline_color", color)
 
 
 ## Rebuild mirrors and geometry after the visible sprite set changes (e.g. a
@@ -118,8 +168,11 @@ func refresh() -> void:
 		_request_single_render()
 
 
-func _process(_delta: float) -> void:
-	if not _enabled:
+func _process(delta: float) -> void:
+	if _attention:
+		_attention_elapsed += delta
+		_apply_color()
+	if not _enabled and not _attention:
 		return
 	# Sources animate / move: re-sync mirrors each frame (viewport re-renders via
 	# UPDATE_ALWAYS while enabled).
@@ -213,7 +266,7 @@ func _update_geometry() -> void:
 	if _explicit_bounds.size.x > 0.0 and _explicit_bounds.size.y > 0.0:
 		bbox = _explicit_bounds if bbox.size.x <= 0.0 else bbox.merge(_explicit_bounds)
 	if bbox.size.x <= 0.0 or bbox.size.y <= 0.0:
-		_layer.visible = _enabled
+		_layer.visible = _should_show()
 		return
 
 	var pad := Vector2(_padding, _padding)
@@ -229,7 +282,7 @@ func _update_geometry() -> void:
 
 	_layer.texture = _viewport.get_texture()
 	_layer.position = bbox.get_center()
-	_layer.visible = _enabled
+	_layer.visible = _should_show()
 	_sync_layer_z()
 
 

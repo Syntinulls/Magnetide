@@ -127,15 +127,16 @@ func _resolve_threat_manager() -> void:
 		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 
-## No new salvage piles while the run is in the threat-cap (storm) decision state.
-func _is_cap_reached() -> bool:
+## No new salvage piles outside normal threat building — not while the interlevel
+## window is open, and not during a storm.
+func _are_spawns_frozen() -> bool:
 	if not _threat_manager:
 		_resolve_threat_manager()
-	return _threat_manager != null and _threat_manager.is_cap_reached
+	return _threat_manager != null and _threat_manager.phase != ThreatManager.Phase.BUILDING
 
 
 func _spawn_salvage() -> void:
-	if _is_cap_reached():
+	if _are_spawns_frozen():
 		return
 	if _current_pile and _current_pile.is_active:
 		return
@@ -154,7 +155,7 @@ func _spawn_salvage() -> void:
 ## If custom_spawn_x >= 0, the pile spawns at that X position instead of the
 ## default off-screen location.  Returns the new SalvagePile instance.
 func spawn_on_demand(custom_spawn_x: float = -1.0) -> SalvagePile:
-	if _is_cap_reached():
+	if _are_spawns_frozen():
 		return null
 	if _current_pile and _current_pile.is_active:
 		_current_pile.deactivate()

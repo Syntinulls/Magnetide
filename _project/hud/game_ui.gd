@@ -25,6 +25,22 @@ const AUGMENT_BORDER_INSET := 6
 ## Gray background inset so it doesn't show in the border's rounded corners.
 const AUGMENT_BG_INSET := 4
 
+## Interlevel window announcements. The window is the run's one departure
+## opportunity, so its subtext spells out every option the player has.
+const WINDOW_EVENT_SOURCE := &"threat_window"
+## The post-advance banner owns a separate source from the window: they overlap
+## whenever a level fills within the banner's lifetime, and sharing a key let the
+## banner's timeout clear the newer window's headline out from under it.
+const LEVEL_BANNER_SOURCE := &"threat_level"
+const WINDOW_PRIORITY := 100
+## Below the window, so an open window always outranks a still-fading banner.
+const LEVEL_BANNER_PRIORITY := 90
+const WINDOW_NORMAL_TEXT := "NEW THREATS APPROACHING"
+const WINDOW_STORM_TEXT := "STORM IMMINENT"
+const WINDOW_TERMINAL_TEXT := "MAXIMUM THREAT"
+const LEVEL_ADVANCED_TEXT := "THREAT LEVEL %d"
+const LEVEL_BANNER_SECONDS := 2.0
+
 @onready var _player_health_bar: TextureProgressBar = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/MarginContainer/PlayerHPBar
 @onready var _player_shield_container: Control = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon
 @onready var _player_shield_pulse_container: MarginContainer = $PlayerStatus/HBoxContainer/PlayerBars/HealthShieldRow/ShieldIcon/ShieldPulseMarginContainer
@@ -57,6 +73,8 @@ var _shield_broken_loop_tween: Tween = null
 var _shield_break_shake_tween: Tween = null
 var _displayed_augment_key: String = ""
 var _displayed_hotbar_item_name: String = ""
+## Seconds left on the transient "THREAT LEVEL N" banner shown after advancing.
+var _level_banner_remaining: float = 0.0
 
 
 func _ready() -> void:
@@ -76,8 +94,6 @@ func _ready() -> void:
 	if _augment_tooltip_body:
 		Magnetide.apply_label_font(_augment_tooltip_body)
 	set_run_scrap_metal_count(0)
-	if _event_text and not _event_text.countdown_finished.is_connected(_on_event_countdown_finished):
-		_event_text.countdown_finished.connect(_on_event_countdown_finished)
 	call_deferred("_bind_to_active_run_controller")
 	call_deferred("_bind_to_active_player")
 	_update_health_ui()
@@ -88,18 +104,17 @@ func _ready() -> void:
 	add_child(pause_menu)
 
 
-## Run teardown: kill the storm countdown so it cannot expire (and trigger the
-## acid storm) during the departure cutscene. Hiding the UI alone does not stop
-## the EventTextDisplay from processing.
 func stop_for_run_end() -> void:
 	if _event_text:
-		_event_text.clear(&"storm")
+		_event_text.clear(WINDOW_EVENT_SOURCE)
+		_event_text.clear(LEVEL_BANNER_SOURCE)
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
 	_bind_to_active_run_controller()
 	_bind_to_active_player()
 	_bind_to_threat()
+	_update_threat_event_text(delta)
 	_update_scrap_counter()
 	_update_magazine_counter()
 	_update_health_ui()
@@ -113,18 +128,15 @@ func _bind_to_threat() -> void:
 		return
 
 	if _bound_threat and is_instance_valid(_bound_threat):
-		if _bound_threat.storm_countdown_started.is_connected(_on_storm_countdown_started):
-			_bound_threat.storm_countdown_started.disconnect(_on_storm_countdown_started)
-		if _bound_threat.storm_arrived.is_connected(_on_storm_arrived):
-			_bound_threat.storm_arrived.disconnect(_on_storm_arrived)
-		if _bound_threat.cap_raised.is_connected(_on_threat_cap_raised):
-			_bound_threat.cap_raised.disconnect(_on_threat_cap_raised)
+		_bound_threat.window_opened.disconnect(_on_window_opened)
+		_bound_threat.window_closed.disconnect(_on_window_closed)
+		_bound_threat.level_advanced.disconnect(_on_level_advanced)
 
 	_bound_threat = threat
 	if _bound_threat:
-		_bound_threat.storm_countdown_started.connect(_on_storm_countdown_started)
-		_bound_threat.storm_arrived.connect(_on_storm_arrived)
-		_bound_threat.cap_raised.connect(_on_threat_cap_raised)
+		_bound_threat.window_opened.connect(_on_window_opened)
+		_bound_threat.window_closed.connect(_on_window_closed)
+		_bound_threat.level_advanced.connect(_on_level_advanced)
 
 
 func _get_active_threat() -> ThreatManager:
@@ -133,30 +145,56 @@ func _get_active_threat() -> ThreatManager:
 	return null
 
 
-func _on_storm_countdown_started(seconds: float) -> void:
-	if _event_text:
-		_event_text.start_countdown(
-			&"storm", "STORM IMMINENT IN", seconds, 100, EventTextDisplay.Style.CRITICAL
-		)
-
-
-func _on_storm_arrived() -> void:
-	if _event_text:
-		_event_text.show_message(&"storm", "ACID STORM", 100, EventTextDisplay.Style.CRITICAL)
-
-
-func _on_threat_cap_raised(_new_cap: int) -> void:
-	if _event_text:
-		_event_text.clear(&"storm")
-
-
-## The event text owns the storm countdown timer. When it expires, kick off the
-## acid storm on the threat manager (which notifies the StormController).
-func _on_event_countdown_finished(source: StringName) -> void:
-	if source != &"storm":
+func _on_window_opened(_seconds: float, is_storm_gate: bool) -> void:
+	if not _event_text or not _bound_threat:
 		return
-	if _bound_threat and is_instance_valid(_bound_threat):
-		_bound_threat.trigger_storm()
+	var headline := WINDOW_STORM_TEXT if is_storm_gate else WINDOW_NORMAL_TEXT
+	var style := EventTextDisplay.Style.CRITICAL if is_storm_gate else EventTextDisplay.Style.WARNING
+	if _bound_threat.is_terminal_window:
+		headline = WINDOW_TERMINAL_TEXT
+		style = EventTextDisplay.Style.CRITICAL
+	_event_text.show_message(WINDOW_EVENT_SOURCE, headline, _window_subtext(), WINDOW_PRIORITY, style)
+
+
+func _on_window_closed() -> void:
+	if _event_text:
+		_event_text.clear(WINDOW_EVENT_SOURCE)
+
+
+func _on_level_advanced(new_cap: int) -> void:
+	if not _event_text:
+		return
+	_level_banner_remaining = LEVEL_BANNER_SECONDS
+	_event_text.show_message(
+		LEVEL_BANNER_SOURCE,
+		LEVEL_ADVANCED_TEXT % (new_cap + 1),
+		"",
+		LEVEL_BANNER_PRIORITY,
+		EventTextDisplay.Style.NORMAL
+	)
+
+
+## The window's live detail line: just the countdown. What the player can do is
+## communicated by the lever and pylons pulsing in the world, not spelled out here.
+## The threat manager owns the clock; this only renders it. Once it expires the line
+## drops, leaving the headline — which is what the player sees when a departure hold
+## is holding the window open past zero.
+func _window_subtext() -> String:
+	if _bound_threat == null or _bound_threat.is_terminal_window:
+		return ""
+	var remaining := int(ceil(_bound_threat.window_seconds_remaining))
+	return "%ds" % remaining if remaining > 0 else ""
+
+
+func _update_threat_event_text(delta: float) -> void:
+	if _event_text == null or _bound_threat == null:
+		return
+	if _level_banner_remaining > 0.0:
+		_level_banner_remaining -= delta
+		if _level_banner_remaining <= 0.0:
+			_event_text.clear(LEVEL_BANNER_SOURCE)
+	if _bound_threat.is_departure_window_open:
+		_event_text.set_subtext(WINDOW_EVENT_SOURCE, _window_subtext())
 
 
 func _update_health_ui() -> void:

@@ -5,7 +5,6 @@ signal destroyed
 signal cinematic_walk_finished
 signal scrap_metal_collected(amount: int)
 signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
-signal damaged(amount: float, source: Node)
 
 @export var speed: float = 400.0
 @export_group("Combat")
@@ -59,6 +58,10 @@ var facing_right: bool = false
 var magnet_effect: Sprite2D = null
 var current_health: float = 0.0
 var current_shield: int = 0
+## Time since the player last took damage of any kind, including environmental
+## drain. The single source of truth for out-of-combat healing — any new damage
+## source suppresses healing simply by resetting this.
+var seconds_since_damage: float = 0.0
 var _has_floor_state: bool = false
 var _was_on_floor: bool = false
 var _footstep_timer: float = 0.0
@@ -279,6 +282,7 @@ func _get_current_muzzle_effect_type() -> MuzzleEffect.EffectType:
 
 func _physics_process(delta: float) -> void:
 	var was_on_floor := _was_on_floor if _has_floor_state else is_on_floor()
+	seconds_since_damage += delta
 
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
@@ -1643,13 +1647,13 @@ func on_looting_ended() -> void:
 	_hide_hover_tooltip()
 
 
-func take_damage(amount: float, source: Node = null) -> void:
+func take_damage(amount: float, _source: Node = null) -> void:
 	if current_health <= 0.0 or combat_disabled or invulnerable:
 		return
 	if amount <= 0.0:
 		return
 
-	damaged.emit(amount, source)
+	seconds_since_damage = 0.0
 	if current_shield > 0:
 		current_shield -= 1
 		_shield_recharge_progress = 0.0
@@ -1670,11 +1674,15 @@ func take_damage(amount: float, source: Node = null) -> void:
 		destroyed.emit()
 
 
-## Environmental acid-storm drain. Bypasses the kinetic shield and reduces
-## health directly (a continuous DoT, not a discrete hit).
+## Environmental storm drain. Bypasses the kinetic shield, the damage number and
+## the damage flash — it is a continuous DoT, not a discrete hit, and per-frame
+## flashes would be unreadable. It does reset seconds_since_damage, so healing is
+## suppressed for as long as the drain lasts: storm damage is meant to be recovered
+## between storms, not shrugged off inside one.
 func apply_storm_damage(amount: float) -> void:
 	if amount <= 0.0 or current_health <= 0.0 or combat_disabled or invulnerable:
 		return
+	seconds_since_damage = 0.0
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	if previous_health > 0.0 and current_health <= 0.0:

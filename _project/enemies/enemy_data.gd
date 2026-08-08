@@ -79,6 +79,13 @@ var target_point_selection_mode: TargetSelectionMode = TargetSelectionMode.RANDO
 @export var death_pop_up_velocity_range: Vector2 = Vector2(520.0, 760.0)
 @export var death_pop_gravity: float = 1400.0
 @export var death_pop_rotation_velocity_range: Vector2 = Vector2(-10.0, 10.0)
+## Seconds a living enemy may stay off screen before it despawns. An enemy is
+## expected to reach the ship shortly after spawning; one that never does would
+## otherwise hold a concurrency slot forever, and during a storm would stall the
+## wave it belongs to and soft-lock the run. 0 disables the despawn.
+@export var out_of_bounds_despawn_seconds: float = 20.0
+## How far outside the viewport an enemy must be to count as out of bounds.
+@export var out_of_bounds_margin: float = 256.0
 @export var death_pop_despawn_margin: float = 128.0
 @export var death_pop_max_time: float = 4.0
 

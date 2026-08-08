@@ -6,6 +6,8 @@ enum State { COOLDOWN, WARNING, ACTIVATION, DECELERATING, LOOTING, DROPPING, ACC
 const LEVER_PULL_GENERIC_SFX := "level/lever_generic.ogg"
 const LEVER_PULL_FINAL_SFX := "level/lever_pull1.ogg"
 const LEVER_RELEASE_SFX := "level/lever_release.ogg"
+const DEPARTURE_TEXT := "DEPARTING"
+const DEPARTURE_PRIORITY := 50
 
 @export_group("Cooldown")
 ## Minimum time between magnet windows in seconds.
@@ -62,20 +64,6 @@ const LEVER_RELEASE_SFX := "level/lever_release.ogg"
 ## Vignette/darkening intensity during activation (0-1).
 @export var vignette_intensity: float = 0.6
 
-@export_group("Advance Cutscene")
-## Speed the player walks to the lever during the advance cutscene.
-@export var advance_walk_speed: float = 180.0
-## Turbo speed multiplier over the normal level speed.
-@export var advance_turbo_speed_multiplier: float = 4.0
-## Time to accelerate from normal speed up to turbo speed.
-@export var advance_accel_time: float = 0.8
-## Time to decelerate from turbo speed back to normal speed.
-@export var advance_decel_time: float = 1.2
-## Fade to/from black duration.
-@export var advance_fade_time: float = 0.6
-## Pause held at full black before fading back in.
-@export var advance_black_hold_time: float = 0.35
-
 @export_group("Scene References")
 @export var salvage_spawner_path: NodePath
 @export var ship_path: NodePath
@@ -90,8 +78,8 @@ const LEVER_RELEASE_SFX := "level/lever_release.ogg"
 
 var _state: State = State.COOLDOWN
 var _spawns_frozen: bool = false
-var _advancing: bool = false
-var _advance_fade_rect: ColorRect = null
+## Seconds left in the looting window. Owned here, not read back off the HUD.
+var _departure_remaining: float = 0.0
 var _threat_manager: ThreatManager = null
 var _base_level_speed: float = 0.0
 var _warning_duration: float = 0.0
@@ -147,7 +135,6 @@ func _ready() -> void:
 	if _magnet_lever:
 		_magnet_lever.lever_flipped.connect(_on_lever_flipped)
 		_magnet_lever.lever_flipped_back.connect(_on_lever_flipped_back)
-		_magnet_lever.advance_confirmed.connect(_on_advance_confirmed)
 
 	_magnet = _resolve_node(magnet_path) as Magnet
 	if _magnet:
@@ -161,12 +148,12 @@ func _ready() -> void:
 	_cooldown_timer.one_shot = true
 	_cooldown_timer.timeout.connect(_on_cooldown_finished)
 
-	# Freeze the salvage spawn cycle while the threat cap is reached.
+	# Freeze the salvage spawn cycle while the window is open and while a storm runs.
 	if _level:
 		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
 	if _threat_manager:
-		_threat_manager.cap_reached.connect(_on_threat_cap_reached)
-		_threat_manager.cap_raised.connect(_on_threat_cap_raised)
+		_threat_manager.window_opened.connect(_on_threat_window_opened)
+		_threat_manager.level_advanced.connect(_on_threat_level_unlocked)
 
 	# Get camera reference
 	_camera = _resolve_node(camera_path) as Camera2D
@@ -218,7 +205,7 @@ func _start_cooldown() -> void:
 	if _magnet_lever:
 		_magnet_lever.set_available(false)
 		# Lever stays visible at all times
-	# No new salvage cycles while the threat cap is reached (storm decision state).
+	# No new salvage cycles while the interlevel window is open or a storm runs.
 	if _spawns_frozen:
 		_cooldown_timer.stop()
 		return
@@ -232,146 +219,30 @@ func _on_cooldown_finished() -> void:
 	_start_warning()
 
 
-## Threat cap reached: stop producing new salvage piles. An active looting cycle
-## is allowed to finish; pending cooldown/warning states go idle. The lever
-## switches to "continue to next threat" mode (unless this is the final level).
-func _on_threat_cap_reached() -> void:
+## Interlevel window opened: stop producing new salvage piles. An active looting
+## cycle is allowed to finish; pending cooldown/warning states go idle.
+func _on_threat_window_opened(_seconds: float, _is_storm_gate: bool) -> void:
 	_spawns_frozen = true
-	if _state == State.COOLDOWN or _state == State.WARNING:
-		_cooldown_timer.stop()
-		if _warning_icon:
-			_warning_icon.set_phase(WarningIcon.Phase.OFF)
-		var event_text := _get_event_text()
-		if event_text:
-			event_text.clear(&"salvage")
-		if _magnet_lever:
-			_magnet_lever.set_available(false)
-		_state = State.COOLDOWN
-	if _magnet_lever and _threat_manager and _threat_manager.can_raise_cap():
-		_magnet_lever.set_advance_mode(true)
-
-
-## Threat cap raised (player advanced): resume the salvage spawn cycle and revert
-## the lever to normal looting use.
-func _on_threat_cap_raised(_new_cap: int) -> void:
-	_spawns_frozen = false
+	if _state != State.COOLDOWN and _state != State.WARNING:
+		return
+	_cooldown_timer.stop()
+	if _warning_icon:
+		_warning_icon.set_phase(WarningIcon.Phase.OFF)
+	var event_text := _get_event_text()
+	if event_text:
+		event_text.clear(&"salvage")
 	if _magnet_lever:
-		_magnet_lever.set_advance_mode(false)
+		_magnet_lever.set_available(false)
+	_state = State.COOLDOWN
+
+
+## Next threat level unlocked: resume the salvage spawn cycle. Keyed to the cap
+## rising rather than the window closing, because at a storm gate the window closes
+## into the storm and spawning must stay frozen until that clears.
+func _on_threat_level_unlocked(_new_cap: int) -> void:
+	_spawns_frozen = false
 	if _state == State.COOLDOWN:
 		_start_cooldown()
-
-
-func _on_advance_confirmed() -> void:
-	if _advancing:
-		return
-	if _threat_manager == null or not _threat_manager.can_raise_cap():
-		return
-	_play_advance_cutscene()
-
-
-## Transition cutscene: walk to lever, flip it, turbo-accelerate, fade to black,
-## raise the threat cap, fade back, and decelerate to normal speed.
-func _play_advance_cutscene() -> void:
-	_advancing = true
-	_set_player_input_enabled(false)
-	if _magnet_lever:
-		_magnet_lever.set_advance_mode(false)
-
-	var normal_speed := _base_level_speed
-	var turbo_speed := _base_level_speed * advance_turbo_speed_multiplier
-
-	# 1. Player walks to the lever spot.
-	await _walk_player_to_lever()
-
-	# 2. Lever flips.
-	if _magnet_lever:
-		_play_lever_sfx(LEVER_PULL_FINAL_SFX)
-		_magnet_lever.progress_rotation(1.0)
-		await _wait(_magnet_lever.rotation_tween_duration + 0.1)
-
-	# 3. Accelerate to turbo speed with the turbo thruster plume.
-	if _ship and _ship.has_method("set_turbo_thrusters"):
-		_ship.set_turbo_thrusters(true)
-	await _tween_level_speed_to(turbo_speed, advance_accel_time)
-
-	# 4. Fade to black, raise the cap, fade back in.
-	await _advance_fade(1.0, advance_fade_time)
-	await _wait(advance_black_hold_time)
-	if _threat_manager:
-		_threat_manager.raise_cap()
-	await _advance_fade(0.0, advance_fade_time)
-
-	# 5. Decelerate back to normal speed and restore thrusters.
-	await _tween_level_speed_to(normal_speed, advance_decel_time)
-	if _ship and _ship.has_method("set_turbo_thrusters"):
-		_ship.set_turbo_thrusters(false)
-
-	# 6. Resume normal gameplay.
-	if _magnet_lever:
-		_magnet_lever.reset_rotation()
-	_set_player_input_enabled(true)
-	_advancing = false
-
-
-func _walk_player_to_lever() -> void:
-	if _player == null or _magnet_lever == null:
-		return
-	if not _player.has_method("start_walk_to_ship_center_for_cutscene"):
-		_position_player_at_lever()
-		return
-
-	var target_global_x := _magnet_lever.global_position.x + player_lever_offset_x
-	var target_local_x := target_global_x
-	var parent := _player.get_parent()
-	if parent is Node2D:
-		target_local_x = (parent as Node2D).to_local(Vector2(target_global_x, _player.global_position.y)).x
-
-	_player.start_walk_to_ship_center_for_cutscene(target_local_x, advance_walk_speed)
-	if _player.is_cinematic_walk_active():
-		await _player.cinematic_walk_finished
-
-
-func _tween_level_speed_to(target_speed: float, duration: float) -> void:
-	var tween := create_tween()
-	tween.tween_method(Callable(self, "_set_level_speed"), _get_level_speed(), target_speed, duration) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
-
-
-func _get_level_speed() -> float:
-	if _level and "level_speed" in _level:
-		return _level.level_speed
-	return _base_level_speed
-
-
-func _advance_fade(target_alpha: float, duration: float) -> void:
-	_ensure_advance_fade_overlay()
-	if _advance_fade_rect == null:
-		return
-	var tween := create_tween()
-	tween.tween_property(_advance_fade_rect, "color:a", target_alpha, duration) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
-
-
-func _ensure_advance_fade_overlay() -> void:
-	if _advance_fade_rect != null and is_instance_valid(_advance_fade_rect):
-		return
-	var canvas_layer := CanvasLayer.new()
-	canvas_layer.name = "AdvanceFadeLayer"
-	canvas_layer.layer = 80
-	add_child(canvas_layer)
-	_advance_fade_rect = ColorRect.new()
-	_advance_fade_rect.color = Color(0.0, 0.0, 0.0, 0.0)
-	_advance_fade_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	_advance_fade_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
-	canvas_layer.add_child(_advance_fade_rect)
-
-
-func _wait(seconds: float) -> void:
-	if seconds <= 0.0:
-		return
-	await get_tree().create_timer(seconds).timeout
 
 
 func _start_warning() -> void:
@@ -382,7 +253,9 @@ func _start_warning() -> void:
 		_warning_icon.set_phase(WarningIcon.Phase.YELLOW)
 	var event_text := _get_event_text()
 	if event_text:
-		event_text.show_message(&"salvage", "SALVAGE DETECTED", 30, EventTextDisplay.Style.WARNING)
+		event_text.show_message(
+			&"salvage", "SALVAGE DETECTED", "", 30, EventTextDisplay.Style.WARNING
+		)
 	if _magnet_lever:
 		_magnet_lever.set_available(true)
 
@@ -420,7 +293,7 @@ func _start_activation_minigame() -> void:
 	_state = State.ACTIVATION
 	# Looting cycle has begun — hold the storm-imminent trigger until the ship departs.
 	if _threat_manager:
-		_threat_manager.set_cap_hold(true)
+		_threat_manager.set_window_hold(true)
 	_timescale_transition_elapsed = 0.0
 	_restoring_timescale = false
 	
@@ -507,7 +380,7 @@ func _process(delta: float) -> void:
 		return
 	# Defer the threat storm-imminent trigger while a looting cycle is in progress.
 	if _threat_manager:
-		_threat_manager.set_cap_hold(is_looting_cycle_active())
+		_threat_manager.set_window_hold(is_looting_cycle_active())
 
 	match _state:
 		State.WARNING:
@@ -517,7 +390,7 @@ func _process(delta: float) -> void:
 		State.DECELERATING:
 			_process_deceleration(delta)
 		State.LOOTING:
-			_process_looting()
+			_process_looting(delta)
 		State.DROPPING:
 			_process_dropping(delta)
 		State.ACCELERATING:
@@ -583,13 +456,15 @@ func _start_looting() -> void:
 		_magnet.activate(_current_pile.pile_data, _current_pile, _get_threat_level())
 		_magnet.set_spawn_paused_for_departure(false)
 
-	# Start departure timer, driven by the event text countdown.
+	_departure_remaining = _get_current_departure_duration()
 	var event_text := _get_event_text()
 	if event_text:
-		if not event_text.countdown_finished.is_connected(_on_event_countdown_finished):
-			event_text.countdown_finished.connect(_on_event_countdown_finished)
-		event_text.start_countdown(
-			&"departure", "DEPARTING IN", _get_current_departure_duration(), 50, EventTextDisplay.Style.NORMAL
+		event_text.show_message(
+			&"departure",
+			DEPARTURE_TEXT,
+			_departure_subtext(),
+			DEPARTURE_PRIORITY,
+			EventTextDisplay.Style.NORMAL
 		)
 
 	# Make lever available so player can flip it back to abort
@@ -597,22 +472,24 @@ func _start_looting() -> void:
 		_magnet_lever.set_available(true)
 
 
-## Seconds left on the departure countdown, read from the event text display.
-func _departure_time_remaining() -> float:
+func _departure_subtext() -> String:
+	return "%ds" % int(ceil(maxf(_departure_remaining, 0.0)))
+
+
+func _process_looting(delta: float) -> void:
+	_departure_remaining = maxf(_departure_remaining - delta, 0.0)
 	var event_text := _get_event_text()
 	if event_text:
-		return event_text.get_remaining(&"departure")
-	return 0.0
+		event_text.set_subtext(&"departure", _departure_subtext())
 
-
-func _process_looting() -> void:
 	if not _magnet:
 		return
 
-	var time_remaining := _departure_time_remaining()
 	var spawn_cutoff := maxf(spawn_cutoff_before_departure, 0.0)
-	var should_pause_spawning := time_remaining <= spawn_cutoff
-	_magnet.set_spawn_paused_for_departure(should_pause_spawning)
+	_magnet.set_spawn_paused_for_departure(_departure_remaining <= spawn_cutoff)
+
+	if _departure_remaining <= 0.0:
+		_end_looting()
 
 
 func _end_looting() -> void:
@@ -651,12 +528,6 @@ func _on_lever_flipped_back() -> void:
 		return
 	# Player manually aborted looting
 	_end_looting()
-
-
-func _on_event_countdown_finished(source: StringName) -> void:
-	# Departure countdown ran out - auto-end looting.
-	if source == &"departure" and _state == State.LOOTING:
-		_end_looting()
 
 
 func _process_dropping(delta: float) -> void:
@@ -847,7 +718,6 @@ func _end_activation_effects() -> void:
 
 
 func stop_for_run_end() -> void:
-	_advancing = false
 	_state = State.COOLDOWN
 	set_process(false)
 	if _cooldown_timer:
@@ -873,5 +743,5 @@ func stop_for_run_end() -> void:
 	_set_level_speed(0.0)
 	_state = State.COOLDOWN
 	if _threat_manager:
-		_threat_manager.set_cap_hold(false)
+		_threat_manager.set_window_hold(false)
 	set_process(false)

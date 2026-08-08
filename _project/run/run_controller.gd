@@ -23,6 +23,7 @@ var _game_ui: Control = null
 var _ship: Ship = null
 var _player: Player = null
 var _magnet: Magnet = null
+var _magnet_lever: MagnetLever = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
 var _storm_controller: StormController = null
@@ -72,6 +73,7 @@ func _bind_runtime() -> void:
 	if _ship:
 		_player = _ship.get_node_or_null("Player") as Player
 		_magnet = _ship.get_node_or_null("Magnet") as Magnet
+		_magnet_lever = _ship.get_node_or_null("MagnetLever") as MagnetLever
 
 	if "ui_root" in _level and _level.ui_root:
 		_game_ui = _level.ui_root.get_node_or_null("GameUI") as Control
@@ -82,6 +84,7 @@ func _bind_runtime() -> void:
 	_threat = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
+	_inject_level_content()
 	_connect_runtime_signals()
 	_initialize_augments()
 	_sync_game_ui_scrap_counter()
@@ -102,10 +105,30 @@ func _connect_runtime_signals() -> void:
 		for pylon in _ship.get_departure_pylons():
 			if not pylon.departure_requested.is_connected(_on_departure_requested):
 				pylon.departure_requested.connect(_on_departure_requested)
-	if _threat and not _threat.cap_raised.is_connected(_on_threat_cap_raised):
-		_threat.cap_raised.connect(_on_threat_cap_raised)
-	if _threat and not _threat.storm_arrived.is_connected(_on_storm_arrived):
-		_threat.storm_arrived.connect(_on_storm_arrived)
+	if _threat and not _threat.storm_started.is_connected(_on_storm_started):
+		_threat.storm_started.connect(_on_storm_started)
+	if _threat and not _threat.storm_finished.is_connected(_on_storm_finished):
+		_threat.storm_finished.connect(_on_storm_finished)
+	# The run coordinates the lever's window role: the threat manager owns the state
+	# and the lever owns the input, but neither should know about the other.
+	if _threat and not _threat.window_opened.is_connected(_on_threat_window_opened):
+		_threat.window_opened.connect(_on_threat_window_opened)
+	if _threat and not _threat.window_closed.is_connected(_on_threat_window_closed):
+		_threat.window_closed.connect(_on_threat_window_closed)
+	if _magnet_lever and not _magnet_lever.advance_confirmed.is_connected(_on_advance_confirmed):
+		_magnet_lever.advance_confirmed.connect(_on_advance_confirmed)
+
+
+## Push the level definition's authored content into the runtime nodes. A level's
+## enemy roster and storms are defined by its definition, not by whichever scene
+## happens to instance the spawner.
+func _inject_level_content() -> void:
+	if _level_definition == null:
+		return
+	if _enemy_spawner:
+		_enemy_spawner.set_enemy_profiles(_level_definition.enemy_profiles)
+	if _threat:
+		_threat.set_storms(_level_definition.storms)
 
 
 func _process(delta: float) -> void:
@@ -117,8 +140,13 @@ func _process(delta: float) -> void:
 			behavior.call("tick", delta)
 
 
+## Departure is only possible during the interlevel window — the run's one
+## deliberate exit. Gating here turns off the pylons' interaction, highlight and
+## control prompt together, since all three hang off this one check.
 func can_accept_departure_request() -> bool:
-	return not _is_run_ending
+	if _is_run_ending:
+		return false
+	return _threat != null and _threat.is_departure_window_open
 
 
 ## True once the run has entered its end sequence (departure cutscene or death
@@ -395,13 +423,34 @@ func _start_run_music() -> void:
 		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
 
 
-func _on_storm_arrived() -> void:
+## Hand the lever its window role. At a storm gate continuing is irreversible, so
+## the lever asks for a confirming second press; at a plain gate one press commits.
+func _on_threat_window_opened(_seconds: float, is_storm_gate: bool) -> void:
+	if _magnet_lever == null or _threat == null:
+		return
+	if _threat.can_advance():
+		_magnet_lever.set_advance_mode(true, is_storm_gate)
+
+
+func _on_threat_window_closed() -> void:
+	if _magnet_lever:
+		_magnet_lever.set_advance_mode(false)
+
+
+func _on_advance_confirmed() -> void:
+	if _threat:
+		_threat.advance()
+
+
+func _on_storm_started(_storm: StormData) -> void:
 	if Magnetide.bgm:
 		Magnetide.bgm.play_category(BgmPlayer.Category.STORM)
 
 
-## Advancing out of an acid storm returns music to the in-run playlist.
-func _on_threat_cap_raised(_new_cap: int) -> void:
+## Clearing a storm returns music to the in-run playlist. The interlevel window
+## deliberately does not switch category — a 30-second swap either side of a
+## decision beat would thrash.
+func _on_storm_finished(_storm: StormData) -> void:
 	if Magnetide.bgm:
 		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
 

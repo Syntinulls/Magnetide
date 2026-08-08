@@ -24,6 +24,14 @@ class_name ThreatUI
 ## draw; the lock icon and segment math reuse the same curve.
 
 @export var threat_gradient: Gradient
+## Icon marking a storm gate. Falls back to the lock texture tinted with
+## storm_icon_modulate when unset.
+@export var storm_icon: Texture2D
+@export var storm_icon_modulate: Color = Color(0.45, 1.0, 0.4, 1.0)
+## Opacity of storm markers other than the one at the current cap boundary. Every
+## gate stays visible for the whole run so the player can read the run's shape from
+## level 1; the one they are actually held at is the only one at full strength.
+@export_range(0.0, 1.0, 0.05) var distant_gate_icon_alpha: float = 0.4
 ## Lock icon vertical position (texture px). The bar is visually flat across most
 ## of its width, so the lock sits at this constant y for every cap boundary...
 @export var lock_icon_y: float = 40.0:
@@ -65,10 +73,16 @@ var _threat_manager: ThreatManager = null
 var _segment_count: int = ThreatManager.LEVEL_COUNT
 var _current_threat: float = 0.0
 var _cap_stage: int = 0
+var _lock_icon_texture: Texture2D = null
+## One marker per authored storm gate, built from the run's storm list so a level
+## with a different number of gates needs no scene change.
+var _gate_icons: Array[Sprite2D] = []
 
 
 func _ready() -> void:
 	_segment_count = ThreatManager.LEVEL_COUNT
+	if _lock_icon:
+		_lock_icon_texture = _lock_icon.texture
 	if Engine.is_editor_hint():
 		# Editor preview only: no threat manager, just lay out at the preview cap.
 		_cap_stage = editor_preview_cap
@@ -86,10 +100,12 @@ func _connect_threat_manager() -> void:
 		_threat_manager = Magnetide.level.threat
 		_threat_manager.threat_changed.connect(_on_threat_changed)
 		_threat_manager.threat_level_changed.connect(_on_threat_level_changed)
-		_threat_manager.cap_raised.connect(_on_cap_raised)
-		_threat_manager.cap_reached.connect(_on_cap_reached)
+		_threat_manager.level_advanced.connect(_on_level_advanced)
+		_threat_manager.window_opened.connect(_on_window_opened)
+		_threat_manager.storms_changed.connect(_rebuild_gate_icons)
 		_current_threat = _threat_manager.current_threat
 		_cap_stage = _threat_manager.threat_level_cap
+		_rebuild_gate_icons()
 		_update_ticker_level(_threat_manager.threat_level)
 		_refresh_layout()
 
@@ -173,19 +189,72 @@ func _position_lock_icon() -> void:
 	if not _lock_icon or not _locked_overlay:
 		return
 	var reachable := _reachable_segments()
-	# Once the whole bar is reachable there is nothing left to lock.
-	_lock_icon.visible = reachable < _segment_count
-	if not _lock_icon.visible:
-		return
-	# Track the overlay's fill edge straight off its raw rect: the locked region's
-	# left edge is reachable/total of the way across the overlay's own size, so
-	# the icon follows the overlay wherever it is positioned or however it is sized.
-	var fraction := float(reachable) / float(_segment_count)
-	var is_center := reachable * 2 == _segment_count
-	_lock_icon.position = Vector2(
-		_locked_overlay.position.x + fraction * _locked_overlay.size.x,
-		lock_icon_dip_y if is_center else lock_icon_y
+	var is_storm_gate: bool = (
+		_threat_manager != null and _threat_manager.is_storm_gate_after(reachable)
 	)
+	# Nothing left to lock once the whole bar is reachable, and a storm gate already
+	# carries its own marker at that boundary, so a lock there would just double up.
+	_lock_icon.visible = reachable < _segment_count and not is_storm_gate
+	if _lock_icon.visible:
+		var is_center := reachable * 2 == _segment_count
+		_lock_icon.texture = _lock_icon_texture
+		_lock_icon.modulate = Color.WHITE
+		_lock_icon.position = Vector2(
+			_boundary_x(reachable), lock_icon_dip_y if is_center else lock_icon_y
+		)
+	_position_gate_icons()
+
+
+## X of the divider after `boundary_level`, taken straight off the locked overlay's
+## raw rect so icons follow it wherever it is positioned or however it is sized.
+func _boundary_x(boundary_level: int) -> float:
+	return (
+		_locked_overlay.position.x
+		+ float(boundary_level) / float(_segment_count) * _locked_overlay.size.x
+	)
+
+
+## Build one marker per authored storm gate. They persist for the whole run rather
+## than appearing only once reached, so the player can see where the storms lie
+## from level 1 and plan how deep to go.
+func _rebuild_gate_icons() -> void:
+	for icon in _gate_icons:
+		if is_instance_valid(icon):
+			icon.queue_free()
+	_gate_icons.clear()
+	if _threat_manager == null:
+		return
+	for level in _threat_manager.get_storm_gate_levels():
+		var icon := Sprite2D.new()
+		icon.name = "StormGate%d" % level
+		icon.texture = storm_icon if storm_icon != null else _lock_icon_texture
+		icon.set_meta(&"gate_level", level)
+		add_child(icon)
+		_gate_icons.append(icon)
+	_position_gate_icons()
+
+
+## Storm gates sit after levels 3, 6 and 9 — never the central dip at 5 — so they
+## always use the bar's flat y.
+func _position_gate_icons() -> void:
+	if not _locked_overlay:
+		return
+	var reachable := _reachable_segments()
+	for icon in _gate_icons:
+		if not is_instance_valid(icon):
+			continue
+		var level: int = icon.get_meta(&"gate_level")
+		icon.position = Vector2(_boundary_x(level), lock_icon_y)
+		icon.modulate = _gate_icon_color(level == reachable)
+
+
+## The gate currently holding the run reads full strength; the rest sit back so
+## they inform without competing with the ticker.
+func _gate_icon_color(is_current: bool) -> Color:
+	var color := Color.WHITE if storm_icon != null else storm_icon_modulate
+	if not is_current:
+		color.a *= distant_gate_icon_alpha
+	return color
 
 
 ## Tint the dome number to the gradient color at the current threat position.
@@ -205,13 +274,13 @@ func _on_threat_level_changed(new_level: int) -> void:
 	_update_ticker_level(new_level)
 
 
-func _on_cap_raised(new_cap: int) -> void:
+func _on_level_advanced(new_cap: int) -> void:
 	_cap_stage = new_cap
 	_update_locked_overlay()
 	_position_lock_icon()
 
 
-func _on_cap_reached() -> void:
+func _on_window_opened(_seconds: float, _is_storm_gate: bool) -> void:
 	if _threat_manager:
 		_cap_stage = _threat_manager.threat_level_cap
 		_update_locked_overlay()

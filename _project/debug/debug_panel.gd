@@ -38,7 +38,7 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _add_threat_button: Button = %AddThreatButton
 @onready var _threat_amount_edit: LineEdit = %ThreatAmountEdit
 @onready var _advance_threat_button: Button = %AdvanceThreatLevelButton
-@onready var _trigger_storm_button: Button = %TriggerStormButton
+@onready var _fill_threat_button: Button = %FillThreatButton
 @onready var _spawn_pile_button: Button = %SpawnSalvagePileButton
 @onready var _extract_button: Button = %ExtractButton
 @onready var _fail_run_button: Button = %FailRunButton
@@ -149,7 +149,7 @@ func _connect_actions() -> void:
 	_kill_all_enemies_button.pressed.connect(_on_kill_all_enemies_pressed)
 	_add_threat_button.pressed.connect(_on_add_threat_pressed)
 	_advance_threat_button.pressed.connect(_on_advance_threat_level_pressed)
-	_trigger_storm_button.pressed.connect(_on_trigger_storm_pressed)
+	_fill_threat_button.pressed.connect(_on_fill_threat_pressed)
 	_spawn_pile_button.pressed.connect(_on_spawn_salvage_pile_pressed)
 	_extract_button.pressed.connect(_on_extract_pressed)
 	_fail_run_button.pressed.connect(_on_fail_run_pressed)
@@ -219,14 +219,16 @@ func _on_add_threat_pressed() -> void:
 
 func _on_advance_threat_level_pressed() -> void:
 	var threat := _get_threat_manager()
-	if threat and threat.can_raise_cap():
-		threat.raise_cap()
+	if threat and threat.can_advance():
+		threat.advance()
 
 
-func _on_trigger_storm_pressed() -> void:
+## Fill the current threat level so its interlevel window opens right away. Also
+## the only route into a storm, since storms run when a gate's window is continued.
+func _on_fill_threat_pressed() -> void:
 	var threat := _get_threat_manager()
 	if threat:
-		threat.trigger_storm()
+		threat.add_threat(ThreatManager.MAX_THREAT)
 
 
 func _on_spawn_salvage_pile_pressed() -> void:
@@ -479,8 +481,8 @@ func _refresh_context() -> void:
 	_spawn_enemy_button.disabled = _get_enemy_spawner() == null
 	_kill_all_enemies_button.disabled = not in_run
 	_add_threat_button.disabled = threat == null
-	_advance_threat_button.disabled = threat == null or not threat.can_raise_cap()
-	_trigger_storm_button.disabled = threat == null
+	_advance_threat_button.disabled = threat == null or not threat.can_advance()
+	_fill_threat_button.disabled = threat == null
 	_spawn_pile_button.disabled = _get_salvage_spawner() == null
 	_extract_button.disabled = not in_run
 	_fail_run_button.disabled = not in_run
@@ -611,10 +613,11 @@ func _refresh_enemy_dropdown() -> void:
 		if _enemy_dropdown.item_count > 0:
 			_enemy_dropdown.clear()
 		return
-	if _enemy_dropdown.item_count == spawner.enemy_profiles.size():
+	var profiles := spawner.get_enemy_profiles()
+	if _enemy_dropdown.item_count == profiles.size():
 		return
 	_enemy_dropdown.clear()
-	for profile in spawner.enemy_profiles:
+	for profile in profiles:
 		if profile == null:
 			continue
 		_enemy_dropdown.add_item(String(profile.id))

@@ -3,8 +3,8 @@ class_name MagnetLever
 
 signal lever_flipped()
 signal lever_flipped_back()
-## Emitted when the player confirms advancing to the next threat level (second
-## interact press while the "CONTINUE RUN?" prompt is shown).
+## Emitted when the player commits to leaving the current threat level. At a plain
+## gate a single press commits; at a storm gate it takes a second confirming press.
 signal advance_confirmed()
 
 ## Start rotation in radians (45 degrees clockwise).
@@ -21,8 +21,11 @@ var _target_rotation_progress: float = 0.0
 var _is_tweening: bool = false
 var _tween_elapsed: float = 0.0
 var _tween_start_progress: float = 0.0
-# Advance ("continue to next threat") mode, active while the threat cap is reached.
+# Advance ("continue to next threat") mode, active while the interlevel window is open.
 var _advance_mode: bool = false
+## True while the pending advance leads into a storm, which is the only case that
+## takes a confirming second press.
+var _advance_needs_confirm: bool = false
 var _advance_confirm_pending: bool = false
 
 var _outline: CompositeOutline = null
@@ -92,15 +95,18 @@ func _process(delta: float) -> void:
 
 
 ## Switch the lever between normal looting use and "continue to next threat"
-## advance use. Entered when the threat cap is reached, reverted after advancing.
-func set_advance_mode(enabled: bool) -> void:
+## advance use, for the duration of the interlevel window. `needs_confirm` marks a
+## storm gate, where continuing is irreversible and takes a second press.
+func set_advance_mode(enabled: bool, needs_confirm: bool = false) -> void:
 	_advance_mode = enabled
+	_advance_needs_confirm = needs_confirm
 	if not enabled:
 		_advance_confirm_pending = false
 		_set_continue_prompt_visible(false)
 
 
-## Two-press confirmation: first interact shows "CONTINUE RUN?", second confirms.
+## A plain gate commits on the first press — the window auto-continues anyway, so a
+## mispress costs nothing. A storm gate shows "ENTER STORM?" and waits for a second.
 func _process_advance_input() -> void:
 	if not is_player_in_range:
 		if _advance_confirm_pending:
@@ -111,19 +117,17 @@ func _process_advance_input() -> void:
 	if not Input.is_action_just_pressed("interact"):
 		return
 
-	if not _advance_confirm_pending:
+	if _advance_needs_confirm and not _advance_confirm_pending:
 		_advance_confirm_pending = true
 		_set_continue_prompt_visible(true)
-	else:
-		_advance_confirm_pending = false
-		_set_continue_prompt_visible(false)
-		# Hand off to the advance handler. Do NOT clear _advance_mode here: the
-		# handler clears it itself the moment the cutscene actually commits (and
-		# _advancing guards against re-triggering). If we cleared it up front and
-		# the handler rejected the press (e.g. a cutscene is still mid-flight when
-		# presses arrive fast), the lever would be left permanently inert with no
-		# way to retry, stranding the run until the storm.
-		advance_confirmed.emit()
+		return
+
+	_advance_confirm_pending = false
+	_set_continue_prompt_visible(false)
+	# Do NOT clear _advance_mode here: the handler clears it once the advance
+	# actually commits. Clearing up front would leave the lever inert with no way
+	# to retry if the handler rejected the press.
+	advance_confirmed.emit()
 
 
 func _set_continue_prompt_visible(value: bool) -> void:
@@ -136,6 +140,10 @@ func _set_continue_prompt_visible(value: bool) -> void:
 func _update_prompt_and_highlight() -> void:
 	var usable := is_player_in_range and (_advance_mode or _is_available)
 	_set_highlight(usable)
+	# Pulse for the whole interlevel window so the lever advertises itself from
+	# across the ship, not only once the player is already standing on it.
+	if _outline:
+		_outline.set_attention(_advance_mode)
 
 	var prompts := Magnetide.control_prompts
 	if prompts == null:
@@ -143,7 +151,7 @@ func _update_prompt_and_highlight() -> void:
 	if usable:
 		var action := "BRAKE"
 		if _advance_mode:
-			action = "CONTINUE"
+			action = "ENTER STORM" if _advance_needs_confirm else "CONTINUE"
 		elif Magnetide.magnet and Magnetide.magnet.is_active:
 			# Magnet is looting; flipping the lever departs the salvage pile.
 			action = "DEPART"

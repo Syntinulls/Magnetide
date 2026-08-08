@@ -187,10 +187,10 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Advance Threat Level"
 
-[node name="TriggerStormButton" type="Button" parent="Panel/Scroll/Groups/LevelRows"]
+[node name="FillThreatButton" type="Button" parent="Panel/Scroll/Groups/LevelRows"]
 unique_name_in_owner = true
 layout_mode = 2
-text = "Trigger Storm"
+text = "Fill Threat Level"
 
 [node name="SpawnSalvagePileButton" type="Button" parent="Panel/Scroll/Groups/LevelRows"]
 unique_name_in_owner = true

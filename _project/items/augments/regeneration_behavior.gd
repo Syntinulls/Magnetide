@@ -11,7 +11,6 @@ class_name RegenerationBehavior
 const HEAL_TICK_SECONDS := 1.0
 
 var _player: Player = null
-var _seconds_since_damage: float = 0.0
 var _heal_tick_elapsed: float = 0.0
 
 
@@ -20,28 +19,23 @@ func initialize_for_run(context: Dictionary, _level: int) -> void:
 	_player = context.get("player", null) as Player
 	if _player == null or not is_instance_valid(_player):
 		return
-	if _player.has_signal("damaged") and not _player.damaged.is_connected(_on_player_damaged):
-		_player.damaged.connect(_on_player_damaged)
-	_seconds_since_damage = 0.0
 	_player.set_process(true)
 
 
 func cleanup_after_run() -> void:
-	if _player != null and is_instance_valid(_player):
-		if _player.has_signal("damaged") and _player.damaged.is_connected(_on_player_damaged):
-			_player.damaged.disconnect(_on_player_damaged)
 	_player = null
-	_seconds_since_damage = 0.0
 	_heal_tick_elapsed = 0.0
 
 
+## Reads the player's own out-of-combat clock rather than tracking its own, so
+## every damage source — including storm drain, which never lands as a discrete
+## hit — suppresses regeneration without this behavior knowing about any of them.
 func tick(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
 	if _player.current_health <= 0.0:
 		return
-	_seconds_since_damage += delta
-	if _seconds_since_damage < maxf(out_of_combat_seconds, 0.0):
+	if _player.seconds_since_damage < maxf(out_of_combat_seconds, 0.0):
 		_heal_tick_elapsed = 0.0
 		return
 	_heal_tick_elapsed += delta
@@ -55,7 +49,3 @@ func get_current_effect_summary(_level: int) -> String:
 		Utils.format_number(maxf(health_per_second, 0.0)),
 		Utils.format_number(maxf(out_of_combat_seconds, 0.0)),
 	]
-
-
-func _on_player_damaged(_amount: float, _source: Node) -> void:
-	_seconds_since_damage = 0.0

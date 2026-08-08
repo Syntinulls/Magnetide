@@ -1,14 +1,19 @@
 extends Control
 class_name EventTextDisplay
 
-## Generic in-run event text banner, shown top-center below the threat bar.
+## Generic in-run event banner, shown top-center below the threat bar.
 ##
-## Any system can post a styled announcement ("SALVAGE DETECTED") or a
-## self-running countdown ("STORM IMMINENT IN 45s"). Entries are keyed by a
-## source name; the highest-priority active entry is displayed. This replaces
-## the bespoke run countdown / departure timer / warning icon presentations.
-
-signal countdown_finished(source: StringName)
+## Two lines: a headline naming what is currently happening ("STORM IMMINENT",
+## "WAVE 2 / 4") and a smaller subtext carrying live detail ("REMAINING - 7").
+##
+## A shared, multi-writer surface. Entries are keyed by source, so any system can
+## post without knowing about the others; the highest-priority live entry is shown.
+## Writers own their source and must clear it when their event ends — nothing else
+## cleans up after them.
+##
+## This is a pure view. It holds no timers and no state machine: each system owns
+## its own clock and pushes formatted text, so run progression is never driven from
+## the HUD.
 
 enum Style { NORMAL, WARNING, CRITICAL }
 
@@ -17,50 +22,50 @@ const STYLE_COLORS: Dictionary = {
 	Style.WARNING: Color(1, 0.84, 0.3, 1),
 	Style.CRITICAL: Color(1, 0.36, 0.3, 1),
 }
+## Subtext is dimmer than its headline so the two lines read as a hierarchy.
+const SUBTEXT_ALPHA: float = 0.75
 
 @onready var _label: Label = $Label
+@onready var _subtext_label: Label = $SubtextLabel
 
 # source (StringName) -> entry Dictionary
 var _entries: Dictionary = {}
 
 
 func _ready() -> void:
-	if _label and Magnetide and Magnetide.has_method("apply_label_font"):
-		Magnetide.apply_label_font(_label)
-	set_process(false)
+	if Magnetide and Magnetide.has_method("apply_label_font"):
+		if _label:
+			Magnetide.apply_label_font(_label)
+		if _subtext_label:
+			Magnetide.apply_label_font(_subtext_label)
 	_refresh()
 
 
-## Show static announcement text for a source (e.g. "SALVAGE DETECTED").
-func show_message(source: StringName, text: String, priority: int = 0, style: int = Style.NORMAL) -> void:
-	_entries[source] = {
-		"countdown": false,
-		"text": text,
-		"priority": priority,
-		"style": style,
-	}
-	_refresh()
-
-
-## Start a self-running countdown displayed as "<prefix> <N><suffix>".
-## Emits countdown_finished(source) and auto-clears the entry when it hits zero.
-func start_countdown(
+## Post or replace a source's entry. `subtext` is the optional second line.
+func show_message(
 	source: StringName,
-	prefix: String,
-	duration: float,
+	text: String,
+	subtext: String = "",
 	priority: int = 0,
-	style: int = Style.CRITICAL,
-	suffix: String = "s"
+	style: int = Style.NORMAL
 ) -> void:
 	_entries[source] = {
-		"countdown": true,
-		"prefix": prefix,
-		"suffix": suffix,
-		"remaining": maxf(duration, 0.0),
+		"text": text,
+		"subtext": subtext,
 		"priority": priority,
 		"style": style,
 	}
-	set_process(true)
+	_refresh()
+
+
+## Replace just the second line of an existing entry. No-op if the source has none.
+func set_subtext(source: StringName, subtext: String) -> void:
+	if not _entries.has(source):
+		return
+	var entry: Dictionary = _entries[source]
+	if String(entry.get("subtext", "")) == subtext:
+		return
+	entry["subtext"] = subtext
 	_refresh()
 
 
@@ -70,49 +75,32 @@ func clear(source: StringName) -> void:
 		_refresh()
 
 
-## Remaining seconds for a source's countdown (0.0 if absent or not a countdown).
-func get_remaining(source: StringName) -> float:
-	if _entries.has(source):
-		var entry: Dictionary = _entries[source]
-		if entry.get("countdown", false):
-			return float(entry.get("remaining", 0.0))
-	return 0.0
-
-
-func _process(delta: float) -> void:
-	var any_countdown := false
-	var finished: Array[StringName] = []
-	for source in _entries:
-		var entry: Dictionary = _entries[source]
-		if not entry.get("countdown", false):
-			continue
-		any_countdown = true
-		entry["remaining"] = maxf(float(entry["remaining"]) - delta, 0.0)
-		if entry["remaining"] <= 0.0:
-			finished.append(source)
-
-	for source in finished:
-		_entries.erase(source)
-		countdown_finished.emit(source)
-
-	if not any_countdown or _entries.is_empty():
-		set_process(false)
-	_refresh()
-
-
 func _refresh() -> void:
 	if not _label:
 		return
 	var source := _highest_priority_source()
 	if source == &"":
-		_label.text = ""
 		visible = false
+		_label.text = ""
+		if _subtext_label:
+			_subtext_label.text = ""
+			_subtext_label.visible = false
 		return
+
 	var entry: Dictionary = _entries[source]
 	visible = true
-	_label.text = _format_entry(entry)
-	var style: int = int(entry.get("style", Style.NORMAL))
-	_label.add_theme_color_override("font_color", STYLE_COLORS.get(style, Color.WHITE))
+	_label.text = String(entry.get("text", ""))
+	var color: Color = STYLE_COLORS.get(int(entry.get("style", Style.NORMAL)), Color.WHITE)
+	_label.add_theme_color_override("font_color", color)
+
+	if not _subtext_label:
+		return
+	var subtext := String(entry.get("subtext", ""))
+	_subtext_label.text = subtext
+	_subtext_label.visible = not subtext.is_empty()
+	_subtext_label.add_theme_color_override(
+		"font_color", Color(color.r, color.g, color.b, color.a * SUBTEXT_ALPHA)
+	)
 
 
 func _highest_priority_source() -> StringName:
@@ -124,10 +112,3 @@ func _highest_priority_source() -> StringName:
 			best_priority = priority
 			best = source
 	return best
-
-
-func _format_entry(entry: Dictionary) -> String:
-	if entry.get("countdown", false):
-		var seconds := int(ceil(float(entry.get("remaining", 0.0))))
-		return "%s %d%s" % [entry.get("prefix", ""), seconds, entry.get("suffix", "s")]
-	return String(entry.get("text", ""))

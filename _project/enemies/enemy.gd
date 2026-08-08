@@ -35,6 +35,8 @@ var _attack_behavior: Resource = null
 var _last_damage_source: Node = null
 var _target_acquire_timer: float = 0.0
 var _death_timer: float = 0.0
+## Consecutive seconds spent off screen, reset by any time back inside it.
+var _out_of_bounds_elapsed: float = 0.0
 var _death_pop_elapsed: float = 0.0
 var _death_phase: DeathPhase = DeathPhase.NONE
 var _death_rotation_velocity: float = 0.0
@@ -110,6 +112,8 @@ func _setup_behaviors() -> void:
 
 
 func _process_active(delta: float) -> void:
+	if _tick_out_of_bounds_despawn(delta):
+		return
 	_update_targeting(delta)
 
 	var next_state := _select_base_state()
@@ -677,6 +681,38 @@ func _launch_death_pop() -> void:
 	_death_rotation_velocity = randf_range(
 		data.death_pop_rotation_velocity_range.x,
 		data.death_pop_rotation_velocity_range.y
+	)
+
+
+## Accumulate off-screen time and free the enemy once it exceeds the data's limit.
+## Returns true when the enemy has been despawned, so the caller stops processing.
+## Any time on screen resets the clock, so an enemy that is merely passing through
+## the margin is never affected.
+func _tick_out_of_bounds_despawn(delta: float) -> bool:
+	if data == null or data.out_of_bounds_despawn_seconds <= 0.0:
+		return false
+	if not _is_outside_viewport(data.out_of_bounds_margin):
+		_out_of_bounds_elapsed = 0.0
+		return false
+	_out_of_bounds_elapsed += delta
+	if _out_of_bounds_elapsed < data.out_of_bounds_despawn_seconds:
+		return false
+	queue_free()
+	return true
+
+
+## True when the enemy is fully outside the viewport by more than `margin`.
+func _is_outside_viewport(margin: float) -> bool:
+	var viewport := get_viewport()
+	if not viewport:
+		return false
+	var screen_position := get_global_transform_with_canvas().origin
+	var viewport_size := viewport.get_visible_rect().size
+	return (
+		screen_position.x < -margin
+		or screen_position.x > viewport_size.x + margin
+		or screen_position.y < -margin
+		or screen_position.y > viewport_size.y + margin
 	)
 
 

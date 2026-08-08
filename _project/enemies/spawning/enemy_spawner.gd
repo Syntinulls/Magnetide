@@ -6,10 +6,6 @@ signal enemy_killed(enemy: Enemy)
 const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 
 @export var spawn_zones: Array[NodePath] = []
-## Flat list of every enemy in the game. Each profile declares its own threat
-## eligibility and spawn conditions; the roster for a given threat level is
-## derived by filtering this list.
-@export var enemy_profiles: Array[EnemySpawnProfile] = []
 
 @export_group("Threat Scaling")
 ## Spawn interval (seconds) indexed by threat level 1-10. Lower = enemies spawn
@@ -25,21 +21,17 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 ## Per-batch max spawn count, indexed by threat level 1-10. Combined (min) with
 ## each enemy profile's own max_batch_size. Last value reused.
 @export var batch_size_by_level: Array[int] = [1, 2, 2, 3, 3, 4, 4, 5, 5, 6]
-## Spawn-rate multiplier while the threat cap is reached (storm imminent). Works
-## like magnet_active_spawn_rate_multiplier — the interval is divided by this — so
-## >1 spawns enemies more often to pressure the leave-or-continue decision.
-@export_range(0.1, 10.0, 0.1, "or_greater") var cap_state_spawn_rate_multiplier: float = 3.0
 ## Spawn-rate multiplier while the magnet minigame is active. >1 = enemies spawn
 ## more often during looting than in idle traversal (the interval is divided by
 ## this). 1.0 = no change.
 @export_range(0.1, 10.0, 0.1, "or_greater") var magnet_active_spawn_rate_multiplier: float = 2.0
-## Enemy max-health multiplier at the top threat level. Level 1 uses the base
-## EnemyData value (1.0x) and it scales linearly to this at level 10. Locked in
-## per enemy at spawn.
-@export_range(1.0, 20.0, 0.1) var health_multiplier_at_max_level: float = 4.0
-## Enemy damage multiplier at the top threat level. Level 1 = 1.0x, scaling
-## linearly to this at level 10. Locked in per enemy at spawn.
-@export_range(1.0, 20.0, 0.1) var damage_multiplier_at_max_level: float = 3.0
+## Extra enemy max health per threat level above 1, as a percent of the base
+## EnemyData value. Level 1 enemies use the base stat unchanged; at 5% a level 10
+## enemy has 1.45x health. Locked in per enemy at spawn.
+@export_range(0.0, 100.0, 0.5, "or_greater") var health_increase_per_level_percent: float = 5.0
+## Extra enemy damage per threat level above 1, as a percent of the base value.
+## Same curve as health. Locked in per enemy at spawn.
+@export_range(0.0, 100.0, 0.5, "or_greater") var damage_increase_per_level_percent: float = 5.0
 
 @export_group("Batch Spread")
 ## Within a batch, enemies spawn one at a time, each offset from the previous by a
@@ -50,8 +42,14 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 @export_range(0.0, 2000.0, 1.0, "or_greater") var batch_spread_min_distance: float = 100.0
 @export_range(0.0, 2000.0, 1.0, "or_greater") var batch_spread_max_distance: float = 400.0
 
+## Flat list of every enemy this level can spawn, injected from the level definition.
+## Each profile declares its own threat eligibility and spawn conditions; the roster
+## for a given threat level is derived by filtering this list.
+var _enemy_profiles: Array[EnemySpawnProfile] = []
 var _zone_lookup: Dictionary = {}
 var _living_enemies: Array[Enemy] = []
+## While false the ambient spawn pass is skipped (a storm director owns spawning).
+var _ambient_spawning_enabled: bool = true
 var _spawn_timer_remaining: float = 0.0
 ## Per-profile spawn cooldown remaining, in seconds. Keyed by EnemySpawnProfile.
 var _profile_cooldowns: Dictionary = {}
@@ -77,12 +75,68 @@ func _process(delta: float) -> void:
 	_cleanup_living_enemies()
 	_tick_profile_cooldowns(delta)
 
+	if not _ambient_spawning_enabled:
+		return
+
 	_spawn_timer_remaining -= delta
 	if _spawn_timer_remaining > 0.0:
 		return
 
 	_run_spawn_pass()
 	_reset_spawn_timer()
+
+
+## Supply the level's enemy roster (injected from the level definition).
+func set_enemy_profiles(profiles: Array[EnemySpawnProfile]) -> void:
+	_enemy_profiles = profiles.duplicate()
+
+
+## The level's enemy roster, for tooling that needs to enumerate it.
+func get_enemy_profiles() -> Array[EnemySpawnProfile]:
+	return _enemy_profiles
+
+
+## Suspend or resume the ambient spawn pass. Suspended while a storm runs, so its
+## director is the only thing spawning and the wave counter stays truthful.
+func set_ambient_spawning_enabled(enabled: bool) -> void:
+	if _ambient_spawning_enabled == enabled:
+		return
+	_ambient_spawning_enabled = enabled
+	if enabled:
+		_reset_spawn_timer()
+
+
+## Spawn one storm-wave batch, bypassing threat eligibility, magnet context, the
+## per-profile cooldown and the concurrency cap — a wave's authored count is the
+## encounter, and clamping it would make waves quietly smaller than authored and
+## stall completion tracking. Returns the spawned enemies so the caller can track
+## the wave.
+func spawn_batch_for_storm(
+	profile: EnemySpawnProfile,
+	count: int,
+	zone_names: PackedStringArray,
+	stat_level: int
+) -> Array[Enemy]:
+	var spawned: Array[Enemy] = []
+	if profile == null or count <= 0:
+		return spawned
+
+	var valid_zones := _resolve_valid_zones(zone_names)
+	if valid_zones.is_empty():
+		return spawned
+
+	var zone := valid_zones[_rng.randi_range(0, valid_zones.size() - 1)]
+	var reference_point := _get_spread_reference_point()
+	var spawn_position := _sample_point_in_zone(zone)
+	for i in range(count):
+		if i > 0:
+			spawn_position += _random_batch_spread_offset(spawn_position, reference_point)
+		var enemy := _spawn_enemy(profile, spawn_position, stat_level)
+		if enemy != null:
+			_track_enemy(enemy)
+			spawned.append(enemy)
+
+	return spawned
 
 
 func _run_spawn_pass() -> void:
@@ -172,7 +226,7 @@ func force_spawn_random_enemy() -> void:
 	_cleanup_living_enemies()
 
 	var spawnable: Array[EnemySpawnProfile] = []
-	for profile in enemy_profiles:
+	for profile in _enemy_profiles:
 		if profile == null or profile.max_batch_size <= 0:
 			continue
 		if _resolve_valid_zones(profile.allowed_spawn_zones).is_empty():
@@ -195,7 +249,7 @@ func force_spawn_random_enemy() -> void:
 func force_spawn_enemy_by_id(id: StringName) -> void:
 	_cleanup_living_enemies()
 
-	for profile in enemy_profiles:
+	for profile in _enemy_profiles:
 		if profile == null or profile.id != id:
 			continue
 		var valid_zones := _resolve_valid_zones(profile.allowed_spawn_zones)
@@ -208,16 +262,20 @@ func force_spawn_enemy_by_id(id: StringName) -> void:
 		return
 
 
-func _spawn_enemy(profile: EnemySpawnProfile, spawn_global_position: Vector2) -> Enemy:
+## `stat_level` overrides the threat level used for health/damage scaling; 0 uses
+## the run's current threat level.
+func _spawn_enemy(
+	profile: EnemySpawnProfile, spawn_global_position: Vector2, stat_level: int = 0
+) -> Enemy:
 	var enemy_scene := profile.enemy_scene if profile.enemy_scene != null else DEFAULT_ENEMY_SCENE
 	var enemy := enemy_scene.instantiate() as Enemy
 	if enemy == null:
 		return null
 
 	enemy.data = profile.enemy_data
-	var level := _get_current_threat_level()
-	enemy.health_scale = _threat_stat_scale(health_multiplier_at_max_level, level)
-	enemy.damage_scale = _threat_stat_scale(damage_multiplier_at_max_level, level)
+	var level := stat_level if stat_level > 0 else _get_current_threat_level()
+	enemy.health_scale = _threat_stat_scale(health_increase_per_level_percent, level)
+	enemy.damage_scale = _threat_stat_scale(damage_increase_per_level_percent, level)
 	enemy.motion_mode = CharacterBody2D.MOTION_MODE_FLOATING
 	enemy.position = to_local(spawn_global_position)
 	add_child(enemy)
@@ -260,7 +318,7 @@ func _get_eligible_profiles() -> Array[EnemySpawnProfile]:
 	var level := _get_current_threat_level()
 	var eligible: Array[EnemySpawnProfile] = []
 
-	for profile in enemy_profiles:
+	for profile in _enemy_profiles:
 		if profile == null or profile.spawn_weight <= 0.0:
 			continue
 		if profile.max_batch_size <= 0:
@@ -358,33 +416,22 @@ func _get_current_threat_level() -> int:
 	return _threat_manager.get_player_threat_level()
 
 
-func _is_cap_reached() -> bool:
-	if _threat_manager == null:
-		_resolve_threat_manager()
-	return _threat_manager != null and _threat_manager.is_cap_reached
-
-
 func _current_max_concurrent() -> int:
 	return _int_value_for_level(max_concurrent_by_level, _get_current_threat_level(), 0)
 
 
 func _current_spawn_interval() -> float:
 	var interval := _float_value_for_level(spawn_interval_by_level, _get_current_threat_level(), 10.0)
-	# Cap-reached (storm imminent) and magnet-active rates never stack; storm
-	# imminent takes precedence if they ever coincide.
-	if _is_cap_reached() and cap_state_spawn_rate_multiplier > 0.0:
-		interval /= cap_state_spawn_rate_multiplier
-	elif _is_magnet_active() and magnet_active_spawn_rate_multiplier > 0.0:
+	if _is_magnet_active() and magnet_active_spawn_rate_multiplier > 0.0:
 		interval /= magnet_active_spawn_rate_multiplier
 	return maxf(interval, 0.1)
 
 
-## Linear stat multiplier from 1.0x at threat level 1 to `max_multiplier` at the
-## top threat level (ThreatManager.LEVEL_COUNT). Levels outside 1..top are clamped.
-func _threat_stat_scale(max_multiplier: float, level: int) -> float:
-	var top_threat_level := maxi(ThreatManager.LEVEL_COUNT, 2)
-	var t := clampf(float(level - 1) / float(top_threat_level - 1), 0.0, 1.0)
-	return lerpf(1.0, maxf(max_multiplier, 1.0), t)
+## Linear stat multiplier: 1.0x at threat level 1, growing by `percent_per_level`
+## of the base value for each level above it. Levels outside 1..LEVEL_COUNT clamp.
+func _threat_stat_scale(percent_per_level: float, level: int) -> float:
+	var levels_above_first := clampi(level, 1, ThreatManager.LEVEL_COUNT) - 1
+	return 1.0 + float(levels_above_first) * maxf(percent_per_level, 0.0) * 0.01
 
 
 func _int_value_for_level(values: Array[int], level: int, fallback: int) -> int:
