@@ -1,6 +1,6 @@
 [gd_scene format=3 uid="uid://dplayer00001"]
 
-[ext_resource type="Script" path="res://_project/items/held_item_data.gd" id="2_fbtnf"]
+[ext_resource type="Script" uid="uid://jfxvrkd1ncx3" path="res://_project/items/held_item_data.gd" id="2_fbtnf"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="2_hitbox"]
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="2_pistol"]
 [ext_resource type="Script" uid="uid://cgymaxcdced8s" path="res://_project/player/player.gd" id="2_script"]
@@ -12,13 +12,13 @@
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
-[ext_resource type="Texture2D" uid="uid://d1ly2sv5d6n6q" path="res://_project/items/magnet_tool/player_item_magnet.png" id="13_4y3ad"]
+[ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="12_j3888"]
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/combat/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/magnet_tool/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/weapons/player_item_gun_effect_1.png" id="15_4y3ad"]
 [ext_resource type="Shader" uid="uid://b6plrflash00a" path="res://_project/player/player_flash.gdshader" id="16_flash"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="17_target_point"]
-[ext_resource type="PackedScene" uid="uid://repairbeam0scn" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
+[ext_resource type="PackedScene" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
 [ext_resource type="Script" path="res://_project/player/player_health.gd" id="20_health"]
 [ext_resource type="Script" path="res://_project/player/player_equipment.gd" id="21_equipment"]
 [ext_resource type="Script" path="res://_project/player/player_interaction.gd" id="22_interaction"]
@@ -229,7 +229,7 @@ visible = false
 position = Vector2(0, -15.5)
 shape = SubResource("RectangleShape2D_g7wmw")
 
-[node name="EnemyTargetPoint" type="Marker2D" parent="Hitbox/CollisionShape2D"]
+[node name="EnemyTargetPoint" type="Marker2D" parent="Hitbox/CollisionShape2D" unique_id=2137422716]
 script = ExtResource("17_target_point")
 target_group = "player"
 
@@ -242,11 +242,11 @@ offset = Vector2(-13.585, 8.13)
 [node name="Weapon" type="Sprite2D" parent="ArmSprite" unique_id=1625981676]
 show_behind_parent = true
 material = SubResource("ShaderMaterial_damage_flash")
-texture = ExtResource("13_4y3ad")
-offset = Vector2(-26.105, 17.995)
+texture = ExtResource("12_j3888")
+offset = Vector2(-22.075, 20.42)
 
 [node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
-position = Vector2(-57.15, 15.8)
+position = Vector2(-52.56, 13.88)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
 visible = false
@@ -256,21 +256,21 @@ offset = Vector2(13.25, 0)
 flip_h = true
 script = ExtResource("13_muzzle_effect")
 
-[node name="RepairBeam" parent="." instance=ExtResource("18_repair_beam")]
+[node name="RepairBeam" parent="." unique_id=1362686197 instance=ExtResource("18_repair_beam")]
 muzzle_path = NodePath("../ArmSprite/Weapon/Muzzle")
 
-[node name="Health" type="Node" parent="."]
+[node name="Health" type="Node" parent="." unique_id=1545203295]
 script = ExtResource("20_health")
 
-[node name="Equipment" type="Node" parent="."]
+[node name="Equipment" type="Node" parent="." unique_id=2088925594]
 script = ExtResource("21_equipment")
 slots = Array[ExtResource("2_fbtnf")]([ExtResource("2_pistol"), ExtResource("3_magnet_gun")])
 
-[node name="Interaction" type="Node" parent="."]
+[node name="Interaction" type="Node" parent="." unique_id=1442828768]
 script = ExtResource("22_interaction")
 
-[node name="ScrapCollector" type="Node" parent="."]
+[node name="ScrapCollector" type="Node" parent="." unique_id=2042482356]
 script = ExtResource("23_scrap")
 
-[node name="ProgressBarController" type="Node" parent="."]
+[node name="ProgressBarController" type="Node" parent="." unique_id=790598023]
 script = ExtResource("24_progress")

@@ -219,6 +219,20 @@ func _on_cooldown_finished() -> void:
 	_start_warning()
 
 
+## True while a salvage cycle could be started right now: the ship is idling between
+## cycles and spawning isn't frozen by the interlevel window or a storm.
+func can_force_salvage_cycle() -> bool:
+	return _state == State.COOLDOWN and not _spawns_frozen
+
+
+## Debug entry point: skip the remaining cooldown and open the warning window now.
+func force_salvage_cycle() -> void:
+	if not can_force_salvage_cycle():
+		return
+	_cooldown_timer.stop()
+	_start_warning()
+
+
 ## Interlevel window opened: stop producing new salvage piles. An active looting
 ## cycle is allowed to finish; pending cooldown/warning states go idle.
 func _on_threat_window_opened(_seconds: float, _is_storm_gate: bool) -> void:

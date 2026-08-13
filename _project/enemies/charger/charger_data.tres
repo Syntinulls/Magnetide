@@ -1,15 +1,15 @@
-[gd_resource type="Resource" script_class="EnemyData" format=3]
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://b3sgvdgg2fblr"]
 
-[ext_resource type="Script" path="res://_project/enemies/enemy_data.gd" id="1_script"]
-[ext_resource type="SpriteFrames" path="res://_project/enemies/charger/charger_sprite_frames.tres" id="2_frames"]
-[ext_resource type="Script" path="res://_project/enemies/charger/charger_move_behavior.gd" id="3_move"]
-[ext_resource type="Script" path="res://_project/enemies/behaviors/attack_behavior.gd" id="4_attack"]
-
-[sub_resource type="Resource" id="Resource_move_behavior"]
-script = ExtResource("3_move")
+[ext_resource type="Script" uid="uid://uiieqdlx023s" path="res://_project/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="SpriteFrames" uid="uid://nywbeh5jfnqb" path="res://_project/enemies/charger/charger_sprite_frames.tres" id="2_frames"]
+[ext_resource type="Script" uid="uid://3txdx3qduum4" path="res://_project/enemies/charger/charger_move_behavior.gd" id="3_move"]
+[ext_resource type="Script" uid="uid://mmko6po3aihr" path="res://_project/enemies/behaviors/attack_behavior.gd" id="4_attack"]
 
 [sub_resource type="Resource" id="Resource_attack_behavior"]
 script = ExtResource("4_attack")
+
+[sub_resource type="Resource" id="Resource_move_behavior"]
+script = ExtResource("3_move")
 
 [resource]
 script = ExtResource("1_script")
@@ -29,5 +29,5 @@ target_priority_order = Array[String](["player"])
 target_priority_random_excludes = Array[String]([])
 target_switching_mode = 0
 proximity_switch_interval = 1.0
-ally_death_switch_range = null
+ally_death_switch_range = 300.0
 target_point_selection_mode = 2

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cx2yatihwoinx"]
 
 [ext_resource type="Script" path="res://_project/items/repair_gun/repair_beam.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://cso5om8ql40mg" path="res://_project/items/repair_gun/effect_beam_1.png" id="2_beam"]
+[ext_resource type="Texture2D" uid="uid://jo5io7x5jlvv" path="res://_project/items/repair_gun/effect_beam_1_frame_0.png" id="2_beam"]
 [ext_resource type="Texture2D" uid="uid://dyhoixdiydpve" path="res://_project/items/repair_gun/effect_shine_1.png" id="3_shine"]
 [ext_resource type="Texture2D" uid="uid://bsfokn81e03ac" path="res://_project/items/repair_gun/effect_contact_1.png" id="4_contact"]
 
@@ -125,6 +125,7 @@ script = ExtResource("1_script")
 
 [node name="Beam" type="Line2D" parent="."]
 visible = false
+texture_repeat = 2
 texture = ExtResource("2_beam")
 texture_mode = 1
 width = 26.0

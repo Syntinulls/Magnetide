@@ -1,9 +1,13 @@
-[gd_resource type="SpriteFrames" format=3]
+[gd_resource type="SpriteFrames" format=3 uid="uid://nywbeh5jfnqb"]
 
-[ext_resource type="Texture2D" path="res://_project/enemies/charger/sprites/enemy_3_fly.png" id="1_fly"]
-[ext_resource type="Texture2D" path="res://_project/enemies/charger/sprites/enemy_3_fly_s.png" id="2_fly_s"]
-[ext_resource type="Texture2D" path="res://_project/enemies/charger/sprites/enemy_3_idle.png" id="3_idle"]
-[ext_resource type="Texture2D" path="res://_project/enemies/charger/sprites/enemy_3_dead.png" id="4_dead"]
+[ext_resource type="Texture2D" uid="uid://caysbbi1ne834" path="res://_project/enemies/charger/sprites/enemy_3_fly.png" id="1_fly"]
+[ext_resource type="Texture2D" uid="uid://dchdb542vbgi0" path="res://_project/enemies/charger/sprites/enemy_3_fly_s.png" id="2_fly_s"]
+[ext_resource type="Texture2D" uid="uid://bpfynsjo8xdpf" path="res://_project/enemies/charger/sprites/enemy_3_idle.png" id="3_idle"]
+[ext_resource type="Texture2D" uid="uid://cf4kchcu8vm8o" path="res://_project/enemies/charger/sprites/enemy_3_dead.png" id="4_dead"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_charge"]
+atlas = ExtResource("1_fly")
+region = Rect2(780, 0, 260, 130)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_move_0"]
 atlas = ExtResource("2_fly_s")
@@ -19,10 +23,6 @@ region = Rect2(520, 0, 260, 130)
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_move_3"]
 atlas = ExtResource("2_fly_s")
-region = Rect2(780, 0, 260, 130)
-
-[sub_resource type="AtlasTexture" id="AtlasTexture_charge"]
-atlas = ExtResource("1_fly")
 region = Rect2(780, 0, 260, 130)
 
 [resource]

@@ -129,6 +129,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Player: -"
 
+[node name="ShipLabel" type="Label" parent="Panel/Scroll/Groups/ReadoutRows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Ship: -"
+
 [node name="ScrapLabel" type="Label" parent="Panel/Scroll/Groups/ReadoutRows"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -197,6 +202,22 @@ text = "Fill Threat Level"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Spawn Salvage Pile"
+
+[node name="AddRunScrapRow" type="HBoxContainer" parent="Panel/Scroll/Groups/LevelRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="AddRunScrapButton" type="Button" parent="Panel/Scroll/Groups/LevelRows/AddRunScrapRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Add Run Scrap"
+
+[node name="RunScrapAmountEdit" type="LineEdit" parent="Panel/Scroll/Groups/LevelRows/AddRunScrapRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "100"
 
 [node name="ExtractButton" type="Button" parent="Panel/Scroll/Groups/LevelRows"]
 unique_name_in_owner = true
@@ -278,6 +299,52 @@ text = "Equip Weapon"
 unique_name_in_owner = true
 layout_mode = 2
 size_flags_horizontal = 3
+
+[node name="ShipHeader" type="Label" parent="Panel/Scroll/Groups"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
+text = "SHIP"
+
+[node name="ShipRows" type="VBoxContainer" parent="Panel/Scroll/Groups"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="DamageShipRow" type="HBoxContainer" parent="Panel/Scroll/Groups/ShipRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DamageShipButton" type="Button" parent="Panel/Scroll/Groups/ShipRows/DamageShipRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Damage Ship"
+
+[node name="DamageShipAmountEdit" type="LineEdit" parent="Panel/Scroll/Groups/ShipRows/DamageShipRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "25"
+
+[node name="RepairShipRow" type="HBoxContainer" parent="Panel/Scroll/Groups/ShipRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="RepairShipButton" type="Button" parent="Panel/Scroll/Groups/ShipRows/RepairShipRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Repair Ship"
+
+[node name="RepairShipAmountEdit" type="LineEdit" parent="Panel/Scroll/Groups/ShipRows/RepairShipRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "full"
+
+[node name="DestroyShipButton" type="Button" parent="Panel/Scroll/Groups/ShipRows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Destroy Ship"
 
 [node name="StationHeader" type="Label" parent="Panel/Scroll/Groups"]
 layout_mode = 2

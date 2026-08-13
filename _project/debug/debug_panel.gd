@@ -40,6 +40,8 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _advance_threat_button: Button = %AdvanceThreatLevelButton
 @onready var _fill_threat_button: Button = %FillThreatButton
 @onready var _spawn_pile_button: Button = %SpawnSalvagePileButton
+@onready var _add_run_scrap_button: Button = %AddRunScrapButton
+@onready var _run_scrap_amount_edit: LineEdit = %RunScrapAmountEdit
 @onready var _extract_button: Button = %ExtractButton
 @onready var _fail_run_button: Button = %FailRunButton
 
@@ -52,6 +54,12 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _damage_mult_edit: LineEdit = %DamageMultEdit
 @onready var _equip_weapon_button: Button = %EquipWeaponButton
 @onready var _weapon_dropdown: OptionButton = %WeaponDropdown
+
+@onready var _damage_ship_button: Button = %DamageShipButton
+@onready var _damage_ship_amount_edit: LineEdit = %DamageShipAmountEdit
+@onready var _repair_ship_button: Button = %RepairShipButton
+@onready var _repair_ship_amount_edit: LineEdit = %RepairShipAmountEdit
+@onready var _destroy_ship_button: Button = %DestroyShipButton
 
 @onready var _add_scrap_button: Button = %AddScrapButton
 @onready var _scrap_amount_edit: LineEdit = %ScrapAmountEdit
@@ -89,6 +97,7 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _threat_label: Label = %ThreatLabel
 @onready var _enemies_label: Label = %EnemiesLabel
 @onready var _player_label: Label = %PlayerLabel
+@onready var _ship_label: Label = %ShipLabel
 @onready var _scrap_label: Label = %ScrapLabel
 
 
@@ -151,6 +160,7 @@ func _connect_actions() -> void:
 	_advance_threat_button.pressed.connect(_on_advance_threat_level_pressed)
 	_fill_threat_button.pressed.connect(_on_fill_threat_pressed)
 	_spawn_pile_button.pressed.connect(_on_spawn_salvage_pile_pressed)
+	_add_run_scrap_button.pressed.connect(_on_add_run_scrap_pressed)
 	_extract_button.pressed.connect(_on_extract_pressed)
 	_fail_run_button.pressed.connect(_on_fail_run_pressed)
 
@@ -160,6 +170,10 @@ func _connect_actions() -> void:
 	_refill_ammo_button.pressed.connect(_on_refill_ammo_pressed)
 	_damage_mult_button.pressed.connect(_on_damage_mult_pressed)
 	_equip_weapon_button.pressed.connect(_on_equip_weapon_pressed)
+
+	_damage_ship_button.pressed.connect(_on_damage_ship_pressed)
+	_repair_ship_button.pressed.connect(_on_repair_ship_pressed)
+	_destroy_ship_button.pressed.connect(_on_destroy_ship_pressed)
 
 	_add_scrap_button.pressed.connect(_on_add_scrap_pressed)
 	_add_research_button.pressed.connect(_on_add_research_pressed)
@@ -231,10 +245,18 @@ func _on_fill_threat_pressed() -> void:
 		threat.add_threat(ThreatManager.MAX_THREAT)
 
 
+## Skip the wait for the next salvage cycle: the warning window opens immediately and
+## the lever becomes flippable, as if the cooldown had just elapsed.
 func _on_spawn_salvage_pile_pressed() -> void:
-	var spawner := _get_salvage_spawner()
-	if spawner:
-		spawner.spawn_on_demand()
+	var minigame := _get_magnet_minigame()
+	if minigame:
+		minigame.force_salvage_cycle()
+
+
+func _on_add_run_scrap_pressed() -> void:
+	var run := _get_run()
+	if run:
+		run.record_scrap_metal_collected(maxi(_parse_int(_run_scrap_amount_edit, 100), 1))
 
 
 func _on_extract_pressed() -> void:
@@ -298,6 +320,28 @@ func _on_equip_weapon_pressed() -> void:
 	loadout.equip_weapon(weapon)
 	_apply_loadout_to_player(loadout)
 	_persist_save_data()
+
+
+# =============================================================================
+# Ship actions
+# =============================================================================
+
+func _on_damage_ship_pressed() -> void:
+	var ship := _get_ship()
+	if ship:
+		ship.take_damage(maxf(_parse_float(_damage_ship_amount_edit, 25.0), 0.0))
+
+
+func _on_repair_ship_pressed() -> void:
+	var ship := _get_ship()
+	if ship:
+		ship.repair(maxf(_parse_float(_repair_ship_amount_edit, ship.max_health), 0.0))
+
+
+func _on_destroy_ship_pressed() -> void:
+	var ship := _get_ship()
+	if ship:
+		ship.take_damage(ship.current_health)
 
 
 # =============================================================================
@@ -483,7 +527,9 @@ func _refresh_context() -> void:
 	_add_threat_button.disabled = threat == null
 	_advance_threat_button.disabled = threat == null or not threat.can_advance()
 	_fill_threat_button.disabled = threat == null
-	_spawn_pile_button.disabled = _get_salvage_spawner() == null
+	var minigame := _get_magnet_minigame()
+	_spawn_pile_button.disabled = minigame == null or not minigame.can_force_salvage_cycle()
+	_add_run_scrap_button.disabled = not in_run
 	_extract_button.disabled = not in_run
 	_fail_run_button.disabled = not in_run
 
@@ -495,6 +541,11 @@ func _refresh_context() -> void:
 	_damage_mult_button.disabled = not has_player
 	if has_player:
 		_god_mode_button.set_pressed_no_signal(player.health.invulnerable)
+
+	var ship := _get_ship()
+	_damage_ship_button.disabled = ship == null
+	_repair_ship_button.disabled = ship == null
+	_destroy_ship_button.disabled = ship == null
 
 	var has_save := save_data != null
 	_equip_weapon_button.disabled = not has_save
@@ -550,6 +601,12 @@ func _update_readout() -> void:
 		]
 	else:
 		_player_label.text = "Player: -"
+
+	var ship := _get_ship()
+	if ship:
+		_ship_label.text = "Ship: Hull %d/%d" % [roundi(ship.current_health), roundi(ship.max_health)]
+	else:
+		_ship_label.text = "Ship: -"
 
 	var run := _get_run()
 	if run:
@@ -683,8 +740,15 @@ func _get_threat_manager() -> ThreatManager:
 	return _get_level_child("ThreatManager") as ThreatManager
 
 
-func _get_salvage_spawner() -> SalvageSpawner:
-	return _get_level_child("SalvageSpawner") as SalvageSpawner
+func _get_magnet_minigame() -> MagnetMinigame:
+	return _get_level_child("MagnetMinigame") as MagnetMinigame
+
+
+func _get_ship() -> Ship:
+	var ship := Magnetide.ship as Ship
+	if ship != null and is_instance_valid(ship):
+		return ship
+	return null
 
 
 ## Push loadout changes onto the live player (no-op outside a run: screens read

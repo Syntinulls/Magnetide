@@ -8,10 +8,14 @@ class_name RepairGunBehavior
 ## reload, repair progress is never preserved.
 
 const REPAIR_BAR_COLOR: Color = Color("9bff63")
-const REPAIR_BAR_TEXT: String = "Repairing"
+const REPAIR_BAR_TEXT: String = "Repairing..."
+const NO_SCRAP_TEXT: String = "No Scrap"
+const FULLY_REPAIRED_TEXT: String = "Fully Repaired"
 
 ## Cycle progress (0..1); resets to 0 whenever the beam drops.
 var _repair_progress: float = 0.0
+## One refusal cue per press: set when one shows, cleared on release.
+var _refusal_shown: bool = false
 
 var tool: RepairGunData:
 	get:
@@ -24,6 +28,7 @@ func process_input(delta: float) -> void:
 		_stop_repair(false)
 		return
 	if not Input.is_action_pressed("shoot"):
+		_refusal_shown = false
 		_stop_repair(true)
 		return
 	var contact := _find_repairable_contact(gun)
@@ -31,14 +36,20 @@ func process_input(delta: float) -> void:
 		_stop_repair(true)
 		return
 	var ship := contact["ship"] as Ship
+	var contact_point: Vector2 = contact["position"]
 	var run := Magnetide.run as RunController
-	if run == null or run.scrap_metal_collected < gun.repair_cost:
+	if run == null:
+		_stop_repair(true)
+		return
+	# Missing scrap outranks a full hull: it is the condition the player can act on.
+	if run.scrap_metal_collected < gun.repair_cost:
+		_refuse(contact_point, NO_SCRAP_TEXT, DamageNumber.DENIED_COLOR)
 		_stop_repair(true)
 		return
 	if ship.current_health >= ship.max_health:
+		_refuse(contact_point, FULLY_REPAIRED_TEXT, DamageNumber.HEAL_COLOR)
 		_stop_repair(true)
 		return
-	var contact_point: Vector2 = contact["position"]
 	player.repair_beam.update_beam(contact_point)
 	_repair_progress += delta * gun.repair_rate
 	if _repair_progress >= 1.0:
@@ -54,13 +65,27 @@ func process_input(delta: float) -> void:
 	)
 
 
+## Tell the player why the beam refused: a popup plus one pass of the beam's contact
+## effects at the spot on the hull they aimed at, once per press rather than every
+## frame they keep holding it down.
+func _refuse(contact_point: Vector2, text: String, color: Color) -> void:
+	if _refusal_shown:
+		return
+	_refusal_shown = true
+	DamageNumber.spawn_text(contact_point, text, color)
+	if player.repair_beam:
+		player.repair_beam.flash_once(contact_point)
+
+
 ## A repair beam must never freeze on-screen while input is captured.
 func process_blocked(_delta: float) -> void:
+	_refusal_shown = false
 	if _repair_progress > 0.0 or (player.repair_beam and player.repair_beam.is_active()):
 		_stop_repair(false)
 
 
 func unequipped() -> void:
+	_refusal_shown = false
 	_stop_repair(false)
 
 

@@ -9,8 +9,26 @@ class_name RepairBeam
 ## The muzzle marker the beam originates from (assigned by the owning scene).
 @export var muzzle_path: NodePath
 
+@export_group("Beam Animation")
+## Standalone per-frame textures for the animated beam. They must be individual
+## textures, not AtlasTexture regions — Line2D ignores atlas regions and would
+## draw the whole sheet. Cycled at beam_anim_fps and tiled along the beam.
+@export var beam_frames: Array[Texture2D] = [
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_0.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_1.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_2.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_3.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_4.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_5.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_6.png"),
+	preload("res://_project/items/repair_gun/effect_beam_1_frame_7.png"),
+]
+## Playback rate of the beam frames, matching the shine and contact sprites.
+@export var beam_anim_fps: float = 15.0
+
 var _active: bool = false
 var _dissipating: bool = false
+var _beam_anim_time: float = 0.0
 
 @onready var _beam: Line2D = $Beam
 @onready var _shine: AnimatedSprite2D = $Shine
@@ -23,7 +41,8 @@ func _ready() -> void:
 	_contact.animation_looped.connect(_on_sprite_animation_looped.bind(_contact))
 
 
-func _process(_delta: float) -> void:
+func _process(delta: float) -> void:
+	_advance_beam_animation(delta)
 	if not (_active or _dissipating) or _muzzle == null:
 		return
 	_shine.global_position = _muzzle.global_position
@@ -31,11 +50,24 @@ func _process(_delta: float) -> void:
 		_beam.points = PackedVector2Array([_muzzle.global_position, _contact.global_position])
 
 
+## Cycle the beam's frame texture while the line shows; the line tiles whichever
+## frame is current along its length.
+func _advance_beam_animation(delta: float) -> void:
+	if not _beam.visible or beam_frames.is_empty() or beam_anim_fps <= 0.0:
+		return
+	_beam_anim_time = fmod(_beam_anim_time + delta, float(beam_frames.size()) / beam_anim_fps)
+	var frame_texture: Texture2D = beam_frames[int(_beam_anim_time * beam_anim_fps) % beam_frames.size()]
+	if frame_texture != null and _beam.texture != frame_texture:
+		_beam.texture = frame_texture
+
+
 func is_active() -> bool:
 	return _active
 
 
 func update_beam(contact_global: Vector2) -> void:
+	if not _beam.visible:
+		_beam_anim_time = 0.0
 	_active = true
 	_dissipating = false
 	_contact.global_position = contact_global
@@ -47,6 +79,23 @@ func update_beam(contact_global: Vector2) -> void:
 		if not sprite.visible or not sprite.is_playing():
 			sprite.visible = true
 			sprite.play()
+
+
+## One pass of the shine and contact sprites with no connecting line, for a beam that
+## refused to run: the player sees what they were aiming at and that the tool
+## responded, without the line or progress that mean a repair is under way.
+func flash_once(contact_global: Vector2) -> void:
+	if _active or _dissipating:
+		return
+	_dissipating = true
+	_beam.visible = false
+	_contact.global_position = contact_global
+	if _muzzle != null:
+		_shine.global_position = _muzzle.global_position
+	for sprite: AnimatedSprite2D in [_shine, _contact]:
+		sprite.visible = true
+		sprite.frame = 0
+		sprite.play()
 
 
 ## Hide the line immediately; each sprite finishes its current animation pass and

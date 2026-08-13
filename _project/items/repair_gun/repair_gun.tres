@@ -1,22 +1,16 @@
 [gd_resource type="Resource" script_class="RepairGunData" format=3 uid="uid://cx2yayyva0y5k"]
 
-[ext_resource type="Script" path="res://_project/items/repair_gun/repair_gun_data.gd" id="1_script"]
+[ext_resource type="Script" uid="uid://ct2l34sxwo2f7" path="res://_project/items/repair_gun/repair_gun_data.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="2_tex"]
-[ext_resource type="Resource" uid="uid://repairgun0upg" path="res://_project/upgrades/repair_gun/repair_gun.tres" id="3_upg"]
+[ext_resource type="Resource" uid="uid://bw2r5jrue7doe" path="res://_project/upgrades/repair_gun/repair_gun.tres" id="3_upg"]
 
 [resource]
 script = ExtResource("1_script")
-repair_amount = 10.0
-repair_rate = 0.5
-repair_cost = 1
-beam_range = 260.0
 hotbar_icon = ExtResource("2_tex")
 weapon_sprite = ExtResource("2_tex")
-weapon_offset = Vector2(-26.105, 17.995)
+weapon_offset = Vector2(-22.075, 20.42)
 weapon_rotation = 0.0
-muzzle_position = Vector2(-57.15, 15.8)
-muzzle_effect_type = 0
-muzzle_effect_offset = Vector2(0, 0)
+muzzle_position = Vector2(-52.56, 13.88)
 item_id = &"repair_gun"
 display_name = "Repair Gun"
 upgrade_data = ExtResource("3_upg")
