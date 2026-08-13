@@ -36,9 +36,9 @@ func _update_damage_multiplier() -> void:
 
 
 func _get_health_ratio() -> float:
-	if _player == null or not is_instance_valid(_player) or _player.max_health <= 0.0:
+	if _player == null or not is_instance_valid(_player) or _player.health.max_health <= 0.0:
 		return 1.0
-	return clampf(_player.current_health / _player.max_health, 0.0, 1.0)
+	return clampf(_player.health.current_health / _player.health.max_health, 0.0, 1.0)
 
 
 ## Actual damage bonus as a fraction (e.g. 0.5 = +50%) given the current health ratio.

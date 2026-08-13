@@ -3,6 +3,7 @@ class_name RunLoadout
 
 const DefaultWeaponData := preload("res://_project/items/weapons/pistol/pistol.tres")
 const DefaultMagnetToolData := preload("res://_project/items/magnet_tool/magnet_gun.tres")
+const DefaultRepairGunData := preload("res://_project/items/repair_gun/repair_gun.tres")
 const UpgradeableItemStateScript := preload("res://_project/run/upgradeable_item_state.gd")
 const UpgradeSlotStateScript := preload("res://_project/run/upgrade_slot_state.gd")
 ## Static loadout-stat items (data-driven; see specs/project_organization.md §9): each is a
@@ -20,6 +21,7 @@ const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
 const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
 const DEFAULT_PLAYER_SHIELD_SECONDS_PER_HIT := 1.0
 const PLAYER_SHIELD_SLOT_ID := &"player_shield"
+const REPAIR_GUN_SLOT_ID := &"repair_gun"
 
 @export_group("Ship")
 @export var ship_storage_area_size: Vector2 = Vector2(180, 100)
@@ -149,6 +151,9 @@ func _get_upgradeable_items() -> Array:
 		items.append(equipped_weapon)
 	if equipped_magnet_tool != null:
 		items.append(equipped_magnet_tool)
+	# Always upgradeable regardless of the slot lock: the station gates purchases
+	# behind the unlock, and the run only equips it when the slot is unlocked.
+	items.append(DefaultRepairGunData)
 	items.append_array(get_equipped_augments())
 	return items
 
@@ -247,6 +252,10 @@ func get_upgraded_weapon_preview(weapon_data: WeaponData = null) -> WeaponData:
 func get_upgraded_magnet_tool_preview(tool_data: MagnetToolData = null) -> MagnetToolData:
 	var source := tool_data if tool_data != null else equipped_magnet_tool
 	return _upgraded_item_preview(source, UpgradeEffect.Target.MAGNET_GUN) as MagnetToolData
+
+
+func get_upgraded_repair_gun_preview() -> RepairGunData:
+	return _upgraded_item_preview(DefaultRepairGunData, UpgradeEffect.Target.REPAIR_GUN) as RepairGunData
 
 
 ## Duplicates `item` and applies its upgrade_data's `effect_target` effects at the item's current
@@ -481,6 +490,10 @@ func _build_runtime_equipment() -> Array[HeldItemData]:
 		runtime_equipment.append(weapon)
 	if magnet_tool:
 		runtime_equipment.append(magnet_tool)
+	if is_slot_unlocked(REPAIR_GUN_SLOT_ID, false):
+		var repair_gun := get_upgraded_repair_gun_preview()
+		if repair_gun:
+			runtime_equipment.append(repair_gun)
 	return runtime_equipment
 
 

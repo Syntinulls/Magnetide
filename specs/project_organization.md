@@ -61,11 +61,18 @@ _project/                    All game content. (Root level is reserved for engin
 │   └── worm/                Per-enemy content: data .tres, spawn profile, sprites.
 ├── items/                   Meta-progression item data model (definitions, not world objects).
 │   ├── item_data.gd         ItemData: base (identity + leveling) for every upgradeable item.
-│   ├── held_item_data.gd    HeldItemData: hotbar/mounting base for weapons + the magnet tool.
+│   ├── held_item_data.gd    HeldItemData: hotbar/mounting base for every equippable item.
+│   ├── held_item_behavior.gd  HeldItemBehavior: base for per-item equipped behavior. Each
+│   │                        data class creates one live instance per hotbar slot (via
+│   │                        create_use_behavior), which owns that slot's input handling and
+│   │                        runtime state (ammo, held item, repair progress).
 │   ├── upgrade_catalog_entry.gd  UpgradeCatalogEntry: one selectable item in a dynamic slot.
-│   ├── weapons/             WeaponData + weapon_fire_behavior + per-weapon folders
-│   │                        (pistol/, rifle/, ...) with their .tres + sprites.
-│   ├── magnet_tool/         MagnetToolData + magnet_gun.tres + sprites.
+│   ├── weapons/             WeaponData + weapon_behavior (trigger/ammo/reload) +
+│   │                        weapon_fire_behavior (per-weapon firing pattern) + per-weapon
+│   │                        folders (pistol/, rifle/, ...) with their .tres + sprites.
+│   ├── magnet_tool/         MagnetToolData + magnet_tool_behavior + magnet_gun.tres + sprites.
+│   ├── repair_gun/          RepairGunData + repair_gun_behavior + repair_beam.* +
+│   │                        repair_gun.tres + sprites.
 │   └── augments/            AugmentData + behavior scripts + augment .tres + sprites.
 ├── level/                   The world during a run (presentation + simulation, not spawnable content).
 │   ├── level.*              Root run scene; level_definition.gd (playable-level data).
@@ -76,7 +83,14 @@ _project/                    All game content. (Root level is reserved for engin
 │                            vignette shader, sprites. Lives here, not under ship/magnet/:
 │                            level.tscn instances it and game_ui.tscn owns its overlay — it
 │                            never touches the ship, and exists only inside a run.
-├── player/                  The player character: player.* + sprites.
+├── player/                  The player character. player.gd (the body: movement, facing,
+│   │                        animation, combat-contract facade) manages component nodes
+│   │                        authored in player.tscn: player_health, player_equipment (hosts
+│   │                        the per-slot HeldItemBehavior instances), player_interaction
+│   │                        (generic drop-target/proximity bridge — interactables implement
+│   │                        its duck-typed contract on themselves and join its groups),
+│   │                        player_scrap_collector, player_progress_bar_controller. Sprites
+│   │                        in sprites/.
 ├── run/                     One run's lifecycle & mutable state: RunController, RunLoadout,
 │                            RunResult, RunUpgrade, item/slot states, RunArtifactTracker.
 ├── salvage/                 The salvage domain, end to end:

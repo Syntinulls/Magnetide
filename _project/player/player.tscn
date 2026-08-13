@@ -18,6 +18,12 @@
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/weapons/player_item_gun_effect_1.png" id="15_4y3ad"]
 [ext_resource type="Shader" uid="uid://b6plrflash00a" path="res://_project/player/player_flash.gdshader" id="16_flash"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="17_target_point"]
+[ext_resource type="PackedScene" uid="uid://repairbeam0scn" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
+[ext_resource type="Script" path="res://_project/player/player_health.gd" id="20_health"]
+[ext_resource type="Script" path="res://_project/player/player_equipment.gd" id="21_equipment"]
+[ext_resource type="Script" path="res://_project/player/player_interaction.gd" id="22_interaction"]
+[ext_resource type="Script" path="res://_project/player/player_scrap_collector.gd" id="23_scrap"]
+[ext_resource type="Script" path="res://_project/player/player_progress_bar_controller.gd" id="24_progress"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_damage_flash"]
 shader = ExtResource("16_flash")
@@ -198,7 +204,6 @@ animations = [{
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
 script = ExtResource("2_script")
-equipment = Array[ExtResource("2_fbtnf")]([ExtResource("2_pistol"), ExtResource("3_magnet_gun")])
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]
 material = SubResource("ShaderMaterial_damage_flash")
@@ -250,3 +255,22 @@ animation = &"magnet_gun"
 offset = Vector2(13.25, 0)
 flip_h = true
 script = ExtResource("13_muzzle_effect")
+
+[node name="RepairBeam" parent="." instance=ExtResource("18_repair_beam")]
+muzzle_path = NodePath("../ArmSprite/Weapon/Muzzle")
+
+[node name="Health" type="Node" parent="."]
+script = ExtResource("20_health")
+
+[node name="Equipment" type="Node" parent="."]
+script = ExtResource("21_equipment")
+slots = Array[ExtResource("2_fbtnf")]([ExtResource("2_pistol"), ExtResource("3_magnet_gun")])
+
+[node name="Interaction" type="Node" parent="."]
+script = ExtResource("22_interaction")
+
+[node name="ScrapCollector" type="Node" parent="."]
+script = ExtResource("23_scrap")
+
+[node name="ProgressBarController" type="Node" parent="."]
+script = ExtResource("24_progress")

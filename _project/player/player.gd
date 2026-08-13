@@ -1,36 +1,21 @@
 extends CharacterBody2D
 class_name Player
 
-signal destroyed
+## The player character body: movement, jumping, knockback, facing/aim and the
+## walk/leg animations. Everything else is delegated to component children
+## (health, equipment + per-item behaviors, world interaction, scrap
+## collection, the shared progress bar). Cross-concept combat calls
+## (take_damage etc.) land here and forward to the health component.
+
 signal cinematic_walk_finished
-signal scrap_metal_collected(amount: int)
-signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 
 @export var speed: float = 400.0
-@export_group("Combat")
-@export var max_health: float = 100.0
-@export var max_shield: float = 2.0
-@export var shield_recharge_delay: float = 6.0
-@export var shield_recharge_duration: float = 1.0
-@export var shield_break_recharge_delay: float = 10.0
 ## Exponential damping applied per second to horizontal enemy knockback; higher
 ## values stop the push sooner.
 @export var knockback_damping: float = 8.0
 
-## Equipment slots - indices match hotbar slots
-@export var equipment: Array[HeldItemData] = []
-
-const MagnetEffectTexture: Texture2D = preload("res://icon.svg")
-const ProjectileScript: Script = preload("res://_project/combat/projectile.gd")
-const ScrapMetalTexture: Texture2D = preload("res://_project/common/sprites/scrap_metal.png")
-const MACHINE_GUN_SHOOT_SFX: Array[String] = [
-	"weapons/machine_gun_shot_1.ogg",
-	"weapons/machine_gun_shot_2.ogg",
-	"weapons/machine_gun_shot_3.ogg"
-]
-const MAGNET_GUN_LOOP_SFX := "ship/magnet_effect.ogg"
-const MAGNET_GUN_LOOP_VOLUME_DB := -10.0
-const MAGNET_GUN_LOOP_PITCH_SCALE := 1.35
+const ARM_OFFSET_X: float = -13.585
+const ARM_POSITION_X: float = 12.56
 const JUMP_SFX := "player/jump_metal_1_1.ogg"
 const JUMP_SFX_VOLUME_DB := -6.0
 const LAND_SFX := "player/jump_metal_1_2.ogg"
@@ -47,6 +32,7 @@ const FOOTSTEP_INTERVAL_SECONDS := 0.28
 const FOOTSTEP_MIN_SPEED := 8.0
 ## Horizontal knockback speed (px/s) below which the residual push is dropped.
 const KNOCKBACK_STOP_SPEED := 10.0
+const DAMAGE_FLASH_FADE_SECONDS := 0.15
 
 ## Jump physics resolved from the run loadout on apply — derived from the
 ## loadout's jump max/min height and time-to-apex, never authored directly here.
@@ -57,106 +43,29 @@ var gravity: float = 1600.0
 var input_enabled: bool = true
 ## While true the player can neither receive nor deal damage (departure cutscene).
 var combat_disabled: bool = false
-## Debug god mode: while true the player ignores all incoming damage.
-var invulnerable: bool = false
 var facing_right: bool = false
-var magnet_effect: Sprite2D = null
-var current_health: float = 0.0
-var current_shield: int = 0
-## Time since the player last took damage of any kind, including environmental
-## drain. The single source of truth for out-of-combat healing — any new damage
-## source suppresses healing simply by resetting this.
-var seconds_since_damage: float = 0.0
-var _has_floor_state: bool = false
-var _was_on_floor: bool = false
-var _footstep_timer: float = 0.0
-var _shield_recharge_cooldown_remaining: float = 0.0
-var _shield_recharge_progress: float = 0.0
-var _shield_broken: bool = false
-var _fire_cooldown: float = 0.0
-## Residual horizontal push from enemy knockback, re-added on top of the
-## per-frame input velocity (which is rewritten every physics tick) and decayed
-## by knockback_damping until it falls below KNOCKBACK_STOP_SPEED.
-var _knockback_velocity_x: float = 0.0
-var _selected_equipment_index: int = 0
-
-## Current rounds in the magazine, keyed by equipment slot index. Each weapon keeps
-## its own ammo when the player switches away and back.
-var _weapon_ammo: Dictionary = {}            # int index -> int current ammo
-## Reload progress in seconds, keyed by equipment slot index. An entry exists only
-## while that slot's weapon is mid-reload; it persists across weapon switches so a
-## reload resumes from where it left off rather than restarting.
-var _weapon_reload_elapsed: Dictionary = {}  # int index -> float seconds
-
 ## Outgoing weapon damage multiplier applied to every projectile the player fires.
 ## Driven at runtime by augments (e.g. Adrenaline scales this with missing health).
 var outgoing_damage_multiplier: float = 1.0
 
-## Chance (0-100) that recycling a trash item yields double scrap. Set by the
-## Increased Recycling augment for the duration of a run.
-var recycler_double_scrap_chance_percent: float = 0.0
-
-## Currently selected equipment
-var current_equipment: HeldItemData:
-	get:
-		if _selected_equipment_index >= 0 and _selected_equipment_index < equipment.size():
-			return equipment[_selected_equipment_index]
-		return null
-
-## Convenience getter for current weapon (if equipped)
-var current_weapon_data: WeaponData:
-	get:
-		var equip := current_equipment
-		return equip as WeaponData if equip is WeaponData else null
-
-## Convenience getter for current magnet tool (if equipped)
-var current_magnet_tool: MagnetToolData:
-	get:
-		var equip := current_equipment
-		return equip as MagnetToolData if equip is MagnetToolData else null
-
-## Pull config - read from current magnet tool or use defaults
-var pull_base_speed: float:
-	get:
-		var tool := current_magnet_tool
-		return tool.pull_base_speed if tool else 133.0
-
-var pull_max_speed: float:
-	get:
-		var tool := current_magnet_tool
-		return tool.pull_max_speed if tool else 1000.0
-
-var pull_ramp_time: float:
-	get:
-		var tool := current_magnet_tool
-		return tool.pull_ramp_time if tool else 0.6
-
-# Magnet gun state
-var _held_item: SalvageItem = null
-var _hovered_item: SalvageItem = null
-var _hovered_research_station: ResearchStation = null
-var _hovered_recycler: Node = null
-var _interactable_research_station: ResearchStation = null
-var _proximity_highlighted_station: ResearchStation = null
-var _repel_hold_elapsed: float = 0.0
-var _is_repel_holding: bool = false
-var _is_recycling_held_trash: bool = false
-var _pending_recycler_scrap_chance_percent: float = 0.0
-var _progress_bar: PlayerProgressBar = null
-## Active progress-bar claims keyed by source (StringName). Each entry is a
-## dictionary { progress, color, text, priority }; the highest-priority claim is
-## rendered so concurrent mechanics (repel / depart / reload) never fight.
-var _progress_bar_claims: Dictionary = {}
-var _hover_tooltip: Label = null
-var _active_scrap_labels: Array[Label] = []
+var _has_floor_state: bool = false
+var _was_on_floor: bool = false
+var _footstep_timer: float = 0.0
+## Residual horizontal push from enemy knockback, re-added on top of the
+## per-frame input velocity (which is rewritten every physics tick) and decayed
+## by knockback_damping until it falls below KNOCKBACK_STOP_SPEED.
+var _knockback_velocity_x: float = 0.0
 var _damage_flash_tween: Tween = null
-## Healing accumulated toward the next whole-point green popup, so per-frame
-## regeneration ticks batch up instead of spawning a popup every frame.
-var _pending_heal_popup: float = 0.0
 var _cinematic_walk_active: bool = false
 var _cinematic_walk_target_x: float = 0.0
 var _cinematic_walk_speed: float = 160.0
 var _cinematic_walk_arrive_epsilon: float = 4.0
+
+var _health: PlayerHealth = null
+var _equipment: PlayerEquipment = null
+var _interaction: PlayerInteraction = null
+var _scrap_collector: PlayerScrapCollector = null
+var _progress_bar: PlayerProgressBarController = null
 
 @onready var body_sprite: Sprite2D = $BodySprite
 @onready var legs_sprite: AnimatedSprite2D = $LegsSprite
@@ -164,23 +73,97 @@ var _cinematic_walk_arrive_epsilon: float = 4.0
 @onready var weapon_sprite: Sprite2D = $ArmSprite/Weapon
 @onready var muzzle: Marker2D = $ArmSprite/Weapon/Muzzle
 @onready var muzzle_effect: MuzzleEffect = $ArmSprite/Weapon/Muzzle/MuzzleEffect
+@onready var repair_beam: RepairBeam = $RepairBeam
+
+## Component accessors resolve lazily (not @onready) because the run loadout is
+## applied before the player enters the tree.
+var health: PlayerHealth:
+	get:
+		if _health == null:
+			_health = get_node_or_null(^"Health") as PlayerHealth
+		return _health
+
+var equipment: PlayerEquipment:
+	get:
+		if _equipment == null:
+			_equipment = get_node_or_null(^"Equipment") as PlayerEquipment
+		return _equipment
+
+var interaction: PlayerInteraction:
+	get:
+		if _interaction == null:
+			_interaction = get_node_or_null(^"Interaction") as PlayerInteraction
+		return _interaction
+
+var scrap_collector: PlayerScrapCollector:
+	get:
+		if _scrap_collector == null:
+			_scrap_collector = get_node_or_null(^"ScrapCollector") as PlayerScrapCollector
+		return _scrap_collector
+
+var progress_bar: PlayerProgressBarController:
+	get:
+		if _progress_bar == null:
+			_progress_bar = get_node_or_null(^"ProgressBarController") as PlayerProgressBarController
+		return _progress_bar
 
 
 func _ready() -> void:
 	add_to_group("player")
-	current_health = max_health
-	current_shield = _get_max_shield_hits()
+	health.damaged.connect(_on_health_damaged)
 	var mouse_pos := get_global_mouse_position()
-	var mouse_is_right := mouse_pos.x > global_position.x
-	_apply_facing(mouse_is_right)
-	_create_progress_bar()
-	_create_hover_tooltip()
-	_init_weapon_ammo()
-	_apply_current_equipment()
-	# GameUI/hotbar may not have registered with Magnetide yet when the player
-	# enters the tree, so UI wiring must be deferred.
-	call_deferred("_connect_hotbar")
-	call_deferred("_populate_hotbar")
+	_apply_facing(mouse_pos.x > global_position.x)
+	equipment.initialize()
+
+
+func _physics_process(delta: float) -> void:
+	var was_on_floor := _was_on_floor if _has_floor_state else is_on_floor()
+
+	if _cinematic_walk_active:
+		_process_cinematic_walk(delta)
+	elif input_enabled and not Magnetide.is_ui_input_captured():
+		var mouse_pos := get_global_mouse_position()
+
+		# Facing is purely based on mouse X vs player X
+		var mouse_is_right := mouse_pos.x > global_position.x
+		if mouse_is_right != facing_right:
+			_apply_facing(mouse_is_right)
+			equipment.notify_facing_changed()
+
+		_update_arm_aim(mouse_pos)
+		equipment.process_current(delta)
+
+		if equipment.get_held_item() == null:
+			interaction.process_proximity()
+		else:
+			interaction.clear_proximity()
+
+		# Variable-height jump: hold to reach max height, release early to cut to min.
+		if is_on_floor() and Input.is_action_pressed("move_jump"):
+			velocity.y = jump_velocity
+			_play_jump_sfx()
+		if Input.is_action_just_released("move_jump") and velocity.y < jump_cut_velocity:
+			velocity.y = jump_cut_velocity
+
+		var direction := Input.get_axis("move_left", "move_right")
+		velocity.x = direction * speed
+	else:
+		velocity.x = 0.0
+		equipment.process_blocked(delta)
+
+	if _knockback_velocity_x != 0.0:
+		velocity.x += _knockback_velocity_x
+		_knockback_velocity_x *= exp(-knockback_damping * delta)
+		if absf(_knockback_velocity_x) < KNOCKBACK_STOP_SPEED:
+			_knockback_velocity_x = 0.0
+
+	if not is_on_floor():
+		velocity.y += gravity * delta
+
+	move_and_slide()
+	_update_floor_sfx_state(was_on_floor)
+	_process_footstep_sfx(delta)
+	_update_leg_animation()
 
 
 func apply_run_loadout(loadout: RunLoadout) -> void:
@@ -188,50 +171,109 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 		return
 
 	var is_runtime_reconfigure := is_inside_tree()
-	if is_runtime_reconfigure:
-		_cleanup_current_equipment()
 
 	speed = loadout.player_speed
 	jump_velocity = loadout.get_player_jump_velocity()
 	jump_cut_velocity = loadout.get_player_jump_cut_velocity()
 	gravity = loadout.get_player_gravity()
-	max_health = loadout.player_max_health
-	max_shield = loadout.player_max_shield
-	shield_recharge_delay = loadout.player_shield_recharge_delay
-	shield_recharge_duration = loadout.player_shield_recharge_duration
-	shield_break_recharge_delay = loadout.player_shield_break_recharge_delay
-	equipment = loadout.player_equipment.duplicate()
-
-	if equipment.is_empty():
-		_selected_equipment_index = 0
-	else:
-		_selected_equipment_index = clampi(
-			loadout.player_selected_equipment_index,
-			0,
-			equipment.size() - 1
-		)
-
-	if not is_runtime_reconfigure:
-		current_health = max_health
-		current_shield = _get_max_shield_hits()
-	else:
-		current_health = minf(current_health, max_health)
-		current_shield = mini(current_shield, _get_max_shield_hits())
-	if _get_max_shield_hits() <= 0:
-		current_shield = 0
-		_shield_recharge_cooldown_remaining = 0.0
-		_shield_recharge_progress = 0.0
-		_shield_broken = false
-
-	_init_weapon_ammo()
-
-	if is_runtime_reconfigure:
-		_apply_current_equipment()
-		call_deferred("_populate_hotbar")
+	health.apply_loadout(loadout, is_runtime_reconfigure)
+	equipment.apply_loadout(
+		loadout.player_equipment,
+		loadout.player_selected_equipment_index,
+		is_runtime_reconfigure
+	)
 
 
-const ARM_OFFSET_X: float = -13.585
-const ARM_POSITION_X: float = 12.56
+## Aim direction from the player toward the mouse cursor (weapons and the
+## repair beam both fire along it).
+func get_aim_direction() -> Vector2:
+	var aim_direction := get_global_mouse_position() - global_position
+	if aim_direction.length_squared() <= 0.0001:
+		aim_direction = Vector2.RIGHT * (-facing_mult())
+	return aim_direction.normalized()
+
+
+func facing_mult() -> float:
+	return -1.0 if facing_right else 1.0
+
+
+func get_ship() -> Node2D:
+	var parent := get_parent()
+	if parent and parent.has_method("is_point_in_storage_area"):
+		return parent as Node2D
+	return null
+
+
+## Discrete push from an enemy hit (e.g. a charger dash). The horizontal
+## component decays exponentially over the following ticks; the vertical
+## component is a one-time impulse that gravity resolves. Sent separately from
+## take_damage so the push lands even when a shield absorbs the hit's damage.
+func apply_knockback(impulse: Vector2) -> void:
+	if health.current_health <= 0.0 or combat_disabled or health.invulnerable or _cinematic_walk_active:
+		return
+	_knockback_velocity_x = impulse.x
+	velocity.y += impulse.y
+
+
+## Combat contract, duck-typed by projectiles/enemies/storms against the body.
+func take_damage(amount: float, source: Node = null) -> void:
+	health.take_damage(amount, source)
+
+
+func apply_storm_damage(amount: float) -> void:
+	health.apply_storm_damage(amount)
+
+
+func heal(amount: float) -> void:
+	health.heal(amount)
+
+
+## Called externally when looting ends to clean up hover state (but keep held item).
+func on_looting_ended() -> void:
+	equipment.notify_looting_ended()
+
+
+func start_walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
+	input_enabled = false
+	equipment.deactivate_current()
+	_apply_facing(true)
+	arm_sprite.rotation = 0.0
+	_cinematic_walk_target_x = target_local_x
+	_cinematic_walk_speed = maxf(walk_speed, 1.0)
+	_cinematic_walk_active = true
+	set_process(true)
+	set_physics_process(true)
+
+
+func is_cinematic_walk_active() -> bool:
+	return _cinematic_walk_active
+
+
+func stop_for_run_end() -> void:
+	input_enabled = false
+	velocity = Vector2.ZERO
+	equipment.stop_for_run_end()
+	progress_bar.clear_all()
+	set_process(false)
+	set_physics_process(false)
+
+
+func get_hitbox() -> Hitbox:
+	var hitboxes := find_children("*", "Hitbox", true, false)
+	if hitboxes.is_empty():
+		return null
+	return hitboxes[0] as Hitbox
+
+
+## Enemies aim here instead of the player's root (which sits at the feet). The
+## point is a child of the hitbox's collision shape, so it always tracks the
+## actual hitbox center.
+func get_enemy_target_points() -> Array[EnemyTargetPoint]:
+	var points: Array[EnemyTargetPoint] = []
+	var point := get_node_or_null("Hitbox/CollisionShape2D/EnemyTargetPoint") as EnemyTargetPoint
+	if point:
+		points.append(point)
+	return points
 
 
 func _apply_facing(new_facing_right: bool) -> void:
@@ -248,142 +290,22 @@ func _apply_facing(new_facing_right: bool) -> void:
 	var offset_mult := -1.0 if facing_right else 1.0
 	arm_sprite.offset.x = ARM_OFFSET_X * offset_mult
 	arm_sprite.position.x = ARM_POSITION_X * offset_mult
-	_apply_equipment_positioning(offset_mult)
+	equipment.apply_facing(offset_mult)
 
 
-func _facing_mult() -> float:
-	return -1.0 if facing_right else 1.0
+func _update_arm_aim(mouse_pos: Vector2) -> void:
+	# Use arm's global position for accurate angle calculation.
+	var delta_y := mouse_pos.y - arm_sprite.global_position.y
+	var delta_x := absf(mouse_pos.x - arm_sprite.global_position.x)
 
-
-func _apply_equipment_positioning(offset_mult: float) -> void:
-	var equip := current_equipment
-	if equip is WeaponData:
-		var wpn := equip as WeaponData
-		weapon_sprite.offset = Vector2(wpn.weapon_offset.x * offset_mult, wpn.weapon_offset.y)
-		weapon_sprite.rotation = wpn.weapon_rotation * offset_mult
-		muzzle.position = Vector2(wpn.muzzle_position.x * offset_mult, wpn.muzzle_position.y)
-	elif equip is MagnetToolData:
-		var tool := equip as MagnetToolData
-		weapon_sprite.offset = Vector2(tool.weapon_offset.x * offset_mult, tool.weapon_offset.y)
-		weapon_sprite.rotation = tool.weapon_rotation * offset_mult
-		muzzle.position = Vector2(tool.muzzle_position.x * offset_mult, tool.muzzle_position.y)
-	_apply_muzzle_effect_positioning()
-
-
-func _apply_muzzle_effect_positioning() -> void:
-	if not muzzle_effect:
-		return
-
-	var equip := current_equipment
-	if equip == null:
-		muzzle_effect.offset = Vector2.ZERO
-		return
-
-	muzzle_effect.offset = equip.get_muzzle_effect_offset(facing_right)
-
-
-func _get_current_muzzle_effect_type() -> MuzzleEffect.EffectType:
-	var equip := current_equipment
-	if equip == null:
-		return MuzzleEffect.EffectType.NONE
-	return equip.get_muzzle_effect_type()
-
-
-func _physics_process(delta: float) -> void:
-	var was_on_floor := _was_on_floor if _has_floor_state else is_on_floor()
-	seconds_since_damage += delta
-
-	if _fire_cooldown > 0.0:
-		_fire_cooldown -= delta
-	_process_shield_recharge(delta)
-
-	if _cinematic_walk_active:
-		_process_cinematic_walk(delta)
-	elif input_enabled and not Magnetide.is_ui_input_captured():
-		var mouse_pos := get_global_mouse_position()
-		
-		# Facing is purely based on mouse X vs player X
-		var mouse_is_right := mouse_pos.x > global_position.x
-		if mouse_is_right != facing_right:
-			var was_holding := _held_item and is_instance_valid(_held_item)
-			_apply_facing(mouse_is_right)
-			# Flip held item position when player flips
-			if was_holding and _held_item:
-				_held_item.flip_relative_to_anchor(global_position)
-		
-		# Calculate vertical angle from arm to mouse
-		# Use arm's global position for accurate angle calculation
-		var delta_y := mouse_pos.y - arm_sprite.global_position.y
-		var delta_x := absf(mouse_pos.x - arm_sprite.global_position.x)
-		
-		# atan2 with abs(delta_x) gives us angle from horizontal
-		# Positive delta_y = mouse below = negative rotation (down)
-		# Negative delta_y = mouse above = positive rotation (up)
-		var arm_rotation := -atan2(delta_y, delta_x)
-		
-		# Clamp to -90° to 90° range
-		arm_rotation = clampf(arm_rotation, -PI / 2, PI / 2)
-		# When facing right, flip_h mirrors the sprite so we negate the rotation
-		if facing_right:
-			arm_rotation = -arm_rotation
-		arm_sprite.rotation = arm_rotation
-		
-		var equip := current_equipment
-		if equip is WeaponData:
-			_process_weapon_input(delta)
-		elif equip is MagnetToolData:
-			_process_magnet_tool_input(delta)
-
-		if _held_item == null or not is_instance_valid(_held_item):
-			_process_research_station_reopen_range()
-			if Input.is_action_just_pressed("interact"):
-				_try_open_hovered_research_station()
-		
-		# Variable-height jump: hold to reach max height, release early to cut to min.
-		if is_on_floor() and Input.is_action_pressed("move_jump"):
-			velocity.y = jump_velocity
-			_play_jump_sfx()
-		if Input.is_action_just_released("move_jump") and velocity.y < jump_cut_velocity:
-			velocity.y = jump_cut_velocity
-		
-		var direction := Input.get_axis("move_left", "move_right")
-		velocity.x = direction * speed
-	else:
-		velocity.x = 0.0
-
-	if _knockback_velocity_x != 0.0:
-		velocity.x += _knockback_velocity_x
-		_knockback_velocity_x *= exp(-knockback_damping * delta)
-		if absf(_knockback_velocity_x) < KNOCKBACK_STOP_SPEED:
-			_knockback_velocity_x = 0.0
-
-	if not is_on_floor():
-		velocity.y += gravity * delta
-	
-	move_and_slide()
-	_update_floor_sfx_state(was_on_floor)
-	_process_footstep_sfx(delta)
-	
-	_update_leg_animation()
-	_update_hover_tooltip()
-
-
-func start_walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
-	input_enabled = false
-	stop_magnetize()
-	_cleanup_current_equipment()
-	_clear_magnet_gun_state()
-	_apply_facing(true)
-	arm_sprite.rotation = 0.0
-	_cinematic_walk_target_x = target_local_x
-	_cinematic_walk_speed = maxf(walk_speed, 1.0)
-	_cinematic_walk_active = true
-	set_process(true)
-	set_physics_process(true)
-
-
-func is_cinematic_walk_active() -> bool:
-	return _cinematic_walk_active
+	# atan2 with abs(delta_x) gives the angle from horizontal:
+	# positive delta_y = mouse below = negative rotation (down).
+	var arm_rotation := -atan2(delta_y, delta_x)
+	arm_rotation = clampf(arm_rotation, -PI / 2, PI / 2)
+	# When facing right, flip_h mirrors the sprite so we negate the rotation
+	if facing_right:
+		arm_rotation = -arm_rotation
+	arm_sprite.rotation = arm_rotation
 
 
 func _process_cinematic_walk(_delta: float) -> void:
@@ -402,17 +324,13 @@ func _process_cinematic_walk(_delta: float) -> void:
 
 func _update_leg_animation() -> void:
 	var current_anim := legs_sprite.animation
-	
+
 	if not is_on_floor():
 		legs_sprite.speed_scale = 1.0
-		if velocity.y < 0.0:
-			if current_anim != "bend":
-				legs_sprite.play("bend")
-		else:
-			if current_anim != "bend":
-				legs_sprite.play("bend")
+		if current_anim != "bend":
+			legs_sprite.play("bend")
 		return
-	
+
 	var is_moving: bool = abs(velocity.x) > 0.1
 	if is_moving:
 		var moving_right: bool = velocity.x > 0.0
@@ -425,287 +343,17 @@ func _update_leg_animation() -> void:
 		legs_sprite.speed_scale = 1.0
 
 
-func _connect_hotbar() -> void:
-	call_deferred("_setup_hotbar_connection")
-
-
-func _setup_hotbar_connection() -> void:
-	var hotbar := Magnetide.hotbar
-	if hotbar:
-		hotbar.slot_selected.connect(_on_hotbar_slot_selected)
-	else:
-		push_warning("Player: Hotbar not found")
-
-
-func _on_hotbar_slot_selected(index: int) -> void:
-	_switch_to_equipment(index)
-
-
-func _switch_to_equipment(index: int) -> void:
-	if index == _selected_equipment_index:
+## Red half-opacity hit flash across every player sprite layer (they share one
+## flash ShaderMaterial, so driving it through body_sprite tints all of them).
+func _on_health_damaged(_amount: float) -> void:
+	var flash_material := body_sprite.material as ShaderMaterial
+	if flash_material == null:
 		return
-	if index < 0 or index >= equipment.size():
-		return
-	
-	_cleanup_current_equipment()
-	_selected_equipment_index = index
-	_apply_current_equipment()
-
-
-func _cleanup_current_equipment() -> void:
-	var equip := current_equipment
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-	# Hide the outgoing weapon's reload bar; its progress is preserved in
-	# _weapon_reload_elapsed and resumes if the weapon is reselected.
-	clear_progress_bar(&"reload")
-	if equip is MagnetToolData:
-		stop_magnetize()
-		_clear_magnet_gun_state()
-
-
-func _apply_current_equipment() -> void:
-	if not weapon_sprite:
-		return
-	var equip := current_equipment
-	if equip is WeaponData:
-		var wpn := equip as WeaponData
-		weapon_sprite.texture = wpn.weapon_sprite
-	elif equip is MagnetToolData:
-		var tool := equip as MagnetToolData
-		weapon_sprite.texture = tool.weapon_sprite
-	elif equip == null:
-		weapon_sprite.texture = null
-	# If equip exists but type not recognized, keep existing texture
-	_apply_equipment_positioning(_facing_mult())
-
-
-func _populate_hotbar() -> void:
-	var hotbar := Magnetide.hotbar
-	if not hotbar:
-		return
-	var items: Array = []
-	for equip in equipment:
-		if equip:
-			items.append({ "icon": equip.hotbar_icon, "data": equip })
-		else:
-			items.append({ "icon": null, "data": null })
-	hotbar.set_all_slots(items)
-
-
-func _process_weapon_input(delta: float) -> void:
-	if combat_disabled:
-		return
-	_process_reload(delta)
-	if Input.is_action_just_pressed("reload"):
-		_try_manual_reload()
-	# Cannot shoot while reloading, and never past an empty magazine.
-	if is_reloading():
-		return
-	if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0 and get_current_ammo() > 0:
-		shoot()
-
-
-func _process_magnet_tool_input(delta: float) -> void:
-	_process_magnet_gun(delta)
-
-
-func shoot() -> void:
-	var wpn := current_weapon_data
-	if not wpn:
-		return
-	_fire_cooldown = 1.0 / maxf(wpn.fire_rate, 0.01)
-	if muzzle_effect:
-		muzzle_effect.play_effect(_get_current_muzzle_effect_type())
-	_play_weapon_fire_sfx(wpn)
-	if wpn.fire_behavior and wpn.fire_behavior.has_method("fire"):
-		wpn.fire_behavior.fire(self, wpn)
-	else:
-		fire_weapon_projectile(get_weapon_aim_direction(), wpn)
-	_consume_ammo_for_shot(wpn)
-
-
-func get_weapon_aim_direction() -> Vector2:
-	var aim_direction := get_global_mouse_position() - global_position
-	if aim_direction.length_squared() <= 0.0001:
-		aim_direction = Vector2.RIGHT * (-_facing_mult())
-	return aim_direction.normalized()
-
-
-func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node2D:
-	if weapon_data == null:
-		return null
-
-	var bullet_direction := direction.normalized()
-	if bullet_direction.length_squared() <= 0.0001:
-		bullet_direction = get_weapon_aim_direction()
-	bullet_direction = bullet_direction.rotated(weapon_data.roll_bullet_spread_offset())
-
-	var world_root := Magnetide.world_root
-	if world_root:
-		return ProjectileScript.spawn(world_root, {
-			&"global_position": _get_bullet_spawn_position(),
-			&"direction": bullet_direction,
-			&"sprite": weapon_data.bullet_sprite if weapon_data.bullet_sprite else MagnetEffectTexture,
-			&"damage": weapon_data.damage * outgoing_damage_multiplier,
-			&"speed": weapon_data.bullet_speed,
-			&"lifetime": 3.0,
-			&"collision_layer": 2,
-			&"collision_mask": 4,
-			&"source": self,
-			&"pierce": weapon_data.pierce,
-			&"gravity": weapon_data.projectile_gravity,
-			&"impact_damage": weapon_data.impact_damage,
-			&"impact_effect": weapon_data.impact_effect,
-		})
-	return null
-
-
-## Bullets normally spawn at the muzzle, but an enemy hitbox between the
-## player's center and the muzzle (a latched worm) would sit behind the spawn
-## point and be impossible to hit. In that case the bullet spawns at the
-## player's center so it overlaps the enemy on its first physics frame.
-func _get_bullet_spawn_position() -> Vector2:
-	var space_state := get_world_2d().direct_space_state
-	var query := PhysicsRayQueryParameters2D.create(global_position, muzzle.global_position, 4)
-	query.collide_with_areas = true
-	query.collide_with_bodies = false
-	# A latched enemy's hitbox usually contains the ray origin itself.
-	query.hit_from_inside = true
-	if space_state.intersect_ray(query).is_empty():
-		return muzzle.global_position
-	return global_position
-
-
-# =============================================================================
-# Ammo & Reloading
-# =============================================================================
-
-## Seeds every weapon slot with a full magazine and clears any reload progress.
-## Called on spawn and whenever the loadout is (re)applied.
-func _init_weapon_ammo() -> void:
-	_weapon_ammo.clear()
-	_weapon_reload_elapsed.clear()
-	for i in range(equipment.size()):
-		var wpn := equipment[i] as WeaponData
-		if wpn and wpn.magazine_size > 0:
-			_weapon_ammo[i] = wpn.magazine_size
-	clear_progress_bar(&"reload")
-
-
-## Reseeds every weapon slot to a full magazine and cancels any reload in
-## progress (debug panel).
-func refill_ammo() -> void:
-	_init_weapon_ammo()
-
-
-## True when the current equipment is a weapon that uses a magazine (drives the
-## HUD ammo readout).
-func has_ammo_display() -> bool:
-	var wpn := current_weapon_data
-	return wpn != null and wpn.magazine_size > 0
-
-
-func get_current_magazine_size() -> int:
-	var wpn := current_weapon_data
-	return wpn.magazine_size if wpn else 0
-
-
-func get_current_ammo() -> int:
-	if current_weapon_data == null:
-		return 0
-	return int(_weapon_ammo.get(_selected_equipment_index, get_current_magazine_size()))
-
-
-## A weapon is reloading exactly while it has a reload-progress entry for its slot.
-func is_reloading() -> bool:
-	return current_weapon_data != null and _weapon_reload_elapsed.has(_selected_equipment_index)
-
-
-## Manual reload (R). Ignored if there is no magazine weapon equipped, a reload is
-## already running, or the magazine is already full.
-func _try_manual_reload() -> void:
-	var wpn := current_weapon_data
-	if wpn == null or wpn.magazine_size <= 0:
-		return
-	if is_reloading():
-		return
-	if get_current_ammo() >= wpn.magazine_size:
-		return
-	_weapon_reload_elapsed[_selected_equipment_index] = 0.0
-	_play_reload_sfx(wpn)
-
-
-## Spends ammo for a shot that just fired. Drains whatever remains even when it is
-## less than the per-shot cost, then kicks off an automatic reload at empty.
-func _consume_ammo_for_shot(wpn: WeaponData) -> void:
-	if wpn == null or wpn.magazine_size <= 0:
-		return
-	var idx := _selected_equipment_index
-	var current := int(_weapon_ammo.get(idx, wpn.magazine_size))
-	current -= mini(current, wpn.ammo_consumption)
-	if current <= 0:
-		current = 0
-		_weapon_reload_elapsed[idx] = 0.0  # auto-reload begins next frame
-		_play_reload_sfx(wpn)
-	_weapon_ammo[idx] = current
-
-
-## Advances the reload for the CURRENTLY selected weapon only. A weapon switched
-## away from freezes at its stored progress and resumes when reselected.
-func _process_reload(delta: float) -> void:
-	var idx := _selected_equipment_index
-	if not _weapon_reload_elapsed.has(idx):
-		clear_progress_bar(&"reload")
-		return
-	var wpn := current_weapon_data
-	if wpn == null or wpn.magazine_size <= 0:
-		_weapon_reload_elapsed.erase(idx)
-		clear_progress_bar(&"reload")
-		return
-	var reload_time := maxf(wpn.reload_time, 0.0)
-	var elapsed := float(_weapon_reload_elapsed[idx]) + delta
-	if elapsed >= reload_time:
-		_weapon_ammo[idx] = wpn.magazine_size
-		_weapon_reload_elapsed.erase(idx)
-		clear_progress_bar(&"reload")
-		return
-	_weapon_reload_elapsed[idx] = elapsed
-	request_progress_bar(
-		&"reload",
-		clampf(elapsed / maxf(reload_time, 0.01), 0.0, 1.0),
-		RELOAD_BAR_COLOR,
-		RELOAD_BAR_TEXT,
-		PROGRESS_BAR_PRIORITY_RELOAD
-	)
-
-
-func _play_weapon_fire_sfx(wpn: WeaponData) -> void:
-	if Magnetide.sfx == null or wpn == null:
-		return
-	var use_last := get_current_ammo() <= wpn.ammo_consumption and not wpn.last_shot_sfx.is_empty()
-	var pool := wpn.last_shot_sfx if use_last else wpn.fire_sfx
-	if pool.is_empty():
-		_play_machine_gun_shoot_sfx()
-		return
-	var stream: AudioStream = pool[randi() % pool.size()]
-	if stream == null:
-		return
-	var volume_db := wpn.last_shot_sfx_volume_db if use_last else wpn.fire_sfx_volume_db
-	Magnetide.sfx.play(stream, volume_db)
-
-
-func _play_machine_gun_shoot_sfx() -> void:
-	if not Magnetide.sfx or MACHINE_GUN_SHOOT_SFX.is_empty():
-		return
-	var sound_name := MACHINE_GUN_SHOOT_SFX[randi() % MACHINE_GUN_SHOOT_SFX.size()]
-	Magnetide.sfx.play(sound_name)
-
-
-func _play_reload_sfx(wpn: WeaponData) -> void:
-	if Magnetide.sfx == null or wpn == null or wpn.reload_sfx == null:
-		return
-	Magnetide.sfx.play(wpn.reload_sfx, wpn.reload_sfx_volume_db)
+	if _damage_flash_tween:
+		_damage_flash_tween.kill()
+	flash_material.set_shader_parameter("flash_intensity", 1.0)
+	_damage_flash_tween = create_tween()
+	_damage_flash_tween.tween_property(flash_material, "shader_parameter/flash_intensity", 0.0, DAMAGE_FLASH_FADE_SECONDS)
 
 
 func _play_jump_sfx() -> void:
@@ -721,9 +369,7 @@ func _play_land_sfx() -> void:
 func _play_footstep_sfx() -> void:
 	if not Magnetide.sfx or FOOTSTEP_SFX.is_empty():
 		return
-
-	var sound_name := FOOTSTEP_SFX[randi() % FOOTSTEP_SFX.size()]
-	Magnetide.sfx.play(sound_name, FOOTSTEP_SFX_VOLUME_DB)
+	Magnetide.sfx.play(FOOTSTEP_SFX[randi() % FOOTSTEP_SFX.size()], FOOTSTEP_SFX_VOLUME_DB)
 
 
 func _process_footstep_sfx(delta: float) -> void:
@@ -748,1069 +394,3 @@ func _update_floor_sfx_state(was_on_floor: bool) -> void:
 
 	_was_on_floor = is_now_on_floor
 	_has_floor_state = true
-
-
-func magnetize() -> void:
-	if magnet_effect != null:
-		return
-	magnet_effect = Sprite2D.new()
-	magnet_effect.texture = MagnetEffectTexture
-	magnet_effect.scale = Vector2(0.5, 0.5)
-	muzzle.add_child(magnet_effect)
-
-
-func stop_magnetize() -> void:
-	if magnet_effect != null:
-		magnet_effect.queue_free()
-		magnet_effect = null
-
-
-func _play_magnet_gun_sfx() -> void:
-	if not Magnetide.sfx or MAGNET_GUN_LOOP_SFX.is_empty():
-		return
-
-	Magnetide.sfx.play_loop(
-		MAGNET_GUN_LOOP_SFX,
-		_get_magnet_gun_sfx_loop_key(),
-		MAGNET_GUN_LOOP_VOLUME_DB,
-		MAGNET_GUN_LOOP_PITCH_SCALE
-	)
-
-
-func _stop_magnet_gun_sfx() -> void:
-	if not Magnetide.sfx or MAGNET_GUN_LOOP_SFX.is_empty():
-		return
-
-	Magnetide.sfx.stop_loop(MAGNET_GUN_LOOP_SFX, _get_magnet_gun_sfx_loop_key())
-
-
-func _get_magnet_gun_sfx_loop_key() -> String:
-	return "player_magnet_gun:%s" % get_instance_id()
-
-
-# =============================================================================
-# Magnet Gun Logic
-# =============================================================================
-
-func _get_magnet_gun_hold_point() -> Vector2:
-	var tool := current_magnet_tool
-	var hold_dist := tool.hold_distance if tool else 30.0
-	var local_x_offset := hold_dist if facing_right else -hold_dist
-	return muzzle.to_global(Vector2(local_x_offset, 0.0))
-
-
-func _process_magnet_gun(delta: float) -> void:
-	var mouse_pos := get_global_mouse_position()
-
-	# Hover highlight (white outline on the salvage item under the cursor) is
-	# independent of whether we are carrying an item, so it always runs.
-	_process_magnet_gun_hover()
-
-	if _held_item and is_instance_valid(_held_item):
-		# Show magnet gun effect while holding item
-		if muzzle_effect:
-			muzzle_effect.play_effect(_get_current_muzzle_effect_type())
-		# RESEARCH and PICK UP are not-carrying interactions; clear them.
-		_interactable_research_station = null
-		_update_research_prompt()
-		_clear_pickup_prompt()
-
-		# Update held item position to follow gun
-		_held_item.update_gun_hold_position(_get_magnet_gun_hold_point())
-
-		# Only allow repel/place once item has reached the anchor point
-		if _held_item.has_reached_anchor:
-			_update_storage_area_outline(mouse_pos)
-			_process_research_station_hover(mouse_pos)
-			_process_recycler_hover(mouse_pos)
-			_update_held_item_prompts(mouse_pos)
-
-			# Right-click hold to repel
-			if Input.is_action_pressed("shoot_alt"):
-				_is_repel_holding = true
-				_repel_hold_elapsed += delta
-				_update_repel_bar()
-				var tool := current_magnet_tool
-				var repel_time := tool.repel_hold_time if tool else 0.8
-				if _repel_hold_elapsed >= repel_time:
-					_repel_held_item()
-			else:
-				if _is_repel_holding:
-					# Released too early - reset
-					_is_repel_holding = false
-					_repel_hold_elapsed = 0.0
-					_update_repel_bar()
-
-			# Left-click to place on a station, then fall back to storage
-			if Input.is_action_just_pressed("shoot"):
-				if _try_recycle_held_trash():
-					return
-				if _try_place_held_item_on_research_station():
-					return
-				var ship_node := _get_ship()
-				if _is_point_over_recycler(mouse_pos):
-					return
-				if ship_node and ship_node.is_point_in_storage_area(mouse_pos):
-					_resolve_storage_click(ship_node, mouse_pos)
-		else:
-			_set_storage_area_outline_state(false)
-			_set_hovered_research_station(null)
-			_set_hovered_recycler(null)
-			_clear_held_item_prompts()
-	else:
-		_set_storage_area_outline_state(false)
-		_set_hovered_research_station(null)
-		_set_hovered_recycler(null)
-		_clear_held_item_prompts()
-		if _held_item != null:
-			_held_item = null
-		_stop_magnet_gun_sfx()
-		# Not carrying: the hovered item can be picked up.
-		_update_pickup_prompt()
-
-		if Input.is_action_just_pressed("shoot"):
-			if _hovered_item and is_instance_valid(_hovered_item):
-				_grab_item_from_magnet(_hovered_item)
-
-
-func _process_magnet_gun_hover() -> void:
-	var mouse_pos := get_global_mouse_position()
-	var space_state := get_world_2d().direct_space_state
-	var query := PhysicsPointQueryParameters2D.new()
-	query.position = mouse_pos
-	query.collision_mask = 2  # Salvage items layer
-	query.collide_with_bodies = true
-	var results := space_state.intersect_point(query, 8)
-	
-	var best_item: SalvageItem = null
-	var best_dist := INF
-	for result in results:
-		var body: Object = result["collider"]
-		if body is SalvageItem:
-			var item := body as SalvageItem
-			if item.can_be_grabbed:
-				var dist := mouse_pos.distance_to(item.global_position)
-				if dist < best_dist:
-					best_dist = dist
-					best_item = item
-	
-	_set_hovered_item(best_item)
-
-
-func _grab_item_from_magnet(item: SalvageItem) -> void:
-	if _held_item != null:
-		return  # Already holding an item
-	if not item.can_be_grabbed:
-		return
-	
-	# Get contact chain before grabbing (items that need to re-settle)
-	var grabbed_from_storage := item.is_in_storage
-	var dependents := item.get_storage_contact_chain() if grabbed_from_storage else item.get_contact_chain()
-	var ship_node := _get_ship()
-
-	if grabbed_from_storage and ship_node:
-		ship_node.remove_from_storage(item)
-	
-	# Remove from magnet tracking
-	var magnet := Magnetide.magnet
-	if magnet:
-		magnet.remove_item(item)
-	
-	# Grab the item
-	_set_hovered_item(null)
-	item.grab_for_magnet_gun(self)
-	item.update_gun_hold_position(_get_magnet_gun_hold_point())
-	_held_item = item
-	_play_magnet_gun_sfx()
-	
-	# Unfreeze dependent items so they can re-settle
-	for dep in dependents:
-		if is_instance_valid(dep) and dep != item:
-			if grabbed_from_storage:
-				dep.wake_for_storage_resettle()
-			else:
-				_unfreeze_item_for_resettle(dep)
-
-
-func _pop_trash_item(item: SalvageItem, dependents: Array[SalvageItem]) -> void:
-	var pop_position := item.global_position
-	var magnet := Magnetide.magnet
-	if magnet:
-		magnet.remove_item(item)
-	
-	_set_hovered_item(null)
-	item.pop_trash()
-	
-	for dep in dependents:
-		if is_instance_valid(dep) and dep != item:
-			_unfreeze_item_for_resettle(dep)
-	
-	var tool := current_magnet_tool
-	var scrap_chance := tool.trash_scrap_chance_percent if tool else 0.0
-	if randf() * 100.0 < scrap_chance:
-		_award_recycled_scrap(pop_position)
-
-
-## Grants scrap for a recycled trash item, rolling the Increased Recycling
-## augment's double-scrap chance to spawn a second scrap pickup.
-func _award_recycled_scrap(origin: Vector2) -> void:
-	_collect_scrap_metal_from(origin)
-	if recycler_double_scrap_chance_percent > 0.0 and randf() * 100.0 < recycler_double_scrap_chance_percent:
-		_collect_scrap_metal_from(origin)
-
-
-func _collect_scrap_metal_from(start_position: Vector2) -> void:
-	if not is_inside_tree():
-		return
-	var parent_node := Magnetide.world_root
-	if not parent_node:
-		parent_node = get_parent()
-	if not parent_node:
-		return
-
-	var pickup := Sprite2D.new()
-	pickup.texture = ScrapMetalTexture
-	pickup.centered = true
-	pickup.global_position = start_position
-	pickup.z_index = 50
-	if pickup.texture:
-		var tex_size := pickup.texture.get_size()
-		if tex_size.x > 0.0 and tex_size.y > 0.0:
-			var uniform_scale := minf(28.0 / tex_size.x, 28.0 / tex_size.y)
-			pickup.scale = Vector2(uniform_scale, uniform_scale)
-	parent_node.add_child(pickup)
-
-	var pop_direction := (start_position - global_position).normalized()
-	if pop_direction == Vector2.ZERO:
-		pop_direction = Vector2.RIGHT.rotated(randf_range(0.0, TAU))
-	var pop_target := start_position + pop_direction * randf_range(28.0, 44.0) + Vector2(0.0, randf_range(-28.0, -12.0))
-	var collect_target := _get_scrap_collection_target_position()
-	var start_scale := pickup.scale
-	var tween := pickup.create_tween()
-	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	tween.tween_property(pickup, "global_position", pop_target, 0.16)
-	tween.parallel().tween_property(pickup, "scale", start_scale * 1.2, 0.16)
-	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
-	tween.tween_property(pickup, "global_position", collect_target, 0.42)
-	tween.parallel().tween_property(pickup, "scale", start_scale * 0.55, 0.42)
-	tween.parallel().tween_property(pickup, "modulate:a", 0.0, 0.16).set_delay(0.26)
-	tween.tween_callback(_on_scrap_pickup_arrived.bind(pickup))
-
-
-func _on_scrap_pickup_arrived(pickup: Sprite2D) -> void:
-	if pickup and is_instance_valid(pickup):
-		pickup.queue_free()
-	_show_scrap_loot_label()
-	scrap_metal_collected.emit(1)
-
-
-func _get_scrap_collection_target_position() -> Vector2:
-	var game_ui := Magnetide.game_ui
-	if game_ui and game_ui.has_method("get_scrap_icon_screen_center"):
-		var screen_position := game_ui.call("get_scrap_icon_screen_center") as Vector2
-		return get_viewport().get_canvas_transform().affine_inverse() * screen_position
-	return global_position + Vector2(0.0, -18.0)
-
-
-func _show_scrap_loot_label() -> void:
-	var game_ui := Magnetide.game_ui
-	if not game_ui:
-		return
-
-	var label := Label.new()
-	label.text = "+1 Scrap Metal"
-	label.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	Magnetide.apply_label_font(label)
-	label.add_theme_font_size_override("font_size", 22)
-	label.add_theme_color_override("font_color", Color("d8d8d8"))
-	label.add_theme_color_override("font_outline_color", Color.BLACK)
-	label.add_theme_constant_override("outline_size", 4)
-	game_ui.add_child(label)
-	label.size = label.get_combined_minimum_size()
-	label.position = _get_scrap_loot_label_target_position(label, 0)
-	label.scale = Vector2(0.82, 0.82)
-	label.modulate = Color(1.0, 1.0, 1.0, 0.0)
-	_active_scrap_labels.append(label)
-	_reposition_scrap_loot_labels()
-
-	var pop_tween := label.create_tween()
-	pop_tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
-	pop_tween.tween_property(label, "scale", Vector2.ONE, SCRAP_LABEL_POP_DURATION)
-	pop_tween.parallel().tween_property(label, "modulate:a", 1.0, SCRAP_LABEL_POP_DURATION * 0.8)
-
-	var fade_tween := label.create_tween()
-	fade_tween.tween_interval(SCRAP_LABEL_LIFETIME_SECONDS)
-	fade_tween.tween_property(label, "position", label.position + Vector2(0.0, -SCRAP_LABEL_DRIFT_DISTANCE), SCRAP_LABEL_FADE_SECONDS)
-	fade_tween.parallel().tween_property(label, "modulate:a", 0.0, SCRAP_LABEL_FADE_SECONDS)
-	fade_tween.finished.connect(_on_scrap_loot_label_expired.bind(label))
-
-
-func _reposition_scrap_loot_labels() -> void:
-	for index in range(_active_scrap_labels.size()):
-		var label := _active_scrap_labels[index]
-		if label == null or not is_instance_valid(label):
-			continue
-
-		label.size = label.get_combined_minimum_size()
-		var reverse_index := (_active_scrap_labels.size() - 1) - index
-		var target_position := _get_scrap_loot_label_target_position(label, reverse_index)
-		var tween := label.create_tween()
-		tween.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_OUT)
-		tween.tween_property(label, "position", target_position, 0.12)
-
-
-func _on_scrap_loot_label_expired(label: Label) -> void:
-	_active_scrap_labels.erase(label)
-	if label and is_instance_valid(label):
-		label.queue_free()
-	_reposition_scrap_loot_labels()
-
-
-func _get_scrap_loot_label_target_position(label: Label, stack_index_from_bottom: int) -> Vector2:
-	var base_position := get_viewport().get_canvas_transform() * (global_position + Vector2(0.0, SCRAP_LABEL_OFFSET_Y))
-	return Vector2(
-		base_position.x - (label.size.x * 0.5),
-		base_position.y - (stack_index_from_bottom * SCRAP_LABEL_SPACING) - label.size.y
-	)
-
-
-func _unfreeze_item_for_resettle(item: SalvageItem) -> void:
-	var magnet := Magnetide.magnet
-	var scene_root := Magnetide.world_root
-	if scene_root and item.get_parent() != scene_root:
-		var pos := item.global_position
-		item.reparent(scene_root)
-		item.global_position = pos
-	
-	if magnet:
-		item.restart_magnet_pull_for_resettle(magnet)
-	else:
-		item.unfreeze_for_resettle()
-
-
-func _repel_held_item() -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		return
-	
-	_set_storage_area_outline_state(false)
-	_set_hovered_research_station(null)
-
-	# Calculate repel direction (away from gun, toward where gun is pointing)
-	var tool := current_magnet_tool
-	var repel_force := tool.repel_impulse_force if tool else 600.0
-	var gun_dir := (muzzle.global_position - arm_sprite.global_position).normalized()
-	var impulse := gun_dir * repel_force
-	
-	_held_item.repel_from_gun(impulse)
-	_held_item = null
-	_stop_magnet_gun_sfx()
-	_is_repel_holding = false
-	_repel_hold_elapsed = 0.0
-	_update_repel_bar()
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-
-
-func _place_item_in_storage(mouse_pos: Vector2) -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		return
-	
-	_set_storage_area_outline_state(false)
-	_set_hovered_research_station(null)
-
-	var ship_node := _get_ship()
-	if not ship_node:
-		return
-	if not ship_node.can_accept_storage_item(_held_item):
-		return
-	
-	if not ship_node.store_item(_held_item, mouse_pos):
-		return
-
-	_finalize_held_item_release()
-
-
-## Shared cleanup after the held item leaves the gun (placed / stacked / swapped).
-func _finalize_held_item_release() -> void:
-	_held_item = null
-	_stop_magnet_gun_sfx()
-	_is_repel_holding = false
-	_repel_hold_elapsed = 0.0
-	_update_repel_bar()
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-
-
-## Resolve a click inside the storage area while holding an item.
-## Priority: Stack (matching type) > Swap (onto a different item) > Place (empty).
-func _resolve_storage_click(ship_node: Node, mouse_pos: Vector2) -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		return
-
-	# 1. Stack: the held item matches an existing stored stack of the same type.
-	# The item tweens into the stack to visually show the merge before vanishing.
-	var stack_target: SalvageItem = ship_node.find_stackable_stored_item(_held_item)
-	if stack_target != null:
-		_set_storage_area_outline_state(false)
-		_clear_held_item_prompts()
-		var item := _held_item
-		_finalize_held_item_release()
-		ship_node.stack_item_animated(item, stack_target)
-		return
-
-	# 2. Swap: clicking directly on a different stored item swaps the two.
-	var target := _get_stored_item_at(mouse_pos)
-	if target != null and target != _held_item:
-		_swap_held_item_with(ship_node, target)
-		return
-
-	# 3. Place into empty space, subject to the top-overflow gate.
-	if ship_node.can_accept_storage_item(_held_item):
-		_place_item_in_storage(mouse_pos)
-
-
-## Topmost stored SalvageItem under the given global point, or null.
-func _get_stored_item_at(mouse_pos: Vector2) -> SalvageItem:
-	var space_state := get_world_2d().direct_space_state
-	var query := PhysicsPointQueryParameters2D.new()
-	query.position = mouse_pos
-	query.collision_mask = 2  # Salvage items layer
-	query.collide_with_bodies = true
-	var results := space_state.intersect_point(query, 8)
-
-	var best: SalvageItem = null
-	var best_dist := INF
-	for result in results:
-		var body: Object = result["collider"]
-		if body is SalvageItem and (body as SalvageItem).is_in_storage:
-			var dist := mouse_pos.distance_to((body as SalvageItem).global_position)
-			if dist < best_dist:
-				best_dist = dist
-				best = body as SalvageItem
-	return best
-
-
-## Swap the held item into storage where `target` sits, then grab `target`
-## (its whole stack) onto the gun.
-func _swap_held_item_with(ship_node: Node, target: SalvageItem) -> void:
-	var incoming := _held_item
-	if incoming == null or not is_instance_valid(incoming):
-		return
-
-	_set_storage_area_outline_state(false)
-	_held_item = null
-	var removed: SalvageItem = ship_node.swap_stored_item(incoming, target)
-	if removed == null:
-		# Swap failed; keep holding the incoming item.
-		_held_item = incoming
-		return
-
-	_finalize_held_item_release()
-	# Grab the swapped-out item (entire stack) back onto the gun.
-	_grab_item_from_magnet(removed)
-
-
-func _clear_magnet_gun_state() -> void:
-	_set_hovered_item(null)
-	_set_hovered_research_station(null)
-	_set_hovered_recycler(null)
-	_clear_pickup_prompt()
-	_set_storage_area_outline_state(false)
-	_clear_held_item_prompts()
-	_hide_hover_tooltip()
-	
-	# Force-release held item
-	if _held_item and is_instance_valid(_held_item):
-		_held_item.force_release_from_gun()
-	_held_item = null
-	_stop_magnet_gun_sfx()
-	
-	_is_repel_holding = false
-	_repel_hold_elapsed = 0.0
-	_update_repel_bar()
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-
-
-func _get_ship() -> Node2D:
-	var parent := get_parent()
-	if parent and parent.has_method("is_point_in_storage_area"):
-		return parent as Node2D
-	return null
-
-
-func _update_storage_area_outline(mouse_pos: Vector2) -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		_set_storage_area_outline_state(false)
-		return
-
-	var ship_node := _get_ship()
-	if ship_node == null:
-		return
-
-	var is_hovered: bool = ship_node.is_point_in_storage_area(mouse_pos)
-	# Placeable (blue) if the held part can stack onto an existing part, or there
-	# is free space (top overflow sensors not all filled); otherwise red.
-	var can_stack: bool = ship_node.find_stackable_stored_item(_held_item) != null
-	var placeable: bool = can_stack or not ship_node.is_storage_top_blocked()
-	_set_storage_area_outline_state(true, is_hovered, placeable)
-
-
-func _set_storage_area_outline_state(enabled: bool, hovered: bool = false, placeable: bool = true) -> void:
-	var ship_node := _get_ship()
-	if ship_node and ship_node.has_method("set_storage_area_outline_state"):
-		ship_node.set_storage_area_outline_state(enabled, hovered, placeable)
-
-
-func _process_research_station_hover(mouse_pos: Vector2) -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		_set_hovered_research_station(null)
-		return
-	if not _held_item.is_artifact:
-		_set_hovered_research_station(null)
-		return
-
-	var ship_node := _get_ship()
-	if ship_node == null or not ship_node.has_method("get_research_station_at_point"):
-		_set_hovered_research_station(null)
-		return
-
-	var station := ship_node.get_research_station_at_point(mouse_pos) as ResearchStation
-	if station and station.can_accept_item(_held_item):
-		_set_hovered_research_station(station)
-	else:
-		_set_hovered_research_station(null)
-
-
-func _process_recycler_hover(mouse_pos: Vector2) -> void:
-	if not _held_item or not is_instance_valid(_held_item):
-		_set_hovered_recycler(null)
-		return
-	if not _held_item.is_trash:
-		_set_hovered_recycler(null)
-		return
-
-	var ship_node := _get_ship()
-	if ship_node == null or not ship_node.has_method("get_recycler_at_point"):
-		_set_hovered_recycler(null)
-		return
-
-	var recycler := ship_node.get_recycler_at_point(mouse_pos) as Node
-	if recycler and recycler.has_method("can_accept_item") and recycler.call("can_accept_item", _held_item):
-		_set_hovered_recycler(recycler)
-	else:
-		_set_hovered_recycler(null)
-
-
-func _process_research_station_reopen_range() -> void:
-	var ship_node := _get_ship()
-	if ship_node == null or not ship_node.has_method("get_research_station_in_interaction_range"):
-		_interactable_research_station = null
-		_update_research_prompt()
-		return
-
-	var station := ship_node.get_research_station_in_interaction_range(global_position) as ResearchStation
-	if station and station.has_active_research():
-		_interactable_research_station = station
-	else:
-		_interactable_research_station = null
-	_update_research_prompt()
-
-
-## "[E] RESEARCH" prompt + station outline while in range of a station with
-## active research (and not carrying an item, which the held-item branch enforces
-## by clearing it).
-func _update_research_prompt() -> void:
-	var station: ResearchStation = null
-	if _interactable_research_station != null and is_instance_valid(_interactable_research_station):
-		station = _interactable_research_station
-
-	# Toggle the proximity highlight on change (mirrors the mouse-hover highlight
-	# so the two sources don't fight — they're mutually exclusive states).
-	if station != _proximity_highlighted_station:
-		if _proximity_highlighted_station and is_instance_valid(_proximity_highlighted_station):
-			_proximity_highlighted_station.set_highlighted(false)
-		_proximity_highlighted_station = station
-		if station:
-			station.set_highlighted(true)
-
-	var prompts := Magnetide.control_prompts
-	if prompts == null:
-		return
-	if station:
-		prompts.set_prompt(&"research", "E", "RESEARCH", false, 3)
-	else:
-		prompts.clear_prompt(&"research")
-
-
-func _try_open_hovered_research_station() -> bool:
-	if _interactable_research_station == null or not is_instance_valid(_interactable_research_station):
-		return false
-	if not _interactable_research_station.has_active_research():
-		return false
-	var station := _interactable_research_station
-	_interactable_research_station = null
-	station.open_research_ui()
-	return true
-
-
-func _try_place_held_item_on_research_station() -> bool:
-	if not _held_item or not is_instance_valid(_held_item):
-		return false
-	if _hovered_research_station == null or not is_instance_valid(_hovered_research_station):
-		return false
-	if not _hovered_research_station.place_artifact(_held_item):
-		return false
-
-	_held_item = null
-	_stop_magnet_gun_sfx()
-	_is_repel_holding = false
-	_repel_hold_elapsed = 0.0
-	_update_repel_bar()
-	_set_hovered_research_station(null)
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-	return true
-
-
-func _try_recycle_held_trash() -> bool:
-	if _is_recycling_held_trash:
-		return false
-	if not _held_item or not is_instance_valid(_held_item):
-		return false
-	if not _held_item.is_trash:
-		return false
-	if _hovered_recycler == null or not is_instance_valid(_hovered_recycler):
-		return false
-
-	var recycler := _hovered_recycler
-	var item := _held_item
-	if not recycler.has_method("recycle_trash"):
-		return false
-	if not recycler.call("recycle_trash", item):
-		return false
-
-	var tool := current_magnet_tool
-	_pending_recycler_scrap_chance_percent = tool.trash_scrap_chance_percent if tool else 0.0
-	_is_recycling_held_trash = true
-	_held_item = null
-	_stop_magnet_gun_sfx()
-	_is_repel_holding = false
-	_repel_hold_elapsed = 0.0
-	_update_repel_bar()
-	_set_hovered_recycler(null)
-	if muzzle_effect:
-		muzzle_effect.stop_effect()
-
-	var recycled_callback := Callable(self, "_on_recycler_trash_recycled")
-	if recycler.has_signal("trash_recycled") and not recycler.is_connected("trash_recycled", recycled_callback):
-		recycler.connect("trash_recycled", recycled_callback, CONNECT_ONE_SHOT)
-	return true
-
-
-func _on_recycler_trash_recycled(scrap_origin: Vector2) -> void:
-	_is_recycling_held_trash = false
-	var scrap_chance := _pending_recycler_scrap_chance_percent
-	_pending_recycler_scrap_chance_percent = 0.0
-	if randf() * 100.0 < scrap_chance:
-		_award_recycled_scrap(scrap_origin)
-
-
-func _is_point_over_recycler(mouse_pos: Vector2) -> bool:
-	var ship_node := _get_ship()
-	if ship_node == null or not ship_node.has_method("get_recycler_at_point"):
-		return false
-	return ship_node.get_recycler_at_point(mouse_pos) != null
-
-
-func _set_hovered_research_station(station: ResearchStation) -> void:
-	if _hovered_research_station == station:
-		return
-
-	if _hovered_research_station and is_instance_valid(_hovered_research_station):
-		_hovered_research_station.set_highlighted(false)
-
-	_hovered_research_station = station
-
-	if _hovered_research_station and is_instance_valid(_hovered_research_station):
-		_hovered_research_station.set_highlighted(true)
-
-
-func _set_hovered_recycler(recycler: Node) -> void:
-	if _hovered_recycler == recycler:
-		return
-
-	if _hovered_recycler and is_instance_valid(_hovered_recycler):
-		if _hovered_recycler.has_method("set_highlighted"):
-			_hovered_recycler.call("set_highlighted", false)
-
-	_hovered_recycler = recycler
-
-	if _hovered_recycler and is_instance_valid(_hovered_recycler):
-		if _hovered_recycler.has_method("set_highlighted"):
-			_hovered_recycler.call("set_highlighted", true)
-
-
-# =============================================================================
-# Player Progress Bar
-# =============================================================================
-
-## World offset (from the player origin) at which the shared bar is anchored.
-const PROGRESS_BAR_OFFSET_Y: float = -72.0
-## Priorities decide which claim is rendered when several are active at once.
-## Reload locks the player, so it outranks the optional repel/depart holds.
-const PROGRESS_BAR_PRIORITY_DEPART: int = 10
-const PROGRESS_BAR_PRIORITY_REPEL: int = 20
-const PROGRESS_BAR_PRIORITY_RELOAD: int = 30
-const REPEL_BAR_COLOR: Color = Color(1.0, 0.3, 0.2, 0.9)
-const DEPART_BAR_COLOR: Color = Color("6ad1ff")
-const RELOAD_BAR_COLOR: Color = Color("ffffff")
-const RELOAD_BAR_TEXT: String = "Reloading..."
-
-const PlayerProgressBarScene: PackedScene = preload("res://_project/hud/player_progress_bar.tscn")
-
-const HOVER_TOOLTIP_OFFSET: Vector2 = Vector2(18.0, -28.0)
-const SCRAP_LABEL_OFFSET_Y: float = -86.0
-const SCRAP_LABEL_SPACING: float = 24.0
-const SCRAP_LABEL_POP_DURATION: float = 0.14
-const SCRAP_LABEL_LIFETIME_SECONDS: float = 0.75
-const SCRAP_LABEL_FADE_SECONDS: float = 0.35
-const SCRAP_LABEL_DRIFT_DISTANCE: float = 18.0
-
-func _create_progress_bar() -> void:
-	call_deferred("_setup_progress_bar")
-
-
-func _setup_progress_bar() -> void:
-	var game_ui := Magnetide.game_ui
-	if not game_ui:
-		push_warning("Player: GameUI not found, progress bar will not be created")
-		return
-
-	_progress_bar = PlayerProgressBarScene.instantiate() as PlayerProgressBar
-	game_ui.add_child(_progress_bar)
-	_progress_bar.attach_to_target(self, Vector2(0.0, PROGRESS_BAR_OFFSET_Y))
-
-
-## Show/refresh a claim on the shared progress bar. The highest-priority active
-## claim wins, so overlapping mechanics don't clobber each other.
-func request_progress_bar(
-	source: StringName,
-	progress: float,
-	fill_color: Color,
-	text: String = "",
-	priority: int = 0
-) -> void:
-	_progress_bar_claims[source] = {
-		"progress": clampf(progress, 0.0, 1.0),
-		"color": fill_color,
-		"text": text,
-		"priority": priority,
-	}
-	_refresh_progress_bar()
-
-
-## Drop a claim (e.g. the hold was released or completed). Hides the bar when no
-## claims remain.
-func clear_progress_bar(source: StringName) -> void:
-	if _progress_bar_claims.erase(source):
-		_refresh_progress_bar()
-
-
-func _refresh_progress_bar() -> void:
-	if _progress_bar == null:
-		return
-	var best: Dictionary = {}
-	var best_priority: int = -0x7FFFFFFF
-	for source in _progress_bar_claims:
-		var claim: Dictionary = _progress_bar_claims[source]
-		if int(claim["priority"]) >= best_priority:
-			best_priority = int(claim["priority"])
-			best = claim
-	if best.is_empty():
-		_progress_bar.hide_bar()
-		return
-	_progress_bar.set_fill_color(best["color"])
-	_progress_bar.set_text(best["text"])
-	_progress_bar.set_progress(best["progress"])
-	_progress_bar.show_bar()
-
-
-func _create_hover_tooltip() -> void:
-	call_deferred("_setup_hover_tooltip")
-
-
-func _setup_hover_tooltip() -> void:
-	var game_ui := Magnetide.game_ui
-	if not game_ui:
-		push_warning("Player: GameUI not found, hover tooltip will not be created")
-		return
-
-	_hover_tooltip = Label.new()
-	_hover_tooltip.name = "SalvageHoverTooltip"
-	_hover_tooltip.visible = false
-	_hover_tooltip.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	Magnetide.apply_label_font(_hover_tooltip)
-	_hover_tooltip.add_theme_font_size_override("font_size", 24)
-	_hover_tooltip.add_theme_color_override("font_outline_color", Color.BLACK)
-	_hover_tooltip.add_theme_constant_override("outline_size", 4)
-	game_ui.add_child(_hover_tooltip)
-
-
-func _update_hover_tooltip() -> void:
-	if not _hover_tooltip:
-		return
-
-	var should_show := input_enabled \
-		and current_magnet_tool != null \
-		and (_held_item == null or not is_instance_valid(_held_item)) \
-		and _hovered_item != null \
-		and is_instance_valid(_hovered_item)
-
-	if not should_show:
-		_hide_hover_tooltip()
-		return
-
-	_hover_tooltip.visible = true
-	_hover_tooltip.text = _hovered_item.get_display_name()
-	_hover_tooltip.add_theme_color_override("font_color", _hovered_item.get_rarity_color())
-	_hover_tooltip.position = get_viewport().get_mouse_position() + HOVER_TOOLTIP_OFFSET
-
-
-func _hide_hover_tooltip() -> void:
-	if _hover_tooltip:
-		_hover_tooltip.visible = false
-
-
-## Hover highlight only. This drives the white interact outline on the salvage
-## item under the cursor and is independent of the held item's rarity outline and
-## of any pickup/swap prompt (those are handled by the caller based on context).
-func _set_hovered_item(item: SalvageItem) -> void:
-	if _hovered_item == item:
-		return
-
-	if _hovered_item and is_instance_valid(_hovered_item):
-		_hovered_item.set_outlined(false)
-
-	_hovered_item = item
-
-	if _hovered_item and is_instance_valid(_hovered_item):
-		_hovered_item.set_outlined(true)
-
-
-## PICK UP prompt, shown only while not carrying and hovering a grabbable item.
-func _update_pickup_prompt() -> void:
-	var prompts := Magnetide.control_prompts
-	if prompts == null:
-		return
-	if _hovered_item and is_instance_valid(_hovered_item):
-		prompts.set_prompt(&"pickup", "LMB", "PICK UP", false, 1)
-	else:
-		prompts.clear_prompt(&"pickup")
-
-
-func _clear_pickup_prompt() -> void:
-	var prompts := Magnetide.control_prompts
-	if prompts:
-		prompts.clear_prompt(&"pickup")
-
-
-## Prompts shown while carrying an item with the magnet gun: repel always, plus a
-## single LMB action reflecting what a left-click would do at the cursor (matching
-## the shoot-handler order: recycle > place artifact > place in storage).
-func _update_held_item_prompts(mouse_pos: Vector2) -> void:
-	var prompts := Magnetide.control_prompts
-	if prompts == null:
-		return
-	prompts.set_prompt(&"repel", "RMB", "REPEL", true, 1)
-
-	if _hovered_recycler != null and is_instance_valid(_hovered_recycler):
-		prompts.set_prompt(&"place", "LMB", "RECYCLE", false, 2)
-	elif _hovered_research_station != null and is_instance_valid(_hovered_research_station):
-		prompts.set_prompt(&"place", "LMB", "PLACE ARTIFACT", false, 2)
-	else:
-		var ship_node := _get_ship()
-		if ship_node and ship_node.is_point_in_storage_area(mouse_pos) and ship_node.can_accept_storage_item(_held_item):
-			prompts.set_prompt(&"place", "LMB", "PLACE", false, 2)
-		else:
-			prompts.clear_prompt(&"place")
-
-
-func _clear_held_item_prompts() -> void:
-	var prompts := Magnetide.control_prompts
-	if prompts == null:
-		return
-	prompts.clear_prompt(&"repel")
-	prompts.clear_prompt(&"place")
-
-
-func _update_repel_bar() -> void:
-	if _is_repel_holding:
-		var tool := current_magnet_tool
-		var repel_time := tool.repel_hold_time if tool else 0.8
-		var fill := clampf(_repel_hold_elapsed / repel_time, 0.0, 1.0)
-		request_progress_bar(&"repel", fill, REPEL_BAR_COLOR, "Repel", PROGRESS_BAR_PRIORITY_REPEL)
-	else:
-		clear_progress_bar(&"repel")
-
-
-## Called externally when looting ends to clean up hover state (but keep held item)
-func on_looting_ended() -> void:
-	# Clear hover only - player keeps any item held by magnet gun
-	_set_hovered_item(null)
-	_clear_pickup_prompt()
-	_hide_hover_tooltip()
-
-
-## Discrete push from an enemy hit (e.g. a charger dash). The horizontal
-## component decays exponentially over the following ticks; the vertical
-## component is a one-time impulse that gravity resolves. Sent separately from
-## take_damage so the push lands even when a shield absorbs the hit's damage.
-func apply_knockback(impulse: Vector2) -> void:
-	if current_health <= 0.0 or combat_disabled or invulnerable or _cinematic_walk_active:
-		return
-	_knockback_velocity_x = impulse.x
-	velocity.y += impulse.y
-
-
-func take_damage(amount: float, _source: Node = null) -> void:
-	if current_health <= 0.0 or combat_disabled or invulnerable:
-		return
-	if amount <= 0.0:
-		return
-
-	seconds_since_damage = 0.0
-	_flash_damage()
-	if current_shield > 0:
-		current_shield -= 1
-		_shield_recharge_progress = 0.0
-		if current_shield <= 0:
-			_shield_broken = true
-			_shield_recharge_cooldown_remaining = shield_break_recharge_delay
-		else:
-			_shield_broken = false
-			_shield_recharge_cooldown_remaining = shield_recharge_delay
-		_emit_shield_changed(-1)
-		return
-
-	var previous_health := current_health
-	current_health = maxf(current_health - amount, 0.0)
-	DamageNumber.spawn(global_position, amount, DamageNumber.PLAYER_COLOR)
-	if previous_health > 0.0 and current_health <= 0.0:
-		destroyed.emit()
-
-
-## Environmental storm drain. Bypasses the kinetic shield, the damage number and
-## the damage flash — it is a continuous DoT, not a discrete hit, and per-frame
-## flashes would be unreadable. It does reset seconds_since_damage, so healing is
-## suppressed for as long as the drain lasts: storm damage is meant to be recovered
-## between storms, not shrugged off inside one.
-func apply_storm_damage(amount: float) -> void:
-	if amount <= 0.0 or current_health <= 0.0 or combat_disabled or invulnerable:
-		return
-	seconds_since_damage = 0.0
-	var previous_health := current_health
-	current_health = maxf(current_health - amount, 0.0)
-	if previous_health > 0.0 and current_health <= 0.0:
-		destroyed.emit()
-
-
-func heal(amount: float) -> void:
-	if amount <= 0.0 or current_health <= 0.0:
-		return
-	var healed := minf(current_health + amount, max_health) - current_health
-	current_health += healed
-	if healed <= 0.0:
-		return
-	_pending_heal_popup += healed
-	if _pending_heal_popup >= 1.0:
-		DamageNumber.spawn(global_position, floorf(_pending_heal_popup), DamageNumber.HEAL_COLOR)
-		_pending_heal_popup -= floorf(_pending_heal_popup)
-
-
-const DAMAGE_FLASH_FADE_SECONDS := 0.15
-
-
-## Red half-opacity hit flash across every player sprite layer (they share one
-## flash ShaderMaterial, so driving it through body_sprite tints all of them).
-func _flash_damage() -> void:
-	var flash_material := body_sprite.material as ShaderMaterial
-	if flash_material == null:
-		return
-	if _damage_flash_tween:
-		_damage_flash_tween.kill()
-	flash_material.set_shader_parameter("flash_intensity", 1.0)
-	_damage_flash_tween = create_tween()
-	_damage_flash_tween.tween_property(flash_material, "shader_parameter/flash_intensity", 0.0, DAMAGE_FLASH_FADE_SECONDS)
-
-
-func _process_shield_recharge(delta: float) -> void:
-	var max_shield_hits := _get_max_shield_hits()
-	if max_shield_hits <= 0 or current_health <= 0.0:
-		current_shield = 0
-		_shield_recharge_progress = 0.0
-		_shield_broken = false
-		return
-	if current_shield >= max_shield_hits:
-		current_shield = max_shield_hits
-		_shield_recharge_cooldown_remaining = 0.0
-		_shield_recharge_progress = 0.0
-		_shield_broken = false
-		return
-	if _shield_recharge_cooldown_remaining > 0.0:
-		_shield_recharge_cooldown_remaining = maxf(_shield_recharge_cooldown_remaining - delta, 0.0)
-		return
-
-	var seconds_per_hit := maxf(shield_recharge_duration, 0.01)
-	_shield_recharge_progress += delta
-	if _shield_recharge_progress >= seconds_per_hit and current_shield < max_shield_hits:
-		_shield_recharge_progress -= seconds_per_hit
-		current_shield += 1
-		_shield_broken = current_shield <= 0
-		_emit_shield_changed(1)
-	_shield_broken = current_shield <= 0
-
-
-func is_shield_broken() -> bool:
-	return _shield_broken
-
-
-func _get_max_shield_hits() -> int:
-	return maxi(roundi(max_shield), 0)
-
-
-func _emit_shield_changed(delta: int) -> void:
-	shield_changed.emit(current_shield, _get_max_shield_hits(), _shield_broken, delta)
-
-
-func stop_for_run_end() -> void:
-	input_enabled = false
-	velocity = Vector2.ZERO
-	_fire_cooldown = 0.0
-	stop_magnetize()
-	_cleanup_current_equipment()
-	_clear_magnet_gun_state()
-	_weapon_reload_elapsed.clear()
-	_progress_bar_claims.clear()
-	if _progress_bar:
-		_progress_bar.hide_bar()
-	set_process(false)
-	set_physics_process(false)
-
-
-func get_hitbox() -> Hitbox:
-	var hitboxes := find_children("*", "Hitbox", true, false)
-	if hitboxes.is_empty():
-		return null
-	return hitboxes[0] as Hitbox
-
-
-## Enemies aim here instead of the player's root (which sits at the feet). The
-## point is a child of the hitbox's collision shape, so it always tracks the
-## actual hitbox center.
-func get_enemy_target_points() -> Array[EnemyTargetPoint]:
-	var points: Array[EnemyTargetPoint] = []
-	var point := get_node_or_null("Hitbox/CollisionShape2D/EnemyTargetPoint") as EnemyTargetPoint
-	if point:
-		points.append(point)
-	return points

@@ -256,29 +256,29 @@ func _on_fail_run_pressed() -> void:
 func _on_heal_pressed() -> void:
 	var player := _get_player()
 	if player:
-		player.heal(_parse_float(_heal_amount_edit, player.max_health))
+		player.heal(_parse_float(_heal_amount_edit, player.health.max_health))
 
 
 func _on_kill_player_pressed() -> void:
 	var player := _get_player()
 	if player == null:
 		return
-	if player.invulnerable:
-		player.invulnerable = false
+	if player.health.invulnerable:
+		player.health.invulnerable = false
 		_god_mode_button.set_pressed_no_signal(false)
-	player.apply_storm_damage(player.current_health)
+	player.apply_storm_damage(player.health.current_health)
 
 
 func _on_god_mode_toggled(pressed: bool) -> void:
 	var player := _get_player()
 	if player:
-		player.invulnerable = pressed
+		player.health.invulnerable = pressed
 
 
 func _on_refill_ammo_pressed() -> void:
 	var player := _get_player()
 	if player:
-		player.refill_ammo()
+		player.equipment.refill_all_ammo()
 
 
 func _on_damage_mult_pressed() -> void:
@@ -494,7 +494,7 @@ func _refresh_context() -> void:
 	_refill_ammo_button.disabled = not has_player
 	_damage_mult_button.disabled = not has_player
 	if has_player:
-		_god_mode_button.set_pressed_no_signal(player.invulnerable)
+		_god_mode_button.set_pressed_no_signal(player.health.invulnerable)
 
 	var has_save := save_data != null
 	_equip_weapon_button.disabled = not has_save
@@ -539,12 +539,14 @@ func _update_readout() -> void:
 
 	var player := _get_player()
 	if player:
+		var weapon: HeldItemBehavior = player.equipment.current_behavior
+		var has_ammo: bool = weapon != null and weapon.has_method("get_current_ammo")
 		_player_label.text = "Player: HP %d/%d  Shield %d  Ammo %d/%d" % [
-			roundi(player.current_health),
-			roundi(player.max_health),
-			player.current_shield,
-			player.get_current_ammo(),
-			player.get_current_magazine_size(),
+			roundi(player.health.current_health),
+			roundi(player.health.max_health),
+			player.health.current_shield,
+			int(weapon.call("get_current_ammo")) if has_ammo else 0,
+			int(weapon.call("get_current_magazine_size")) if has_ammo else 0,
 		]
 	else:
 		_player_label.text = "Player: -"

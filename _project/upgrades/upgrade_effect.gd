@@ -9,9 +9,10 @@ class_name UpgradeEffect
 
 enum IncreaseMode { FLAT, PERCENT_OF_BASE }
 ## Which object this effect changes. PLAYER/SHIP/MAGNET are stats on the run loadout;
-## WEAPON/MAGNET_GUN are stats on the equipped item; BEHAVIOR is a tunable on the owning
-## augment's AugmentBehavior (which the behavior reads at runtime).
-enum Target { PLAYER, SHIP, MAGNET, WEAPON, MAGNET_GUN, BEHAVIOR }
+## WEAPON/MAGNET_GUN/REPAIR_GUN are stats on the equipped item; BEHAVIOR is a tunable on
+## the owning augment's AugmentBehavior (which the behavior reads at runtime). New values
+## append at the end: .tres files serialize `target` as a raw int.
+enum Target { PLAYER, SHIP, MAGNET, WEAPON, MAGNET_GUN, BEHAVIOR, REPAIR_GUN }
 
 @export var target: Target = Target.PLAYER
 ## The exact variable/stat id changed on the target (e.g. &"player_speed", &"damage").
@@ -65,6 +66,8 @@ func get_gain_text_for_level(stat_name: String, level: int, max_level: int) -> S
 	var amount := amount_per_level
 	if not level_amounts.is_empty():
 		amount = level_amounts[clampi(level, 0, level_amounts.size() - 1)]
+	if is_zero_approx(amount):
+		return ""
 	var display_label := label
 	if display_label.is_empty():
 		display_label = stat_name if not stat_name.is_empty() else String(target_property).capitalize()

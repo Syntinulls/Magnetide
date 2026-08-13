@@ -45,6 +45,8 @@
 [ext_resource type="Resource" uid="uid://bsbo08m16krc6" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
 [ext_resource type="Resource" uid="uid://bsbo1kl5cs6p6" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
 [ext_resource type="Resource" uid="uid://bsbo1d1vvthc6" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
+[ext_resource type="Resource" uid="uid://repairgun0data" path="res://_project/items/repair_gun/repair_gun.tres" id="67_repair_gun"]
+[ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="68_ic_repair"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 shader = ExtResource("36_perspective")
@@ -457,6 +459,24 @@ item = ExtResource("62_magnet_gun")
 slot_id = &"magnet_tool"
 display_name = "Magnet Gun"
 static_icon = ExtResource("50_ic_magnet")
+
+[node name="RepairGunRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn"]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 0
+
+[node name="RepairGunSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/RepairGunRow" instance=ExtResource("17_upgrade_slot")]
+layout_mode = 2
+item = ExtResource("67_repair_gun")
+slot_id = &"repair_gun"
+display_name = "Repair Gun"
+static_icon = ExtResource("68_ic_repair")
+locked = true
+unlock_research_id = &"repair_gun"
+unlock_cost_common = 2
+unlock_description = "A handheld tool that converts collected scrap into hull integrity mid-run."
+unlock_gain_text = "Unlocks the Repair Gun (hotbar slot 3)"
 
 [node name="PlayerPreviewStage" type="SubViewportContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=763171482]
 layout_mode = 0

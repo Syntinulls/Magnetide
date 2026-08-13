@@ -33,9 +33,9 @@ func cleanup_after_run() -> void:
 func tick(delta: float) -> void:
 	if _player == null or not is_instance_valid(_player):
 		return
-	if _player.current_health <= 0.0:
+	if _player.health.current_health <= 0.0:
 		return
-	if _player.seconds_since_damage < maxf(out_of_combat_seconds, 0.0):
+	if _player.health.seconds_since_damage < maxf(out_of_combat_seconds, 0.0):
 		_heal_tick_elapsed = 0.0
 		return
 	_heal_tick_elapsed += delta

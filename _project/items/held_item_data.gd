@@ -19,6 +19,13 @@ class_name HeldItemData
 @export_group("")
 
 
+## Behavior handling this item's input and runtime state while equipped. Each
+## subclass returns a fresh instance; PlayerEquipment creates one per hotbar
+## slot so slots never share state.
+func create_use_behavior() -> HeldItemBehavior:
+	return null
+
+
 func get_icon() -> Texture2D:
 	return hotbar_icon
 

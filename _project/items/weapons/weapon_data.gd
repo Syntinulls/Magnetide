@@ -64,6 +64,10 @@ class_name WeaponData
 @export var reload_sfx_volume_db: float = 0.0
 
 
+func create_use_behavior() -> HeldItemBehavior:
+	return WeaponBehavior.new()
+
+
 ## Per-bullet angular offset in radians. Rolls a spread magnitude in
 ## [bullet_spread_min, bullet_spread_max] degrees, then a random angle within
 ## that cone (±magnitude/2). Returns 0 when spread is disabled (0/0).

@@ -15,3 +15,7 @@ class_name MagnetToolData
 @export var pull_ramp_time: float = 0.6
 ## Chance that popping a trash object creates a scrap metal pickup.
 @export_range(0.0, 100.0, 1.0) var trash_scrap_chance_percent: float = 25.0
+
+
+func create_use_behavior() -> HeldItemBehavior:
+	return MagnetToolBehavior.new()

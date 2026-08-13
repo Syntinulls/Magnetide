@@ -4,6 +4,7 @@ class_name DeparturePylon
 signal departure_requested(pylon: DeparturePylon)
 
 const DEPART_BAR_TEXT: String = "Departing..."
+const DEPART_BAR_COLOR: Color = Color("6ad1ff")
 
 @export var hold_duration: float = 1.0
 
@@ -50,15 +51,15 @@ func _process(delta: float) -> void:
 ## Drives the shared player progress bar (anchored above the player's head).
 func _update_progress_bar() -> void:
 	var player := Magnetide.player as Player
-	if player == null or not player.has_method("request_progress_bar"):
+	if player == null or player.progress_bar == null:
 		return
 	var progress := clampf(_hold_elapsed / maxf(hold_duration, 0.01), 0.0, 1.0)
-	player.request_progress_bar(
+	player.progress_bar.request(
 		_bar_source,
 		progress,
-		Player.DEPART_BAR_COLOR,
+		DEPART_BAR_COLOR,
 		DEPART_BAR_TEXT,
-		Player.PROGRESS_BAR_PRIORITY_DEPART
+		PlayerProgressBarController.PRIORITY_DEPART
 	)
 
 
@@ -105,8 +106,8 @@ func _cancel_hold() -> void:
 	_hold_elapsed = 0.0
 	_set_departure_hold(false)
 	var player := Magnetide.player as Player
-	if player and player.has_method("clear_progress_bar"):
-		player.clear_progress_bar(_bar_source)
+	if player and player.progress_bar:
+		player.progress_bar.clear(_bar_source)
 
 
 ## Report an in-progress hold so an expiring window waits for it instead of

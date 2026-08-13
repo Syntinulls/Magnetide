@@ -93,10 +93,10 @@ func _bind_runtime() -> void:
 
 
 func _connect_runtime_signals() -> void:
-	if _player and not _player.destroyed.is_connected(_on_player_destroyed):
-		_player.destroyed.connect(_on_player_destroyed)
-	if _player and not _player.scrap_metal_collected.is_connected(record_scrap_metal_collected):
-		_player.scrap_metal_collected.connect(record_scrap_metal_collected)
+	if _player and not _player.health.destroyed.is_connected(_on_player_destroyed):
+		_player.health.destroyed.connect(_on_player_destroyed)
+	if _player and not _player.scrap_collector.scrap_metal_collected.is_connected(record_scrap_metal_collected):
+		_player.scrap_collector.scrap_metal_collected.connect(record_scrap_metal_collected)
 	if _ship and not _ship.destroyed.is_connected(_on_ship_destroyed):
 		_ship.destroyed.connect(_on_ship_destroyed)
 	if _enemy_spawner and not _enemy_spawner.enemy_killed.is_connected(_on_enemy_killed):
@@ -461,6 +461,18 @@ func record_scrap_metal_collected(amount: int) -> void:
 	_scrap_metal_collected += amount
 	scrap_metal_count_changed.emit(_scrap_metal_collected)
 	_sync_game_ui_scrap_counter()
+
+
+## Spend from the run's scrap pool (e.g. repair gun cycles). All-or-nothing: returns
+## false without deducting when the pool can't cover the amount. Spent scrap also
+## shrinks the end-of-run banked payout, which reads the same counter.
+func spend_scrap_metal(amount: int) -> bool:
+	if amount <= 0 or _scrap_metal_collected < amount:
+		return false
+	_scrap_metal_collected -= amount
+	scrap_metal_count_changed.emit(_scrap_metal_collected)
+	_sync_game_ui_scrap_counter()
+	return true
 
 
 func _sync_game_ui_scrap_counter() -> void:

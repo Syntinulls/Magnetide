@@ -14,12 +14,12 @@ func initialize_for_run(context: Dictionary, _level: int) -> void:
 	cleanup_after_run()
 	_player = context.get("player", null) as Player
 	if _player != null and is_instance_valid(_player):
-		_player.recycler_double_scrap_chance_percent = maxf(double_scrap_chance_percent, 0.0)
+		_player.scrap_collector.double_scrap_chance_percent = maxf(double_scrap_chance_percent, 0.0)
 
 
 func cleanup_after_run() -> void:
 	if _player != null and is_instance_valid(_player):
-		_player.recycler_double_scrap_chance_percent = 0.0
+		_player.scrap_collector.double_scrap_chance_percent = 0.0
 	_player = null
 
 

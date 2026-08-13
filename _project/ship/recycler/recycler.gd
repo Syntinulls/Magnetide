@@ -19,8 +19,16 @@ const RENDER_Z_TRASH: int = -4
 const RENDER_Z_PARTICLES: int = -2
 const RENDER_Z_BLADES: int = -1
 
+## PlayerInteraction drop-target contract: outranks storage and the research
+## station so trash dropped on the recycler is always recycled.
+var drop_priority: int = 30
+
 var _is_recycling: bool = false
 var _outline: CompositeOutline = null
+## Scrap chance (0-100) rolled when the running recycle finishes, captured from
+## the magnet tool that dropped the trash.
+var _pending_scrap_chance_percent: float = 0.0
+var _pending_scrap_player: Player = null
 
 @onready var _sprite_back: Sprite2D = $SpriteBack as Sprite2D
 @onready var _sprite_front: AnimatedSprite2D = $SpriteFront as AnimatedSprite2D
@@ -34,6 +42,7 @@ var _outline: CompositeOutline = null
 
 
 func _ready() -> void:
+	add_to_group(PlayerInteraction.DROP_TARGET_GROUP)
 	_apply_render_order()
 	_setup_outline_material()
 	_setup_particles()
@@ -67,6 +76,54 @@ func can_accept_item(item: SalvageItem) -> bool:
 func set_highlighted(enabled: bool) -> void:
 	if _outline:
 		_outline.set_enabled(enabled)
+
+
+# ---- PlayerInteraction drop-target contract ----
+
+func is_drop_point(global_point: Vector2) -> bool:
+	return is_point_in_placement_area(global_point)
+
+
+func can_accept_dropped_item(item: SalvageItem, _point: Vector2) -> bool:
+	return can_accept_item(item)
+
+
+func get_drop_prompt_label(_item: SalvageItem) -> String:
+	return "RECYCLE"
+
+
+func update_drop_state(_item: SalvageItem, _point: Vector2, is_active: bool) -> void:
+	set_highlighted(is_active)
+
+
+func clear_drop_state() -> void:
+	set_highlighted(false)
+
+
+## Starts the recycle and captures the dropping player's magnet-tool scrap
+## chance, rolled when the grind finishes.
+func accept_dropped_item(player: Player, item: SalvageItem, _point: Vector2) -> Dictionary:
+	if not recycle_trash(item):
+		return {"accepted": false}
+
+	var tool := player.equipment.current_data as MagnetToolData
+	_pending_scrap_chance_percent = tool.trash_scrap_chance_percent if tool else 0.0
+	_pending_scrap_player = player
+	var recycled_callback := Callable(self, "_on_own_trash_recycled")
+	if not trash_recycled.is_connected(recycled_callback):
+		trash_recycled.connect(recycled_callback, CONNECT_ONE_SHOT)
+	return {"accepted": true}
+
+
+func _on_own_trash_recycled(scrap_origin: Vector2) -> void:
+	var chance := _pending_scrap_chance_percent
+	var player := _pending_scrap_player
+	_pending_scrap_chance_percent = 0.0
+	_pending_scrap_player = null
+	if player == null or not is_instance_valid(player):
+		return
+	if randf() * 100.0 < chance:
+		player.scrap_collector.collect_recycled(scrap_origin)
 
 
 func recycle_trash(item: SalvageItem) -> bool:

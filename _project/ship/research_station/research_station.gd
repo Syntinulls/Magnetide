@@ -11,6 +11,10 @@ signal artifact_cleared(item_data: SalvageItemData)
 
 const ResearchStationUIScene: PackedScene = preload("res://_project/ship/research_station/research_station_ui.tscn")
 
+## PlayerInteraction drop-target contract: outranks ship storage so an artifact
+## dropped on the station is never swallowed by the storage area behind it.
+var drop_priority: int = 20
+
 var _current_artifact: SalvageItem = null
 var _is_researching: bool = false
 var _research_timer: Timer = null
@@ -26,6 +30,8 @@ var _saved_stage_state: Dictionary = {}
 
 func _ready() -> void:
 	super._ready()
+	add_to_group(PlayerInteraction.DROP_TARGET_GROUP)
+	add_to_group(PlayerInteraction.PROXIMITY_GROUP)
 	_research_timer = Timer.new()
 	_research_timer.one_shot = true
 	_research_timer.timeout.connect(_on_research_timer_timeout)
@@ -61,6 +67,52 @@ func can_accept_item(item: SalvageItem) -> bool:
 func set_highlighted(enabled: bool) -> void:
 	if _outline:
 		_outline.set_enabled(enabled)
+
+
+# ---- PlayerInteraction drop-target contract ----
+
+func is_drop_point(global_point: Vector2) -> bool:
+	return is_point_in_placement_area(global_point)
+
+
+func can_accept_dropped_item(item: SalvageItem, _point: Vector2) -> bool:
+	return can_accept_item(item)
+
+
+func get_drop_prompt_label(_item: SalvageItem) -> String:
+	return "PLACE ARTIFACT"
+
+
+func update_drop_state(_item: SalvageItem, _point: Vector2, is_active: bool) -> void:
+	set_highlighted(is_active)
+
+
+func clear_drop_state() -> void:
+	set_highlighted(false)
+
+
+func accept_dropped_item(_player: Player, item: SalvageItem, _point: Vector2) -> Dictionary:
+	return {"accepted": place_artifact(item)}
+
+
+# ---- PlayerInteraction proximity contract ----
+
+## Reopen the research UI from proximity only while a session is in progress
+## (the initial open comes from placing the artifact).
+func can_proximity_interact(_player_position: Vector2) -> bool:
+	return is_player_in_range and has_active_research()
+
+
+func get_proximity_prompt_label() -> String:
+	return "RESEARCH"
+
+
+func set_proximity_highlighted(enabled: bool) -> void:
+	set_highlighted(enabled)
+
+
+func proximity_interact(_player: Player) -> void:
+	open_research_ui()
 
 
 func place_artifact(item: SalvageItem) -> bool:

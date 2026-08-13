@@ -43,6 +43,10 @@ const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
 const STORAGE_OUTLINE_PLACEABLE_COLOR: Color = Color(0.72, 0.95, 1.0)
 ## Red tint: the held item can't be placed (storage full and no stack target).
 const STORAGE_OUTLINE_BLOCKED_COLOR: Color = Color("ff5a5a")
+## PlayerInteraction drop-target contract: lowest priority, so the mounted
+## stations sitting inside the ship's silhouette win overlapping drops.
+var drop_priority: int = 10
+
 var _pylon_outline: CompositeOutline = null
 var _active_departure_pylons: Dictionary = {}
 var _armed_departure_pylons: Dictionary = {}
@@ -67,7 +71,6 @@ var _thruster_audio: ThrusterAudio = null
 @onready var _thruster_left: Thruster = $ThrusterLeft as Thruster
 @onready var _thruster_right: Thruster = $ThrusterRight as Thruster
 @onready var _research_station: ResearchStation = get_node_or_null("ResearchStation") as ResearchStation
-@onready var _recycler: Node = get_node_or_null("Recycler")
 
 var stored_items: Array[SalvageItem]:
 	get:
@@ -76,6 +79,7 @@ var stored_items: Array[SalvageItem]:
 
 func _ready() -> void:
 	add_to_group("ship")
+	add_to_group(PlayerInteraction.DROP_TARGET_GROUP)
 	current_health = max_health
 	_ensure_storage_items_root()
 	_create_storage_zone()
@@ -486,49 +490,96 @@ func spawn_debug_research_artifact() -> void:
 		artifact.queue_free()
 
 
-func get_research_station_at_point(global_point: Vector2) -> ResearchStation:
-	if _research_station == null or not is_instance_valid(_research_station):
-		return null
-	if _research_station.is_point_in_placement_area(global_point):
-		return _research_station
-	return null
+# ---- PlayerInteraction drop-target contract (storage area) ----
+
+func is_drop_point(global_point: Vector2) -> bool:
+	return is_point_in_storage_area(global_point)
 
 
-func get_research_station_in_interaction_range(_global_point: Vector2) -> ResearchStation:
-	if _research_station == null or not is_instance_valid(_research_station):
-		return null
-	if _research_station.is_player_in_range:
-		return _research_station
-	return null
-
-
-func can_accept_research_item(item: SalvageItem) -> bool:
-	return _research_station != null and is_instance_valid(_research_station) and _research_station.can_accept_item(item)
-
-
-func place_research_item(item: SalvageItem) -> bool:
-	if _research_station == null or not is_instance_valid(_research_station):
+## A click in the storage area does something when the held item can stack onto
+## an existing part, swap with the stored item under the cursor, or be placed
+## into free space.
+func can_accept_dropped_item(item: SalvageItem, point: Vector2) -> bool:
+	if item == null or not is_instance_valid(item):
 		return false
-	return _research_station.place_artifact(item)
+	if find_stackable_stored_item(item) != null:
+		return true
+	var swap_target := _get_stored_item_at(point)
+	if swap_target != null and swap_target != item:
+		return true
+	return can_accept_storage_item(item)
 
 
-func clear_research_station_highlight() -> void:
-	if _research_station and is_instance_valid(_research_station):
-		_research_station.set_highlighted(false)
+## The prompt only advertises a plain place; stack and swap still work without
+## it (matching the outline, which colors by placeability instead).
+func get_drop_prompt_label(item: SalvageItem) -> String:
+	return "PLACE" if can_accept_storage_item(item) else ""
 
 
-func get_recycler_at_point(global_point: Vector2) -> Node:
-	if _recycler == null or not is_instance_valid(_recycler):
-		return null
-	if _recycler.has_method("is_point_in_placement_area") and _recycler.call("is_point_in_placement_area", global_point):
-		return _recycler
-	return null
+## The outline shows while any item is carried, not just while hovered:
+## enabled always, bright when the cursor is inside, blue when the held part
+## can stack onto an existing one or space is free, red otherwise.
+func update_drop_state(item: SalvageItem, point: Vector2, _is_active: bool) -> void:
+	if item == null or not is_instance_valid(item):
+		set_storage_area_outline_state(false)
+		return
+	var is_hovered := is_point_in_storage_area(point)
+	var can_stack: bool = find_stackable_stored_item(item) != null
+	var placeable: bool = can_stack or not is_storage_top_blocked()
+	set_storage_area_outline_state(true, is_hovered, placeable)
 
 
-func clear_recycler_highlight() -> void:
-	if _recycler and is_instance_valid(_recycler):
-		if _recycler.has_method("set_highlighted"):
-			_recycler.call("set_highlighted", false)
+func clear_drop_state() -> void:
+	set_storage_area_outline_state(false)
+
+
+## Resolve a place click inside the storage area.
+## Priority: Stack (matching type) > Swap (onto a different item) > Place (empty).
+## A swap returns the removed stored item as "regrab" so the magnet gun picks it
+## (its whole stack) back up.
+func accept_dropped_item(_player: Player, item: SalvageItem, point: Vector2) -> Dictionary:
+	if item == null or not is_instance_valid(item):
+		return {"accepted": false}
+
+	# 1. Stack: the held item matches an existing stored stack of the same type.
+	# The item tweens into the stack to visually show the merge before vanishing.
+	var stack_target: SalvageItem = find_stackable_stored_item(item)
+	if stack_target != null:
+		return {"accepted": stack_item_animated(item, stack_target)}
+
+	# 2. Swap: clicking directly on a different stored item swaps the two.
+	var target := _get_stored_item_at(point)
+	if target != null and target != item:
+		var removed := swap_stored_item(item, target)
+		if removed == null:
+			return {"accepted": false}
+		return {"accepted": true, "regrab": removed}
+
+	# 3. Place into empty space, subject to the top-overflow gate.
+	if not can_accept_storage_item(item):
+		return {"accepted": false}
+	return {"accepted": store_item(item, point)}
+
+
+## Topmost stored SalvageItem under the given global point, or null.
+func _get_stored_item_at(global_point: Vector2) -> SalvageItem:
+	var space_state := get_world_2d().direct_space_state
+	var query := PhysicsPointQueryParameters2D.new()
+	query.position = global_point
+	query.collision_mask = 2  # Salvage items layer
+	query.collide_with_bodies = true
+	var results := space_state.intersect_point(query, 8)
+
+	var best: SalvageItem = null
+	var best_dist := INF
+	for result in results:
+		var body: Object = result["collider"]
+		if body is SalvageItem and (body as SalvageItem).is_in_storage:
+			var dist := global_point.distance_to((body as SalvageItem).global_position)
+			if dist < best_dist:
+				best_dist = dist
+				best = body as SalvageItem
+	return best
 
 
 func stop_for_run_end() -> void:
@@ -639,6 +690,17 @@ func take_damage(amount: float, source: Node = null) -> void:
 		popup_position = (source as Node2D).global_position
 	DamageNumber.spawn(popup_position, amount, DamageNumber.SHIP_COLOR)
 	_reduce_health(amount)
+
+
+## Restore hull integrity (repair gun cycles), capped at max_health. The popup
+## spawns at popup_position when given (e.g. the repair beam contact point).
+func repair(amount: float, popup_position: Vector2 = Vector2.INF) -> void:
+	if current_health <= 0.0 or current_health >= max_health or amount <= 0.0:
+		return
+	var healed := minf(amount, max_health - current_health)
+	current_health += healed
+	var spawn_position := popup_position if popup_position.is_finite() else global_position
+	DamageNumber.spawn(spawn_position, healed, DamageNumber.HEAL_COLOR)
 
 
 ## Environmental acid-storm drain (continuous DoT on hull integrity, so no

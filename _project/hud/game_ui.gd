@@ -208,9 +208,9 @@ func _update_player_health(player: Player) -> void:
 
 	var max_health := 1.0
 	var current_health := 0.0
-	if player:
-		max_health = maxf(player.max_health, 1.0)
-		current_health = clampf(player.current_health, 0.0, max_health)
+	if player and player.health:
+		max_health = maxf(player.health.max_health, 1.0)
+		current_health = clampf(player.health.current_health, 0.0, max_health)
 
 	_player_health_bar.min_value = 0.0
 	_player_health_bar.max_value = max_health
@@ -226,10 +226,10 @@ func _update_player_shield(player: Player) -> void:
 	var max_shield := 0.0
 	var current_shield := 0
 	var shield_broken := false
-	if player:
-		max_shield = maxf(player.max_shield, 0.0)
-		current_shield = clampi(player.current_shield, 0, roundi(max_shield))
-		shield_broken = player.is_shield_broken()
+	if player and player.health:
+		max_shield = maxf(player.health.max_shield, 0.0)
+		current_shield = clampi(player.health.current_shield, 0, roundi(max_shield))
+		shield_broken = player.health.is_shield_broken()
 
 	var shield_enabled := max_shield > 0.0
 	_player_shield_container.visible = shield_enabled
@@ -280,13 +280,14 @@ func _update_magazine_counter() -> void:
 	if _magazine_row == null:
 		return
 	var player := Magnetide.player as Player
-	var show_row: bool = player != null and player.has_method("has_ammo_display") and player.has_ammo_display()
+	var weapon: HeldItemBehavior = player.equipment.current_behavior if player and player.equipment else null
+	var show_row: bool = weapon != null and weapon.has_method("has_ammo_display") and weapon.call("has_ammo_display")
 	_magazine_row.visible = show_row
 	if not show_row:
 		return
 	if _magazine_label:
-		_magazine_label.text = "%d / %d" % [player.get_current_ammo(), player.get_current_magazine_size()]
-		var reloading: bool = player.has_method("is_reloading") and player.is_reloading()
+		_magazine_label.text = "%d / %d" % [weapon.call("get_current_ammo"), weapon.call("get_current_magazine_size")]
+		var reloading: bool = weapon.call("is_reloading")
 		_magazine_label.add_theme_color_override(
 			"font_color",
 			MAGAZINE_RELOADING_COLOR if reloading else MAGAZINE_READY_COLOR
@@ -309,14 +310,14 @@ func _bind_to_active_player() -> void:
 
 func bind_player(player: Player) -> void:
 	var update_callable := Callable(self, "_on_player_shield_changed")
-	if _bound_player and is_instance_valid(_bound_player):
-		if _bound_player.shield_changed.is_connected(update_callable):
-			_bound_player.shield_changed.disconnect(update_callable)
+	if _bound_player and is_instance_valid(_bound_player) and _bound_player.health:
+		if _bound_player.health.shield_changed.is_connected(update_callable):
+			_bound_player.health.shield_changed.disconnect(update_callable)
 
 	_bound_player = player
 	if _bound_player:
-		if not _bound_player.shield_changed.is_connected(update_callable):
-			_bound_player.shield_changed.connect(update_callable)
+		if not _bound_player.health.shield_changed.is_connected(update_callable):
+			_bound_player.health.shield_changed.connect(update_callable)
 		_update_player_shield(_bound_player)
 	else:
 		_displayed_shield_count = -1

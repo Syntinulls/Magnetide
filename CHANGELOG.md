@@ -4,6 +4,16 @@
 
 ### New Content
 
+**The Repair Gun.** A new station-unlockable tool that turns collected scrap into hull
+integrity mid-run. Unlock it with Research Points in the Equipment column and it appears
+in **hotbar slot 3**. Hold **left-click** on the ship's hull to fire a repair beam: a
+progress bar fills, and each completed cycle spends **1 scrap** from your run's haul to
+restore **10 integrity**. Let go and the progress resets — repairs only count when the
+cycle completes. Five upgrade levels raise the repair to **30 integrity** per cycle and
+speed the beam up ~2.4x, though top-end levels push the cost to **3 scrap** per cycle.
+Every point of scrap you spend is scrap you don't bank at the end of the run — patch the
+hull, or pad the wallet.
+
 **Six weapons, one arsenal.** The Rifle and Shotgun are joined by four new guns, each
 with a distinct role:
 

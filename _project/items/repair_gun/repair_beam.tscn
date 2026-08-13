@@ -1,0 +1,141 @@
+[gd_scene format=3 uid="uid://cx2yatihwoinx"]
+
+[ext_resource type="Script" path="res://_project/items/repair_gun/repair_beam.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://cso5om8ql40mg" path="res://_project/items/repair_gun/effect_beam_1.png" id="2_beam"]
+[ext_resource type="Texture2D" uid="uid://dyhoixdiydpve" path="res://_project/items/repair_gun/effect_shine_1.png" id="3_shine"]
+[ext_resource type="Texture2D" uid="uid://bsfokn81e03ac" path="res://_project/items/repair_gun/effect_contact_1.png" id="4_contact"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh0"]
+atlas = ExtResource("3_shine")
+region = Rect2(0, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh1"]
+atlas = ExtResource("3_shine")
+region = Rect2(112, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh2"]
+atlas = ExtResource("3_shine")
+region = Rect2(224, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh3"]
+atlas = ExtResource("3_shine")
+region = Rect2(336, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh4"]
+atlas = ExtResource("3_shine")
+region = Rect2(448, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh5"]
+atlas = ExtResource("3_shine")
+region = Rect2(560, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh6"]
+atlas = ExtResource("3_shine")
+region = Rect2(672, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_sh7"]
+atlas = ExtResource("3_shine")
+region = Rect2(784, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co0"]
+atlas = ExtResource("4_contact")
+region = Rect2(0, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co1"]
+atlas = ExtResource("4_contact")
+region = Rect2(112, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co2"]
+atlas = ExtResource("4_contact")
+region = Rect2(224, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co3"]
+atlas = ExtResource("4_contact")
+region = Rect2(336, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co4"]
+atlas = ExtResource("4_contact")
+region = Rect2(448, 0, 112, 112)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_co5"]
+atlas = ExtResource("4_contact")
+region = Rect2(560, 0, 112, 112)
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_shine"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_sh7")
+}],
+"loop": true,
+"name": &"shine",
+"speed": 15.0
+}]
+
+[sub_resource type="SpriteFrames" id="SpriteFrames_contact"]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_co5")
+}],
+"loop": true,
+"name": &"contact",
+"speed": 15.0
+}]
+
+[node name="RepairBeam" type="Node2D"]
+top_level = true
+script = ExtResource("1_script")
+
+[node name="Beam" type="Line2D" parent="."]
+visible = false
+texture = ExtResource("2_beam")
+texture_mode = 1
+width = 26.0
+default_color = Color(1, 1, 1, 1)
+
+[node name="Shine" type="AnimatedSprite2D" parent="."]
+visible = false
+sprite_frames = SubResource("SpriteFrames_shine")
+animation = &"shine"
+
+[node name="Contact" type="AnimatedSprite2D" parent="."]
+visible = false
+sprite_frames = SubResource("SpriteFrames_contact")
+animation = &"contact"
