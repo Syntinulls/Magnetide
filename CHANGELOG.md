@@ -26,6 +26,11 @@ closes to hovering distance, holds position, then fires needles at you with a sl
 and a 3-second cooldown between shots. It starts appearing at Threat Level 2 and can
 approach from any direction.
 
+**New enemy: the Charger.** A flying bruiser that circles you at range, freezes into its
+charge pose, then rockets straight through you — ending up on your far side before it
+turns and lines up the next pass. Getting clipped costs a hit of damage *and* knocks you
+back, so watch the telegraph and sidestep the line. It starts appearing at Threat Level 3.
+
 **Two new augments:**
 - **Adrenaline** — the lower your health, the more damage you deal. Scales up to +50% at
   10% HP or below (at max level).
@@ -122,6 +127,10 @@ title stands larger and higher above the menu buttons.
 they now pop instantly on death. Instead, they flinch and shake *when hit*, so damage reads
 immediately and kills are clean. Hit flashes now cover the whole enemy (a Mosquito's wings
 flash and shake with its body, not just its torso).
+
+**Enemy hitboxes now match their sprites.** Every enemy's hitbox is sized to its actual
+body — no more shots passing through a Mosquito's wings-to-body gap or clipping empty air
+around a Worm. If it looks like a hit, it's a hit.
 
 **Ship thrusters now have a voice.** A continuous engine loop tracks the ship's speed and
 state — a deep hum when idle, a steady tone in transit, and a rising whine while boosting

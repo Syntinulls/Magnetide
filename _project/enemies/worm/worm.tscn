@@ -9,7 +9,7 @@ shader = ExtResource("2_shader")
 shader_parameter/flash_intensity = 0.0
 
 [sub_resource type="RectangleShape2D" id="RectangleShape2D_worm_hitbox"]
-size = Vector2(40, 40)
+size = Vector2(44, 140)
 
 [node name="Worm" type="CharacterBody2D" unique_id=596254595]
 motion_mode = 1

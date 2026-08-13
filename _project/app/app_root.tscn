@@ -1,4 +1,4 @@
-[gd_scene load_steps=21 format=3]
+[gd_scene load_steps=22 format=3]
 
 [ext_resource type="Script" path="res://_project/app/app_root.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://_project/debug/debug_panel.tscn" id="13_debug_panel"]
@@ -6,6 +6,7 @@
 [ext_resource type="PackedScene" path="res://_project/level/level.tscn" id="3_level_scene"]
 [ext_resource type="Resource" uid="uid://hnrt22mrwtwi" path="res://_project/enemies/worm/worm_spawn_profile.tres" id="14_worm_profile"]
 [ext_resource type="Resource" uid="uid://dg8vx2ya4b0w3" path="res://_project/enemies/mosquito/mosquito_spawn_profile.tres" id="15_mosquito_profile"]
+[ext_resource type="Resource" path="res://_project/enemies/charger/charger_spawn_profile.tres" id="21_charger_profile"]
 [ext_resource type="Script" path="res://_project/enemies/spawning/enemy_spawn_profile.gd" id="16_enemy_profile"]
 [ext_resource type="Script" path="res://_project/level/threat/storms/storm_data.gd" id="17_storm_data"]
 [ext_resource type="Resource" uid="uid://cst0rm1acid00" path="res://_project/level/threat/storms/storm_1.tres" id="18_storm_1"]
@@ -25,7 +26,7 @@ script = ExtResource("2_level_definition")
 level_id = &"wasteland"
 display_name = "Wasteland"
 level_scene = ExtResource("3_level_scene")
-enemy_profiles = Array[ExtResource("16_enemy_profile")]([ExtResource("14_worm_profile"), ExtResource("15_mosquito_profile")])
+enemy_profiles = Array[ExtResource("16_enemy_profile")]([ExtResource("14_worm_profile"), ExtResource("15_mosquito_profile"), ExtResource("21_charger_profile")])
 storms = Array[ExtResource("17_storm_data")]([ExtResource("18_storm_1"), ExtResource("19_storm_2"), ExtResource("20_storm_3")])
 
 [sub_resource type="Resource" id="Resource_default_run_loadout"]

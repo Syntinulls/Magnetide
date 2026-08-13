@@ -1,0 +1,49 @@
+[gd_scene format=3]
+
+[ext_resource type="Script" path="res://_project/enemies/charger/charger.gd" id="1_script"]
+[ext_resource type="Shader" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Script" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
+[ext_resource type="Script" path="res://_project/combat/damage_box.gd" id="4_damage_box"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]
+shader = ExtResource("2_shader")
+shader_parameter/flash_intensity = 0.0
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_charger_hitbox"]
+size = Vector2(250, 110)
+
+[sub_resource type="RectangleShape2D" id="RectangleShape2D_charger_damage_box"]
+size = Vector2(72, 72)
+
+[node name="Charger" type="CharacterBody2D"]
+motion_mode = 1
+script = ExtResource("1_script")
+
+[node name="Visual" type="Node2D" parent="."]
+material = SubResource("ShaderMaterial_flash")
+
+[node name="Sprite" type="AnimatedSprite2D" parent="Visual"]
+use_parent_material = true
+
+[node name="Hitbox" type="Area2D" parent="."]
+collision_layer = 4
+collision_mask = 0
+script = ExtResource("3_hitbox")
+owner_path = NodePath("..")
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="Hitbox"]
+visible = false
+shape = SubResource("RectangleShape2D_charger_hitbox")
+
+[node name="DamageBox" type="Area2D" parent="."]
+position = Vector2(94, 0)
+collision_layer = 0
+collision_mask = 8
+monitorable = false
+script = ExtResource("4_damage_box")
+owner_path = NodePath("..")
+single_hit_per_activation = true
+
+[node name="CollisionShape2D" type="CollisionShape2D" parent="DamageBox"]
+visible = false
+shape = SubResource("RectangleShape2D_charger_damage_box")

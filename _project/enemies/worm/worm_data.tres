@@ -17,6 +17,7 @@ enemy_name = "Worm"
 sprite_frames = ExtResource("2_frames")
 damage = 8.0
 movement_speed = 1040.0
+hitbox_size = Vector2(44, 140)
 move_behavior = SubResource("Resource_move_behavior")
 attack_behavior = SubResource("Resource_attack_behavior")
 valid_targets = Array[String](["magnet", "ship", "player"])

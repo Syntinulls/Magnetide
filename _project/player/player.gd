@@ -13,6 +13,9 @@ signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 @export var shield_recharge_delay: float = 6.0
 @export var shield_recharge_duration: float = 1.0
 @export var shield_break_recharge_delay: float = 10.0
+## Exponential damping applied per second to horizontal enemy knockback; higher
+## values stop the push sooner.
+@export var knockback_damping: float = 8.0
 
 ## Equipment slots - indices match hotbar slots
 @export var equipment: Array[HeldItemData] = []
@@ -42,6 +45,8 @@ const FOOTSTEP_SFX: Array[String] = [
 const FOOTSTEP_SFX_VOLUME_DB := -6.0
 const FOOTSTEP_INTERVAL_SECONDS := 0.28
 const FOOTSTEP_MIN_SPEED := 8.0
+## Horizontal knockback speed (px/s) below which the residual push is dropped.
+const KNOCKBACK_STOP_SPEED := 10.0
 
 ## Jump physics resolved from the run loadout on apply — derived from the
 ## loadout's jump max/min height and time-to-apex, never authored directly here.
@@ -69,6 +74,10 @@ var _shield_recharge_cooldown_remaining: float = 0.0
 var _shield_recharge_progress: float = 0.0
 var _shield_broken: bool = false
 var _fire_cooldown: float = 0.0
+## Residual horizontal push from enemy knockback, re-added on top of the
+## per-frame input velocity (which is rewritten every physics tick) and decayed
+## by knockback_damping until it falls below KNOCKBACK_STOP_SPEED.
+var _knockback_velocity_x: float = 0.0
 var _selected_equipment_index: int = 0
 
 ## Current rounds in the magazine, keyed by equipment slot index. Each weapon keeps
@@ -341,7 +350,13 @@ func _physics_process(delta: float) -> void:
 		velocity.x = direction * speed
 	else:
 		velocity.x = 0.0
-	
+
+	if _knockback_velocity_x != 0.0:
+		velocity.x += _knockback_velocity_x
+		_knockback_velocity_x *= exp(-knockback_damping * delta)
+		if absf(_knockback_velocity_x) < KNOCKBACK_STOP_SPEED:
+			_knockback_velocity_x = 0.0
+
 	if not is_on_floor():
 		velocity.y += gravity * delta
 	
@@ -1647,6 +1662,17 @@ func on_looting_ended() -> void:
 	_hide_hover_tooltip()
 
 
+## Discrete push from an enemy hit (e.g. a charger dash). The horizontal
+## component decays exponentially over the following ticks; the vertical
+## component is a one-time impulse that gravity resolves. Sent separately from
+## take_damage so the push lands even when a shield absorbs the hit's damage.
+func apply_knockback(impulse: Vector2) -> void:
+	if current_health <= 0.0 or combat_disabled or invulnerable or _cinematic_walk_active:
+		return
+	_knockback_velocity_x = impulse.x
+	velocity.y += impulse.y
+
+
 func take_damage(amount: float, _source: Node = null) -> void:
 	if current_health <= 0.0 or combat_disabled or invulnerable:
 		return
@@ -1654,6 +1680,7 @@ func take_damage(amount: float, _source: Node = null) -> void:
 		return
 
 	seconds_since_damage = 0.0
+	_flash_damage()
 	if current_shield > 0:
 		current_shield -= 1
 		_shield_recharge_progress = 0.0
@@ -1669,7 +1696,6 @@ func take_damage(amount: float, _source: Node = null) -> void:
 	var previous_health := current_health
 	current_health = maxf(current_health - amount, 0.0)
 	DamageNumber.spawn(global_position, amount, DamageNumber.PLAYER_COLOR)
-	_flash_damage()
 	if previous_health > 0.0 and current_health <= 0.0:
 		destroyed.emit()
 

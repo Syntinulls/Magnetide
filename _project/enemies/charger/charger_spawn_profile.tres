@@ -1,0 +1,16 @@
+[gd_resource type="Resource" script_class="EnemySpawnProfile" format=3]
+
+[ext_resource type="Script" path="res://_project/enemies/spawning/enemy_spawn_profile.gd" id="1_profile"]
+[ext_resource type="PackedScene" path="res://_project/enemies/charger/charger.tscn" id="2_enemy_scene"]
+[ext_resource type="Resource" path="res://_project/enemies/charger/charger_data.tres" id="3_enemy_data"]
+
+[resource]
+script = ExtResource("1_profile")
+id = &"charger"
+enemy_scene = ExtResource("2_enemy_scene")
+enemy_data = ExtResource("3_enemy_data")
+allowed_spawn_zones = PackedStringArray("SpawnW", "SpawnWNW", "SpawnWSW", "SpawnE", "SpawnENE", "SpawnESE", "SpawnNE", "SpawnSE", "SpawnNW", "SpawnSW")
+min_threat_level = 3
+can_spawn_magnet_idle = true
+max_batch_size = 1
+spawn_cooldown = 14.0
