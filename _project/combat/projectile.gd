@@ -34,6 +34,9 @@ const REQUIRED_CONFIG_FIELDS: Array[StringName] = [
 
 var direction: Vector2 = Vector2.RIGHT
 var source: Node = null
+## Shooter movement velocity at fire time, added on top of the projectile's own
+## motion for the whole flight so shots inherit the shooter's momentum.
+var inherited_velocity: Vector2 = Vector2.ZERO
 ## The sprite child (Sprite2D or AnimatedSprite2D), exposed so a ProjectileBehavior
 ## can scale/modulate/spin it over the projectile's lifetime.
 var visual: Node2D = null
@@ -82,6 +85,7 @@ func configure(config: Dictionary) -> void:
 	collision_layer = int(config[&"collision_layer"])
 	collision_mask = int(config[&"collision_mask"])
 	source = config[&"source"] as Node
+	inherited_velocity = config.get(&"inherited_velocity", Vector2.ZERO)
 	pierce = int(config.get(&"pierce", 1))
 	projectile_gravity = float(config.get(&"gravity", 0.0))
 	impact_damage = bool(config.get(&"impact_damage", true))
@@ -97,7 +101,7 @@ func configure(config: Dictionary) -> void:
 
 func _ready() -> void:
 	_remaining_pierce = maxi(pierce, 1)
-	_velocity = direction * speed
+	_velocity = direction * speed + inherited_velocity
 	rotation = direction.angle() + PI / 2.0
 	body_entered.connect(_on_body_entered)
 	area_entered.connect(_on_area_entered)
@@ -117,9 +121,9 @@ func _physics_process(delta: float) -> void:
 		position += _velocity * delta
 		rotation = _velocity.angle() + PI / 2.0
 	elif _behavior != null:
-		position += _behavior.get_velocity(self, _elapsed) * delta
+		position += (_behavior.get_velocity(self, _elapsed) + inherited_velocity) * delta
 	else:
-		position += direction * speed * delta
+		position += (direction * speed + inherited_velocity) * delta
 	if _behavior != null:
 		_behavior.tick(self, _elapsed, delta)
 

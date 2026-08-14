@@ -10,7 +10,7 @@
 
 [sub_resource type="Gradient" id="Gradient_flame"]
 offsets = PackedFloat32Array(0, 0.3, 0.65, 1)
-colors = PackedColorArray(1, 0.984314, 0.878431, 1, 1, 0.85098, 0.290196, 1, 1, 0.54902, 0.101961, 0.9, 0.290196, 0.266667, 0.25098, 0.6)
+colors = PackedColorArray(1, 0.984314, 0.878431, 1, 1, 0.85098, 0.290196, 1, 1, 0.54902, 0.101961, 1, 0.290196, 0.266667, 0.25098, 0)
 
 [sub_resource type="Resource" id="Resource_flame_projectile_behavior"]
 script = ExtResource("3_flame_behavior")
@@ -19,18 +19,19 @@ color_ramp = SubResource("Gradient_flame")
 [resource]
 script = ExtResource("1_weapon_data")
 damage = 2.0
-fire_rate = 11.0
+fire_rate = 30.0
 bullet_speed = 1300.0
 bullet_sprite_frames = ExtResource("2_flame_frames")
 bullet_lifetime = 1.1
 bullet_collision_size = Vector2(28, 28)
 projectile_behavior = SubResource("Resource_flame_projectile_behavior")
+inherit_shooter_velocity = true
 destroy_on_contact = false
 contact_effect = ExtResource("4_burning")
 fire_sfx = Array[AudioStream]([null])
 bullet_spread_min = 8.5
 bullet_spread_max = 17.0
-magazine_size = 100
+magazine_size = 200
 reload_time = 1.8
 hotbar_icon = ExtResource("5_flame_sprite")
 weapon_sprite = ExtResource("5_flame_sprite")

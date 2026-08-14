@@ -104,6 +104,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"collision_layer": 2,
 			&"collision_mask": 4,
 			&"source": player,
+			&"inherited_velocity": player.velocity if weapon_data.inherit_shooter_velocity else Vector2.ZERO,
 			&"pierce": weapon_data.pierce,
 			&"gravity": weapon_data.projectile_gravity,
 			&"impact_damage": weapon_data.impact_damage,

@@ -31,14 +31,22 @@ with a distinct role:
 moment it strikes an enemy, and the explosion hits everything nearby for the weapon's full
 damage. It's the last weapon in the unlock chain and your answer to a crowd.
 
-**New weapon: the Flamethrower.** Hoses out a cone of flame at **11 particles per
-second** — the fastest-firing weapon in the game — from a **100-fuel** tank (1.8s
-reload). Each flame bursts from the muzzle, balloons as it slows, and passes *through*
-the first enemy it touches for **2 damage**, so a sustained stream washes over the whole
-front of a crowd. Anything a flame touches is **set on fire**: burning enemies take
-**2 damage every second for 6–8 seconds**, and re-igniting them restarts the burn. Short
-reach, big sustained damage — get close and paint the pack. Unlocks after the Grenade
-Launcher for **2 rare + 2 epic** Research Points.
+**New weapon: the Flamethrower.** Hoses out a wide cone of flame at **30 particles per
+second** — by far the fastest-firing weapon in the game — from a **200-fuel** tank
+(~6.7s of continuous fire, 1.8s reload). Each flame bursts from the muzzle, balloons to
+over twice its size as it flies, and passes *through* the first enemy it touches for
+**2 damage**, so a sustained stream washes over the whole front of a crowd. Flames also
+inherit your momentum — firing on the move throws them with you. Anything a flame
+touches is **set on fire**: burning enemies take **2 damage every second for 6–8
+seconds**, and re-igniting them restarts the burn. Short reach, big sustained damage —
+get close and paint the pack. Unlocks after the Grenade Launcher for **2 rare + 2 epic**
+Research Points.
+
+**Hit protection on every target.** All hitboxes now carry brief I-frames (**0.1s**):
+damage instances arriving faster than that are ignored, capping rapid streams like the
+Flamethrower at **10 hits per second** on a single target. Normal fire rates are
+unaffected, though a point-blank shotgun blast now lands one pellet on the same enemy
+instead of all of them at once.
 
 **New enemy: the Mosquito.** A flying ranged attacker that hunts *you*, not the ship. It
 closes to hovering distance, holds position, then fires needles at you with a slow windup

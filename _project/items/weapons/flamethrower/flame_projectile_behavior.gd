@@ -2,24 +2,20 @@ extends ProjectileBehavior
 class_name FlameProjectileBehavior
 
 ## Flamethrower flame motion/visuals: a short full-speed burst out of the muzzle,
-## then a sharp falloff to a drift. The visual grows as the flame decelerates,
-## shifts color along color_ramp over its lifetime, and spins at a per-flame
-## random speed and direction.
+## then a sharp falloff to a drift. The visual grows linearly over the flame's
+## lifetime, shifts color along color_ramp, and spins at a per-flame random
+## speed and direction.
 
 ## Seconds at full bullet speed before the falloff begins.
 @export var burst_duration: float = 0.12
 ## Seconds over which speed decays from full down to min_speed.
-@export var falloff_duration: float = 0.75
+@export var falloff_duration: float = 1.0
 ## Drift speed the flame settles at after the falloff.
-@export var min_speed: float = 150.0
-## Sprite scale at full speed, so flames are visible right out of the muzzle.
+@export var min_speed: float = 250.0
+## Sprite scale at spawn, so flames are visible right out of the muzzle.
 @export var min_visual_scale: float = 0.7
-## Sprite scale once the flame has fully decelerated.
-@export var max_visual_scale: float = 1.5
-## Response curve applied to the speed-driven growth: scale follows the same
-## pattern as the speed falloff, but an exponent below 1 makes it ramp ahead of
-## the speed change (more volatile early growth). 1.0 = linear with speed.
-@export_range(0.1, 1.0, 0.05) var scale_response_exponent: float = 0.5
+## Sprite scale at end of lifetime.
+@export var max_visual_scale: float = 2.0
 ## Spin speed range, radians/second. Direction is rolled per flame.
 @export var spin_speed_min: float = 2.0
 @export var spin_speed_max: float = 5.0
@@ -41,11 +37,7 @@ func tick(projectile: Projectile, elapsed: float, delta: float) -> void:
 	var visual := projectile.visual
 	if visual == null:
 		return
-	# The flame grows as it slows, but outpaces the deceleration: the speed-driven
-	# progress is pushed through a sub-linear response curve so scale surges early
-	# while still tracking the shape of the speed falloff.
-	var speed_ratio := _current_speed(projectile, elapsed) / maxf(projectile.speed, 0.01)
-	var growth := pow(clampf(1.0 - speed_ratio, 0.0, 1.0), maxf(scale_response_exponent, 0.01))
+	var growth := clampf(elapsed / maxf(projectile.lifetime, 0.01), 0.0, 1.0)
 	visual.scale = Vector2.ONE * lerpf(min_visual_scale, max_visual_scale, growth)
 	if color_ramp != null:
 		visual.modulate = color_ramp.sample(clampf(elapsed / maxf(projectile.lifetime, 0.01), 0.0, 1.0))
