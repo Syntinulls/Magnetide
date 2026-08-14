@@ -1,0 +1,43 @@
+[gd_resource type="Resource" script_class="WeaponData" format=3 uid="uid://bflamethrower"]
+
+[ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="1_weapon_data"]
+[ext_resource type="SpriteFrames" uid="uid://bflameprjfrms" path="res://_project/items/weapons/flamethrower/flame_projectile_sprite_frames.tres" id="2_flame_frames"]
+[ext_resource type="Script" path="res://_project/items/weapons/flamethrower/flame_projectile_behavior.gd" id="3_flame_behavior"]
+[ext_resource type="PackedScene" uid="uid://bburningeffct" path="res://_project/effects/burning/burning_effect.tscn" id="4_burning"]
+[ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/weapons/old/rifle_reload.ogg" id="5_1gt0x"]
+[ext_resource type="Texture2D" uid="uid://mvtpuhx5628f" path="res://_project/items/weapons/flamethrower/player_item_flame.png" id="5_flame_sprite"]
+[ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
+
+[sub_resource type="Gradient" id="Gradient_flame"]
+offsets = PackedFloat32Array(0, 0.3, 0.65, 1)
+colors = PackedColorArray(1, 0.984314, 0.878431, 1, 1, 0.85098, 0.290196, 1, 1, 0.54902, 0.101961, 0.9, 0.290196, 0.266667, 0.25098, 0.6)
+
+[sub_resource type="Resource" id="Resource_flame_projectile_behavior"]
+script = ExtResource("3_flame_behavior")
+color_ramp = SubResource("Gradient_flame")
+
+[resource]
+script = ExtResource("1_weapon_data")
+damage = 2.0
+fire_rate = 11.0
+bullet_speed = 1300.0
+bullet_sprite_frames = ExtResource("2_flame_frames")
+bullet_lifetime = 1.1
+bullet_collision_size = Vector2(28, 28)
+projectile_behavior = SubResource("Resource_flame_projectile_behavior")
+destroy_on_contact = false
+contact_effect = ExtResource("4_burning")
+fire_sfx = Array[AudioStream]([null])
+bullet_spread_min = 8.5
+bullet_spread_max = 17.0
+magazine_size = 100
+reload_time = 1.8
+hotbar_icon = ExtResource("5_flame_sprite")
+weapon_sprite = ExtResource("5_flame_sprite")
+weapon_offset = Vector2(-33.665, 20.42)
+weapon_rotation = 0.0
+muzzle_position = Vector2(-80.56, 11.88)
+item_id = &"weapon_flamethrower"
+display_name = "Flamethrower"
+upgrade_data = ExtResource("90_upg")
+metadata/_custom_type_script = "uid://dswvbat8qx1i4"

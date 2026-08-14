@@ -7,12 +7,24 @@ class_name WeaponData
 	set(value):
 		pierce = maxi(value, 1)
 @export var bullet_sprite: Texture2D
+## Animated projectile visual. When set it wins over bullet_sprite and the
+## projectile is built with an AnimatedSprite2D (flamethrower flames).
+@export var bullet_sprite_frames: SpriteFrames = null
 @export var fire_behavior: Resource = null
 
 @export_group("Projectile Physics")
 ## Downward acceleration applied to this weapon's projectiles (px/s^2). 0 = straight-
 ## line bullet; a positive value arcs the shot (grenade launcher).
 @export var projectile_gravity: float = 0.0
+## Seconds a projectile lives before expiring on its own.
+@export var bullet_lifetime: float = 3.0:
+	set(value):
+		bullet_lifetime = maxf(value, 0.01)
+## Size of the projectile's rectangular collision shape, in pixels.
+@export var bullet_collision_size: Vector2 = Vector2(32.0, 12.0)
+## Optional per-projectile motion/tick strategy (ProjectileBehavior). The projectile
+## duplicates it so each shot keeps its own state.
+@export var projectile_behavior: Resource = null
 
 @export_group("Impact")
 ## When true, hitting an enemy deals this weapon's damage (and pierce) directly. Turn it
@@ -23,6 +35,12 @@ class_name WeaponData
 ## first enemy the projectile touches; the effect owns its own area/animation and inherits
 ## this weapon's damage.
 @export var impact_effect: PackedScene = null
+## When false, exhausting pierce stops a projectile from damaging further enemies but
+## does not destroy it — it keeps flying until bullet_lifetime expires (flamethrower).
+@export var destroy_on_contact: bool = true
+## Optional status effect scene (StatusEffect root) applied to each enemy this weapon's
+## projectiles damage (burning). Unlike impact_effect this never consumes the projectile.
+@export var contact_effect: PackedScene = null
 
 @export_group("Fire Sound")
 ## Sound(s) played when this weapon fires. When more than one is supplied, one is

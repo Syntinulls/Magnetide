@@ -12,13 +12,13 @@
 [ext_resource type="Texture2D" uid="uid://daab7lsv5ofoo" path="res://_project/player/sprites/guy_arm.png" id="4_arm"]
 [ext_resource type="Texture2D" uid="uid://bcjnenayhx0in" path="res://_project/player/sprites/guy_part_legs_walk.png" id="4_k6685"]
 [ext_resource type="Texture2D" uid="uid://cegsvxxw88tcp" path="res://_project/player/sprites/guy_part_legs_stretch.png" id="5_6i4jc"]
-[ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="12_j3888"]
+[ext_resource type="Texture2D" uid="uid://mvtpuhx5628f" path="res://_project/items/weapons/flamethrower/player_item_flame.png" id="12_j3888"]
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/combat/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/magnet_tool/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/weapons/player_item_gun_effect_1.png" id="15_4y3ad"]
 [ext_resource type="Shader" uid="uid://b6plrflash00a" path="res://_project/player/player_flash.gdshader" id="16_flash"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="17_target_point"]
-[ext_resource type="PackedScene" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
+[ext_resource type="PackedScene" uid="uid://cx2yatihwoinx" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
 [ext_resource type="Script" path="res://_project/player/player_health.gd" id="20_health"]
 [ext_resource type="Script" path="res://_project/player/player_equipment.gd" id="21_equipment"]
 [ext_resource type="Script" path="res://_project/player/player_interaction.gd" id="22_interaction"]
@@ -243,10 +243,10 @@ offset = Vector2(-13.585, 8.13)
 show_behind_parent = true
 material = SubResource("ShaderMaterial_damage_flash")
 texture = ExtResource("12_j3888")
-offset = Vector2(-22.075, 20.42)
+offset = Vector2(-33.665, 20.42)
 
 [node name="Muzzle" type="Marker2D" parent="ArmSprite/Weapon" unique_id=1724757782]
-position = Vector2(-52.56, 13.88)
+position = Vector2(-80.56, 11.88)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
 visible = false

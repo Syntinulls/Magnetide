@@ -53,6 +53,10 @@ _project/                    All game content. (Root level is reserved for engin
 ├── debug/                   Development-only tooling: the debug panel overlay
 │                            (debug_panel.*), active only in debug builds or behind the
 │                            --debug-panel launch flag. See specs/debug_panel.md.
+├── effects/                 Runtime status effects applied to combatants: the
+│   │                        StatusEffect base (status_effect.gd) plus one folder per
+│   │                        effect owning its scene, script, and sprites.
+│   └── burning/             Burning DoT: scene, script, flame SpriteFrames + sheet.
 ├── enemies/                 Enemy entity, data, AI, and spawning.
 │   ├── enemy.*              The enemy body + state machine.
 │   ├── enemy_data.gd        Stats/config resource.

@@ -1,0 +1,81 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bflameprjfrms"]
+
+[ext_resource type="Texture2D" uid="uid://bl0c6fo4b1e82" path="res://_project/items/weapons/flamethrower/effect_flame_1.png" id="1_flame"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_0"]
+atlas = ExtResource("1_flame")
+region = Rect2(0, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_1"]
+atlas = ExtResource("1_flame")
+region = Rect2(224, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_2"]
+atlas = ExtResource("1_flame")
+region = Rect2(448, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_3"]
+atlas = ExtResource("1_flame")
+region = Rect2(672, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_4"]
+atlas = ExtResource("1_flame")
+region = Rect2(896, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_5"]
+atlas = ExtResource("1_flame")
+region = Rect2(1120, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_6"]
+atlas = ExtResource("1_flame")
+region = Rect2(1344, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_7"]
+atlas = ExtResource("1_flame")
+region = Rect2(1568, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_8"]
+atlas = ExtResource("1_flame")
+region = Rect2(1792, 0, 224, 224)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_flame_9"]
+atlas = ExtResource("1_flame")
+region = Rect2(2016, 0, 224, 224)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_3")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_4")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_5")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_6")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_7")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_8")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_flame_9")
+}],
+"loop": true,
+"name": &"default",
+"speed": 12.0
+}]

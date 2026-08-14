@@ -88,15 +88,19 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 		bullet_direction = get_weapon_aim_direction()
 	bullet_direction = bullet_direction.rotated(weapon_data.roll_bullet_spread_offset())
 
+	var sprite_value: Variant = weapon_data.bullet_sprite if weapon_data.bullet_sprite else FallbackBulletTexture
+	if weapon_data.bullet_sprite_frames != null:
+		sprite_value = weapon_data.bullet_sprite_frames
+
 	var world_root := Magnetide.world_root
 	if world_root:
 		return ProjectileScript.spawn(world_root, {
 			&"global_position": _get_bullet_spawn_position(),
 			&"direction": bullet_direction,
-			&"sprite": weapon_data.bullet_sprite if weapon_data.bullet_sprite else FallbackBulletTexture,
+			&"sprite": sprite_value,
 			&"damage": weapon_data.damage * player.outgoing_damage_multiplier,
 			&"speed": weapon_data.bullet_speed,
-			&"lifetime": 3.0,
+			&"lifetime": weapon_data.bullet_lifetime,
 			&"collision_layer": 2,
 			&"collision_mask": 4,
 			&"source": player,
@@ -104,6 +108,10 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"gravity": weapon_data.projectile_gravity,
 			&"impact_damage": weapon_data.impact_damage,
 			&"impact_effect": weapon_data.impact_effect,
+			&"destroy_on_contact": weapon_data.destroy_on_contact,
+			&"contact_effect": weapon_data.contact_effect,
+			&"projectile_behavior": weapon_data.projectile_behavior,
+			&"collision_size": weapon_data.bullet_collision_size,
 		})
 	return null
 

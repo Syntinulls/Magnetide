@@ -1,0 +1,15 @@
+[gd_scene load_steps=3 format=3 uid="uid://bburningeffct"]
+
+[ext_resource type="Script" uid="uid://dmlypd0orjo3t" path="res://_project/effects/burning/burning_effect.gd" id="1_burning"]
+[ext_resource type="SpriteFrames" uid="uid://bburnflamefrm" path="res://_project/effects/burning/burning_flame_sprite_frames.tres" id="2_frames"]
+
+[node name="BurningEffect" type="Node2D"]
+z_index = 5
+script = ExtResource("1_burning")
+effect_id = &"burning"
+
+[node name="FlameTemplate" type="AnimatedSprite2D" parent="."]
+visible = false
+sprite_frames = ExtResource("2_frames")
+animation = &"burn"
+autoplay = "burn"
