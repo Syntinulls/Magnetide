@@ -7,6 +7,8 @@
 z_index = 5
 script = ExtResource("1_burning")
 effect_id = &"burning"
+display_name = "burning"
+display_color = Color(1, 0.54902, 0.101961, 1)
 
 [node name="FlameTemplate" type="AnimatedSprite2D" parent="."]
 visible = false

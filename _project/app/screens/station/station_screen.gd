@@ -1888,6 +1888,9 @@ func _format_catalog_item_description(entry: Resource) -> String:
 		var stats := _format_resource_stats(_get_weapon_preview(item_data as WeaponData), WEAPON_STAT_PROPERTIES)
 		if not stats.is_empty():
 			lines.append(stats)
+		var effect_line := _format_weapon_contact_effect_line(item_data as WeaponData)
+		if not effect_line.is_empty():
+			lines.append(effect_line)
 	elif item_data is AugmentData:
 		var state := _get_item_state_for_data(item_data)
 		if item_data.has_method("get_current_effect_summary"):
@@ -1896,6 +1899,24 @@ func _format_catalog_item_description(entry: Resource) -> String:
 				lines.append(summary)
 
 	return "\n".join(lines)
+
+
+## Sentence naming the status effect a weapon's projectiles apply ("Applies
+## burning to enemies"), with the effect name tinted in the effect's own color.
+## The effect scene is briefly instantiated (never added to the tree) to read
+## its authored display exports.
+func _format_weapon_contact_effect_line(weapon: WeaponData) -> String:
+	if weapon == null or weapon.contact_effect == null:
+		return ""
+	var effect := weapon.contact_effect.instantiate() as StatusEffect
+	if effect == null:
+		return ""
+	var effect_name := effect.display_name if not effect.display_name.is_empty() else String(effect.effect_id)
+	var effect_color := effect.display_color
+	effect.free()
+	if effect_name.is_empty():
+		return ""
+	return "Applies [color=#%s]%s[/color] to enemies" % [effect_color.to_html(false), effect_name]
 
 
 func _get_catalog_entry_description(item_data: Resource) -> String:

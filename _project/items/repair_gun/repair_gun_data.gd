@@ -8,7 +8,7 @@ class_name RepairGunData
 ## In-run scrap metal consumed per completed repair cycle
 @export var repair_cost: int = 1
 ## Raycast distance from the muzzle to a repairable surface
-@export var beam_range: float = 260.0
+@export var beam_range: float = 520.0
 
 
 func create_use_behavior() -> HeldItemBehavior:

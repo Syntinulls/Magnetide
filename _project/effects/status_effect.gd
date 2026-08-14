@@ -8,6 +8,11 @@ class_name StatusEffect
 
 ## Identity used to match an incoming effect against one already on the receiver.
 @export var effect_id: StringName = &""
+## Player-facing name used in weapon tooltips ("Applies burning to enemies").
+## Falls back to effect_id when empty.
+@export var display_name: String = ""
+## Unique tint for this effect's name in tooltips (burning = orange).
+@export var display_color: Color = Color.WHITE
 ## Seconds between _apply_tick() calls. The first tick lands one interval after
 ## the effect attaches.
 @export var tick_interval: float = 1.0

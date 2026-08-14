@@ -25,10 +25,13 @@ class_name WeaponData
 ## Optional per-projectile motion/tick strategy (ProjectileBehavior). The projectile
 ## duplicates it so each shot keeps its own state.
 @export var projectile_behavior: Resource = null
-## When true, projectiles inherit the player's movement velocity at fire time on top
-## of their own motion (flamethrower). Off by default so bullets fly identically no
-## matter how the player is moving.
-@export var inherit_shooter_velocity: bool = false
+## When true, projectiles inherit the player's horizontal movement velocity at fire
+## time on top of their own motion (flamethrower). Off by default so bullets fly
+## identically no matter how the player is moving.
+@export var inherit_shooter_velocity_x: bool = false
+## Vertical counterpart of inherit_shooter_velocity_x, split out so a weapon can
+## carry sideways momentum without also inheriting jumps and falls.
+@export var inherit_shooter_velocity_y: bool = false
 
 @export_group("Impact")
 ## When true, hitting an enemy deals this weapon's damage (and pierce) directly. Turn it

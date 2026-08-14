@@ -16,7 +16,7 @@ existing call sites (weapons, mosquito needles) are unaffected.
 | `contact_effect` | `PackedScene = null` | StatusEffect scene applied to each enemy the projectile damages. Never consumes the projectile (unlike `impact_effect`, which does). |
 | `projectile_behavior` | `ProjectileBehavior = null` | Motion/tick strategy resource, duplicated per projectile. |
 | `collision_size` | `Vector2 = (32, 12)` | Size of the projectile's rectangular collision shape. |
-| `inherited_velocity` | `Vector2 = ZERO` | Shooter movement velocity at fire time, added to the projectile's motion for its whole flight. Opt-in per weapon via `WeaponData.inherit_shooter_velocity` (only the flamethrower enables it). |
+| `inherited_velocity` | `Vector2 = ZERO` | Shooter movement velocity at fire time, added to the projectile's motion for its whole flight. Opt-in per weapon and per axis via `WeaponData.inherit_shooter_velocity_x` / `_y` (only the flamethrower enables it, horizontal only). |
 | `sprite` (extended) | now also accepts `SpriteFrames` | Builds an `AnimatedSprite2D` visual instead of a `Sprite2D`. |
 
 Lifetime is now tracked per-frame (`_elapsed`) instead of a one-shot
