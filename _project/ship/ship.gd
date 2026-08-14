@@ -694,11 +694,13 @@ func take_damage(amount: float, source: Node = null) -> void:
 
 ## Restore hull integrity (repair gun cycles), capped at max_health. The popup
 ## spawns at popup_position when given (e.g. the repair beam contact point).
-func repair(amount: float, popup_position: Vector2 = Vector2.INF) -> void:
+func repair(amount: float, popup_position: Vector2 = Vector2.INF, show_popup: bool = true) -> void:
 	if current_health <= 0.0 or current_health >= max_health or amount <= 0.0:
 		return
 	var healed := minf(amount, max_health - current_health)
 	current_health += healed
+	if not show_popup:
+		return
 	var spawn_position := popup_position if popup_position.is_finite() else global_position
 	DamageNumber.spawn(spawn_position, healed, DamageNumber.HEAL_COLOR)
 

@@ -55,7 +55,12 @@ func process_input(delta: float) -> void:
 	if _repair_progress >= 1.0:
 		_repair_progress = 0.0
 		if run.spend_scrap_metal(gun.repair_cost):
-			ship.repair(gun.repair_amount, contact_point)
+			# The cycle that tops the hull off shows only the "Fully Repaired" cue,
+			# not a repair number alongside it.
+			var completes_hull := ship.current_health + gun.repair_amount >= ship.max_health
+			ship.repair(gun.repair_amount, contact_point, not completes_hull)
+			if completes_hull:
+				_refuse(contact_point, FULLY_REPAIRED_TEXT, DamageNumber.HEAL_COLOR)
 	player.progress_bar.request(
 		&"repair",
 		_repair_progress,
