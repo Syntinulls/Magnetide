@@ -240,6 +240,32 @@ func notify_storm_finished() -> void:
 	_raise_cap()
 
 
+## Debug entry point: jump the run to the given player-facing threat level (1-10).
+## Resolves any open window or running storm state and restarts threat at the
+## start of that level's segment. Storm actors already spawned are not cleaned
+## up -- intended for jumping levels while threat is building.
+func debug_set_threat_level(player_level: int) -> void:
+	var stage := clampi(player_level - 1, 0, MAX_STAGE_INDEX)
+	var was_window := _phase == Phase.WINDOW
+	var storm := _active_storm
+	var old_level := threat_level
+	_phase = Phase.BUILDING
+	_window_remaining = 0.0
+	_window_is_storm_gate = false
+	_window_is_terminal = false
+	_active_storm = null
+	_threat_level_cap = stage
+	if was_window:
+		window_closed.emit()
+	if storm != null:
+		storm_finished.emit(storm)
+	_current_threat = stage * THREAT_SEGMENT_SIZE
+	threat_changed.emit(_current_threat)
+	if threat_level != old_level:
+		threat_level_changed.emit(threat_level)
+	level_advanced.emit(_threat_level_cap)
+
+
 func reset() -> void:
 	_threat_level_cap = 0
 	_phase = Phase.BUILDING

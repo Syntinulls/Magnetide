@@ -34,9 +34,9 @@ mouse_filter = 2
 color = Color(0, 0, 0, 0)
 
 [node name="InfoLabel" type="Label" parent="."]
-offset_left = -450.0
+offset_left = -375.0
 offset_top = -144.0
-offset_right = 450.0
+offset_right = 375.0
 offset_bottom = -110.0
 theme_override_font_sizes/font_size = 36
 theme_override_constants/outline_size = 6
@@ -46,9 +46,9 @@ vertical_alignment = 1
 [node name="OuterPanel" type="Control" parent="."]
 layout_mode = 3
 anchors_preset = 0
-offset_left = -450.0
+offset_left = -375.0
 offset_top = -100.0
-offset_right = 450.0
+offset_right = 375.0
 mouse_filter = 2
 
 [node name="Fill" type="ColorRect" parent="OuterPanel"]

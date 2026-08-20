@@ -39,6 +39,8 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _threat_amount_edit: LineEdit = %ThreatAmountEdit
 @onready var _advance_threat_button: Button = %AdvanceThreatLevelButton
 @onready var _fill_threat_button: Button = %FillThreatButton
+@onready var _set_threat_level_button: Button = %SetThreatLevelButton
+@onready var _threat_level_edit: LineEdit = %ThreatLevelEdit
 @onready var _spawn_pile_button: Button = %SpawnSalvagePileButton
 @onready var _add_run_scrap_button: Button = %AddRunScrapButton
 @onready var _run_scrap_amount_edit: LineEdit = %RunScrapAmountEdit
@@ -60,6 +62,7 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _repair_ship_button: Button = %RepairShipButton
 @onready var _repair_ship_amount_edit: LineEdit = %RepairShipAmountEdit
 @onready var _destroy_ship_button: Button = %DestroyShipButton
+@onready var _ship_god_mode_button: Button = %ShipGodModeButton
 
 @onready var _add_scrap_button: Button = %AddScrapButton
 @onready var _scrap_amount_edit: LineEdit = %ScrapAmountEdit
@@ -159,6 +162,7 @@ func _connect_actions() -> void:
 	_add_threat_button.pressed.connect(_on_add_threat_pressed)
 	_advance_threat_button.pressed.connect(_on_advance_threat_level_pressed)
 	_fill_threat_button.pressed.connect(_on_fill_threat_pressed)
+	_set_threat_level_button.pressed.connect(_on_set_threat_level_pressed)
 	_spawn_pile_button.pressed.connect(_on_spawn_salvage_pile_pressed)
 	_add_run_scrap_button.pressed.connect(_on_add_run_scrap_pressed)
 	_extract_button.pressed.connect(_on_extract_pressed)
@@ -174,6 +178,7 @@ func _connect_actions() -> void:
 	_damage_ship_button.pressed.connect(_on_damage_ship_pressed)
 	_repair_ship_button.pressed.connect(_on_repair_ship_pressed)
 	_destroy_ship_button.pressed.connect(_on_destroy_ship_pressed)
+	_ship_god_mode_button.toggled.connect(_on_ship_god_mode_toggled)
 
 	_add_scrap_button.pressed.connect(_on_add_scrap_pressed)
 	_add_research_button.pressed.connect(_on_add_research_pressed)
@@ -243,6 +248,12 @@ func _on_fill_threat_pressed() -> void:
 	var threat := _get_threat_manager()
 	if threat:
 		threat.add_threat(ThreatManager.MAX_THREAT)
+
+
+func _on_set_threat_level_pressed() -> void:
+	var threat := _get_threat_manager()
+	if threat:
+		threat.debug_set_threat_level(int(_parse_float(_threat_level_edit, 1.0)))
 
 
 ## Skip the wait for the next salvage cycle: the warning window opens immediately and
@@ -340,8 +351,18 @@ func _on_repair_ship_pressed() -> void:
 
 func _on_destroy_ship_pressed() -> void:
 	var ship := _get_ship()
+	if ship == null:
+		return
+	if ship.invulnerable:
+		ship.invulnerable = false
+		_ship_god_mode_button.set_pressed_no_signal(false)
+	ship.take_damage(ship.current_health)
+
+
+func _on_ship_god_mode_toggled(pressed: bool) -> void:
+	var ship := _get_ship()
 	if ship:
-		ship.take_damage(ship.current_health)
+		ship.invulnerable = pressed
 
 
 # =============================================================================
@@ -527,6 +548,7 @@ func _refresh_context() -> void:
 	_add_threat_button.disabled = threat == null
 	_advance_threat_button.disabled = threat == null or not threat.can_advance()
 	_fill_threat_button.disabled = threat == null
+	_set_threat_level_button.disabled = threat == null
 	var minigame := _get_magnet_minigame()
 	_spawn_pile_button.disabled = minigame == null or not minigame.can_force_salvage_cycle()
 	_add_run_scrap_button.disabled = not in_run
@@ -546,6 +568,9 @@ func _refresh_context() -> void:
 	_damage_ship_button.disabled = ship == null
 	_repair_ship_button.disabled = ship == null
 	_destroy_ship_button.disabled = ship == null
+	_ship_god_mode_button.disabled = ship == null
+	if ship:
+		_ship_god_mode_button.set_pressed_no_signal(ship.invulnerable)
 
 	var has_save := save_data != null
 	_equip_weapon_button.disabled = not has_save

@@ -199,6 +199,22 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Fill Threat Level"
 
+[node name="SetThreatLevelRow" type="HBoxContainer" parent="Panel/Scroll/Groups/LevelRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SetThreatLevelButton" type="Button" parent="Panel/Scroll/Groups/LevelRows/SetThreatLevelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Set Threat Level"
+
+[node name="ThreatLevelEdit" type="LineEdit" parent="Panel/Scroll/Groups/LevelRows/SetThreatLevelRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "1-10"
+
 [node name="SpawnSalvagePileButton" type="Button" parent="Panel/Scroll/Groups/LevelRows"]
 unique_name_in_owner = true
 layout_mode = 2
@@ -346,6 +362,12 @@ placeholder_text = "full"
 unique_name_in_owner = true
 layout_mode = 2
 text = "Destroy Ship"
+
+[node name="ShipGodModeButton" type="Button" parent="Panel/Scroll/Groups/ShipRows"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Ship God Mode"
 
 [node name="StationHeader" type="Label" parent="Panel/Scroll/Groups"]
 layout_mode = 2

@@ -62,6 +62,8 @@ var _storage_outline_line: Line2D = null
 var _storage_outline_material: ShaderMaterial = null
 var _stored_salvage_items_root: Node2D = null
 var current_health: float = 0.0
+## Debug flag (god mode): while true the hull ignores all incoming damage.
+var invulnerable: bool = false
 var _thruster_state: ThrusterState = ThrusterState.STOPPED
 var _thruster_reference_speed: float = 0.0
 var _last_level_speed: float = -1.0
@@ -683,7 +685,7 @@ func _get_level_speed() -> float:
 
 
 func take_damage(amount: float, source: Node = null) -> void:
-	if current_health <= 0.0 or amount <= 0.0:
+	if invulnerable or current_health <= 0.0 or amount <= 0.0:
 		return
 	var popup_position := global_position
 	if source is Node2D and is_instance_valid(source):
@@ -708,7 +710,7 @@ func repair(amount: float, popup_position: Vector2 = Vector2.INF, show_popup: bo
 ## Environmental acid-storm drain (continuous DoT on hull integrity, so no
 ## per-hit damage popup).
 func apply_storm_damage(amount: float) -> void:
-	if current_health <= 0.0:
+	if invulnerable or current_health <= 0.0:
 		return
 	_reduce_health(amount)
 

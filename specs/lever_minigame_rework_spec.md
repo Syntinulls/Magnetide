@@ -18,7 +18,7 @@ in level.tscn that owns both the minigame UI and the whole activation presentati
    the reds, a **3-2-1 countdown** plays (0.6s per digit, real time), and "Go!"
    pops in green (decaying like every other info text) as the sweep begins.
 3. The crosshair reticle sweeps the bar left→right at a constant speed
-   (0.5 bar-widths/s). Pressing `interact` evaluates the zone under the
+   (0.35 bar-widths/s). Pressing `interact` evaluates the zone under the
    reticle center:
    - **Green** — that pair's light turns green, "PERFECT" pops in green.
    - **Yellow** — the pair's light turns yellow, "CLOSE" pops in yellow, and the
@@ -39,16 +39,17 @@ in level.tscn that owns both the minigame UI and the whole activation presentati
 
 - Pair count = green zone count, threat-scaled 2→5 over threat stages 0→9
   (same `_scale_for_threat` lerp as before).
-- Green zone width = 4% of the bar; each yellow zone is 8% per side (sizes
-  deliberately swapped from the original derivation so the precise green window
-  is smaller than its forgiving yellow fringe). Cluster width = 0.20.
+- Base zone widths at threat stage 0: green 4% of the bar, yellow 6% per side.
+  Both shrink by the same threat-lerped factor (1.0 at stage 0 down to 1/3 at
+  stage 9 — yellow ends at 2%, green at ~1.33%), keeping the green:yellow ratio
+  constant while the growing zone count doesn't crowd out the red. Cluster
+  width runs 0.16 at min threat down to ~0.053 at max.
 - Green centers are rejection-sampled with a minimum center spacing of 0.20
-  (= cluster width, so clusters never overlap) and an edge margin of 0.10
-  (half the cluster width). If sampling can't place every center in 100
+  (> cluster width, so clusters never overlap and keep at least a 4% red gap)
+  and an edge margin of 0.10. If sampling can't place every center in 100
   attempts, the centers fall back to deterministic even spacing. Note the
-  defaults exactly fill the bar at max threat: 2·0.10 + 4·0.20 = 1.0, so
-  5-pair boards always use the even-spacing fallback and have no red filler
-  between clusters.
+  spacing exactly fills the bar at max threat: 2·0.10 + 4·0.20 = 1.0, so
+  5-pair boards always use the even-spacing fallback.
 - Red zones fill all remaining space; zero-width segments are skipped.
 - Zones are HBox children with a cosmetic 1px separation; child pixel widths are
   derived from the ratio boundaries, but hit detection uses the ratios, so the 1px
@@ -66,9 +67,9 @@ LeverMinigame (CanvasLayer 110, PROCESS_MODE_ALWAYS, script lever_minigame.gd)
 ├── VignetteLayer (CanvasLayer 100)
 │   └── Vignette              full-rect ColorRect with the grayscale/vignette
 │                             ShaderMaterial (authored, params start at 0)
-├── InfoLabel                 900x34, 10px above the panel; countdown digits and
+├── InfoLabel                 750x34, 10px above the panel; countdown digits and
 │                             PERFECT/CLOSE/MISS share it
-└── OuterPanel                900x100, bottom edge at the anchor point
+└── OuterPanel                750x100, bottom edge at the anchor point
     ├── Fill                  #5f6969, inset 3px
     ├── InnerPanel            anchored 8px left/top/right, 56px high: InnerFill
     │                         #1e2323 (inset 3), ZoneRow (HBox, separation 1),
@@ -111,7 +112,7 @@ wall-clock speed through the slowdown.
   `cancel_minigame`. `MagnetMinigame` only orchestrates the looting cycle:
   starts the minigame with the threat level, freezes player input and position,
   ratchets the lever on `pair_resolved`, and reacts to `minigame_completed`.
-- The panel is HUD-canvas UI (crisp 900×100 authoring), but presented as a world
+- The panel is HUD-canvas UI (crisp 750×100 authoring), but presented as a world
   object: the minigame computes its own zoom focus point (current horizontal
   view center at `zoom_focus_offset_y`, default -80, above the player from
   `player_path`) and every frame glues the panel's bottom-center to it through

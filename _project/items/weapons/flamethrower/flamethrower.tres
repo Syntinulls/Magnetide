@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="1_weapon_data"]
 [ext_resource type="SpriteFrames" uid="uid://bflameprjfrms" path="res://_project/items/weapons/flamethrower/flame_projectile_sprite_frames.tres" id="2_flame_frames"]
-[ext_resource type="Script" path="res://_project/items/weapons/flamethrower/flame_projectile_behavior.gd" id="3_flame_behavior"]
+[ext_resource type="Script" uid="uid://cpcecusuucpn4" path="res://_project/items/weapons/flamethrower/flame_projectile_behavior.gd" id="3_flame_behavior"]
 [ext_resource type="PackedScene" uid="uid://bburningeffct" path="res://_project/effects/burning/burning_effect.tscn" id="4_burning"]
 [ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/weapons/old/rifle_reload.ogg" id="5_1gt0x"]
 [ext_resource type="Texture2D" uid="uid://mvtpuhx5628f" path="res://_project/items/weapons/flamethrower/player_item_flame.png" id="5_flame_sprite"]
@@ -26,7 +26,6 @@ bullet_sprite_frames = ExtResource("2_flame_frames")
 bullet_lifetime = 1.1
 bullet_collision_size = Vector2(28, 28)
 projectile_behavior = SubResource("Resource_flame_projectile_behavior")
-inherit_shooter_velocity_x = true
 destroy_on_contact = false
 contact_effect = ExtResource("4_burning")
 fire_sfx = Array[AudioStream]([null])

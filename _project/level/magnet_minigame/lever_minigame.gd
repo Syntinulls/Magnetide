@@ -39,15 +39,20 @@ const COUNTDOWN_STEPS := 3
 const INFO_HIDE_TWEEN_TIME := 0.15
 
 @export_group("Zones")
-## Full width of a green zone as a ratio of the bar width.
+## Full width of a green zone as a ratio of the bar width, at min threat (stage 0).
 @export var green_width_ratio: float = 0.04
-## Width of each yellow zone (one per side of every green) as a ratio of the bar width.
-@export var yellow_width_ratio: float = 0.08
+## Width of each yellow zone (one per side of every green) as a ratio of the bar
+## width, at min threat (stage 0).
+@export var yellow_width_ratio: float = 0.06
+## Zone width multiplier at max threat (stage 9), lerped from 1.0 at stage 0.
+## Green and yellow shrink by the same factor so their ratio holds at every
+## threat while the growing zone count doesn't crowd out the red.
+@export var zone_width_scale_at_max_threat: float = 1.0 / 3.0
 ## Green zones at min threat (stage 0) and max threat (stage 9); scales linearly between.
 @export var zones_min: int = 2
 @export var zones_max: int = 5
 ## Minimum distance between green zone centers as a ratio of the bar width.
-## Must be at least green_width_ratio + 2 * yellow_width_ratio or yellows overlap.
+## Must be at least the green+yellows cluster width at every threat or yellows overlap.
 @export var min_green_center_spacing_ratio: float = 0.20
 ## Minimum distance from a green zone center to either bar edge as a ratio of the
 ## bar width. Must be at least half the green+yellows cluster width.
@@ -55,7 +60,7 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 
 @export_group("Reticle")
 ## Constant reticle speed as a ratio of the bar width per second.
-@export var reticle_speed_ratio: float = 0.55
+@export var reticle_speed_ratio: float = 0.35
 ## Speed multiplier step per yellow hit (0.1 = 1.1x at one yellow, 1.2x at two).
 @export var yellow_speed_penalty_ratio: float = 0.1
 
@@ -92,7 +97,7 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var zoom_tween_time: float = 0.6
 ## World-space height above the player's y that the zoom focuses on (and where
 ## the panel's bottom-center anchors); the camera never moves horizontally.
-@export var zoom_focus_offset_y: float = -80.0
+@export var zoom_focus_offset_y: float = -150.0
 ## Grayscale/vignette strength during the minigame (0-1).
 @export var vignette_intensity: float = 0.8
 
@@ -419,17 +424,19 @@ func _zone_at_ratio(ratio: float) -> Zone:
 
 func _build_zones(threat_level: int) -> void:
 	var pair_count := _scale_for_threat(threat_level, zones_min, zones_max)
+	var width_scale := _lerp_for_threat(threat_level, 1.0, zone_width_scale_at_max_threat)
+	var yellow_width := yellow_width_ratio * width_scale
 	var centers := _generate_green_centers(pair_count)
-	var half_green := green_width_ratio * 0.5
+	var half_green := green_width_ratio * width_scale * 0.5
 	var cursor := 0.0
 	for i in range(centers.size()):
 		var center: float = centers[i]
-		var cluster_start := center - half_green - yellow_width_ratio
+		var cluster_start := center - half_green - yellow_width
 		_append_zone(ZoneType.RED, cursor, cluster_start)
 		_append_zone(ZoneType.YELLOW, cluster_start, center - half_green, i)
 		_append_zone(ZoneType.GREEN, center - half_green, center + half_green, i)
-		_append_zone(ZoneType.YELLOW, center + half_green, center + half_green + yellow_width_ratio, i)
-		cursor = center + half_green + yellow_width_ratio
+		_append_zone(ZoneType.YELLOW, center + half_green, center + half_green + yellow_width, i)
+		cursor = center + half_green + yellow_width
 		var pair := Pair.new()
 		pair.center_ratio = center
 		pair.right_edge_ratio = cursor
@@ -582,6 +589,11 @@ func _show_info(text: String, color: Color) -> void:
 
 
 func _scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:
+	return int(roundf(_lerp_for_threat(threat_level, float(min_value), float(max_value))))
+
+
+## Linear blend from min_value (threat stage 0) to max_value (stage 9).
+func _lerp_for_threat(threat_level: int, min_value: float, max_value: float) -> float:
 	var span := maxi(ThreatManager.LEVEL_COUNT - 1, 1)
 	var t := clampf(float(threat_level) / float(span), 0.0, 1.0)
-	return int(roundf(lerpf(float(min_value), float(max_value), t)))
+	return lerpf(min_value, max_value, t)
