@@ -267,17 +267,15 @@ cooldown_min = 8.0
 cooldown_max = 10.0
 pile_spawn_x_ratio = 5.0
 timescale_slowdown_time = 1.0
-timescale_speedup_time = 1.0
-zoom_tween_time = 1.0
+zoom_tween_time = 0.6
 salvage_spawner_path = NodePath("../SalvageSpawner")
 ship_path = NodePath("../Ship")
 player_path = NodePath("../Ship/Player")
 magnet_lever_path = NodePath("../Ship/MagnetLever")
 magnet_path = NodePath("../Ship/Magnet")
 camera_path = NodePath("../Camera2D")
-activation_minigame_path = NodePath("../UICanvas/UIRoot/GameUI/ActivationMinigame")
+lever_minigame_path = NodePath("../UICanvas/UIRoot/GameUI/MinigameLayer/LeverMinigame")
 magnet_capacity_path = NodePath("../MagnetCapacity")
-activation_anchor_path = NodePath("../Ship/ActivationMinigameAnchor")
 warning_icon_path = NodePath("../UICanvas/UIRoot/GameUI/WarningIconAnchor/WarningIcon")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1705480197]

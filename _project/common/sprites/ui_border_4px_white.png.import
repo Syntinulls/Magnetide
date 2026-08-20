@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://b7qa80uvj1vvj"
-path="res://.godot/imported/icon_success.png-0af1981cf4fd7b0f72769e6b62b4e715.ctex"
+uid="uid://rb78ju5rjqk8"
+path="res://.godot/imported/ui_border_4px_white.png-853702601bf42c37a39263f667759a5f.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/icon_success.png"
-dest_files=["res://.godot/imported/icon_success.png-0af1981cf4fd7b0f72769e6b62b4e715.ctex"]
+source_file="res://_project/common/sprites/ui_border_4px_white.png"
+dest_files=["res://.godot/imported/ui_border_4px_white.png-853702601bf42c37a39263f667759a5f.ctex"]
 
 [params]
 

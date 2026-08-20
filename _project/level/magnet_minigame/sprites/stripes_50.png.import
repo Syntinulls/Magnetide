@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://by1lcje8004y5"
-path="res://.godot/imported/bar.png-6d443af36170b84f600f6ffffbade051.ctex"
+uid="uid://csjtjg2skq506"
+path="res://.godot/imported/stripes_50.png-f35ea008f75b416c15401089154253e2.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/bar.png"
-dest_files=["res://.godot/imported/bar.png-6d443af36170b84f600f6ffffbade051.ctex"]
+source_file="res://_project/level/magnet_minigame/sprites/stripes_50.png"
+dest_files=["res://.godot/imported/stripes_50.png-f35ea008f75b416c15401089154253e2.ctex"]
 
 [params]
 

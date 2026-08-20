@@ -138,9 +138,6 @@ position = Vector2(-398.19, -126)
 visible = false
 position = Vector2(396.58, -126)
 
-[node name="ActivationMinigameAnchor" type="Marker2D" parent="." unique_id=143007536]
-position = Vector2(0, -350)
-
 [node name="Hitbox" type="Area2D" parent="." unique_id=65635393]
 visible = false
 script = ExtResource("6_dbcm7")

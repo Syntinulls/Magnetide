@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://dcdl7f8g21bqq"
-path="res://.godot/imported/icon_neutral.png-691712b58e14a69ebdf9bb1dee7b1ea4.ctex"
+uid="uid://2gy4tet1r2bs"
+path="res://.godot/imported/light_off.png-1032062665d73fbe4e0935014bdca59c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/icon_neutral.png"
-dest_files=["res://.godot/imported/icon_neutral.png-691712b58e14a69ebdf9bb1dee7b1ea4.ctex"]
+source_file="res://_project/level/magnet_minigame/sprites/light_off.png"
+dest_files=["res://.godot/imported/light_off.png-1032062665d73fbe4e0935014bdca59c.ctex"]
 
 [params]
 

@@ -65,6 +65,21 @@ back, so watch the telegraph and sidestep the line. It starts appearing at Threa
 
 ### New Systems
 
+**The lever minigame was rebuilt from scratch.** Braking for salvage now plays out on a
+proper calibration panel above your head instead of the old cog-and-markers bar. After a
+quick **3-2-1 countdown** (during which the board deals out its green, yellow, and red
+zones), a crosshair sweeps left-to-right at a steady speed and you press **E** as it
+crosses each green zone. Every green zone gets a result light: a perfect press lights it
+**green ("PERFECT")**, clipping the narrow yellow fringe lights it **yellow ("CLOSE")**
+and permanently speeds the crosshair up for the rest of the sweep, and pressing on red —
+or letting a zone slip past untouched — turns the whole board red (**"MISS"**) and fails
+the brake on the spot. The old "yellow allowance" is gone: yellows never fail you, they
+just make the rest of the sweep harder. Zone count still scales with Threat Level
+(**2 zones** at low threat up to **5** at max). The camera dive is gentler too — a
+**1.5×** zoom (was 2.5×) that eases in over 0.6s and centers on *you* instead of a point
+in the sky, and the panel itself stays pixel-crisp at native size instead of scaling up
+with the zoom.
+
 **Weapons now have magazines and reloading.** Guns run dry and must be reloaded — press
 **R** to reload manually, or fire the last round and it reloads automatically. Ammo and
 reload progress are tracked *per weapon slot*, so switching guns mid-reload doesn't lose
@@ -138,6 +153,10 @@ instead of 3, so it's the same number of shots with far more honest ammo readout
 1 Common + 1 Rare.
 
 ### Feel, Audio & Visuals
+
+**Crisper UI panel borders.** Every bordered panel — the station screens, popups, progress
+bars, and augment frames — now uses a clean square-cornered 4px border with tighter 3px
+content insets, replacing the old rounded-corner frame.
 
 **The game has music.** Every part of the game now has its own soundtrack — the main menu,
 the station (carried seamlessly across the map and salvage screens), and runs each draw from

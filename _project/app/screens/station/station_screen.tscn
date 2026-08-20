@@ -317,10 +317,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=1748560142]
 layout_mode = 0
@@ -543,10 +543,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=963301196]
 layout_mode = 0
@@ -693,10 +693,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer" unique_id=778651480]
 layout_mode = 0
@@ -900,10 +900,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="Row" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay" unique_id=235527973]
 layout_mode = 1
@@ -1020,10 +1020,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StatsPanel" unique_id=1707857102]
 layout_mode = 0
@@ -1073,10 +1073,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StoragePanel" unique_id=1374877275]
 layout_mode = 0
@@ -1154,10 +1154,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 5
-patch_margin_top = 5
-patch_margin_right = 5
-patch_margin_bottom = 5
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
 
 [node name="ItemIcon" type="TextureRect" parent="SharedBottomArea/StorageDetailPanel" unique_id=1606379290]
 layout_mode = 0

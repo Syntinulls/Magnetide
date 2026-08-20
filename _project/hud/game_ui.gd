@@ -21,7 +21,7 @@ const AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
 const AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/ui_border_4px.png")
 const AUGMENT_BG_COLOR := Color("5f6969")
 ## Border thickness in the ui_border_4px nine-patch; icons inset by this much.
-const AUGMENT_BORDER_INSET := 5
+const AUGMENT_BORDER_INSET := 6
 ## Gray background inset so it doesn't bleed past the border stroke.
 const AUGMENT_BG_INSET := 3
 

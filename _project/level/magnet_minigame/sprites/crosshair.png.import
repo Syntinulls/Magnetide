@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://rj7x1y3kpkb0"
-path="res://.godot/imported/icon_chevron.png-f4c1f573ffe1a51b658bb0c148acf1f9.ctex"
+uid="uid://kphcko0tdwed"
+path="res://.godot/imported/crosshair.png-807541e08fb29bf9291adfb1853a8c7c.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/icon_chevron.png"
-dest_files=["res://.godot/imported/icon_chevron.png-f4c1f573ffe1a51b658bb0c148acf1f9.ctex"]
+source_file="res://_project/level/magnet_minigame/sprites/crosshair.png"
+dest_files=["res://.godot/imported/crosshair.png-807541e08fb29bf9291adfb1853a8c7c.ctex"]
 
 [params]
 

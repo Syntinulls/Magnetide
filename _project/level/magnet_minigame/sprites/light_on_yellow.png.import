@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://qby14j35cvd7"
-path="res://.godot/imported/marker_animation.png-a5fbac10eea401414785355a17898ca2.ctex"
+uid="uid://d00sm6q67erve"
+path="res://.godot/imported/light_on_yellow.png-6b5be94fd49125273015e0c9680498fd.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/marker_animation.png"
-dest_files=["res://.godot/imported/marker_animation.png-a5fbac10eea401414785355a17898ca2.ctex"]
+source_file="res://_project/level/magnet_minigame/sprites/light_on_yellow.png"
+dest_files=["res://.godot/imported/light_on_yellow.png-6b5be94fd49125273015e0c9680498fd.ctex"]
 
 [params]
 

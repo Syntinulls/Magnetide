@@ -1,0 +1,132 @@
+[gd_scene load_steps=5 format=3 uid="uid://dn21ges0buuvi"]
+
+[ext_resource type="Script" path="res://_project/level/magnet_minigame/lever_minigame.gd" id="1_script"]
+[ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="2_border4"]
+[ext_resource type="Texture2D" uid="uid://bpxmjs2slk4kd" path="res://_project/common/sprites/ui_border_3px.png" id="3_border3"]
+[ext_resource type="Texture2D" uid="uid://kphcko0tdwed" path="res://_project/level/magnet_minigame/sprites/crosshair.png" id="4_crosshair"]
+
+[node name="LeverMinigame" type="Control"]
+process_mode = 3
+visible = false
+anchors_preset = 0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="InfoLabel" type="Label" parent="."]
+layout_mode = 0
+offset_left = -450.0
+offset_top = -144.0
+offset_right = 450.0
+offset_bottom = -110.0
+theme_override_font_sizes/font_size = 36
+theme_override_constants/outline_size = 6
+horizontal_alignment = 1
+vertical_alignment = 1
+
+[node name="OuterPanel" type="Control" parent="."]
+layout_mode = 0
+offset_left = -450.0
+offset_top = -100.0
+offset_right = 450.0
+mouse_filter = 2
+
+[node name="Fill" type="ColorRect" parent="OuterPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="InnerPanel" type="Control" parent="OuterPanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 8.0
+offset_right = -8.0
+offset_bottom = 64.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="InnerFill" type="ColorRect" parent="OuterPanel/InnerPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.117647, 0.137255, 0.137255, 1)
+
+[node name="ZoneRow" type="HBoxContainer" parent="OuterPanel/InnerPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 1
+
+[node name="InnerBorder" type="NinePatchRect" parent="OuterPanel/InnerPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("3_border3")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="Reticle" type="TextureRect" parent="OuterPanel/InnerPanel"]
+layout_mode = 0
+offset_top = 1.0
+offset_right = 18.0
+offset_bottom = 55.0
+mouse_filter = 2
+texture = ExtResource("4_crosshair")
+stretch_mode = 2
+
+[node name="LightsRow" type="Control" parent="OuterPanel"]
+layout_mode = 1
+anchors_preset = 10
+anchor_right = 1.0
+offset_left = 8.0
+offset_top = 68.0
+offset_right = -8.0
+offset_bottom = 92.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="Border" type="NinePatchRect" parent="OuterPanel"]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+texture = ExtResource("2_border4")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
