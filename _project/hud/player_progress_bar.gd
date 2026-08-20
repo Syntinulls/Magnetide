@@ -8,7 +8,7 @@ class_name PlayerProgressBar
 ## drives it via set_progress()/set_fill_color()/set_text() and it positions itself
 ## in screen space above the attached world target each frame.
 ##
-## Visuals: a ui_border_2 nine-patch frame (6px margins) drawn on top of a ColorRect
+## Visuals: a ui_border_4px nine-patch frame (5px margins) drawn on top of a ColorRect
 ## fill that is clipped to the frame's interior. Unfilled interior stays transparent;
 ## filled interior shows the solid fill color. An optional label floats above.
 

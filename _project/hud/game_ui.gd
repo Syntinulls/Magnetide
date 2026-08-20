@@ -18,12 +18,12 @@ const SHIELD_BROKEN_LOOP_PAUSE_SECONDS := 0.35
 const SHIELD_BREAK_SHAKE_DEGREES := 8.0
 const AUGMENT_ICON_SIZE := Vector2(44.0, 44.0)
 const AUGMENT_TOOLTIP_OFFSET := Vector2(0.0, 52.0)
-const AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/panel_border.png")
+const AUGMENT_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/ui_border_4px.png")
 const AUGMENT_BG_COLOR := Color("5f6969")
-## Border thickness in the panel_border nine-patch; icons inset by this much.
-const AUGMENT_BORDER_INSET := 6
-## Gray background inset so it doesn't show in the border's rounded corners.
-const AUGMENT_BG_INSET := 4
+## Border thickness in the ui_border_4px nine-patch; icons inset by this much.
+const AUGMENT_BORDER_INSET := 5
+## Gray background inset so it doesn't bleed past the border stroke.
+const AUGMENT_BG_INSET := 3
 
 ## Interlevel window announcements. The window is the run's one departure
 ## opportunity, so its subtext spells out every option the player has.

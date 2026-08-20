@@ -33,7 +33,7 @@
 [ext_resource type="Texture2D" uid="uid://bu6ihviltjyq5" path="res://_project/app/screens/station/sprites/station_floor_line.png" id="34_floor_line"]
 [ext_resource type="Texture2D" uid="uid://b2pkbswqn8aro" path="res://_project/app/screens/station/sprites/station_fore_dollie_crates.png" id="35_dollie_crates"]
 [ext_resource type="Shader" uid="uid://cn2rwlbq1g8c0" path="res://_project/level/decoration/perspective_scroll.gdshader" id="36_perspective"]
-[ext_resource type="Texture2D" uid="uid://b7ebjmexj2v8n" path="res://_project/common/sprites/panel_border.png" id="37_border"]
+[ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="37_border"]
 [ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="40_upg_weapon"]
 [ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/app/screens/station/sprites/icon_health.png" id="48_ic_health"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/app/screens/station/sprites/icon_shield.png" id="49_ic_shield"]
@@ -300,10 +300,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -317,10 +317,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer" unique_id=1748560142]
 layout_mode = 0
@@ -526,10 +526,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -543,10 +543,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="TitleLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=963301196]
 layout_mode = 0
@@ -676,10 +676,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -693,10 +693,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="TopUpgradeLayout" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer" unique_id=778651480]
 layout_mode = 0
@@ -883,10 +883,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -900,10 +900,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="Row" type="HBoxContainer" parent="TopBar/ResearchPointsDisplay" unique_id=235527973]
 layout_mode = 1
@@ -1003,10 +1003,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -1020,10 +1020,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StatsPanel" unique_id=1707857102]
 layout_mode = 0
@@ -1056,10 +1056,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -1073,10 +1073,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="TitleLabel" type="Label" parent="SharedBottomArea/StoragePanel" unique_id=1374877275]
 layout_mode = 0
@@ -1137,10 +1137,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -1154,10 +1154,10 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="ItemIcon" type="TextureRect" parent="SharedBottomArea/StorageDetailPanel" unique_id=1606379290]
 layout_mode = 0

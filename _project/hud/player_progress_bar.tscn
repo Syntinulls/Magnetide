@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://c8plprbar0001"]
 
 [ext_resource type="Script" path="res://_project/hud/player_progress_bar.gd" id="1_script"]
-[ext_resource type="Texture2D" uid="uid://b7ebjmexj2v8n" path="res://_project/common/sprites/panel_border.png" id="2_border"]
+[ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="2_border"]
 
 [node name="PlayerProgressBar" type="Control"]
 custom_minimum_size = Vector2(120, 22)
@@ -27,10 +27,10 @@ layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
 anchor_bottom = 1.0
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
@@ -51,7 +51,7 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("2_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5

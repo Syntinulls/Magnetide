@@ -46,7 +46,7 @@ _project/                    All game content. (Root level is reserved for engin
 ├── common/                  Generic, game-agnostic building blocks:
 │                            utils.gd (static helpers), weighted_random, interaction_hitbox,
 │                            shared outline shaders (border_outline, composite_outline).
-│   └── sprites/             Sprites with no single owner: reusable chrome (panel_border) and
+│   └── sprites/             Sprites with no single owner: reusable chrome (ui_border_*) and
 │                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
 │                            icon_crate, icon_research_point). A sprite used by exactly one
 │                            concept belongs to that concept, not here.

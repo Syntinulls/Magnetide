@@ -1,6 +1,6 @@
 [gd_scene load_steps=2 format=3 uid="uid://deheo7vkoke2n"]
 
-[ext_resource type="Texture2D" uid="uid://b7ebjmexj2v8n" path="res://_project/common/sprites/panel_border.png" id="1_border"]
+[ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="1_border"]
 
 [node name="DynamicSlotPopup" type="Control" unique_id=344138790]
 visible = false
@@ -34,10 +34,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 mouse_filter = 2
 color = Color(0.372549, 0.411765, 0.411765, 1)
 
@@ -50,10 +50,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="ItemListTitle" type="Label" parent="ItemListPanel" unique_id=250815423]
 layout_mode = 0
@@ -92,10 +92,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 mouse_filter = 2
 color = Color(0.372549, 0.411765, 0.411765, 1)
 
@@ -108,10 +108,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="HeaderRow" type="HBoxContainer" parent="ItemDetailPanel" unique_id=1722274249]
 layout_mode = 0
@@ -177,10 +177,10 @@ anchor_right = 1.0
 anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
-offset_left = 4.0
-offset_top = 4.0
-offset_right = -4.0
-offset_bottom = -4.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
 mouse_filter = 2
 color = Color(0.372549, 0.411765, 0.411765, 1)
 
@@ -193,10 +193,10 @@ grow_horizontal = 2
 grow_vertical = 2
 mouse_filter = 2
 texture = ExtResource("1_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
+patch_margin_left = 5
+patch_margin_top = 5
+patch_margin_right = 5
+patch_margin_bottom = 5
 
 [node name="HeaderRow" type="HBoxContainer" parent="ItemDetailPanelCompare" unique_id=1722274250]
 layout_mode = 0
