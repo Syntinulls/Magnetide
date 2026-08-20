@@ -1,19 +1,39 @@
-[gd_scene load_steps=5 format=3 uid="uid://dn21ges0buuvi"]
+[gd_scene load_steps=7 format=3 uid="uid://dn21ges0buuvi"]
 
 [ext_resource type="Script" path="res://_project/level/magnet_minigame/lever_minigame.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="2_border4"]
 [ext_resource type="Texture2D" uid="uid://bpxmjs2slk4kd" path="res://_project/common/sprites/ui_border_3px.png" id="3_border3"]
 [ext_resource type="Texture2D" uid="uid://kphcko0tdwed" path="res://_project/level/magnet_minigame/sprites/crosshair.png" id="4_crosshair"]
+[ext_resource type="Shader" uid="uid://dbys0mqpe3wxu" path="res://_project/level/magnet_minigame/vignette_grayscale.gdshader" id="5_vignette"]
 
-[node name="LeverMinigame" type="Control"]
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
+shader = ExtResource("5_vignette")
+shader_parameter/vignette_intensity = 0.0
+shader_parameter/vignette_radius = 0.4
+shader_parameter/vignette_softness = 0.4
+shader_parameter/grayscale_intensity = 0.0
+
+[node name="LeverMinigame" type="CanvasLayer"]
 process_mode = 3
+layer = 110
 visible = false
-anchors_preset = 0
-mouse_filter = 2
 script = ExtResource("1_script")
 
+[node name="VignetteLayer" type="CanvasLayer" parent="."]
+layer = 100
+
+[node name="Vignette" type="ColorRect" parent="VignetteLayer"]
+visible = false
+material = SubResource("ShaderMaterial_vignette")
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0, 0, 0, 0)
+
 [node name="InfoLabel" type="Label" parent="."]
-layout_mode = 0
 offset_left = -450.0
 offset_top = -144.0
 offset_right = 450.0
@@ -24,7 +44,8 @@ horizontal_alignment = 1
 vertical_alignment = 1
 
 [node name="OuterPanel" type="Control" parent="."]
-layout_mode = 0
+layout_mode = 3
+anchors_preset = 0
 offset_left = -450.0
 offset_top = -100.0
 offset_right = 450.0

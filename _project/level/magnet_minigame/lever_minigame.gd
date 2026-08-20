@@ -1,4 +1,4 @@
-extends Control
+extends CanvasLayer
 class_name LeverMinigame
 
 ## Lever activation minigame: a crosshair reticle sweeps left-to-right across a
@@ -8,13 +8,17 @@ class_name LeverMinigame
 ## slip past -- turns every light red and fails the attempt instantly. One result
 ## light per green zone reports the outcome below the bar.
 ##
-## The panel lives on the HUD canvas but is presented like a world object: its
-## bottom-center is glued to a world anchor point (the activation zoom's focus,
-## set via set_world_anchor) through the canvas transform each frame, and its
-## scale matches the camera zoom, so the panel zooms in with the world. The
-## camera finishes centered on the anchor, leaving the panel bottom-centered on
-## screen at the zoomed scale. All timers/movement divide out Engine.time_scale
-## so the minigame plays at wall-clock speed during the activation slowdown.
+## Owns the whole activation presentation: while it runs it slows
+## Engine.time_scale, zooms the camera onto a focus point above the player, and
+## fades in the grayscale vignette (authored on the child VignetteLayer, canvas
+## layer 100 -- above the HUD, below this scene's own layer 110 so only the
+## minigame escapes the grayscale). The panel is presented like a world object:
+## its bottom-center is glued to the zoom focus point through the canvas
+## transform each frame and its scale matches the camera zoom, so it zooms in
+## with the world and ends bottom-centered on screen. All timers/movement divide
+## out Engine.time_scale so the minigame plays at wall-clock speed during the
+## slowdown. Instanced in level.tscn; MagnetMinigame only starts it and reacts
+## to its signals.
 
 signal minigame_completed(success: bool)
 signal pair_resolved(pair_index: int, total_pairs: int)
@@ -72,10 +76,28 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 ## Pause with the reticle halted after a miss before the minigame closes.
 @export var fail_pause_time: float = 0.6
 ## Time to linger on a successful result before closing.
-@export var result_display_time: float = 1.5
+@export var result_display_time: float = 0.75
 @export var zone_color_green: Color = Color("58c05c")
 @export var zone_color_yellow: Color = Color("e8c14b")
 @export var zone_color_red: Color = Color("d1493f")
+
+@export_group("Activation Effects")
+## Target Engine.time_scale while the minigame runs (restored on completion).
+@export var activation_timescale: float = 0.01
+## Real-time seconds to ease the timescale down to activation_timescale.
+@export var timescale_slowdown_time: float = 1.0
+## Camera zoom multiplier while the minigame runs.
+@export var activation_zoom: float = 1.5
+## Zoom/vignette tween-in time; the restore takes half of this.
+@export var zoom_tween_time: float = 0.6
+## World-space height above the player's y that the zoom focuses on (and where
+## the panel's bottom-center anchors); the camera never moves horizontally.
+@export var zoom_focus_offset_y: float = -80.0
+## Grayscale/vignette strength during the minigame (0-1).
+@export var vignette_intensity: float = 0.8
+
+@export_group("Scene References")
+@export var player_path: NodePath
 
 class Zone:
 	var type: ZoneType
@@ -105,10 +127,19 @@ var _reds_revealed := false
 var _result_timer: float = 0.0
 var _game_won := false
 var _world_anchor := Vector2.ZERO
-var _has_world_anchor := false
-var _base_camera_zoom := Vector2.ONE
+var _effects_active := false
+var _camera: Camera2D = null
+var _original_zoom := Vector2.ONE
+var _original_offset := Vector2.ZERO
+var _timescale_active := false
+var _timescale_elapsed: float = 0.0
+var _zoom_tween: Tween = null
+var _offset_tween: Tween = null
+var _vignette_tween: Tween = null
 var _info_tween: Tween = null
 
+@onready var _player: Node2D = get_node_or_null(player_path) as Node2D
+@onready var _vignette: ColorRect = $VignetteLayer/Vignette
 @onready var _info_label: Label = $InfoLabel
 @onready var _zone_row: HBoxContainer = $OuterPanel/InnerPanel/ZoneRow
 @onready var _reticle: TextureRect = $OuterPanel/InnerPanel/Reticle
@@ -128,6 +159,11 @@ func _process(delta: float) -> void:
 		return
 	_update_placement()
 	var real_delta := delta / Engine.time_scale if Engine.time_scale > 0.0 else delta
+	if _timescale_active:
+		_timescale_elapsed += real_delta
+		var t := clampf(_timescale_elapsed / timescale_slowdown_time, 0.0, 1.0)
+		var eased_t := 1.0 - pow(1.0 - t, 2.0)
+		Engine.time_scale = lerpf(1.0, activation_timescale, eased_t)
 	# Tweens tick on scaled time; keep the info pop at wall-clock speed while
 	# the timescale slowdown tweens in and out underneath it.
 	if _info_tween and _info_tween.is_valid():
@@ -156,6 +192,7 @@ func start_minigame(threat_level: int) -> void:
 	_reset_state()
 	_build_zones(clamped_threat)
 	_update_reticle_position()
+	_begin_activation_effects()
 	_update_placement()
 	visible = true
 	set_process(true)
@@ -163,20 +200,11 @@ func start_minigame(threat_level: int) -> void:
 
 
 func cancel_minigame() -> void:
+	_end_activation_effects()
 	visible = false
 	set_process(false)
 	_state = State.INACTIVE
 	_reset_state()
-
-
-## World point the panel's bottom-center is glued to; should be the point the
-## activation zoom focuses on so the panel scales with the world around it.
-## Call before start_minigame, while the camera is still at its resting zoom.
-func set_world_anchor(point: Vector2) -> void:
-	_world_anchor = point
-	_has_world_anchor = true
-	var camera := get_viewport().get_camera_2d()
-	_base_camera_zoom = camera.zoom if camera else Vector2.ONE
 
 
 func _reset_state() -> void:
@@ -206,15 +234,85 @@ func _reset_state() -> void:
 	_info_label.scale = Vector2.ZERO
 
 
+## Slow time, zoom the camera onto the focus point above the player, and fade in
+## the grayscale vignette. Called while the camera is still at its resting state.
+func _begin_activation_effects() -> void:
+	_camera = get_viewport().get_camera_2d()
+	_timescale_elapsed = 0.0
+	_timescale_active = true
+	_effects_active = true
+	if _camera:
+		_original_zoom = _camera.zoom
+		_original_offset = _camera.offset
+		var focus_y := _player.global_position.y + zoom_focus_offset_y if _player \
+			else _camera.global_position.y + _original_offset.y
+		_world_anchor = Vector2(_camera.global_position.x + _original_offset.x, focus_y)
+		_kill_camera_tweens()
+		_zoom_tween = create_tween()
+		_zoom_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+		_zoom_tween.tween_property(_camera, "zoom", _original_zoom * activation_zoom, zoom_tween_time) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+		_offset_tween = create_tween()
+		_offset_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+		var target_offset := Vector2(_original_offset.x, _world_anchor.y - _camera.global_position.y)
+		_offset_tween.tween_property(_camera, "offset", target_offset, zoom_tween_time) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
+	if _vignette and _vignette.material:
+		_vignette.visible = true
+		if _vignette_tween:
+			_vignette_tween.kill()
+		_vignette_tween = create_tween()
+		_vignette_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
+		_vignette_tween.set_parallel(true)
+		_vignette_tween.tween_property(_vignette.material, "shader_parameter/vignette_intensity", vignette_intensity, zoom_tween_time) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+		_vignette_tween.tween_property(_vignette.material, "shader_parameter/grayscale_intensity", vignette_intensity, zoom_tween_time) \
+			.set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
+
+
+## Restore timescale, camera, and vignette. Safe to call when nothing is active.
+func _end_activation_effects() -> void:
+	_timescale_active = false
+	Engine.time_scale = 1.0
+	if not _effects_active:
+		return
+	_effects_active = false
+	var transition_time := zoom_tween_time * 0.5
+	if _camera:
+		_kill_camera_tweens()
+		_zoom_tween = create_tween()
+		_zoom_tween.tween_property(_camera, "zoom", _original_zoom, transition_time) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+		_offset_tween = create_tween()
+		_offset_tween.tween_property(_camera, "offset", _original_offset, transition_time) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
+	if _vignette and _vignette.material:
+		if _vignette_tween:
+			_vignette_tween.kill()
+		_vignette_tween = create_tween()
+		_vignette_tween.set_parallel(true)
+		_vignette_tween.tween_property(_vignette.material, "shader_parameter/vignette_intensity", 0.0, transition_time) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		_vignette_tween.tween_property(_vignette.material, "shader_parameter/grayscale_intensity", 0.0, transition_time) \
+			.set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
+		_vignette_tween.tween_callback(_vignette.hide).set_delay(transition_time)
+
+
+func _kill_camera_tweens() -> void:
+	if _zoom_tween:
+		_zoom_tween.kill()
+	if _offset_tween:
+		_offset_tween.kill()
+
+
 func _update_placement() -> void:
-	var camera := get_viewport().get_camera_2d()
-	if not _has_world_anchor or camera == null:
+	if not _effects_active or _camera == null:
 		var screen_size := get_viewport().get_visible_rect().size
-		position = Vector2(screen_size.x * 0.5, screen_size.y * 0.5)
+		offset = Vector2(screen_size.x * 0.5, screen_size.y * 0.5)
 		scale = Vector2.ONE
 		return
-	position = get_viewport().get_canvas_transform() * _world_anchor
-	scale = camera.zoom / _base_camera_zoom
+	offset = get_viewport().get_canvas_transform() * _world_anchor
+	scale = _camera.zoom / _original_zoom
 
 
 ## The bar starts empty; zones reveal green -> yellow -> red on a beat, then the
@@ -268,6 +366,7 @@ func _process_result(real_delta: float) -> void:
 	_result_timer += real_delta
 	var wait_time := result_display_time if _game_won else fail_pause_time
 	if _result_timer >= wait_time:
+		_end_activation_effects()
 		visible = false
 		set_process(false)
 		_state = State.INACTIVE

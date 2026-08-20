@@ -17,6 +17,7 @@
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
 [ext_resource type="Resource" uid="uid://dt1qcniioijon" path="res://_project/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 [ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/hud/magnet_capacity.gd" id="24_magnet_capacity"]
+[ext_resource type="PackedScene" path="res://_project/level/magnet_minigame/lever_minigame.tscn" id="25_lever_minigame"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)
@@ -266,17 +267,18 @@ pile_height_ratio_max = 0.2
 cooldown_min = 8.0
 cooldown_max = 10.0
 pile_spawn_x_ratio = 5.0
-timescale_slowdown_time = 1.0
-zoom_tween_time = 0.6
 salvage_spawner_path = NodePath("../SalvageSpawner")
 ship_path = NodePath("../Ship")
 player_path = NodePath("../Ship/Player")
 magnet_lever_path = NodePath("../Ship/MagnetLever")
 magnet_path = NodePath("../Ship/Magnet")
-camera_path = NodePath("../Camera2D")
-lever_minigame_path = NodePath("../UICanvas/UIRoot/GameUI/MinigameLayer/LeverMinigame")
+lever_minigame_path = NodePath("../LeverMinigame")
 magnet_capacity_path = NodePath("../MagnetCapacity")
 warning_icon_path = NodePath("../UICanvas/UIRoot/GameUI/WarningIconAnchor/WarningIcon")
+
+[node name="LeverMinigame" parent="." unique_id=110391115 instance=ExtResource("25_lever_minigame")]
+zoom_focus_offset_y = -150.0
+player_path = NodePath("../Ship/Player")
 
 [node name="Camera2D" type="Camera2D" parent="." unique_id=1705480197]
 

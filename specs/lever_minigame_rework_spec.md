@@ -5,7 +5,9 @@ a crosshair reticle sweeps left-to-right at constant speed across a bar of visib
 green/yellow/red zones, replacing the accelerating cog swept over pop-in markers.
 The old implementation (`activation_minigame.gd`, fully code-built UI) is deleted;
 the new one is `LeverMinigame` (`lever_minigame.gd` + authored `lever_minigame.tscn`
-in `_project/level/magnet_minigame/`).
+in `_project/level/magnet_minigame/`), a self-contained CanvasLayer scene instanced
+in level.tscn that owns both the minigame UI and the whole activation presentation
+(timescale slowdown, camera zoom, grayscale vignette).
 
 ## Mechanic
 
@@ -60,10 +62,13 @@ in `_project/level/magnet_minigame/`).
 ## Authored scene
 
 ```
-LeverMinigame (Control, PROCESS_MODE_ALWAYS, script lever_minigame.gd)
+LeverMinigame (CanvasLayer 110, PROCESS_MODE_ALWAYS, script lever_minigame.gd)
+├── VignetteLayer (CanvasLayer 100)
+│   └── Vignette              full-rect ColorRect with the grayscale/vignette
+│                             ShaderMaterial (authored, params start at 0)
 ├── InfoLabel                 900x34, 10px above the panel; countdown digits and
 │                             PERFECT/CLOSE/MISS share it
-└── OuterPanel                900x100, bottom edge at the tracked height
+└── OuterPanel                900x100, bottom edge at the anchor point
     ├── Fill                  #5f6969, inset 3px
     ├── InnerPanel            anchored 8px left/top/right, 56px high: InnerFill
     │                         #1e2323 (inset 3), ZoneRow (HBox, separation 1),
@@ -73,6 +78,12 @@ LeverMinigame (Control, PROCESS_MODE_ALWAYS, script lever_minigame.gd)
     │                         plain Control, lights positioned by code
     └── Border                ui_border_4px, margins 6
 ```
+
+The scene is instanced in level.tscn as a root-level node beside MagnetMinigame
+(`player_path` wired to `../Ship/Player`) and brings its own render layers: the
+panel on canvas layer 110 (excluded from the grayscale), the vignette on 100
+(above the HUD's layer 10, below the panel). Nothing minigame-related lives in
+game_ui.tscn anymore.
 
 Zone children and lights are runtime N-lists and stay code-generated (spec §8);
 everything static is authored. Two structural notes: the lights row deviates from
@@ -90,27 +101,27 @@ Every update kills the running tween and replays: center-pivot scale 0→1 over
 `speed_scale` is re-set to `1/Engine.time_scale` every frame so it runs at
 wall-clock speed through the slowdown.
 
-## Placement and camera
+## Presentation ownership, placement, and camera
 
-- The minigame instance sits under `MinigameLayer` (CanvasLayer, layer 110) in
-  game_ui.tscn — above the grayscale/vignette overlay (layer 100) — so the
-  minigame is the one UI element excluded from the activation grayscale while
-  the rest of the HUD keeps the effect.
-
+- **LeverMinigame owns the entire activation presentation**: the timescale
+  slowdown (`activation_timescale` 0.01 over `timescale_slowdown_time` 1.0s,
+  restored instantly on completion/cancel), the camera zoom, and the
+  grayscale/vignette fade (`vignette_intensity` 0.8) — all exports on the
+  minigame, all started by `start_minigame` and unwound by completion or
+  `cancel_minigame`. `MagnetMinigame` only orchestrates the looting cycle:
+  starts the minigame with the threat level, freezes player input and position,
+  ratchets the lever on `pair_resolved`, and reacts to `minigame_completed`.
 - The panel is HUD-canvas UI (crisp 900×100 authoring), but presented as a world
-  object: `MagnetMinigame` passes the zoom's world focus point via
-  `set_world_anchor`, and every frame the panel glues its bottom-center to that
-  point through the canvas transform while matching `scale` to the camera zoom
-  ratio. It therefore zooms in with the world, scaling about its bottom-center
-  (the anchor). The camera finishes centered on the anchor, so the panel ends
-  bottom-centered on screen at the zoomed scale. The old per-node tracking
-  (`set_tracked_node`, the `Ship/ActivationMinigameAnchor` Marker2D,
-  `set_anchor_marker`) is deleted.
-- Camera: activation zoom reduced 2.5× → **1.5×**, tween shortened 1.0s → **0.6s**
-  and smoothed to TRANS_CUBIC. The zoom refocuses **vertically only**: the focus
-  point is the current horizontal view center at `zoom_focus_offset_y` (default
-  -80) above the player's y (`_get_zoom_focus_point()`); the horizontal framing
-  never moves.
+  object: the minigame computes its own zoom focus point (current horizontal
+  view center at `zoom_focus_offset_y`, default -80, above the player from
+  `player_path`) and every frame glues the panel's bottom-center to it through
+  the canvas transform while matching layer `scale` to the camera zoom ratio.
+  It zooms in with the world, scaling about its bottom-center, and ends
+  bottom-centered on screen at the zoomed scale.
+- Camera: activation zoom **1.5×** over **0.6s** TRANS_CUBIC (restore takes
+  half); the zoom refocuses **vertically only** — the horizontal framing never
+  moves. The camera is found via `get_viewport().get_camera_2d()`; original
+  zoom/offset are captured at minigame start and restored after.
 
 ## Integration contract
 

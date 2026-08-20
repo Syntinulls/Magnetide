@@ -48,21 +48,8 @@ const DEPARTURE_PRIORITY := 50
 @export var magnet_pull_frequency: float = 2.5
 
 @export_group("Activation Minigame")
-## Target timescale during activation minigame (0.01 = almost paused).
-@export var activation_timescale: float = 0.01
-## Time to slow down to activation timescale.
-@export var timescale_slowdown_time: float = 0.5
 ## X offset from lever position for player during activation (negative = left of lever).
 @export var player_lever_offset_x: float = -80.0
-## Camera zoom level during activation minigame (higher = more zoomed in).
-@export var activation_zoom: float = 1.5
-## Time to zoom in/out.
-@export var zoom_tween_time: float = 0.5
-## World-space height above the player's y that the zoom focuses on (and where
-## the minigame panel anchors); the camera never moves horizontally.
-@export var zoom_focus_offset_y: float = -80.0
-## Vignette/darkening intensity during activation (0-1).
-@export var vignette_intensity: float = 0.6
 
 @export_group("Scene References")
 @export var salvage_spawner_path: NodePath
@@ -70,7 +57,6 @@ const DEPARTURE_PRIORITY := 50
 @export var player_path: NodePath
 @export var magnet_lever_path: NodePath
 @export var magnet_path: NodePath
-@export var camera_path: NodePath
 @export var lever_minigame_path: NodePath
 @export var magnet_capacity_path: NodePath
 @export var warning_icon_path: NodePath
@@ -89,17 +75,7 @@ var _accel_elapsed: float = 0.0
 var _drop_elapsed: float = 0.0
 const DROP_DURATION: float = 1.0  # Time to wait for items to fall
 var _current_pile: SalvagePile = null
-var _timescale_transition_elapsed: float = 0.0
-var _restoring_timescale: bool = false
-var _activation_won: bool = false
 var _player_original_position: Vector2 = Vector2.ZERO
-var _camera: Camera2D = null
-var _original_zoom: Vector2 = Vector2.ONE
-var _original_camera_offset: Vector2 = Vector2.ZERO
-var _zoom_tween: Tween = null
-var _offset_tween: Tween = null
-var _vignette_overlay: ColorRect = null
-var _vignette_tween: Tween = null
 
 var _level: Node2D = null
 var _salvage_spawner: SalvageSpawner = null
@@ -153,15 +129,6 @@ func _ready() -> void:
 	if _threat_manager:
 		_threat_manager.window_opened.connect(_on_threat_window_opened)
 		_threat_manager.level_advanced.connect(_on_threat_level_unlocked)
-
-	# Get camera reference
-	_camera = _resolve_node(camera_path) as Camera2D
-	if _camera:
-		_original_zoom = _camera.zoom
-		_original_camera_offset = _camera.offset
-	
-	# Create vignette overlay
-	_setup_vignette_overlay()
 
 
 func _setup_ui_references() -> void:
@@ -304,47 +271,33 @@ func _start_lever_minigame() -> void:
 	# Looting cycle has begun — hold the storm-imminent trigger until the ship departs.
 	if _threat_manager:
 		_threat_manager.set_window_hold(true)
-	_timescale_transition_elapsed = 0.0
-	_restoring_timescale = false
-	
-	# Set process mode to always so we can control timescale
+
+	# Keep running while the minigame slows the timescale.
 	process_mode = Node.PROCESS_MODE_ALWAYS
 
 	# Disable player input during minigame
 	_set_player_input_enabled(false)
-	
+
 	# Position player at lever spot
 	_position_player_at_lever()
-	
+
 	# Reset lever to start position
 	if _magnet_lever:
 		_magnet_lever.reset_rotation()
-	
-	# Start the lever minigame UI (difficulty scales by current threat level);
-	# anchor it to the zoom's focus point so it scales in with the world.
+
+	# The minigame owns its own presentation (timescale, camera zoom, vignette);
+	# difficulty scales by current threat level.
 	if _lever_minigame:
-		_lever_minigame.set_world_anchor(_get_zoom_focus_point())
 		_lever_minigame.start_minigame(_get_threat_level())
-	
-	# Start camera zoom and vignette effects
-	_start_activation_effects()
 
 
 func _on_activation_completed(success: bool) -> void:
-	_activation_won = success
-	_restoring_timescale = true
-	_timescale_transition_elapsed = 0.0
-	
-	# Restore timescale and process mode
-	Engine.time_scale = 1.0
+	# The minigame restored timescale/camera/vignette before emitting.
 	process_mode = Node.PROCESS_MODE_INHERIT
-	
+
 	# Re-enable player input
 	_set_player_input_enabled(true)
-	
-	# End camera zoom and vignette effects
-	_end_activation_effects()
-	
+
 	# Always spawn pile after minigame ends
 	var spawn_x := _get_screen_width() * pile_spawn_x_ratio
 	if _salvage_spawner:
@@ -397,8 +350,6 @@ func _process(delta: float) -> void:
 	match _state:
 		State.WARNING:
 			_process_warning(delta)
-		State.ACTIVATION:
-			_process_activation(delta)
 		State.DECELERATING:
 			_process_deceleration(delta)
 		State.LOOTING:
@@ -407,16 +358,6 @@ func _process(delta: float) -> void:
 			_process_dropping(delta)
 		State.ACCELERATING:
 			_process_acceleration(delta)
-
-
-func _process_activation(delta: float) -> void:
-	# Slow down timescale on a curve
-	if not _restoring_timescale:
-		_timescale_transition_elapsed += delta
-		var t := clampf(_timescale_transition_elapsed / timescale_slowdown_time, 0.0, 1.0)
-		# Use ease out curve for smooth slowdown
-		var eased_t := 1.0 - pow(1.0 - t, 2.0)
-		Engine.time_scale = lerpf(1.0, activation_timescale, eased_t)
 
 
 func _process_warning(delta: float) -> void:
@@ -593,14 +534,6 @@ func _get_current_departure_duration() -> float:
 	return departure_duration
 
 
-## World point the activation zoom converges on: the current horizontal view
-## center at a fixed height above the player.
-func _get_zoom_focus_point() -> Vector2:
-	var center_x := _camera.global_position.x + _original_camera_offset.x if _camera else 0.0
-	var focus_y := _player.global_position.y + zoom_focus_offset_y if _player else 0.0
-	return Vector2(center_x, focus_y)
-
-
 func _position_player_at_lever() -> void:
 	if not _player or not _magnet_lever:
 		return
@@ -630,70 +563,6 @@ func _set_player_input_enabled(enabled: bool) -> void:
 		_player.input_enabled = enabled
 
 
-func _setup_vignette_overlay() -> void:
-	# Create a BackBufferCopy to capture the screen for the shader
-	var canvas_layer := CanvasLayer.new()
-	canvas_layer.layer = 100
-	add_child(canvas_layer)
-	
-	# Create the vignette overlay with shader (reads from screen texture)
-	_vignette_overlay = ColorRect.new()
-	_vignette_overlay.set_anchors_preset(Control.PRESET_FULL_RECT)
-	_vignette_overlay.color = Color.TRANSPARENT
-	_vignette_overlay.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	
-	# Load and apply the vignette + grayscale shader
-	var shader := preload("res://_project/level/magnet_minigame/vignette_grayscale.gdshader")
-	var shader_material := ShaderMaterial.new()
-	shader_material.shader = shader
-	shader_material.set_shader_parameter("vignette_intensity", 0.0)
-	shader_material.set_shader_parameter("grayscale_intensity", 0.0)
-	shader_material.set_shader_parameter("vignette_radius", 0.4)
-	shader_material.set_shader_parameter("vignette_softness", 0.4)
-	_vignette_overlay.material = shader_material
-	_vignette_overlay.visible = false  # Start hidden
-	
-	canvas_layer.add_child(_vignette_overlay)
-
-
-func _start_activation_effects() -> void:
-	# With DRAG_CENTER anchor mode, offset moves the camera center: refocus
-	# vertically onto the zoom focus point above the player, keeping the
-	# horizontal framing untouched.
-	var target_offset: Vector2 = _original_camera_offset
-	if _camera and _player:
-		target_offset = Vector2(
-			_original_camera_offset.x,
-			_get_zoom_focus_point().y - _camera.global_position.y)
-
-	# Zoom and translate camera using offset
-	if _camera:
-		if _zoom_tween:
-			_zoom_tween.kill()
-		if _offset_tween:
-			_offset_tween.kill()
-
-		_zoom_tween = create_tween()
-		_zoom_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-		var target_zoom := _original_zoom * activation_zoom
-		_zoom_tween.tween_property(_camera, "zoom", target_zoom, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-
-		_offset_tween = create_tween()
-		_offset_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-		_offset_tween.tween_property(_camera, "offset", target_offset, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_CUBIC)
-	
-	# Fade in vignette + grayscale shader effect
-	if _vignette_overlay and _vignette_overlay.material:
-		_vignette_overlay.visible = true
-		if _vignette_tween:
-			_vignette_tween.kill()
-		_vignette_tween = create_tween()
-		_vignette_tween.set_process_mode(Tween.TWEEN_PROCESS_PHYSICS)
-		_vignette_tween.set_parallel(true)
-		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/vignette_intensity", vignette_intensity, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/grayscale_intensity", vignette_intensity, zoom_tween_time).set_ease(Tween.EASE_OUT).set_trans(Tween.TRANS_QUAD)
-
-
 func _on_magnet_item_attached(_item: SalvageItem) -> void:
 	_update_magnet_capacity_ui()
 
@@ -705,33 +574,6 @@ func _on_magnet_item_removed(_item: SalvageItem) -> void:
 func _update_magnet_capacity_ui() -> void:
 	if _magnet_capacity and _magnet:
 		_magnet_capacity.set_magnet_capacity(_magnet.held_count, _magnet.hold_capacity)
-
-
-func _end_activation_effects() -> void:
-	var transition_time := zoom_tween_time * 0.5  # Faster transition out
-	
-	# Zoom and translate camera back using offset
-	if _camera:
-		if _zoom_tween:
-			_zoom_tween.kill()
-		if _offset_tween:
-			_offset_tween.kill()
-		
-		_zoom_tween = create_tween()
-		_zoom_tween.tween_property(_camera, "zoom", _original_zoom, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-
-		_offset_tween = create_tween()
-		_offset_tween.tween_property(_camera, "offset", _original_camera_offset, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_CUBIC)
-	
-	# Fade out vignette + grayscale shader effect
-	if _vignette_overlay and _vignette_overlay.material:
-		if _vignette_tween:
-			_vignette_tween.kill()
-		_vignette_tween = create_tween()
-		_vignette_tween.set_parallel(true)
-		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/vignette_intensity", 0.0, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-		_vignette_tween.tween_property(_vignette_overlay.material, "shader_parameter/grayscale_intensity", 0.0, transition_time).set_ease(Tween.EASE_IN).set_trans(Tween.TRANS_QUAD)
-		_vignette_tween.tween_callback(_vignette_overlay.hide).set_delay(transition_time)
 
 
 func stop_for_run_end() -> void:
@@ -752,11 +594,10 @@ func stop_for_run_end() -> void:
 		_player.on_looting_ended()
 	if _magnet:
 		_magnet.deactivate()
+	# cancel_minigame restores timescale, camera zoom, and the vignette.
 	if _lever_minigame:
 		_lever_minigame.cancel_minigame()
-	Engine.time_scale = 1.0
 	process_mode = Node.PROCESS_MODE_INHERIT
-	_end_activation_effects()
 	_set_level_speed(0.0)
 	_state = State.COOLDOWN
 	if _threat_manager:
