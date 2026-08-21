@@ -243,6 +243,8 @@ func _discover_slots() -> void:
 		if slot is DynamicUpgradeSlot:
 			if not slot.selection_requested.is_connected(_on_slot_selected):
 				slot.selection_requested.connect(_on_slot_selected)
+			if not slot.unequip_requested.is_connected(_on_slot_unequip_pressed):
+				slot.unequip_requested.connect(_on_slot_unequip_pressed)
 			var select_button := slot.get_select_button()
 			if select_button != null:
 				select_button.z_index = 3
@@ -257,6 +259,20 @@ func _on_slot_selected(slot_id: StringName) -> void:
 		return
 	var title := slot.popup_title if not slot.popup_title.is_empty() else slot.display_name
 	_toggle_dynamic_slot_popup(slot_id, slot.get_select_button(), slot.slot_kind, slot.slot_index, title)
+
+
+## Clears a dynamic slot that authored itself as emptyable, driven by the same kind/index
+## exports the equip path uses. Equipping null is the unequip — there is no separate model.
+func _on_slot_unequip_pressed(slot_id: StringName) -> void:
+	var slot := _station_slots.get(slot_id, null) as DynamicUpgradeSlot
+	if slot == null or not slot.allows_unequip() or _run_loadout == null:
+		return
+	if not _equip_augment_into_slot(slot.slot_kind, slot.slot_index, null):
+		return
+	if _active_dynamic_slot_id == slot_id:
+		_close_dynamic_slot_popup()
+	_save_current_game()
+	_refresh_loadout_ui()
 
 
 func _find_all_upgrade_slots() -> Array[UpgradeSlot]:
@@ -1004,27 +1020,39 @@ func _equip_dynamic_item_from_popup(entry: Resource) -> void:
 			if weapon_data == null:
 				return
 			_run_loadout.equip_weapon(weapon_data)
-		&"player_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment":
 			var augment_data := _catalog_entry_item_data(entry) as AugmentData
 			if augment_data == null:
 				return
-			_run_loadout.equip_player_augment(_active_augment_slot_index, augment_data)
-		&"ship_augment":
-			var ship_augment_data := _catalog_entry_item_data(entry) as AugmentData
-			if ship_augment_data == null:
+			if not _equip_augment_into_slot(
+				_active_dynamic_slot_kind, _active_augment_slot_index, augment_data
+			):
 				return
-			_run_loadout.equip_ship_augment(_active_augment_slot_index, ship_augment_data)
-		&"magnet_augment":
-			var magnet_augment_data := _catalog_entry_item_data(entry) as AugmentData
-			if magnet_augment_data == null:
-				return
-			_run_loadout.equip_magnet_augment(_active_augment_slot_index, magnet_augment_data)
 		_:
 			return
 
 	_save_current_game()
 	_refresh_loadout_ui()
 	_close_dynamic_slot_popup()
+
+
+## Equips `augment_data` (null to clear) into the augment slot named by kind + index.
+## Returns false for a kind that is not an augment slot.
+func _equip_augment_into_slot(
+	slot_kind: StringName, slot_index: int, augment_data: AugmentData
+) -> bool:
+	if _run_loadout == null:
+		return false
+	match slot_kind:
+		&"player_augment":
+			_run_loadout.equip_player_augment(slot_index, augment_data)
+		&"ship_augment":
+			_run_loadout.equip_ship_augment(slot_index, augment_data)
+		&"magnet_augment":
+			_run_loadout.equip_magnet_augment(slot_index, augment_data)
+		_:
+			return false
+	return true
 
 
 func _populate_storage_slots(storage_entries: Array[Dictionary]) -> void:
@@ -1110,6 +1138,7 @@ func _refresh_static_slot(sid: StringName, slot: UpgradeSlot) -> void:
 
 func _refresh_dynamic_slot(_sid: StringName, slot: DynamicUpgradeSlot) -> void:
 	var item := _get_equipped_item_for_slot(slot)
+	slot.set_unequip_visible(item != null)
 	if item == null:
 		slot.set_current_name(slot.display_name)
 		slot.set_current_icon(slot.static_icon)

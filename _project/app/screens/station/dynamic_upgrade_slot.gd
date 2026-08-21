@@ -13,10 +13,17 @@ class_name DynamicUpgradeSlot
 @export var popup_title: String = ""
 ## Selectable items for this slot, each carrying its own item, upgrade, and unlock gating.
 @export var catalog: Array[UpgradeCatalogEntry] = []
+## Whether this slot may be emptied again. Augment slots author this true; the weapon slot
+## leaves it false because a run cannot start without a weapon equipped.
+@export var can_unequip: bool = false
 
 
 func is_selectable() -> bool:
 	return true
+
+
+func allows_unequip() -> bool:
+	return can_unequip
 
 # A dynamic slot has no fixed upgrade id — its upgrade track comes from the equipped item's
 # `upgrade_data` (resolved per item_id at runtime by the station), so it uses the base &"".

@@ -8,6 +8,7 @@ class_name UpgradeSlot
 
 signal selection_requested(slot_id: StringName)
 signal upgrade_requested(slot_id: StringName)
+signal unequip_requested(slot_id: StringName)
 
 const MAX_VISIBLE_TICKS := 5
 
@@ -25,8 +26,9 @@ const UNLOCK_ICON: Texture2D = preload("res://_project/app/screens/station/sprit
 @export var slot_id: StringName = &""
 ## Header label text (e.g. "Health", "Rifle"). Authored, never a runtime placeholder.
 @export var display_name: String = "Item"
-## Icon shown in a static slot, and the authored placeholder icon for a dynamic slot
-## until code overrides it with the actually-equipped item at runtime.
+## Icon shown in a static slot. Dynamic slots leave this null and draw whatever item is
+## equipped, so a slot that can legitimately be empty (an augment slot) reads as empty
+## rather than as something already fitted.
 @export var static_icon: Texture2D = null
 ## Which way this slot's popups (item list, detail/compare panels, cost popup) open. Slots on
 ## the left of a page open rightward; a slot on the right of a page sets this so its popups
@@ -64,6 +66,7 @@ var _tick_column: VBoxContainer = null
 var _tick_container: HBoxContainer = null
 var _upgrade_button: Button = null
 var _unlock_icon: TextureRect = null
+var _unequip_button: Button = null
 var _upgrade_style_normal: StyleBox = null
 var _upgrade_style_pressed: StyleBox = null
 var _can_select: bool = false
@@ -78,6 +81,12 @@ func _ready() -> void:
 
 ## True when the slot's icon opens the item-selection popup (dynamic slots). Overridden.
 func is_selectable() -> bool:
+	return false
+
+
+## True when this slot is allowed to hold nothing, which is what the unequip button offers.
+## A slot the run cannot start without (the weapon) leaves this false. Overridden.
+func allows_unequip() -> bool:
 	return false
 
 
@@ -109,6 +118,7 @@ func _apply_config() -> void:
 	_select_button.tooltip_text = display_name
 	_icon_rect.texture = static_icon
 	_static_slot.visible = not selectable
+	set_unequip_visible(false)
 	if locked:
 		set_unlock_mode(true)
 	else:
@@ -126,6 +136,15 @@ func set_current_icon(icon: Texture2D) -> void:
 	_build_once()
 	_select_button.icon = icon
 	_icon_rect.texture = icon
+
+
+## Reactive override: show the unequip affordance only while this slot holds something it is
+## allowed to give up. An empty slot has nothing to clear, so the button stays hidden.
+func set_unequip_visible(enabled: bool) -> void:
+	_build_once()
+	if _unequip_button == null:
+		return
+	_unequip_button.visible = enabled and allows_unequip()
 
 
 ## Non-zero authored unlock cost as a rarity -> amount map (empty when free).
@@ -343,6 +362,7 @@ func _bind_existing_nodes() -> void:
 	_tick_container = get_node_or_null("BodyRow/TickColumn/TickContainer") as HBoxContainer
 	_upgrade_button = get_node_or_null("BodyRow/ActionCell/UpgradeButton") as Button
 	_unlock_icon = get_node_or_null("BodyRow/ActionCell/UpgradeButton/UnlockIcon") as TextureRect
+	_unequip_button = get_node_or_null("BodyRow/SelectButton/UnequipButton") as Button
 
 
 func _connect_controls() -> void:
@@ -360,6 +380,10 @@ func _connect_controls() -> void:
 		var up_callable := Callable(self, "_on_upgrade_button_up")
 		if not _upgrade_button.button_up.is_connected(up_callable):
 			_upgrade_button.button_up.connect(up_callable)
+	if _unequip_button != null:
+		var unequip_callable := Callable(self, "_on_unequip_pressed")
+		if not _unequip_button.pressed.is_connected(unequip_callable):
+			_unequip_button.pressed.connect(unequip_callable)
 
 
 func _on_select_pressed() -> void:
@@ -369,6 +393,10 @@ func _on_select_pressed() -> void:
 
 func _on_upgrade_pressed() -> void:
 	upgrade_requested.emit(slot_id)
+
+
+func _on_unequip_pressed() -> void:
+	unequip_requested.emit(slot_id)
 
 
 func _set_level(to_level: int, to_max: int) -> void:

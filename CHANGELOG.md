@@ -14,6 +14,16 @@ speed the beam up ~2.4x, though top-end levels push the cost to **3 scrap** per 
 Every point of scrap you spend is scrap you don't bank at the end of the run — patch the
 hull, or pad the wallet.
 
+**New ship augment: Auto-Repair.** Bolt it into a Ship Augment slot and the hull patches
+itself: every **6 seconds** it spends **1 scrap** from your run's haul to restore
+**10 integrity**, no aiming and no hold — the repair lands instantly. It only fires when
+the hull is actually damaged and you can afford it, and it banks its charge otherwise, so
+a hit taken with the timer up is patched on the spot. Five upgrade levels take it to
+**30 integrity** every **3.5 seconds**, at **3 scrap** a tick. Unlocks in the Ship page's
+Augment column for **1 common + 1 rare** Research Point. Like the Repair Gun, every point
+it spends is a point you don't bank at the end of the run — but this one spends it whether
+you're looking or not.
+
 **Six weapons, one arsenal.** The Rifle and Shotgun are joined by four new guns, each
 with a distinct role:
 
@@ -153,6 +163,13 @@ instead of 3, so it's the same number of shots with far more honest ammo readout
 1 Common + 1 Rare.
 
 ### Feel, Audio & Visuals
+
+**Augment slots can be emptied again.** An equipped augment now carries a small red **X**
+in the top-right corner of its icon — click it to pull that augment back out and leave the
+slot open.
+Empty slots also read as empty: they no longer show a generic player/ship placeholder icon,
+so you can tell at a glance which of your slots are still free. Both are augment-only —
+the weapon slot keeps its icon and has no X, because you always have a weapon equipped.
 
 **Crisper UI panel borders.** Every bordered panel — the station screens, popups, progress
 bars, and augment frames — now uses a clean square-cornered 4px border with tighter 3px

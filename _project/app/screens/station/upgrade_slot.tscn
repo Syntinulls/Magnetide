@@ -7,6 +7,8 @@
 [ext_resource type="Texture2D" uid="uid://dqupgarw00001" path="res://_project/app/screens/station/sprites/upgrade_arrow.png" id="5_upg_arrow"]
 [ext_resource type="Texture2D" uid="uid://cvf0b0nfmwwdw" path="res://_project/app/screens/station/sprites/icon_lock_open.png" id="6_lock"]
 
+[sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_unequip"]
+
 [sub_resource type="StyleBoxTexture" id="StyleBoxTexture_upg_normal"]
 texture = ExtResource("3_upg_button")
 
@@ -48,6 +50,32 @@ layout_mode = 2
 size_flags_horizontal = 4
 size_flags_vertical = 4
 expand_icon = true
+
+[node name="UnequipButton" type="Button" parent="BodyRow/SelectButton"]
+visible = false
+layout_mode = 1
+anchors_preset = 1
+anchor_left = 1.0
+anchor_right = 1.0
+offset_left = -32.0
+offset_top = 6.0
+offset_right = -2.0
+offset_bottom = 36.0
+grow_horizontal = 0
+focus_mode = 0
+tooltip_text = "Unequip"
+theme_override_colors/font_color = Color(0.898039, 0.215686, 0.215686, 1)
+theme_override_colors/font_hover_color = Color(1, 0.352941, 0.352941, 1)
+theme_override_colors/font_pressed_color = Color(0.686275, 0.129412, 0.129412, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 24
+theme_override_styles/normal = SubResource("StyleBoxEmpty_unequip")
+theme_override_styles/hover = SubResource("StyleBoxEmpty_unequip")
+theme_override_styles/focus = SubResource("StyleBoxEmpty_unequip")
+theme_override_styles/pressed = SubResource("StyleBoxEmpty_unequip")
+theme_override_styles/disabled = SubResource("StyleBoxEmpty_unequip")
+text = "X"
 
 [node name="StaticSlot" type="Panel" parent="BodyRow"]
 visible = false
