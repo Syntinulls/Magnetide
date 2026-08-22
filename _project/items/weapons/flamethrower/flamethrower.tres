@@ -23,7 +23,6 @@ shader_parameter/glow_intensity = 1.0
 shader_parameter/glow_color = Color(1, 0.607843, 0.180392, 1)
 shader_parameter/emission_energy = 0.6
 shader_parameter/emission_knee = 0.9
-shader_parameter/emission_opacity = 0.0
 shader_parameter/halo_radius = 22.0
 shader_parameter/halo_energy = 0.85
 shader_parameter/halo_falloff = 2.5

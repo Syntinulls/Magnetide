@@ -6,9 +6,8 @@
 shader = ExtResource("1_glow")
 shader_parameter/glow_intensity = 0.0
 shader_parameter/glow_color = Color(1, 1, 1, 1)
-shader_parameter/emission_energy = 0.6
-shader_parameter/emission_knee = 0.9
-shader_parameter/emission_opacity = 0.95
+shader_parameter/emission_energy = 2.5
+shader_parameter/emission_knee = 0.25
 shader_parameter/halo_radius = 0.0
 shader_parameter/halo_energy = 1.0
 shader_parameter/halo_falloff = 2.0

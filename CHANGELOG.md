@@ -84,7 +84,9 @@ crosses each green zone. Every green zone gets a result light: a perfect press l
 and permanently speeds the crosshair up for the rest of the sweep, and pressing on red —
 or letting a zone slip past untouched — turns the whole board red (**"MISS"**) and fails
 the brake on the spot. The old "yellow allowance" is gone: yellows never fail you, they
-just make the rest of the sweep harder. Zone count still scales with Threat Level
+just make the rest of the sweep harder. Once the attempt is settled — every light lit,
+or a miss taken — the panel stops taking input while the crosshair finishes its run,
+so a stray press on the red stretch past the last zone cannot take a win back. Zone count still scales with Threat Level
 (**2 zones** at low threat up to **5** at max). The camera dive is gentler too — a
 **1.5×** zoom (was 2.5×) that eases in over 0.6s and centers on *you* instead of a point
 in the sky, and the panel itself stays pixel-crisp at native size instead of scaling up
@@ -177,8 +179,9 @@ up the sky behind it.
 and the light bleed together, for a small performance gain or if the effect isn't to your
 taste.
 
-**The lever minigame hits back.** Landing the reticle on a green or yellow zone punches
-that zone up in scale and flares it bright for an instant. Hitting a red one kicks the
+**The lever minigame hits back.** Zones now rest a few shades darker and light up to
+full strength the instant they fire, so a hit reads at a glance. Landing the reticle on
+a green or yellow zone also punches that zone up in scale. Hitting a red one kicks the
 reticle sideways and blinks **every** red zone in unison, like a warning light, for
 **1.6 seconds** (up from a **0.6s** dead pause) before the panel closes — a failed
 activation now reads as a failure instead of just stopping.

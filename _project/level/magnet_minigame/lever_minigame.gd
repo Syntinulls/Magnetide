@@ -5,7 +5,9 @@ class_name LeverMinigame
 ## bar of green/yellow/red zones. The player presses interact as the reticle
 ## crosses each green zone ("PERFECT") or a flanking yellow ("CLOSE", which also
 ## speeds the reticle up). Pressing on red -- or letting an unresolved zone pair
-## slip past -- turns every light red and fails the attempt instantly. One result
+## slip past -- turns every light red and fails the attempt instantly. Once the attempt
+## is settled -- every pair lit, or a miss taken -- the panel stops accepting input
+## while the crosshair finishes its sweep, so a decided result cannot be undone. One result
 ## light per green zone reports the outcome below the bar. Hitting a green or yellow
 ## punches that zone up in scale and flares its glow; hitting a red blinks every red
 ## zone in unison like a warning light and kicks the reticle before the panel closes.
@@ -106,9 +108,16 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var reticle_shake_time: float = 0.24
 ## Time to linger on a successful result before closing.
 @export var result_display_time: float = 0.75
+## Full-strength colour of each zone: what it shows the instant it is hit, and what
+## the info text is tinted with. A resting zone sits at zone_idle_darken of this.
 @export var zone_color_green: Color = Color("58c05c")
 @export var zone_color_yellow: Color = Color("e8c14b")
 @export var zone_color_red: Color = Color("d1493f")
+## How far a resting zone is darkened from its full-strength colour. The hit flash
+## and the fail blink swing it back up, so a zone lighting up is carried by its own
+## colour rather than by the glow -- bloom then only adds on top, and the read
+## survives the Bloom video option being off.
+@export_range(0.1, 1.0, 0.01) var zone_idle_darken: float = 0.55
 
 @export_group("Activation Effects")
 ## Target Engine.time_scale while the minigame runs (restored on completion).
@@ -157,6 +166,10 @@ var _yellows_revealed := false
 var _reds_revealed := false
 var _result_timer: float = 0.0
 var _game_won := false
+## Set once the attempt is settled -- every pair lit, or a miss taken. The crosshair
+## still finishes its sweep either way; this is what stops a press during the red
+## run-out past the last zone undoing a result that is already decided.
+var _outcome_locked := false
 var _world_anchor := Vector2.ZERO
 var _effects_active := false
 var _camera: Camera2D = null
@@ -211,7 +224,7 @@ func _process(delta: float) -> void:
 
 
 func _input(event: InputEvent) -> void:
-	if get_tree().paused or _state != State.PLAYING:
+	if get_tree().paused or _state != State.PLAYING or _outcome_locked:
 		return
 	if event.is_action_pressed("interact"):
 		_evaluate_press()
@@ -251,6 +264,7 @@ func _reset_state() -> void:
 	_reds_revealed = false
 	_result_timer = 0.0
 	_game_won = false
+	_outcome_locked = false
 	# Remove immediately, not just queue_free: zones are rebuilt and revealed in
 	# this same frame, and stale children would corrupt the row's child order.
 	for child in _zone_row.get_children():
@@ -386,8 +400,7 @@ func _process_playing(real_delta: float) -> void:
 	if _reticle_ratio >= 1.0:
 		_reticle_ratio = 1.0
 		_update_reticle_position()
-		_game_won = true
-		_state = State.RESULT
+		_win_minigame()
 		return
 	_update_reticle_position()
 	for pair in _pairs:
@@ -427,18 +440,36 @@ func _resolve_pair(zone: Zone, perfect: bool) -> void:
 	pair.resolved = true
 	_flash_zone(zone)
 	if perfect:
-		_light_up(pair, LIGHT_GREEN_TEXTURE, zone_color_green)
+		_light_up(pair, LIGHT_GREEN_TEXTURE)
 		_show_info("PERFECT", zone_color_green)
 	else:
-		_light_up(pair, LIGHT_YELLOW_TEXTURE, zone_color_yellow)
+		_light_up(pair, LIGHT_YELLOW_TEXTURE)
 		_yellows_hit += 1
 		_show_info("CLOSE", zone_color_yellow)
 	pair_resolved.emit(zone.pair_index, _pairs.size())
+	if _all_pairs_resolved():
+		_outcome_locked = true
+
+
+## Reached only with every pair resolved: an unresolved one fails the attempt as it
+## slips past, so arriving at the end of the bar is itself the win condition.
+func _win_minigame() -> void:
+	_game_won = true
+	_result_timer = 0.0
+	_state = State.RESULT
+
+
+func _all_pairs_resolved() -> bool:
+	for pair in _pairs:
+		if not pair.resolved:
+			return false
+	return not _pairs.is_empty()
 
 
 func _fail_minigame() -> void:
+	_outcome_locked = true
 	for pair in _pairs:
-		_light_up(pair, LIGHT_RED_TEXTURE, zone_color_red)
+		_light_up(pair, LIGHT_RED_TEXTURE)
 	_blink_red_zones()
 	_shake_reticle()
 	_show_info("MISS", zone_color_red)
@@ -543,7 +574,7 @@ func _make_zone_control(type: ZoneType, width: int, glow: ShaderMaterial) -> Con
 	zone_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Zone color tints both the stripes and the border; alpha 0 until this
 	# zone's reveal step during the countdown.
-	zone_control.modulate = Color(_zone_color(type), 0.0)
+	zone_control.modulate = Color(_zone_idle_color(type), 0.0)
 	var stripes := TextureRect.new()
 	stripes.texture = STRIPES_TEXTURE
 	stripes.stretch_mode = TextureRect.STRETCH_TILE
@@ -597,6 +628,12 @@ func _reveal_zones(type: ZoneType) -> void:
 			zone.control.modulate.a = 1.0
 
 
+## The shade a zone rests at, derived so idle and lit can never drift apart in hue.
+func _zone_idle_color(type: ZoneType) -> Color:
+	var lit := _zone_color(type)
+	return Color(lit.r * zone_idle_darken, lit.g * zone_idle_darken, lit.b * zone_idle_darken)
+
+
 func _zone_color(type: ZoneType) -> Color:
 	match type:
 		ZoneType.GREEN:
@@ -629,21 +666,20 @@ func _show_info(text: String, color: Color) -> void:
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 
 
-## A result light switching on takes the state's color into its glow as well as its
-## texture, so the lit lens reads as actually emitting rather than merely tinted.
-func _light_up(pair: Pair, texture: Texture2D, color: Color) -> void:
+## Switch a result light on. The glow drives the lit texture's own colours past full
+## brightness, so each state emits in its own hue without being told which it is.
+func _light_up(pair: Pair, texture: Texture2D) -> void:
 	pair.light.texture = texture
-	pair.light_glow.set_shader_parameter(&"glow_color", color)
 	pair.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
 
 
-## A hit green or yellow zone punches up in scale and flares its glow, then settles
-## back. Red is never flashed this way -- hitting one is a fail, not a hit.
+## A hit green or yellow zone punches up in scale and lights to full strength, then
+## settles back. Red is never flashed this way -- hitting one is a fail, not a hit.
 func _flash_zone(zone: Zone) -> void:
 	var flare := _create_realtime_tween()
-	flare.tween_property(zone.glow, "shader_parameter/glow_intensity", 1.0, zone_hit_flash_time) \
+	flare.tween_method(_set_zone_lit.bind(zone), 0.0, 1.0, zone_hit_flash_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	flare.tween_property(zone.glow, "shader_parameter/glow_intensity", 0.0, zone_hit_fade_time) \
+	flare.tween_method(_set_zone_lit.bind(zone), 1.0, 0.0, zone_hit_fade_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	zone.control.pivot_offset = zone.control.size * 0.5
 	var bounce := _create_realtime_tween()
@@ -660,14 +696,23 @@ func _blink_red_zones() -> void:
 	var half_period := fail_pause_time / float(blinks * 2)
 	var blink := _create_realtime_tween()
 	for _index in range(blinks):
-		blink.tween_method(_set_red_zone_glow, 0.0, 1.0, half_period)
-		blink.tween_method(_set_red_zone_glow, 1.0, 0.0, half_period)
+		blink.tween_method(_set_red_zones_lit, 0.0, 1.0, half_period)
+		blink.tween_method(_set_red_zones_lit, 1.0, 0.0, half_period)
 
 
-func _set_red_zone_glow(value: float) -> void:
+func _set_red_zones_lit(value: float) -> void:
 	for zone in _zones:
-		if zone.type == ZoneType.RED and zone.glow != null:
-			zone.glow.set_shader_parameter(&"glow_intensity", value)
+		if zone.type == ZoneType.RED:
+			_set_zone_lit(value, zone)
+
+
+## 0 leaves the zone at its resting shade, 1 takes it to full strength with the glow
+## at full. Colour and glow move together, so the glow adds to the tell rather than
+## being the whole of it.
+func _set_zone_lit(value: float, zone: Zone) -> void:
+	var lit := _zone_idle_color(zone.type).lerp(_zone_color(zone.type), value)
+	zone.control.modulate = Color(lit, zone.control.modulate.a)
+	zone.glow.set_shader_parameter(&"glow_intensity", value)
 
 
 ## One sharp there-and-back kick in position plus a scale punch, so a red hit lands

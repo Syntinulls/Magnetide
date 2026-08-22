@@ -3,8 +3,6 @@
 // nearly-transparent art (an indicator lens that only reads as lit once it fills in):
 //
 //   emission_energy   drives the node's own pixels past full brightness, per channel.
-//   emission_opacity  floods the node's emissive area with glow_color, for art too
-//                     faint to have anything worth driving.
 //   halo_radius       spills a soft halo into the transparent margin around the node.
 //
 // At glow_intensity 0 the node draws exactly as it would with no material at all, so
@@ -18,10 +16,10 @@
 shader_type canvas_item;
 
 // Directions sampled per ring, and rings sampled out to halo_radius, when building
-// the halo. Eight taps over three rings is smooth enough for the small radii this is
-// used at without turning into a full blur.
+// the halo. Enough taps that the averaged falloff reads as continuous rather than as
+// a set of concentric steps.
 const int HALO_TAPS = 8;
-const int HALO_RINGS = 3;
+const int HALO_RINGS = 4;
 
 // Master switch for every glow material at once, driven by the Bloom video option
 // (AppRoot.set_bloom_enabled). 0 takes the node back to drawing exactly as it would
@@ -39,15 +37,12 @@ uniform float emission_energy : hint_range(0.0, 4.0) = 1.0;
 // the sprite looking exactly as drawn and only drives channels that were at full
 // scale anyway; low turns emission into a deliberate blow-out flash.
 uniform float emission_knee : hint_range(0.0, 1.0) = 0.9;
-// Opacity the glow lends the node's emissive area -- every pixel carrying color, as
-// opposed to the black linework and the transparent surround, both of which stay put.
-// Art that is barely there when unlit needs this to read as lit; solid art leaves it at 0.
-uniform float emission_opacity : hint_range(0.0, 1.0) = 0.0;
 // Reach of the halo around the silhouette, in texture pixels. 0 = no halo.
 uniform float halo_radius : hint_range(0.0, 32.0) = 0.0;
 // Opacity of the halo where it meets the silhouette.
 uniform float halo_energy : hint_range(0.0, 4.0) = 1.0;
-// How sharply the halo fades over halo_radius. 1 = linear, higher = tighter.
+// How sharply the halo fades over halo_radius. Higher pulls the falloff in tighter
+// around the silhouette; it never introduces an edge, only moves where the fade sits.
 uniform float halo_falloff : hint_range(0.5, 8.0) = 2.0;
 // Set this on a node that tiles its texture (a Line2D beam): halo taps wrap at the
 // texture edges rather than stopping there, so the glow follows the whole tiled run.
@@ -84,24 +79,20 @@ void fragment() {
 		* emission_energy * amount;
 	vec3 lit = base.rgb * (1.0 + emissive_ramp);
 
-	// Emissive area = pixels that carry color once alpha is divided back out, which
-	// picks out a lens (colored, whatever its opacity) from the linework around it
-	// (black) and the surround (empty) under either alpha convention.
-	vec3 unpremultiplied = tex.rgb / max(tex.a, 0.001);
-	float emissive_mask = clamp(max(max(unpremultiplied.r, unpremultiplied.g), unpremultiplied.b), 0.0, 1.0)
-		* step(0.003, tex.a);
-	float flood_alpha = emission_opacity * emissive_mask;
 	float halo_alpha = 0.0;
 
-	// Distance-weighted dilation of the silhouette: each ring of taps counts for less
-	// the further out it sits, which fades the halo over halo_radius. The (1 - alpha)
-	// factor keeps it outside the sprite instead of washing the sprite out.
+	// A gaussian-weighted average of the silhouette's alpha over a disc of taps -- a
+	// small blur. Averaging, rather than keeping the strongest tap of each ring, is what
+	// makes the falloff continuous: a max over discrete rings quantises the halo into
+	// concentric bands and ends on a hard edge at the outermost one. The (1 - alpha)
+	// factor keeps the result outside the sprite instead of washing the sprite out.
 	if (halo_radius > 0.0 && halo_energy > 0.0) {
-		float halo = 0.0;
-		for (int ring = 0; ring < HALO_RINGS; ring++) {
-			float distance_ratio = (float(ring) + 0.5) / float(HALO_RINGS);
+		float blurred = tex.a;
+		float weight_sum = 1.0;
+		for (int ring = 1; ring <= HALO_RINGS; ring++) {
+			float distance_ratio = float(ring) / float(HALO_RINGS);
+			float weight = exp(-2.0 * halo_falloff * distance_ratio * distance_ratio);
 			vec2 offset = TEXTURE_PIXEL_SIZE * halo_radius * distance_ratio;
-			float reach = 0.0;
 			for (int tap = 0; tap < HALO_TAPS; tap++) {
 				float angle = TAU * (float(tap) + distance_ratio) / float(HALO_TAPS);
 				vec2 tap_uv = UV + vec2(cos(angle), sin(angle)) * offset;
@@ -110,25 +101,19 @@ void fragment() {
 				// -- outward.
 				bool off_sprite = !halo_tiles
 					&& any(notEqual(clamp(tap_uv, vec2(0.0), vec2(1.0)), tap_uv));
-				reach = max(reach, off_sprite ? 0.0 : texture(TEXTURE, tap_uv).a);
+				blurred += (off_sprite ? 0.0 : texture(TEXTURE, tap_uv).a) * weight;
+				weight_sum += weight;
 			}
-			halo = max(halo, reach * pow(1.0 - distance_ratio, halo_falloff));
 		}
-		halo_alpha = halo * (1.0 - tex.a) * halo_energy;
+		halo_alpha = (blurred / weight_sum) * (1.0 - tex.a) * halo_energy;
 	}
-	float glow_alpha = clamp(max(flood_alpha, halo_alpha) * amount * glow_color.a * modulation.a,
-		0.0, 1.0);
+	float glow_alpha = clamp(halo_alpha * amount * glow_color.a * modulation.a, 0.0, 1.0);
 
-	// The emitted light is a straight-alpha layer of glow_color lying under the node:
-	// it fills in wherever the node itself is thin or absent and leaves solid pixels
-	// (linework, opaque art) to the emission above.
-	//
-	// Only the flood carries the overdrive, so a lit indicator lens crosses the bloom
-	// threshold instead of parking exactly on it. The halo deliberately does not: it is
-	// atmosphere, and driving it past 1.0 turns a soft falloff into a hard clipped rim.
-	float flood_share = flood_alpha / max(flood_alpha + halo_alpha, 0.0001);
-	vec3 emitted = glow_color.rgb * mix(1.0, 1.0 + emission_energy * amount, flood_share);
+	// The halo is a straight-alpha layer of glow_color lying under the node, filling the
+	// transparent margin around it and leaving solid pixels to the emission above. It is
+	// deliberately never driven past 1.0: that would clip it into a hard rim, and the
+	// point of the halo is the falloff.
 	float glow_share = (1.0 - base.a) * glow_alpha;
 	float out_alpha = base.a + glow_share;
-	COLOR = vec4(mix(lit, emitted, glow_share / max(out_alpha, 0.0001)), out_alpha);
+	COLOR = vec4(mix(lit, glow_color.rgb, glow_share / max(out_alpha, 0.0001)), out_alpha);
 }
