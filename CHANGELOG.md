@@ -169,7 +169,10 @@ instead of 3, so it's the same number of shots with far more honest ammo readout
 **Things that should glow now glow.** Ship thrusters throw a blue-white haze off their
 plumes, flamethrower flames carry a warm glow that fades as they die, enemies you set
 alight burn with glowing flames, and the repair beam burns green down its whole length
-instead of reading as a plain white line. Indicator
+instead of reading as a plain white line. Gunfire
+flashes at the muzzle — a punch of light per round, so a fast weapon reads as a burst of
+shots rather than one continuous flare — and the magnet gun and its pull beams glow while
+they work. The research station's alignment lasers burn bright down their length. Indicator
 lights light up properly too — the station's upgrade level ticks and the lever minigame's
 result lights now shine rather than just changing color. Emissive things also bleed light
 into the scene around them: thruster wash spills across the hull, and a jet of flame lights
@@ -179,7 +182,7 @@ up the sky behind it.
 and the light bleed together, for a small performance gain or if the effect isn't to your
 taste.
 
-**The lever minigame hits back.** Zones now rest a few shades darker and light up to
+**The lever minigame hits back.** Zones now rest a shade darker and light up to
 full strength the instant they fire, so a hit reads at a glance. Landing the reticle on
 a green or yellow zone also punches that zone up in scale. Hitting a red one kicks the
 reticle sideways and blinks **every** red zone in unison, like a warning light, for

@@ -117,7 +117,7 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 ## and the fail blink swing it back up, so a zone lighting up is carried by its own
 ## colour rather than by the glow -- bloom then only adds on top, and the read
 ## survives the Bloom video option being off.
-@export_range(0.1, 1.0, 0.01) var zone_idle_darken: float = 0.55
+@export_range(0.1, 1.0, 0.01) var zone_idle_darken: float = 0.82
 
 @export_group("Activation Effects")
 ## Target Engine.time_scale while the minigame runs (restored on completion).
@@ -562,7 +562,6 @@ func _build_zone_controls() -> void:
 			width -= 1
 		var zone := _zones[i]
 		zone.glow = ZONE_GLOW.duplicate() as ShaderMaterial
-		zone.glow.set_shader_parameter(&"glow_color", _zone_color(zone.type))
 		zone.glow.set_shader_parameter(&"glow_intensity", 0.0)
 		zone.control = _make_zone_control(zone.type, maxi(width, 1), zone.glow)
 		_zone_row.add_child(zone.control)

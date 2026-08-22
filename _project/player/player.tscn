@@ -16,6 +16,7 @@
 [ext_resource type="Script" uid="uid://dfqohdsshrnc0" path="res://_project/combat/muzzle_effect.gd" id="13_muzzle_effect"]
 [ext_resource type="Texture2D" uid="uid://blfm8gb3lb7h8" path="res://_project/items/magnet_tool/player_item_magnet_effect.png" id="14_5c2p4"]
 [ext_resource type="Texture2D" uid="uid://cp2rea5f54jvb" path="res://_project/items/weapons/player_item_gun_effect_1.png" id="15_4y3ad"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="30_glow"]
 [ext_resource type="Shader" uid="uid://b6plrflash00a" path="res://_project/player/player_flash.gdshader" id="16_flash"]
 [ext_resource type="Script" uid="uid://bqv3p643kd7me" path="res://_project/combat/enemy_target_point.gd" id="17_target_point"]
 [ext_resource type="PackedScene" uid="uid://cx2yatihwoinx" path="res://_project/items/repair_gun/repair_beam.tscn" id="18_repair_beam"]
@@ -24,6 +25,15 @@
 [ext_resource type="Script" path="res://_project/player/player_interaction.gd" id="22_interaction"]
 [ext_resource type="Script" path="res://_project/player/player_scrap_collector.gd" id="23_scrap"]
 [ext_resource type="Script" path="res://_project/player/player_progress_bar_controller.gd" id="24_progress"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_muzzle_glow"]
+shader = ExtResource("30_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(1, 1, 1, 1)
+shader_parameter/emission_energy = 1.04
+shader_parameter/emission_knee = 0.5
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_damage_flash"]
 shader = ExtResource("16_flash")
@@ -249,6 +259,7 @@ offset = Vector2(-33.665, 20.42)
 position = Vector2(-80.56, 11.88)
 
 [node name="MuzzleEffect" type="AnimatedSprite2D" parent="ArmSprite/Weapon/Muzzle" unique_id=280877275]
+material = SubResource("ShaderMaterial_muzzle_glow")
 visible = false
 sprite_frames = SubResource("SpriteFrames_op25k")
 animation = &"magnet_gun"

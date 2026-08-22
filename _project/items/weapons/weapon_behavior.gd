@@ -66,7 +66,7 @@ func shoot() -> void:
 		return
 	_fire_cooldown = 1.0 / maxf(wpn.fire_rate, 0.01)
 	if player.muzzle_effect:
-		player.muzzle_effect.play_effect(wpn.get_muzzle_effect_type())
+		player.muzzle_effect.play_effect(wpn.get_muzzle_effect_type(), _fire_cooldown)
 	_play_fire_sfx(wpn)
 	if wpn.fire_behavior and wpn.fire_behavior.has_method("fire"):
 		wpn.fire_behavior.fire(self, wpn)

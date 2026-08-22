@@ -8,11 +8,21 @@
 [ext_resource type="Texture2D" uid="uid://mhpknbl1y8gr" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_body.png" id="tex_body"]
 [ext_resource type="Texture2D" uid="uid://o3xjjxle3fh6" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_1_frame_1.png" id="tex_frame1"]
 [ext_resource type="Texture2D" uid="uid://bu3wm042af5ic" path="res://_project/ship/research_station/minigames/alignment_a/sprites/laser_gear.png" id="tex_gear"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="shader_glow"]
 [ext_resource type="Texture2D" uid="uid://n047vboph778" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_bar.png" id="tex_tbar"]
 [ext_resource type="Texture2D" uid="uid://b7w82xa2ccrlp" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_bg.png" id="tex_tbg"]
 [ext_resource type="Texture2D" uid="uid://dy10pgsjs5t6v" path="res://_project/ship/research_station/minigames/alignment_a/sprites/ticker_color.png" id="tex_tcolor"]
 [ext_resource type="Texture2D" uid="uid://lof2lrdcna7p" path="res://_project/ship/research_station/minigames/alignment_a/sprites/temperature_progress.png" id="tex_tprog"]
 [ext_resource type="Texture2D" uid="uid://bu56ep7lab2sc" path="res://_project/ship/research_station/minigames/alignment_a/sprites/ticker_shape.png" id="tex_tshape"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_laser_glow"]
+shader = ExtResource("shader_glow")
+shader_parameter/glow_intensity = 1.0
+shader_parameter/glow_color = Color(0.5, 0.75, 1, 1)
+shader_parameter/emission_energy = 0.78
+shader_parameter/emission_knee = 0.5
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
 
 [sub_resource type="StyleBoxFlat" id="sb_bg"]
 bg_color = Color(0.682353, 0.690196, 0.690196, 1)
@@ -79,6 +89,7 @@ begin_cap_mode = 2
 end_cap_mode = 2
 
 [node name="LeftBeam" type="Line2D" parent="." unique_id=1132620629]
+material = SubResource("ShaderMaterial_laser_glow")
 unique_name_in_owner = true
 texture_repeat = 2
 points = PackedVector2Array(51, 295, 456, 295)
@@ -88,6 +99,7 @@ texture_mode = 1
 end_cap_mode = 2
 
 [node name="RightBeam" type="Line2D" parent="." unique_id=1192287932]
+material = SubResource("ShaderMaterial_laser_glow")
 unique_name_in_owner = true
 texture_repeat = 2
 points = PackedVector2Array(924, 295, 524, 295)
