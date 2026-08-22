@@ -56,6 +56,8 @@ var _impact_effect: PackedScene = null
 var _contact_effect: PackedScene = null
 ## Motion/tick strategy; a per-projectile duplicate of the authored resource.
 var _behavior: ProjectileBehavior = null
+## Optional material applied to the visual (e.g. the glow shader on flames).
+var _visual_material: Material = null
 
 
 static func create(config: Dictionary) -> Area2D:
@@ -95,6 +97,7 @@ func configure(config: Dictionary) -> void:
 	_collision_size = config.get(&"collision_size", Vector2(32.0, 12.0))
 	var behavior_value := config.get(&"projectile_behavior", null) as ProjectileBehavior
 	_behavior = behavior_value.duplicate() as ProjectileBehavior if behavior_value != null else null
+	_visual_material = config.get(&"visual_material", null) as Material
 	_build_visual(config[&"sprite"])
 	_build_collision()
 
@@ -142,6 +145,7 @@ func _build_visual(sprite_value: Variant) -> void:
 		var animation_names := frames.get_animation_names()
 		if animation_names.size() > 0:
 			animated.play(animation_names[0])
+		animated.material = _visual_material
 		visual = animated
 		add_child(animated)
 		return
@@ -155,6 +159,7 @@ func _build_visual(sprite_value: Variant) -> void:
 		sprite.region_enabled = sprite_template.region_enabled
 		sprite.region_rect = sprite_template.region_rect
 		sprite.modulate = sprite_template.modulate
+	sprite.material = _visual_material
 	visual = sprite
 	add_child(sprite)
 

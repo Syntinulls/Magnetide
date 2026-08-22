@@ -7,6 +7,8 @@ class_name AppOptions
 
 const PATH := "user://options.ini"
 const AUDIO_SECTION := "audio"
+const VIDEO_SECTION := "video"
+const DEFAULT_BLOOM_ENABLED := true
 const DEFAULT_VOLUME_PERCENT := 100.0
 ## Bus level at a 100% music slider. Kept below full scale so the placeholder
 ## tracks (mastered hot) sit under gameplay SFX; raise toward 0 dB once real
@@ -20,14 +22,22 @@ const VOLUME_RANGE_DB := 40.0
 
 var music_volume: float = DEFAULT_VOLUME_PERCENT
 var sfx_volume: float = DEFAULT_VOLUME_PERCENT
+## Screen-wide bloom on emissive art. Off restores plain LDR rendering, which is
+## both the cheaper path and the fallback if a driver renders the HDR one badly.
+var bloom_enabled: bool = DEFAULT_BLOOM_ENABLED
 
 
-## Push the current values onto the audio buses.
+## Push the current values onto the audio buses and the viewport.
 func apply() -> void:
 	if Magnetide.bgm:
 		Magnetide.bgm.set_music_volume(_percent_to_linear(music_volume, MUSIC_FULL_VOLUME_DB))
 	if Magnetide.sfx:
 		Magnetide.sfx.set_sfx_volume(_percent_to_linear(sfx_volume, SFX_FULL_VOLUME_DB))
+	# AppRoot owns the WorldEnvironment the bloom lives on. It applies the saved
+	# value itself once it is in the tree, so a null here is only ever startup
+	# ordering, never a lost setting.
+	if Magnetide.app_root and Magnetide.app_root.has_method("set_bloom_enabled"):
+		Magnetide.app_root.set_bloom_enabled(bloom_enabled)
 
 
 func save_to_disk() -> void:
@@ -37,13 +47,15 @@ func save_to_disk() -> void:
 	file.load(PATH)
 	file.set_value(AUDIO_SECTION, "music_volume", music_volume)
 	file.set_value(AUDIO_SECTION, "sfx_volume", sfx_volume)
+	file.set_value(VIDEO_SECTION, "bloom_enabled", bloom_enabled)
 	file.save(PATH)
 
 
 func equals(other: AppOptions) -> bool:
 	return other != null \
 		and is_equal_approx(music_volume, other.music_volume) \
-		and is_equal_approx(sfx_volume, other.sfx_volume)
+		and is_equal_approx(sfx_volume, other.sfx_volume) \
+		and bloom_enabled == other.bloom_enabled
 
 
 ## 0% -> 0.0 gain (the player services hard-mute the bus); otherwise the
@@ -62,4 +74,5 @@ static func load_from_disk() -> AppOptions:
 	if file.load(PATH) == OK:
 		options.music_volume = clampf(float(file.get_value(AUDIO_SECTION, "music_volume", DEFAULT_VOLUME_PERCENT)), 0.0, 100.0)
 		options.sfx_volume = clampf(float(file.get_value(AUDIO_SECTION, "sfx_volume", DEFAULT_VOLUME_PERCENT)), 0.0, 100.0)
+		options.bloom_enabled = bool(file.get_value(VIDEO_SECTION, "bloom_enabled", DEFAULT_BLOOM_ENABLED))
 	return options

@@ -420,7 +420,16 @@ func _set_level(to_level: int, to_max: int) -> void:
 		if tick == null:
 			continue
 		tick.visible = index < mini(clamped_max, MAX_VISIBLE_TICKS)
-		tick.texture = TICK_LIGHT_ON if index < clamped_level else TICK_LIGHT_OFF
+		_set_tick_lit(tick, index < clamped_level)
+
+
+## A lit tick swaps to the on texture and switches its glow on; the glow material is
+## authored per tick in upgrade_slot.tscn so each one lights independently.
+func _set_tick_lit(tick: TextureRect, lit: bool) -> void:
+	tick.texture = TICK_LIGHT_ON if lit else TICK_LIGHT_OFF
+	var glow := tick.material as ShaderMaterial
+	if glow != null:
+		glow.set_shader_parameter(&"glow_intensity", 1.0 if lit else 0.0)
 
 
 func _on_upgrade_button_down() -> void:

@@ -30,6 +30,12 @@ _project/                    All game content. (Root level is reserved for engin
 ├── app/                     Application shell: entry scene, save data, global autoload.
 │   ├── app_root.*           Top-level state machine (menu ↔ station ↔ map ↔ run ↔ salvage).
 │   ├── app_save_data.gd     Persistent save resource + legacy path migration.
+│   ├── app_options.gd       Player settings (user://options.ini), applied by AppRoot.
+│   ├── bloom_environment.tres  WorldEnvironment glow authored on app_root.tscn. Bloom
+│   │                        spans three layers driven together by AppRoot.set_bloom_enabled:
+│   │                        the `bloom_strength` global shader uniform (project.godot
+│   │                        `[shader_globals]`) that gates common/glow.gdshader, the HDR 2D
+│   │                        viewport that keeps its emission above 1.0, and this resource.
 │   ├── magnetide.gd         The `Magnetide` autoload: run-context service locator, fonts, sfx.
 │   └── screens/             One folder per out-of-run screen. A screen keeps the sprites it
 │       │                    alone uses in its own sprites/ subfolder.
@@ -45,7 +51,7 @@ _project/                    All game content. (Root level is reserved for engin
 │                            projectile, hitbox, enemy_target_point, muzzle_effect.
 ├── common/                  Generic, game-agnostic building blocks:
 │                            utils.gd (static helpers), weighted_random, interaction_hitbox,
-│                            shared outline shaders (border_outline, composite_outline).
+│                            shared shaders (border_outline, composite_outline, glow).
 │   └── sprites/             Sprites with no single owner: reusable chrome (ui_border_*) and
 │                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
 │                            icon_crate, icon_research_point). A sprite used by exactly one
@@ -84,7 +90,8 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── decoration/          Parallax layers, skyline, bands, decoration shaders + sprites.
 │   ├── threat/              Threat simulation: ThreatManager, StormController.
 │   └── magnet_minigame/     The looting-cycle minigame + its activation overlay, warning icon,
-│                            vignette shader, sprites. Lives here, not under ship/magnet/:
+│                            vignette shader, zone/light glow materials, sprites. Lives
+│                            here, not under ship/magnet/:
 │                            level.tscn instances it and game_ui.tscn owns its overlay — it
 │                            never touches the ship, and exists only inside a run.
 ├── player/                  The player character. player.gd (the body: movement, facing,

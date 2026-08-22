@@ -19,14 +19,32 @@ var _active_run_controller: RunController = null
 var _save_data: Resource = null
 var _options_screen: Control = null
 
+@onready var _bloom_environment: WorldEnvironment = $BloomEnvironment
 @onready var _run_root: Node = $RunRoot
 @onready var _screen_root: Control = $ScreenCanvas/ScreenRoot
 
 
 func _ready() -> void:
 	Magnetide.register_app_root(self)
+	# Applied from here rather than the Magnetide autoload: the autoload is ready
+	# before this scene exists, so the bloom half of the settings would have had
+	# nothing to apply to.
+	AppOptions.load_from_disk().apply()
 	_save_data = AppSaveDataScript.load_or_create(default_run_loadout)
 	_show_main_menu()
+
+
+## The Bloom option, applied to all three layers it spans: the glow.gdshader
+## materials (via the bloom_strength global uniform), the HDR 2D viewport that
+## keeps their emission above 1.0 instead of clamping it, and the
+## WorldEnvironment that blooms whatever exceeds it. Off restores plain LDR
+## rendering with no glow at all: every lit state the glow dresses up is also
+## carried by an on/off texture, so nothing becomes unreadable without it.
+func set_bloom_enabled(enabled: bool) -> void:
+	RenderingServer.global_shader_parameter_set(&"bloom_strength", 1.0 if enabled else 0.0)
+	get_viewport().use_hdr_2d = enabled
+	if _bloom_environment.environment != null:
+		_bloom_environment.environment.glow_enabled = enabled
 
 
 func start_run(level_definition: LevelDefinition = null, run_loadout: RunLoadout = null) -> void:

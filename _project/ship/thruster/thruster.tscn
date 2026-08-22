@@ -5,6 +5,21 @@
 [ext_resource type="Texture2D" uid="uid://crgxls4sd11k" path="res://_project/ship/thruster/sprites/thruster_effect_1_start.png" id="2_x1vb2"]
 [ext_resource type="Texture2D" uid="uid://dikcoxpc050ey" path="res://_project/ship/thruster/sprites/thruster_effect_2_loop.png" id="3_j282s"]
 [ext_resource type="Texture2D" uid="uid://wnbv58viosrx" path="res://_project/ship/thruster/sprites/thruster.png" id="3_y8bgj"]
+[ext_resource type="Shader" path="res://_project/common/glow.gdshader" id="6_glow"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_plume_glow"]
+shader = ExtResource("6_glow")
+shader_parameter/glow_intensity = 1.0
+shader_parameter/glow_color = Color(0.596078, 0.815686, 1, 1)
+shader_parameter/emission_energy = 0.5
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.0
+shader_parameter/halo_radius = 18.8550008956125
+shader_parameter/halo_energy = 3.1070001475825
+shader_parameter/halo_falloff = 3.5870001466325
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 1.2640000600399999
+shader_parameter/pulse_depth = 0.3570000169575
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_j282s"]
 atlas = ExtResource("1_mjibk")
@@ -75,6 +90,7 @@ animations = [{
 script = ExtResource("1_x1vb2")
 
 [node name="PlumeAnimation" type="AnimatedSprite2D" parent="." unique_id=580565471]
+material = SubResource("ShaderMaterial_plume_glow")
 position = Vector2(0, 72)
 sprite_frames = SubResource("SpriteFrames_7hrym")
 animation = &"loop_1"

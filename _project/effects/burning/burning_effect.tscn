@@ -1,7 +1,22 @@
-[gd_scene load_steps=3 format=3 uid="uid://bburningeffct"]
+[gd_scene load_steps=5 format=3 uid="uid://bburningeffct"]
 
 [ext_resource type="Script" uid="uid://dmlypd0orjo3t" path="res://_project/effects/burning/burning_effect.gd" id="1_burning"]
 [ext_resource type="SpriteFrames" uid="uid://bburnflamefrm" path="res://_project/effects/burning/burning_flame_sprite_frames.tres" id="2_frames"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="3_glow"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_burn_glow"]
+shader = ExtResource("3_glow")
+shader_parameter/glow_intensity = 1.0
+shader_parameter/glow_color = Color(1, 0.607843, 0.180392, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.0
+shader_parameter/halo_radius = 14.0
+shader_parameter/halo_energy = 0.9
+shader_parameter/halo_falloff = 2.5
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
 
 [node name="BurningEffect" type="Node2D"]
 z_index = 5
@@ -12,6 +27,7 @@ display_color = Color(1, 0.54902, 0.101961, 1)
 
 [node name="FlameTemplate" type="AnimatedSprite2D" parent="."]
 visible = false
+material = SubResource("ShaderMaterial_burn_glow")
 sprite_frames = ExtResource("2_frames")
 animation = &"burn"
 autoplay = "burn"

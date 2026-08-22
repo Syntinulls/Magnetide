@@ -10,6 +10,10 @@ class_name WeaponData
 ## Animated projectile visual. When set it wins over bullet_sprite and the
 ## projectile is built with an AnimatedSprite2D (flamethrower flames).
 @export var bullet_sprite_frames: SpriteFrames = null
+## Optional material for the projectile's visual — the glow shader on flames. The
+## same resource is shared by every projectile this weapon fires, so anything that
+## has to vary per shot belongs in projectile_behavior, not here.
+@export var projectile_material: Material = null
 @export var fire_behavior: Resource = null
 
 @export_group("Projectile Physics")

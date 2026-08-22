@@ -169,14 +169,41 @@ vertical_alignment = 1
 [node name="Video" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs"]
 visible = false
 layout_mode = 2
+theme_override_constants/separation = 16
 
-[node name="PlaceholderLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video"]
+[node name="VideoMargin" type="MarginContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video"]
 layout_mode = 2
-size_flags_vertical = 3
+theme_override_constants/margin_left = 16
+theme_override_constants/margin_top = 24
+theme_override_constants/margin_right = 16
+
+[node name="VideoRows" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video/VideoMargin"]
+layout_mode = 2
+theme_override_constants/separation = 20
+
+[node name="BloomRow" type="HBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video/VideoMargin/VideoRows"]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="BloomLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video/VideoMargin/VideoRows/BloomRow"]
+custom_minimum_size = Vector2(160, 0)
+layout_mode = 2
+text = "Bloom"
+
+[node name="BloomCheckBox" type="CheckBox" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video/VideoMargin/VideoRows/BloomRow"]
+unique_name_in_owner = true
+custom_minimum_size = Vector2(0, 44)
+layout_mode = 2
+size_flags_vertical = 4
+theme_override_styles/focus = SubResource("StyleBoxEmpty_tab")
+button_pressed = true
+
+[node name="BloomHintLabel" type="Label" parent="CenterContainer/Panel/Margin/Layout/Tabs/Video/VideoMargin/VideoRows"]
+layout_mode = 2
 theme_override_colors/font_color = Color(1, 1, 1, 0.4)
-text = "No settings yet."
-horizontal_alignment = 1
-vertical_alignment = 1
+theme_override_font_sizes/font_size = 20
+text = "Emissive objects glow and bleed light into the scene. Turn off for a small performance gain."
+autowrap_mode = 3
 
 [node name="Audio" type="VBoxContainer" parent="CenterContainer/Panel/Margin/Layout/Tabs"]
 visible = false

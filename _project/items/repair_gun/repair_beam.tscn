@@ -4,6 +4,35 @@
 [ext_resource type="Texture2D" uid="uid://jo5io7x5jlvv" path="res://_project/items/repair_gun/effect_beam_1_frame_0.png" id="2_beam"]
 [ext_resource type="Texture2D" uid="uid://dyhoixdiydpve" path="res://_project/items/repair_gun/effect_shine_1.png" id="3_shine"]
 [ext_resource type="Texture2D" uid="uid://bsfokn81e03ac" path="res://_project/items/repair_gun/effect_contact_1.png" id="4_contact"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="5_glow"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_beam_glow"]
+shader = ExtResource("5_glow")
+shader_parameter/glow_intensity = 1.0
+shader_parameter/glow_color = Color(0.607843, 1, 0.388235, 1)
+shader_parameter/emission_energy = 0.5
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.0
+shader_parameter/halo_radius = 11.0
+shader_parameter/halo_energy = 1.3
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = true
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_flare_glow"]
+shader = ExtResource("5_glow")
+shader_parameter/glow_intensity = 1.0
+shader_parameter/glow_color = Color(0.607843, 1, 0.388235, 1)
+shader_parameter/emission_energy = 0.5
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.0
+shader_parameter/halo_radius = 18.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.5
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
 
 [sub_resource type="AtlasTexture" id="AtlasTexture_sh0"]
 atlas = ExtResource("3_shine")
@@ -125,6 +154,7 @@ script = ExtResource("1_script")
 
 [node name="Beam" type="Line2D" parent="."]
 visible = false
+material = SubResource("ShaderMaterial_beam_glow")
 texture_repeat = 2
 texture = ExtResource("2_beam")
 texture_mode = 1
@@ -133,10 +163,12 @@ default_color = Color(1, 1, 1, 1)
 
 [node name="Shine" type="AnimatedSprite2D" parent="."]
 visible = false
+material = SubResource("ShaderMaterial_flare_glow")
 sprite_frames = SubResource("SpriteFrames_shine")
 animation = &"shine"
 
 [node name="Contact" type="AnimatedSprite2D" parent="."]
 visible = false
+material = SubResource("ShaderMaterial_flare_glow")
 sprite_frames = SubResource("SpriteFrames_contact")
 animation = &"contact"

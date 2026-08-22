@@ -164,6 +164,25 @@ instead of 3, so it's the same number of shots with far more honest ammo readout
 
 ### Feel, Audio & Visuals
 
+**Things that should glow now glow.** Ship thrusters throw a blue-white haze off their
+plumes, flamethrower flames carry a warm glow that fades as they die, enemies you set
+alight burn with glowing flames, and the repair beam burns green down its whole length
+instead of reading as a plain white line. Indicator
+lights light up properly too — the station's upgrade level ticks and the lever minigame's
+result lights now shine rather than just changing color. Emissive things also bleed light
+into the scene around them: thruster wash spills across the hull, and a jet of flame lights
+up the sky behind it.
+
+**New setting: Bloom.** Options → Video. On by default; unchecking it turns off the glow
+and the light bleed together, for a small performance gain or if the effect isn't to your
+taste.
+
+**The lever minigame hits back.** Landing the reticle on a green or yellow zone punches
+that zone up in scale and flares it bright for an instant. Hitting a red one kicks the
+reticle sideways and blinks **every** red zone in unison, like a warning light, for
+**1.6 seconds** (up from a **0.6s** dead pause) before the panel closes — a failed
+activation now reads as a failure instead of just stopping.
+
 **Augment slots can be emptied again.** An equipped augment now carries a small red **X**
 in the top-right corner of its icon — click it to pull that augment back out and leave the
 slot open.

@@ -31,8 +31,6 @@ func _ready() -> void:
 	_bgm.name = "BgmPlayer"
 	add_child(_bgm)
 
-	AppOptions.load_from_disk().apply()
-
 
 func register_app_root(app_root_node: Node) -> void:
 	_active_app_root = app_root_node

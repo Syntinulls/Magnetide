@@ -170,6 +170,13 @@ debug_toggle_panel={
 
 3d/physics_engine="Jolt Physics"
 
+[shader_globals]
+
+bloom_strength={
+"type": "float",
+"value": 1.0
+}
+
 [rendering]
 
 rendering_device/driver.windows="d3d12"

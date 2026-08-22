@@ -1,4 +1,4 @@
-[gd_scene load_steps=22 format=3]
+[gd_scene load_steps=23 format=3]
 
 [ext_resource type="Script" path="res://_project/app/app_root.gd" id="1_script"]
 [ext_resource type="PackedScene" path="res://_project/debug/debug_panel.tscn" id="13_debug_panel"]
@@ -20,6 +20,7 @@
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="12_pistol"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/station/station_screen.tscn" id="10_station_screen"]
 [ext_resource type="PackedScene" path="res://_project/app/screens/map/map_screen.tscn" id="11_map_screen"]
+[ext_resource type="Environment" uid="uid://cbloomenv0001" path="res://_project/app/bloom_environment.tres" id="22_bloom_env"]
 
 [sub_resource type="Resource" id="Resource_default_level"]
 script = ExtResource("2_level_definition")
@@ -67,6 +68,9 @@ main_menu_scene = ExtResource("4_main_menu")
 station_screen_scene = ExtResource("10_station_screen")
 map_screen_scene = ExtResource("11_map_screen")
 salvage_process_scene = ExtResource("5_salvage_screen")
+
+[node name="BloomEnvironment" type="WorldEnvironment" parent="."]
+environment = ExtResource("22_bloom_env")
 
 [node name="RunRoot" type="Node" parent="."]
 

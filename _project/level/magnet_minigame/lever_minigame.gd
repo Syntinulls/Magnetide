@@ -6,7 +6,9 @@ class_name LeverMinigame
 ## crosses each green zone ("PERFECT") or a flanking yellow ("CLOSE", which also
 ## speeds the reticle up). Pressing on red -- or letting an unresolved zone pair
 ## slip past -- turns every light red and fails the attempt instantly. One result
-## light per green zone reports the outcome below the bar.
+## light per green zone reports the outcome below the bar. Hitting a green or yellow
+## punches that zone up in scale and flares its glow; hitting a red blinks every red
+## zone in unison like a warning light and kicks the reticle before the panel closes.
 ##
 ## Owns the whole activation presentation: while it runs it slows
 ## Engine.time_scale, zooms the camera onto a focus point above the player, and
@@ -32,6 +34,10 @@ const LIGHT_OFF_TEXTURE: Texture2D = preload("res://_project/level/magnet_miniga
 const LIGHT_GREEN_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_green.png")
 const LIGHT_YELLOW_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_yellow.png")
 const LIGHT_RED_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_red.png")
+## Glow materials duplicated per zone and per result light so each one can be driven
+## on its own; all their tuning lives in the .tres files, not here.
+const ZONE_GLOW: ShaderMaterial = preload("res://_project/level/magnet_minigame/zone_glow.tres")
+const LIGHT_GLOW: ShaderMaterial = preload("res://_project/level/magnet_minigame/light_glow.tres")
 const ZONE_BORDER_PATCH_MARGIN := 6
 ## Panels bordered by the ui_border sprites inset their content by this much.
 const ZONE_CONTENT_INSET := 3.0
@@ -78,8 +84,26 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var info_pop_time: float = 0.18
 ## Idle time before the info text scales back to hidden.
 @export var info_hold_time: float = 1.5
-## Pause with the reticle halted after a miss before the minigame closes.
-@export var fail_pause_time: float = 0.6
+## Time for a hit green/yellow zone to flare its glow to full.
+@export var zone_hit_flash_time: float = 0.06
+## Time for that flare to fade back out.
+@export var zone_hit_fade_time: float = 0.28
+## Scale a hit green/yellow zone bounces up to before settling back.
+@export var zone_hit_scale: Vector2 = Vector2(1.45, 1.2)
+## Time for the bounce out, then the elastic settle back to default scale.
+@export var zone_hit_bounce_time: float = 0.09
+@export var zone_hit_settle_time: float = 0.32
+## Pause with the reticle halted after a miss, during which every red zone blinks,
+## before the minigame closes.
+@export var fail_pause_time: float = 1.6
+## Blinks the red zones fit into that pause.
+@export var fail_flash_count: int = 4
+## How far the reticle kicks sideways on a red hit, in pixels.
+@export var reticle_shake_offset: float = 10.0
+## Scale the reticle punches to on that same kick.
+@export var reticle_shake_scale: float = 1.35
+## Duration of the whole one-off kick.
+@export var reticle_shake_time: float = 0.24
 ## Time to linger on a successful result before closing.
 @export var result_display_time: float = 0.75
 @export var zone_color_green: Color = Color("58c05c")
@@ -110,6 +134,7 @@ class Zone:
 	var end_ratio: float
 	var pair_index: int = -1
 	var control: Control
+	var glow: ShaderMaterial
 
 class Pair:
 	var resolved := false
@@ -117,6 +142,7 @@ class Pair:
 	## Right edge of the green+yellows cluster; passing it unresolved is a miss.
 	var right_edge_ratio: float
 	var light: TextureRect
+	var light_glow: ShaderMaterial
 
 var _state: State = State.INACTIVE
 var _zones: Array[Zone] = []
@@ -142,6 +168,9 @@ var _zoom_tween: Tween = null
 var _offset_tween: Tween = null
 var _vignette_tween: Tween = null
 var _info_tween: Tween = null
+## Every tween the minigame itself starts, kept so _process can hold them at
+## wall-clock speed against the activation slowdown.
+var _realtime_tweens: Array[Tween] = []
 
 @onready var _player: Node2D = get_node_or_null(player_path) as Node2D
 @onready var _vignette: ColorRect = $VignetteLayer/Vignette
@@ -169,10 +198,7 @@ func _process(delta: float) -> void:
 		var t := clampf(_timescale_elapsed / timescale_slowdown_time, 0.0, 1.0)
 		var eased_t := 1.0 - pow(1.0 - t, 2.0)
 		Engine.time_scale = lerpf(1.0, activation_timescale, eased_t)
-	# Tweens tick on scaled time; keep the info pop at wall-clock speed while
-	# the timescale slowdown tweens in and out underneath it.
-	if _info_tween and _info_tween.is_valid():
-		_info_tween.set_speed_scale(1.0 / Engine.time_scale if Engine.time_scale > 0.0 else 1.0)
+	_drive_realtime_tweens()
 	match _state:
 		State.SETUP:
 			_process_setup(real_delta)
@@ -233,10 +259,13 @@ func _reset_state() -> void:
 	for child in _lights_row.get_children():
 		_lights_row.remove_child(child)
 		child.queue_free()
-	if _info_tween and _info_tween.is_valid():
-		_info_tween.kill()
+	for tween in _realtime_tweens:
+		if tween != null and tween.is_valid():
+			tween.kill()
+	_realtime_tweens.clear()
 	_info_tween = null
 	_info_label.scale = Vector2.ZERO
+	_reticle.scale = Vector2.ONE
 
 
 ## Slow time, zoom the camera onto the focus point above the player, and fade in
@@ -386,29 +415,32 @@ func _evaluate_press() -> void:
 		ZoneType.RED:
 			_fail_minigame()
 		ZoneType.GREEN:
-			_resolve_pair(zone.pair_index, true)
+			_resolve_pair(zone, true)
 		ZoneType.YELLOW:
-			_resolve_pair(zone.pair_index, false)
+			_resolve_pair(zone, false)
 
 
-func _resolve_pair(pair_index: int, perfect: bool) -> void:
-	var pair := _pairs[pair_index]
+func _resolve_pair(zone: Zone, perfect: bool) -> void:
+	var pair := _pairs[zone.pair_index]
 	if pair.resolved:
 		return
 	pair.resolved = true
+	_flash_zone(zone)
 	if perfect:
-		pair.light.texture = LIGHT_GREEN_TEXTURE
+		_light_up(pair, LIGHT_GREEN_TEXTURE, zone_color_green)
 		_show_info("PERFECT", zone_color_green)
 	else:
-		pair.light.texture = LIGHT_YELLOW_TEXTURE
+		_light_up(pair, LIGHT_YELLOW_TEXTURE, zone_color_yellow)
 		_yellows_hit += 1
 		_show_info("CLOSE", zone_color_yellow)
-	pair_resolved.emit(pair_index, _pairs.size())
+	pair_resolved.emit(zone.pair_index, _pairs.size())
 
 
 func _fail_minigame() -> void:
 	for pair in _pairs:
-		pair.light.texture = LIGHT_RED_TEXTURE
+		_light_up(pair, LIGHT_RED_TEXTURE, zone_color_red)
+	_blink_red_zones()
+	_shake_reticle()
 	_show_info("MISS", zone_color_red)
 	_game_won = false
 	_result_timer = 0.0
@@ -497,11 +529,15 @@ func _build_zone_controls() -> void:
 		var width := boundaries[i + 1] - boundaries[i]
 		if i < _zones.size() - 1:
 			width -= 1
-		_zones[i].control = _make_zone_control(_zones[i].type, maxi(width, 1))
-		_zone_row.add_child(_zones[i].control)
+		var zone := _zones[i]
+		zone.glow = ZONE_GLOW.duplicate() as ShaderMaterial
+		zone.glow.set_shader_parameter(&"glow_color", _zone_color(zone.type))
+		zone.glow.set_shader_parameter(&"glow_intensity", 0.0)
+		zone.control = _make_zone_control(zone.type, maxi(width, 1), zone.glow)
+		_zone_row.add_child(zone.control)
 
 
-func _make_zone_control(type: ZoneType, width: int) -> Control:
+func _make_zone_control(type: ZoneType, width: int, glow: ShaderMaterial) -> Control:
 	var zone_control := Control.new()
 	zone_control.custom_minimum_size = Vector2(width, 0.0)
 	zone_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
@@ -522,6 +558,7 @@ func _make_zone_control(type: ZoneType, width: int) -> Control:
 	stripes.offset_right = -ZONE_CONTENT_INSET
 	stripes.offset_bottom = -ZONE_CONTENT_INSET
 	stripes.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	stripes.material = glow
 	zone_control.add_child(stripes)
 	var border := NinePatchRect.new()
 	border.texture = ZONE_BORDER_TEXTURE
@@ -531,6 +568,7 @@ func _make_zone_control(type: ZoneType, width: int) -> Control:
 	border.patch_margin_bottom = ZONE_BORDER_PATCH_MARGIN
 	border.set_anchors_preset(Control.PRESET_FULL_RECT)
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	border.material = glow
 	zone_control.add_child(border)
 	return zone_control
 
@@ -542,6 +580,9 @@ func _build_lights() -> void:
 		light.texture = LIGHT_OFF_TEXTURE
 		light.stretch_mode = TextureRect.STRETCH_KEEP
 		light.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		pair.light_glow = LIGHT_GLOW.duplicate() as ShaderMaterial
+		pair.light_glow.set_shader_parameter(&"glow_intensity", 0.0)
+		light.material = pair.light_glow
 		var light_size := LIGHT_OFF_TEXTURE.get_size()
 		light.position = Vector2(
 			ZONE_CONTENT_INSET + pair.center_ratio * bar_width - light_size.x * 0.5,
@@ -580,12 +621,98 @@ func _show_info(text: String, color: Color) -> void:
 	_info_label.add_theme_color_override("font_color", color)
 	_info_label.pivot_offset = _info_label.size * 0.5
 	_info_label.scale = Vector2.ZERO
-	_info_tween = _info_label.create_tween()
+	_info_tween = _create_realtime_tween()
 	_info_tween.tween_property(_info_label, "scale", Vector2.ONE, info_pop_time) \
 		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	_info_tween.tween_interval(info_hold_time)
 	_info_tween.tween_property(_info_label, "scale", Vector2.ZERO, INFO_HIDE_TWEEN_TIME) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+## A result light switching on takes the state's color into its glow as well as its
+## texture, so the lit lens reads as actually emitting rather than merely tinted.
+func _light_up(pair: Pair, texture: Texture2D, color: Color) -> void:
+	pair.light.texture = texture
+	pair.light_glow.set_shader_parameter(&"glow_color", color)
+	pair.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
+
+
+## A hit green or yellow zone punches up in scale and flares its glow, then settles
+## back. Red is never flashed this way -- hitting one is a fail, not a hit.
+func _flash_zone(zone: Zone) -> void:
+	var flare := _create_realtime_tween()
+	flare.tween_property(zone.glow, "shader_parameter/glow_intensity", 1.0, zone_hit_flash_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	flare.tween_property(zone.glow, "shader_parameter/glow_intensity", 0.0, zone_hit_fade_time) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	zone.control.pivot_offset = zone.control.size * 0.5
+	var bounce := _create_realtime_tween()
+	bounce.tween_property(zone.control, "scale", zone_hit_scale, zone_hit_bounce_time) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	bounce.tween_property(zone.control, "scale", Vector2.ONE, zone_hit_settle_time) \
+		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
+
+
+## Every red zone blinks in unison for the whole fail pause, like a warning light.
+## One tween drives them all so they can never drift out of step.
+func _blink_red_zones() -> void:
+	var blinks := maxi(fail_flash_count, 1)
+	var half_period := fail_pause_time / float(blinks * 2)
+	var blink := _create_realtime_tween()
+	for _index in range(blinks):
+		blink.tween_method(_set_red_zone_glow, 0.0, 1.0, half_period)
+		blink.tween_method(_set_red_zone_glow, 1.0, 0.0, half_period)
+
+
+func _set_red_zone_glow(value: float) -> void:
+	for zone in _zones:
+		if zone.type == ZoneType.RED and zone.glow != null:
+			zone.glow.set_shader_parameter(&"glow_intensity", value)
+
+
+## One sharp there-and-back kick in position plus a scale punch, so a red hit lands
+## physically. The reticle is halted by then, so nothing fights these tweens.
+func _shake_reticle() -> void:
+	var rest := _reticle.position
+	var kick := Vector2(reticle_shake_offset, 0.0)
+	var step := reticle_shake_time / 3.0
+	var shake := _create_realtime_tween()
+	shake.tween_property(_reticle, "position", rest + kick, step) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	shake.tween_property(_reticle, "position", rest - kick, step) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN_OUT)
+	shake.tween_property(_reticle, "position", rest, step) \
+		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+	_reticle.pivot_offset = _reticle.size * 0.5
+	var punch := _create_realtime_tween()
+	punch.tween_property(_reticle, "scale", Vector2.ONE * reticle_shake_scale, step) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
+	punch.tween_property(_reticle, "scale", Vector2.ONE, reticle_shake_time - step) \
+		.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_IN)
+
+
+## Tweens tick on scaled time, and the minigame runs under a heavy Engine.time_scale
+## slowdown; every tween it starts goes through here so _drive_realtime_tweens can
+## hold it at wall-clock speed.
+func _create_realtime_tween() -> Tween:
+	var tween := create_tween()
+	tween.set_speed_scale(_realtime_speed_scale())
+	_realtime_tweens.append(tween)
+	return tween
+
+
+func _drive_realtime_tweens() -> void:
+	var speed := _realtime_speed_scale()
+	for index in range(_realtime_tweens.size() - 1, -1, -1):
+		var tween: Tween = _realtime_tweens[index]
+		if tween == null or not tween.is_valid():
+			_realtime_tweens.remove_at(index)
+			continue
+		tween.set_speed_scale(speed)
+
+
+func _realtime_speed_scale() -> float:
+	return 1.0 / Engine.time_scale if Engine.time_scale > 0.0 else 1.0
 
 
 func _scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:

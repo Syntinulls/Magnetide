@@ -98,6 +98,7 @@ func fire_weapon_projectile(direction: Vector2, weapon_data: WeaponData) -> Node
 			&"global_position": _get_bullet_spawn_position(),
 			&"direction": bullet_direction,
 			&"sprite": sprite_value,
+			&"visual_material": weapon_data.projectile_material,
 			&"damage": weapon_data.damage * player.outgoing_damage_multiplier,
 			&"speed": weapon_data.bullet_speed,
 			&"lifetime": weapon_data.bullet_lifetime,

@@ -16,6 +16,7 @@ const TAB_INACTIVE_COLOR := Color(1.0, 1.0, 1.0, 0.55)
 @onready var _music_value_label: Label = %MusicValueLabel
 @onready var _sfx_slider: HSlider = %SfxSlider
 @onready var _sfx_value_label: Label = %SfxValueLabel
+@onready var _bloom_check: CheckBox = %BloomCheckBox
 @onready var _ok_button: Button = %OkButton
 @onready var _cancel_button: Button = %CancelButton
 @onready var _unsaved_confirm: Control = %UnsavedConfirm
@@ -29,6 +30,7 @@ func _ready() -> void:
 	_saved = AppOptions.load_from_disk()
 	_music_slider.value = _saved.music_volume
 	_sfx_slider.value = _saved.sfx_volume
+	_bloom_check.button_pressed = _saved.bloom_enabled
 	_hide_slider_grabbers()
 	for index in _tab_buttons.get_child_count():
 		var tab_button := _tab_buttons.get_child(index) as Button
@@ -37,6 +39,7 @@ func _ready() -> void:
 	_refresh_tab_buttons()
 	_music_slider.value_changed.connect(_on_slider_changed)
 	_sfx_slider.value_changed.connect(_on_slider_changed)
+	_bloom_check.toggled.connect(_on_bloom_toggled)
 	_ok_button.pressed.connect(_on_ok_pressed)
 	_cancel_button.pressed.connect(_on_cancel_pressed)
 	_apply_button.pressed.connect(_on_confirm_apply_pressed)
@@ -76,6 +79,12 @@ func _on_slider_changed(_value: float) -> void:
 	_current_values().apply()
 
 
+## Live-previewed like the sliders, so the player sees the glow appear and
+## disappear behind the panel before committing to it.
+func _on_bloom_toggled(_pressed: bool) -> void:
+	_current_values().apply()
+
+
 func _refresh_value_labels() -> void:
 	_music_value_label.text = "%d%%" % roundi(_music_slider.value)
 	_sfx_value_label.text = "%d%%" % roundi(_sfx_slider.value)
@@ -89,6 +98,7 @@ func _current_values() -> AppOptions:
 	var options := AppOptions.new()
 	options.music_volume = _music_slider.value
 	options.sfx_volume = _sfx_slider.value
+	options.bloom_enabled = _bloom_check.button_pressed
 	return options
 
 

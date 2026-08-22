@@ -1,0 +1,17 @@
+[gd_resource type="ShaderMaterial" format=3 uid="uid://b0oneglowmat0"]
+
+[ext_resource type="Shader" path="res://_project/common/glow.gdshader" id="1_glow"]
+
+[resource]
+shader = ExtResource("1_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(1, 1, 1, 1)
+shader_parameter/emission_energy = 1.8
+shader_parameter/emission_knee = 0.05
+shader_parameter/emission_opacity = 0.0
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0

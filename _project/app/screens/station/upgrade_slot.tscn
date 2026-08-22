@@ -6,6 +6,82 @@
 [ext_resource type="Texture2D" uid="uid://dqupgbtn00002" path="res://_project/app/screens/station/sprites/upgrade_button_pressed.png" id="4_upg_button_pressed"]
 [ext_resource type="Texture2D" uid="uid://dqupgarw00001" path="res://_project/app/screens/station/sprites/upgrade_arrow.png" id="5_upg_arrow"]
 [ext_resource type="Texture2D" uid="uid://cvf0b0nfmwwdw" path="res://_project/app/screens/station/sprites/icon_lock_open.png" id="6_lock"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="7_glow"]
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tick1_glow"]
+resource_local_to_scene = true
+shader = ExtResource("7_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0, 0.898039, 0.768627, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.85
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tick2_glow"]
+resource_local_to_scene = true
+shader = ExtResource("7_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0, 0.898039, 0.768627, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.85
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tick3_glow"]
+resource_local_to_scene = true
+shader = ExtResource("7_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0, 0.898039, 0.768627, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.85
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tick4_glow"]
+resource_local_to_scene = true
+shader = ExtResource("7_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0, 0.898039, 0.768627, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.85
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
+
+[sub_resource type="ShaderMaterial" id="ShaderMaterial_tick5_glow"]
+resource_local_to_scene = true
+shader = ExtResource("7_glow")
+shader_parameter/glow_intensity = 0.0
+shader_parameter/glow_color = Color(0, 0.898039, 0.768627, 1)
+shader_parameter/emission_energy = 0.6
+shader_parameter/emission_knee = 0.9
+shader_parameter/emission_opacity = 0.85
+shader_parameter/halo_radius = 0.0
+shader_parameter/halo_energy = 1.0
+shader_parameter/halo_falloff = 2.0
+shader_parameter/halo_tiles = false
+shader_parameter/pulse_speed = 0.0
+shader_parameter/pulse_depth = 0.0
 
 [sub_resource type="StyleBoxEmpty" id="StyleBoxEmpty_unequip"]
 
@@ -125,6 +201,7 @@ size_flags_horizontal = 4
 theme_override_constants/separation = 4
 
 [node name="Tick1" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+material = SubResource("ShaderMaterial_tick1_glow")
 custom_minimum_size = Vector2(12, 34)
 layout_mode = 2
 size_flags_vertical = 4
@@ -134,6 +211,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Tick2" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+material = SubResource("ShaderMaterial_tick2_glow")
 custom_minimum_size = Vector2(12, 34)
 layout_mode = 2
 size_flags_vertical = 4
@@ -143,6 +221,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Tick3" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+material = SubResource("ShaderMaterial_tick3_glow")
 custom_minimum_size = Vector2(12, 34)
 layout_mode = 2
 size_flags_vertical = 4
@@ -152,6 +231,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Tick4" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+material = SubResource("ShaderMaterial_tick4_glow")
 custom_minimum_size = Vector2(12, 34)
 layout_mode = 2
 size_flags_vertical = 4
@@ -161,6 +241,7 @@ expand_mode = 1
 stretch_mode = 5
 
 [node name="Tick5" type="TextureRect" parent="BodyRow/TickColumn/TickContainer"]
+material = SubResource("ShaderMaterial_tick5_glow")
 custom_minimum_size = Vector2(12, 34)
 layout_mode = 2
 size_flags_vertical = 4
