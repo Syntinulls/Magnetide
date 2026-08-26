@@ -13,6 +13,7 @@
 [ext_resource type="PackedScene" uid="uid://ggn0tn42w7k4" path="res://_project/ship/research_station/research_station.tscn" id="8_6os2d"]
 [ext_resource type="PackedScene" uid="uid://bvaekv4vjhgyn" path="res://_project/ship/recycler/recycler.tscn" id="9_0vixk"]
 [ext_resource type="PackedScene" uid="uid://d4nnmhac6tp0q" path="res://_project/ship/thruster/thruster.tscn" id="10_dbkfd"]
+[ext_resource type="Script" uid="uid://d0wojt41vayoc" path="res://_project/ship/ship_floor.gd" id="30_ship_floor"]
 
 [sub_resource type="SpriteFrames" id="SpriteFrames_dbkfd"]
 animations = [{
@@ -81,14 +82,14 @@ enemy_target_point_paths = Array[NodePath]([NodePath("Targets/EnemyTargetPoint")
 position = Vector2(0, 136)
 hold_capacity = 5
 
+[node name="ShipFloor" type="Node2D" parent="."]
+script = ExtResource("30_ship_floor")
+
 [node name="StoredSalvageItems" type="Node2D" parent="." unique_id=1915771884]
 y_sort_enabled = true
 
 [node name="ShipBack" type="Sprite2D" parent="." unique_id=1881827609]
 texture = ExtResource("1_back")
-
-[node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
-texture = ExtResource("2_fore")
 
 [node name="ShipGens" type="AnimatedSprite2D" parent="." unique_id=426583781]
 position = Vector2(0, -108)
@@ -129,6 +130,9 @@ position = Vector2(-235, -113.35)
 
 [node name="Recycler" parent="." unique_id=2041959714 instance=ExtResource("9_0vixk")]
 position = Vector2(235, -107)
+
+[node name="DeckSalvageItems" type="Node2D" parent="."]
+y_sort_enabled = true
 
 [node name="DeparturePylonLeft" parent="." unique_id=1436115027 instance=ExtResource("5_departure_pylon")]
 visible = false
@@ -183,6 +187,9 @@ position = Vector2(160, 120)
 script = ExtResource("7_r6cvl")
 target_root_path = NodePath("../..")
 metadata/_custom_type_script = "uid://bqv3p643kd7me"
+
+[node name="ShipFore" type="Sprite2D" parent="." unique_id=1053002359]
+texture = ExtResource("2_fore")
 
 [node name="ThrusterLeft" parent="." unique_id=788938685 instance=ExtResource("10_dbkfd")]
 position = Vector2(-333, 23)

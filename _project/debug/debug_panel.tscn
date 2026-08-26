@@ -221,6 +221,26 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Spawn Salvage Pile"
 
+[node name="DropItemRow" type="HBoxContainer" parent="Panel/Scroll/Groups/LevelRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DropItemOnShipButton" type="Button" parent="Panel/Scroll/Groups/LevelRows/DropItemRow"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Drop On Ship"
+
+[node name="DropItemDropdown" type="OptionButton" parent="Panel/Scroll/Groups/LevelRows/DropItemRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+
+[node name="DropItemCountEdit" type="LineEdit" parent="Panel/Scroll/Groups/LevelRows/DropItemRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(60, 0)
+placeholder_text = "1"
+
 [node name="AddRunScrapRow" type="HBoxContainer" parent="Panel/Scroll/Groups/LevelRows"]
 layout_mode = 2
 theme_override_constants/separation = 6

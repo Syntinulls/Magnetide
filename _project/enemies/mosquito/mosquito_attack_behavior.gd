@@ -26,7 +26,7 @@ class_name MosquitoAttackBehavior
 ## Extra distance ahead of the muzzle (toward the target) the needle spawns from.
 @export var needle_spawn_offset: float = 24.0
 ## Collision mask the needle scans for. Must include the player Hitbox layer.
-@export_flags_2d_physics var needle_collision_mask: int = 8
+@export_flags_2d_physics var needle_collision_mask: int = 1 << PhysicsLayers.PLAYER_HITBOX
 
 var _timer: float = 0.0
 

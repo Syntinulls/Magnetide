@@ -15,8 +15,10 @@ const WIPE_CONFIRM_SECONDS := 3.0
 const WIPE_BUTTON_TEXT := "Wipe Save"
 const WIPE_CONFIRM_TEXT := "Confirm Wipe?"
 const SCROLL_VIEWPORT_MARGIN := 24.0
+## Ceiling on a debug deck drop's stack count.
+const MAX_DEBUG_DECK_ITEMS := 20
 
-## Dropdown/action catalogs. Content additions register here (spec §9); the
+## Dropdown/action catalogs. Content additions register here (spec §10); the
 ## enemy dropdown instead enumerates the live EnemySpawner's profiles.
 @export var weapons: Array[WeaponData] = []
 @export var upgrade_items: Array[ItemData] = []
@@ -42,6 +44,9 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _set_threat_level_button: Button = %SetThreatLevelButton
 @onready var _threat_level_edit: LineEdit = %ThreatLevelEdit
 @onready var _spawn_pile_button: Button = %SpawnSalvagePileButton
+@onready var _drop_item_button: Button = %DropItemOnShipButton
+@onready var _drop_item_dropdown: OptionButton = %DropItemDropdown
+@onready var _drop_item_count_edit: LineEdit = %DropItemCountEdit
 @onready var _add_run_scrap_button: Button = %AddRunScrapButton
 @onready var _run_scrap_amount_edit: LineEdit = %RunScrapAmountEdit
 @onready var _extract_button: Button = %ExtractButton
@@ -164,6 +169,8 @@ func _connect_actions() -> void:
 	_fill_threat_button.pressed.connect(_on_fill_threat_pressed)
 	_set_threat_level_button.pressed.connect(_on_set_threat_level_pressed)
 	_spawn_pile_button.pressed.connect(_on_spawn_salvage_pile_pressed)
+	_drop_item_button.pressed.connect(_on_drop_item_on_ship_pressed)
+	_fill_drop_item_dropdown()
 	_add_run_scrap_button.pressed.connect(_on_add_run_scrap_pressed)
 	_extract_button.pressed.connect(_on_extract_pressed)
 	_fail_run_button.pressed.connect(_on_fail_run_pressed)
@@ -258,6 +265,34 @@ func _on_set_threat_level_pressed() -> void:
 
 ## Skip the wait for the next salvage cycle: the warning window opens immediately and
 ## the lever becomes flippable, as if the cooldown had just elapsed.
+func _on_drop_item_on_ship_pressed() -> void:
+	var ship := Magnetide.ship
+	if ship == null:
+		return
+	# A blank or unparsable count means one; a blank picker means a random common part.
+	var count := 1
+	var typed := _drop_item_count_edit.text.strip_edges()
+	if typed.is_valid_int():
+		count = clampi(typed.to_int(), 1, MAX_DEBUG_DECK_ITEMS)
+	var data: SalvageItemData = null
+	var picked := _drop_item_dropdown.selected
+	if picked >= 0 and picked < _drop_item_dropdown.item_count:
+		data = _drop_item_dropdown.get_item_metadata(picked) as SalvageItemData
+	ship.spawn_debug_deck_item(data, count)
+
+
+## Every salvage part the loot pools can produce, behind a leading random entry. The
+## catalog is authored data that cannot change mid-run, so this runs once on ready.
+func _fill_drop_item_dropdown() -> void:
+	var catalog := Ship.get_debug_item_catalog()
+	_drop_item_dropdown.clear()
+	_drop_item_dropdown.add_item("(random common)")
+	_drop_item_dropdown.set_item_metadata(0, null)
+	for data in catalog:
+		_drop_item_dropdown.add_item(_salvage_label(data))
+		_drop_item_dropdown.set_item_metadata(_drop_item_dropdown.item_count - 1, data)
+
+
 func _on_spawn_salvage_pile_pressed() -> void:
 	var minigame := _get_magnet_minigame()
 	if minigame:
@@ -551,6 +586,8 @@ func _refresh_context() -> void:
 	_set_threat_level_button.disabled = threat == null
 	var minigame := _get_magnet_minigame()
 	_spawn_pile_button.disabled = minigame == null or not minigame.can_force_salvage_cycle()
+	_drop_item_button.disabled = Magnetide.ship == null
+	_drop_item_dropdown.disabled = Magnetide.ship == null
 	_add_run_scrap_button.disabled = not in_run
 	_extract_button.disabled = not in_run
 	_fail_run_button.disabled = not in_run
@@ -706,6 +743,12 @@ func _refresh_enemy_dropdown() -> void:
 			continue
 		_enemy_dropdown.add_item(String(profile.id))
 		_enemy_dropdown.set_item_metadata(_enemy_dropdown.item_count - 1, profile.id)
+
+
+static func _salvage_label(item: SalvageItemData) -> String:
+	if item != null and not item.item_name.is_empty():
+		return item.item_name
+	return item.resource_path.get_file().get_basename() if item != null else "?"
 
 
 static func _item_label(item: ItemData) -> String:

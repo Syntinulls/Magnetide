@@ -14,10 +14,20 @@ class_name InteractionHitbox
 signal player_entered()
 signal player_exited()
 
+## Layer 7. Every interactable identifies itself here rather than sitting on whatever
+## a scene happened to default to, so "is an interactable" is a thing the physics
+## world can answer. See project.godot [layer_names].
+const COLLISION_LAYER: int = 1 << PhysicsLayers.INTERACTABLES
+## Layer 5, the player body — the only thing these hitboxes look for. Set here rather
+## than per scene so a new interactable cannot forget it and silently never fire.
+const PLAYER_BODY_MASK: int = 1 << PhysicsLayers.PLAYER_BODY
+
 var is_player_in_range: bool = false
 
 
 func _ready() -> void:
+	collision_layer = COLLISION_LAYER
+	collision_mask = PLAYER_BODY_MASK
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 

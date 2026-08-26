@@ -15,6 +15,8 @@ shader_parameter/flash_intensity = 0.0
 size = Vector2(140, 115)
 
 [node name="Mosquito" type="CharacterBody2D" unique_id=117270025]
+collision_layer = 4
+collision_mask = 21
 motion_mode = 1
 script = ExtResource("1_script")
 hover_distance = 1000.0

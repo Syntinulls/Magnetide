@@ -28,14 +28,17 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 ## area (the ship/screen center); Y is where it drops in from before settling.
 @export var debug_research_artifact_storage_offset: Vector2 = Vector2(0.0, -90.0)
 
-const STORAGE_COLLISION_LAYER: int = 8
 const STORAGE_BORDER_THICKNESS: float = 8.0
+## Gap kept between a placed item and the storage pen's inside faces, on top of the
+## item's own half-size.
+const STORAGE_PLACE_CLEARANCE: float = 4.0
 ## Thickness of the top-edge overflow sensor band (Area2D). When any stored item
 ## intersects this band the storage is "full" and refuses new items.
 const STORAGE_TOP_SENSOR_THICKNESS: float = 14.0
 const STORAGE_ITEMS_ROOT_NAME := "StoredSalvageItems"
 const STORAGE_ITEMS_Z_INDEX: int = -5
 const DEBUG_ARTIFACT_POOLS: ArtifactPools = preload("res://_project/salvage/loot/artifact_pools.tres")
+const DEBUG_LOOT_POOLS: SalvageLootPools = preload("res://_project/salvage/loot/salvage_loot_pools.tres")
 const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/common/border_outline.gdshader")
 const STORAGE_OUTLINE_IDLE_ALPHA: float = 0.35
 const STORAGE_OUTLINE_HOVER_ALPHA: float = 1.0
@@ -233,7 +236,7 @@ func _create_storage_floor_marker() -> void:
 
 func _create_storage_borders() -> void:
 	_storage_borders = StaticBody2D.new()
-	_storage_borders.collision_layer = STORAGE_COLLISION_LAYER
+	_storage_borders.collision_layer = SalvageItem.STORAGE_COLLISION_LAYER
 	_storage_borders.collision_mask = 0
 	add_child(_storage_borders)
 
@@ -286,7 +289,7 @@ func _create_storage_top_sensor() -> void:
 		sensor.monitorable = false
 		# Detect salvage items (collision layer 2); don't advertise ourselves.
 		sensor.collision_layer = 0
-		sensor.collision_mask = 2
+		sensor.collision_mask = 1 << PhysicsLayers.SALVAGE_ITEMS
 		add_child(sensor)
 
 		var sensor_shape := CollisionShape2D.new()
@@ -345,20 +348,18 @@ func _update_storage_area_outline_geometry() -> void:
 	if _storage_outline_line == null or not is_instance_valid(_storage_outline_line):
 		return
 
-	var top_left := Vector2(
-		storage_area_position.x - storage_area_size.x * 0.5,
-		storage_area_position.y - storage_area_size.y
-	)
+	var rect := get_storage_area_local_rect()
+	var top_left := rect.position
 	_storage_outline_line.points = PackedVector2Array([
 		top_left,
-		top_left + Vector2(storage_area_size.x, 0.0),
-		top_left + storage_area_size,
-		top_left + Vector2(0.0, storage_area_size.y)
+		top_left + Vector2(rect.size.x, 0.0),
+		top_left + rect.size,
+		top_left + Vector2(0.0, rect.size.y)
 	])
 
 	if _storage_outline_material:
 		_storage_outline_material.set_shader_parameter("rect_top_left", top_left)
-		_storage_outline_material.set_shader_parameter("rect_size", storage_area_size)
+		_storage_outline_material.set_shader_parameter("rect_size", rect.size)
 
 
 func set_storage_area_outline_state(enabled: bool, hovered: bool = false, placeable: bool = true) -> void:
@@ -377,12 +378,22 @@ func set_storage_area_outline_state(enabled: bool, hovered: bool = false, placea
 		_storage_outline_material.set_shader_parameter("outline_color", color)
 
 
+## The storage box as the player sees it: the volume above the marker plate, with the
+## plate itself excluded. The plate is the pen's floor — a click on it would place an
+## item level with the only collider holding storage in, so the zone stops on top of it.
+## Both the click test and the dashed outline read this, so the box the player sees is
+## exactly the box that accepts a click.
+func get_storage_area_local_rect() -> Rect2:
+	var height := maxf(storage_area_size.y - storage_marker_height, 1.0)
+	return Rect2(
+		Vector2(storage_area_position.x - storage_area_size.x * 0.5,
+			storage_area_position.y - storage_area_size.y),
+		Vector2(storage_area_size.x, height))
+
+
 func get_storage_area_global_rect() -> Rect2:
-	var top_left := global_position + Vector2(
-		storage_area_position.x - storage_area_size.x * 0.5,
-		storage_area_position.y - storage_area_size.y
-	)
-	return Rect2(top_left, storage_area_size)
+	var local := get_storage_area_local_rect()
+	return Rect2(global_position + local.position, local.size)
 
 
 func is_point_in_storage_area(global_point: Vector2) -> bool:
@@ -411,10 +422,31 @@ func store_item(item: SalvageItem, target_pos: Vector2) -> bool:
 	if not can_accept_storage_item(item):
 		return false
 
-	item.place_in_storage(target_pos, _ensure_storage_items_root())
+	item.place_in_storage(_settle_storage_point(item, target_pos), _ensure_storage_items_root())
 	add_to_storage(item)
 	_commit_artifact_if_collected(item)
 	return true
+
+
+## Pull a placement inside the storage pen. The clickable storage rect runs down to
+## storage_area_position.y, but the pen's floor collider sits storage_marker_height
+## above that — so the bottom band of the rect is outside the pen. An item dropped
+## there lands under the only thing holding it: stored items mask the pen and other
+## items, never the ship boundaries, so nothing else catches them and they fall out
+## through the hull.
+func _settle_storage_point(item: SalvageItem, target_pos: Vector2) -> Vector2:
+	if item == null or not is_instance_valid(item):
+		return target_pos
+	var half := item.hitbox_size * 0.5
+	var pen_floor_y := global_position.y + storage_area_position.y - storage_marker_height
+	var pen_centre_x := global_position.x + storage_area_position.x
+	var half_w := storage_area_size.x * 0.5
+	var max_y := pen_floor_y - half.y - STORAGE_PLACE_CLEARANCE
+	var min_x := pen_centre_x - half_w + half.x + STORAGE_PLACE_CLEARANCE
+	var max_x := pen_centre_x + half_w - half.x - STORAGE_PLACE_CLEARANCE
+	# A part wider than the pen has no valid x; centre it rather than invert the range.
+	var x := pen_centre_x if min_x > max_x else clampf(target_pos.x, min_x, max_x)
+	return Vector2(x, minf(target_pos.y, max_y))
 
 
 ## Existing stored item that `item` could stack onto (same part type), or null.
@@ -454,7 +486,7 @@ func swap_stored_item(held: SalvageItem, target: SalvageItem) -> SalvageItem:
 
 	var swap_pos := target.global_position
 	remove_from_storage(target)
-	held.place_in_storage(swap_pos, _ensure_storage_items_root())
+	held.place_in_storage(_settle_storage_point(held, swap_pos), _ensure_storage_items_root())
 	add_to_storage(held)
 	_commit_artifact_if_collected(held)
 	return target
@@ -490,6 +522,57 @@ func spawn_debug_research_artifact() -> void:
 	var target_pos := global_position + storage_area_position + debug_research_artifact_storage_offset
 	if not store_item(artifact, target_pos):
 		artifact.queue_free()
+
+
+## Debug: set a salvage part down on the deck exactly as a player release would. It
+## lands on the walkable surface and, being deck rather than storage, is left behind
+## on departure. A null item_data picks a random common part. A count above one is a
+## quantity, not a repeat: one object carrying that stack, the way the game itself
+## represents several of the same part.
+func spawn_debug_deck_item(item_data: SalvageItemData = null, count: int = 1) -> SalvageItem:
+	var deck := get_ship_floor()
+	if deck == null:
+		return null
+	var rect := deck.get_deck_rect()
+	if not rect.has_area():
+		return null
+	var data := item_data
+	if data == null and DEBUG_LOOT_POOLS != null:
+		data = DEBUG_LOOT_POOLS.pick_uniform(SalvageItemData.ItemRarity.COMMON, true, 0)
+	if data == null:
+		return null
+
+	var item := SalvageItem.new()
+	item.name = "DebugDeckItem"
+	add_child(item)
+	item.setup(data)
+	# Only parts stack; anything else ignores the quantity and arrives as one.
+	if count > 1 and item.is_stackable_part():
+		item.set_stack_count(count)
+	# Dropped from the top of the deck band so it visibly falls into place.
+	item.drop_on_deck(Vector2(rect.get_center().x, rect.position.y), deck.get_dropped_items_root())
+	return item
+
+
+## Every salvage part the loot pools can produce, de-duplicated, for the debug picker.
+static func get_debug_item_catalog() -> Array[SalvageItemData]:
+	var out: Array[SalvageItemData] = []
+	if DEBUG_LOOT_POOLS == null:
+		return out
+	for rarity in [SalvageItemData.ItemRarity.COMMON, SalvageItemData.ItemRarity.RARE,
+			SalvageItemData.ItemRarity.EPIC, SalvageItemData.ItemRarity.LEGENDARY]:
+		for salvageable in [true, false]:
+			for data in DEBUG_LOOT_POOLS.get_pool(rarity, salvageable):
+				if data != null and data not in out:
+					out.append(data)
+	return out
+
+
+func get_ship_floor() -> ShipFloor:
+	for child in get_children():
+		if child is ShipFloor:
+			return child as ShipFloor
+	return null
 
 
 # ---- PlayerInteraction drop-target contract (storage area) ----
@@ -568,7 +651,7 @@ func _get_stored_item_at(global_point: Vector2) -> SalvageItem:
 	var space_state := get_world_2d().direct_space_state
 	var query := PhysicsPointQueryParameters2D.new()
 	query.position = global_point
-	query.collision_mask = 2  # Salvage items layer
+	query.collision_mask = 1 << PhysicsLayers.SALVAGE_ITEMS
 	query.collide_with_bodies = true
 	var results := space_state.intersect_point(query, 8)
 

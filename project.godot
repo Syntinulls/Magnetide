@@ -166,9 +166,25 @@ debug_toggle_panel={
 ]
 }
 
+[layer_names]
+
+2d_physics/layer_1="Boundaries"
+2d_physics/layer_2="Salvage Items"
+2d_physics/layer_3="Enemies"
+2d_physics/layer_4="Player Hitbox"
+2d_physics/layer_5="Player Body"
+2d_physics/layer_6="Storage Borders"
+2d_physics/layer_7="Interactables"
+
 [physics]
 
 3d/physics_engine="Jolt Physics"
+
+[rendering]
+
+rendering_device/driver.windows="d3d12"
+renderer/rendering_method="gl_compatibility"
+renderer/rendering_method.mobile="gl_compatibility"
 
 [shader_globals]
 
@@ -176,9 +192,3 @@ bloom_strength={
 "type": "float",
 "value": 1.0
 }
-
-[rendering]
-
-rendering_device/driver.windows="d3d12"
-renderer/rendering_method="gl_compatibility"
-renderer/rendering_method.mobile="gl_compatibility"

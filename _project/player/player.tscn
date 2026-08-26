@@ -213,6 +213,8 @@ animations = [{
 }]
 
 [node name="Player" type="CharacterBody2D" unique_id=1017700510 groups=["target_high"]]
+collision_layer = 16
+collision_mask = 5
 script = ExtResource("2_script")
 
 [node name="BodySprite" type="Sprite2D" parent="." unique_id=148419492]

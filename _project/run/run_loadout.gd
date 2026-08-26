@@ -6,7 +6,7 @@ const DefaultMagnetToolData := preload("res://_project/items/magnet_tool/magnet_
 const DefaultRepairGunData := preload("res://_project/items/repair_gun/repair_gun.tres")
 const UpgradeableItemStateScript := preload("res://_project/run/upgradeable_item_state.gd")
 const UpgradeSlotStateScript := preload("res://_project/run/upgrade_slot_state.gd")
-## Static loadout-stat items (data-driven; see specs/project_organization.md §9): each is a
+## Static loadout-stat items (data-driven; see specs/project_organization.md §10): each is a
 ## StatItemData whose upgrade_data effects target loadout properties. Together with the equipped
 ## weapon / magnet tool / augments, these are the upgradeable items in a loadout — progress for all
 ## of them is tracked in item_states, keyed by item_id.

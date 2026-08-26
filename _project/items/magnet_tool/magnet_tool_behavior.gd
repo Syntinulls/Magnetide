@@ -119,7 +119,7 @@ func _process_hover() -> void:
 	var space_state := player.get_world_2d().direct_space_state
 	var query := PhysicsPointQueryParameters2D.new()
 	query.position = mouse_pos
-	query.collision_mask = 2  # Salvage items layer
+	query.collision_mask = 1 << PhysicsLayers.SALVAGE_ITEMS
 	query.collide_with_bodies = true
 	var results := space_state.intersect_point(query, 8)
 

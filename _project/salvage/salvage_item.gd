@@ -7,7 +7,10 @@ signal frozen(item: SalvageItem)
 ## Pull phase state machine for magnet pull behavior
 enum PullPhase { NONE, UNDERGROUND, SURFACE, BREAKAWAY }
 
-const STORAGE_COLLISION_LAYER: int = 8
+## Layer 6: the invisible walls of the ship's storage area. Its own bit rather than
+## sharing the player-hitbox layer, so "what an enemy can hit" and "what a stored item
+## is penned in by" stay separate ideas.
+const STORAGE_COLLISION_LAYER: int = 1 << PhysicsLayers.STORAGE_BORDERS
 ## Interact highlight color; supersedes the persistent rarity outline while hovered/interactable.
 const INTERACT_OUTLINE_COLOR: Color = Color.WHITE
 const TRASH_RARITY_COLOR: Color = Color("b8b8b8")
@@ -35,6 +38,10 @@ var _trash_hitbox_size: Vector2 = Vector2(36, 36)
 var _trash_weight: float = 0.75
 var _is_held_by_gun: bool = false
 var _is_in_storage: bool = false
+## Set down on the ship deck: loose and physical like any world item, but resting
+## where the player put it. Tracked apart from storage because departure carries only
+## storage back, while both states must stay pickable by the magnet gun.
+var _is_on_deck: bool = false
 var _is_locked_for_research: bool = false
 var _is_repelled: bool = false
 var _magnet_target: Node2D = null
@@ -114,6 +121,11 @@ var is_in_storage: bool:
 	get:
 		return _is_in_storage
 
+## True while the item is resting on the ship deck rather than in storage.
+var is_on_deck: bool:
+	get:
+		return _is_on_deck
+
 var is_trash: bool:
 	get:
 		return _is_trash
@@ -136,10 +148,11 @@ var is_frozen_on_magnet: bool:
 	get:
 		return _is_frozen
 
-## Returns true if this item can be grabbed by the magnet gun.
+## Returns true if this item can be grabbed by the magnet gun. Settled on the magnet,
+## sitting in storage, or set down on the deck — all three are "at rest and pickable".
 var can_be_grabbed: bool:
 	get:
-		return not _is_locked_for_research and not _is_held_by_gun and not _is_falling and not _is_repelled and (is_frozen_on_magnet or _is_in_storage)
+		return not _is_locked_for_research and not _is_held_by_gun and not _is_falling and not _is_repelled and (is_frozen_on_magnet or _is_in_storage or _is_on_deck)
 
 ## Size of the item hitbox in pixels, from item data actual_hitbox_size.
 var hitbox_size: Vector2:
@@ -161,8 +174,8 @@ func _ready() -> void:
 	
 	# Collision setup: layer 2 = salvage items
 	# Mask: 1 = boundaries, 2 = other items, 4 = magnet body
-	collision_layer = 2
-	collision_mask = 1 | 2 | 4  # Collide with boundaries, other items, and magnet
+	collision_layer = 1 << PhysicsLayers.SALVAGE_ITEMS
+	collision_mask = (1 << PhysicsLayers.BOUNDARIES) | (1 << PhysicsLayers.SALVAGE_ITEMS) | (1 << PhysicsLayers.ENEMIES)
 	
 	# Soft physics material (Suika-style: low bounce, moderate friction)
 	var soft_material := PhysicsMaterial.new()
@@ -173,20 +186,22 @@ func _ready() -> void:
 	body_entered.connect(_on_body_entered)
 	body_exited.connect(_on_body_exited)
 	
-	_sprite = Sprite2D.new()
-	_sprite.centered = true
-	add_child(_sprite)
-
-	# Pre-create the offset stack sprites, hidden and rendered behind the main
-	# sprite. They become visible when this object represents a stack (>1 items).
+	# The offset stack sprites are added first so they draw behind the main sprite by
+	# child order rather than by a negative z_index. A negative z would not just put
+	# them behind their own sprite -- it would drop them behind everything else at
+	# z 0, the ship hull plates included, while the main sprite stayed in front.
+	# They become visible when this object represents a stack (>1 items).
 	for _i in range(STACK_SPRITE_OFFSET_FRACTIONS.size()):
 		var stack_sprite := Sprite2D.new()
 		stack_sprite.centered = true
 		stack_sprite.visible = false
-		stack_sprite.z_index = -1  # behind the main sprite (relative to this body)
 		stack_sprite.modulate = STACK_SPRITE_MODULATE
 		add_child(stack_sprite)
 		_stack_sprites.append(stack_sprite)
+
+	_sprite = Sprite2D.new()
+	_sprite.centered = true
+	add_child(_sprite)
 
 	# One composite outline around the whole item, including any visible stack
 	# sprites, instead of a per-sprite shader on each sprite.
@@ -731,6 +746,7 @@ func grab_for_magnet_gun(puller: Node2D) -> void:
 	_is_in_magnet_field = false
 	_is_held_by_gun = true
 	_is_in_storage = false
+	_is_on_deck = false
 	_is_repelled = false
 	_is_falling = false
 	_is_flying_to_gun = true
@@ -793,6 +809,7 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = true
+	_is_on_deck = false
 	_is_locked_for_research = false
 	_is_repelled = false
 	_is_falling = false
@@ -814,8 +831,8 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 		_collision_shape.set_deferred("disabled", false)
 	
 	# Set collision for storage: collide with other items (2) and storage borders (8)
-	collision_layer = 2
-	collision_mask = 2 | STORAGE_COLLISION_LAYER
+	collision_layer = 1 << PhysicsLayers.SALVAGE_ITEMS
+	collision_mask = (1 << PhysicsLayers.SALVAGE_ITEMS) | STORAGE_COLLISION_LAYER
 	
 	# Unfreeze and enable gravity to let it drop
 	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
@@ -831,10 +848,60 @@ func place_in_storage(target_pos: Vector2, storage_parent: Node = null) -> void:
 	_refresh_outline()
 
 
+## Set the item down on the ship deck. Physically this is a normal drop -- it falls and
+## settles under gravity -- but it is pointedly NOT storage: departure carries back the
+## storage area alone, so anything left on the deck is left behind. The magnet gun can
+## still pick it back up.
+func drop_on_deck(target_pos: Vector2, deck_parent: Node = null) -> void:
+	_clear_settled_magnet_state()
+	_is_held_by_gun = false
+	_is_in_storage = false
+	_is_on_deck = true
+	_is_locked_for_research = false
+	_is_repelled = false
+	_is_falling = false
+	_is_flying_to_gun = false
+	_pull_phase = PullPhase.NONE
+	_magnet_target = null
+	_gun_hold_velocity = Vector2.ZERO
+	_is_frozen = false
+
+	if deck_parent and get_parent() != deck_parent:
+		var current_pos := global_position
+		reparent(deck_parent)
+		global_position = current_pos
+	global_position = target_pos
+
+	if _collision_shape:
+		_collision_shape.set_deferred("disabled", false)
+
+	# The same set a loose item carries anywhere else: the boundaries it rests on,
+	# other items so a part dropped on another stacks instead of sinking through,
+	# and the magnet field. The player is on its own layer and so is never in it.
+	collision_layer = 1 << PhysicsLayers.SALVAGE_ITEMS
+	collision_mask = (1 << PhysicsLayers.BOUNDARIES) | (1 << PhysicsLayers.SALVAGE_ITEMS) | (1 << PhysicsLayers.ENEMIES)
+
+	freeze_mode = RigidBody2D.FREEZE_MODE_STATIC
+	freeze = false
+	# Two parts dropped into each other separate with a hard impulse, and the deck is
+	# only 40px thick -- fast enough to cross it inside one physics step. Sweeping the
+	# shape rather than sampling its end position is what keeps a shoved part on the
+	# deck instead of under the ship.
+	continuous_cd = RigidBody2D.CCD_MODE_CAST_SHAPE
+	gravity_scale = DROP_GRAVITY_SCALE * _get_gravity_scale_factor()
+	linear_damp = DEFAULT_LINEAR_DAMP * _get_damp_scale_factor()
+	angular_damp = DEFAULT_ANGULAR_DAMP * _get_damp_scale_factor()
+	linear_velocity = Vector2.ZERO
+	angular_velocity = 0.0
+	z_index = 0
+	_refresh_outline()
+
+
 func lock_for_research(target_pos: Vector2, research_parent: Node = null) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = false
+	_is_on_deck = false
 	_is_locked_for_research = true
 	_is_repelled = false
 	_is_falling = false
@@ -869,6 +936,7 @@ func lock_for_departure_cutscene(storage_parent: Node = null) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_in_storage = true
+	_is_on_deck = false
 	_is_repelled = false
 	_is_falling = false
 	_is_flying_to_gun = false
@@ -894,6 +962,7 @@ func repel_from_gun(impulse: Vector2) -> void:
 	_clear_settled_magnet_state()
 	_is_held_by_gun = false
 	_is_repelled = true
+	_is_on_deck = false
 
 	# Collider stays disabled so the item doesn't hit anything on the way out.
 

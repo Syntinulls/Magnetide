@@ -515,8 +515,9 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	# Create walls if they don't exist
 	if not _left_wall:
 		_left_wall = StaticBody2D.new()
-		_left_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
-		_left_wall.collision_mask = 2  # Collide with salvage items
+		# A surface for items to rest against, not part of the magnet field.
+		_left_wall.collision_layer = 1 << PhysicsLayers.BOUNDARIES
+		_left_wall.collision_mask = 1 << PhysicsLayers.SALVAGE_ITEMS
 		_left_wall.physics_material_override = _create_edge_wall_material()
 		var new_left_shape := CollisionShape2D.new()
 		new_left_shape.shape = ConvexPolygonShape2D.new()
@@ -525,8 +526,8 @@ func _update_edge_walls(top_left: Vector2, bottom_left: Vector2, top_right: Vect
 	
 	if not _right_wall:
 		_right_wall = StaticBody2D.new()
-		_right_wall.collision_layer = 1  # Boundary layer (NOT magnet layer 4)
-		_right_wall.collision_mask = 2  # Collide with salvage items
+		_right_wall.collision_layer = 1 << PhysicsLayers.BOUNDARIES
+		_right_wall.collision_mask = 1 << PhysicsLayers.SALVAGE_ITEMS
 		_right_wall.physics_material_override = _create_edge_wall_material()
 		var new_right_shape := CollisionShape2D.new()
 		new_right_shape.shape = ConvexPolygonShape2D.new()

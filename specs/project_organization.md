@@ -51,6 +51,7 @@ _project/                    All game content. (Root level is reserved for engin
 │                            projectile, hitbox, enemy_target_point, muzzle_effect.
 ├── common/                  Generic, game-agnostic building blocks:
 │                            utils.gd (static helpers), weighted_random, interaction_hitbox,
+│                            physics_layers.gd (the 2D layer indices, §7),
 │                            shared shaders (border_outline, composite_outline, glow).
 │   └── sprites/             Sprites with no single owner: reusable chrome (ui_border_*) and
 │                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
@@ -116,6 +117,10 @@ _project/                    All game content. (Root level is reserved for engin
 │   │                        object is a folder owning its own scene, scripts and sprites;
 │   │                        ship/ root holds only the hull. ship.tscn instances each one.
 │   ├── ship.*               Hull, storage zone, combat surface; storage_zone_fade.gdshader.
+│   ├── ship_floor.gd       Drop target for the walkable deck (lowest drop_priority): a
+│   │                       carried item can be set down anywhere the player can stand.
+│   │                       Deck items are not storage — departure carries back the
+│   │                       storage area alone.
 │   ├── sprites/             Hull art only (hull_back/fore, force_field_*, pattern_hazard).
 │   ├── magnet/              Ship magnet + lever + nine-patch shader + sprites.
 │   ├── research_station/    Research station + its UI + minigame_docker + sprites.
@@ -125,7 +130,7 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── recycler/            Recycler + sprites.
 │   ├── thruster/            Thruster + thruster_audio + sprites.
 │   └── departure_pylon/     Departure pylon.
-├── upgrades/                Authored upgrade definitions (data-driven, §9): upgrade_effect.gd +
+├── upgrades/                Authored upgrade definitions (data-driven, §10): upgrade_effect.gd +
 │                            upgrade_level_cost.gd + per-domain .tres grouped in player/, ship/,
 │                            magnet/, weapon/.
 └── hud/                     The in-run heads-up display (only the HUD — not "anything drawn
@@ -256,7 +261,47 @@ Everything else is noise and must not be committed:
   `is_point_in_placement_area` in recycler/research_station (no shared script ancestor
   without rebasing Recycler onto InteractionHitbox).
 
-## 7. Resource & reference hygiene
+## 7. Physics layers
+
+Layers say **what a body is**; masks say **what it collides with**. One bit means one
+thing — a bit shared by two unrelated concepts cannot be named honestly, and forces
+callers into masks that catch more than they meant.
+
+Named in `project.godot` under `[layer_names]`, and mirrored as bit indices in
+`common/physics_layers.gd`. Code never writes the integer — it names the layer and
+shifts, so a mask reads as the layers it contains:
+
+```gdscript
+collision_layer = 1 << PhysicsLayers.SALVAGE_ITEMS
+collision_mask = (1 << PhysicsLayers.BOUNDARIES) | (1 << PhysicsLayers.ENEMIES)
+```
+
+Scene files still carry plain integers — a `.tscn` cannot reference a constant — so
+set an authored node's layers through the inspector, where the names show up as
+labelled checkboxes.
+
+| # | Bit | Layer | Who is on it |
+|---|---|---|---|
+| 1 | 1 | Boundaries | Ship hull box, magnet body — the surfaces things rest on |
+| 2 | 2 | Salvage Items | Every `SalvageItem`, and player projectiles |
+| 3 | 4 | Enemies | Enemy bodies and their hitboxes, the magnet field area |
+| 4 | 8 | Player Hitbox | The player's damage-taking `Area2D` |
+| 5 | 16 | Player Body | The player `CharacterBody2D` |
+| 6 | 32 | Storage Borders | Invisible walls penning stored items in |
+| 7 | 64 | Interactables | `InteractionHitbox` areas — lever, pylons, research station |
+
+The player body is on its own layer precisely so salvage can mask the boundaries it
+rests on without also colliding with the player. `InteractionHitbox` sets its own
+layer and mask in `_ready()` rather than leaving them to each scene, so an
+interactable cannot be authored with a default mask and silently never fire.
+
+Watch the defaults: a physics node with no `collision_layer`/`collision_mask` line in
+its scene is on layer 1 masking layer 1, and nothing in the file says so. That is how
+the interactables and the enemy bodies both ended up on the Boundaries layer by
+accident. Declare both on anything that matters. Add a bit only when something new
+must be *identified*; if the need is "collide with less", narrow a mask instead.
+
+## 8. Resource & reference hygiene
 
 - Scenes/resources reference each other by `res://` path + UID. When moving files,
   move the `.uid`/`.import` companions with them and update all textual `res://`
@@ -266,7 +311,7 @@ Everything else is noise and must not be committed:
   corresponding rewrite rule to `AppSaveData._migrate_legacy_resource_paths()`.
 - `project.godot` `folder_colors` should track the top-level concept folders.
 
-## 8. Scenes over code for node structure
+## 9. Scenes over code for node structure
 
 When a feature needs a node/scene structure — several nodes wired together, a
 reusable UI component, a widget with children — author it as a `.tscn` scene
@@ -304,7 +349,7 @@ script referencing the authored nodes by path. Reserve standalone `.tscn` files
 for structures that are genuinely large, reused in more than one place, or
 instanced many times at runtime; otherwise nest the nodes in the owning scene.
 
-## 9. Data-driven systems
+## 10. Data-driven systems
 
 New systems default to **data-driven**: their content, tuning, and per-instance
 configuration live in authored data — `@export` fields, `.tres` resources, catalogs,
@@ -324,16 +369,16 @@ does not hardcode the *content*.
   item by name. A per-item `match`/if-chain that grows with content is a smell — drive
   it from the data instead.
 
-This is the companion to §8: §8 keeps *structure* in scenes; this keeps *content and
+This is the companion to §9: §9 keeps *structure* in scenes; this keeps *content and
 tuning* in data. Both exist so the game grows through authoring, not code churn.
 
-## 10. Specs
+## 11. Specs
 
 Each nontrivial feature gets a spec in `specs/` before/while it is built. Specs are
 design history — they are not updated retroactively when code moves; this document is
 the single source of truth for structure.
 
-## 11. Changelog
+## 12. Changelog
 
 `CHANGELOG.md` at the repo root is the **player-facing** record of what changed between
 builds. It is written for someone who plays the game, not someone who works on it. Git
@@ -368,23 +413,48 @@ build and this one, as the player will experience it:
 - **Omit debug values and their corrections.** A timer temporarily shortened for testing and
   then restored is not a change. But if the debug value actually shipped in the previous
   build, the correction *is* a player-facing change and gets an entry.
-- **Group by theme, not by commit.** Suggested sections, in order:
-  `New Content` → `New Systems` → `Balance` → `Feel, Audio & Visuals` → `Fixes`.
-  Drop any section with nothing in it.
 
-### Voice and specificity
+### Sections and grouping
 
-- Address the player in second person ("You start with the Pistol"), present tense.
-- **Balance entries carry real numbers**, and show the delta when a value changed:
-  "Worm health 30 → 50", "enemies spawn 3× as often once a storm is imminent".
-  Vague entries ("improved balance", "various tweaks") are not acceptable.
-- Say what a change *means*, not just what it is. "Enemies spawn 2× as often while the
-  magnet minigame runs — looting is no longer free" beats "adjusted magnet spawn multiplier".
-- Lead each section with the changes a player will notice first. A new weapon outranks a
-  louder footstep.
-- Tables are for enumerable stat comparisons (weapon stat lines, tier costs). Everything
-  else is prose and bullets.
-- Bold the subject of an entry so the file is skimmable at a glance.
+The layout is modeled on Minecraft's snapshot changelogs: a small set of fixed conceptual
+sections, each containing subcategories for the area of the game a change belongs to.
+
+- Top-level `###` sections within a version, in this order, dropping any that are empty:
+  - `New Features` — content and systems that did not exist in the previous build
+    (weapons, enemies, augments, tools, minigames, settings, music, whole new mechanics).
+  - `Changes` — anything that already existed and now works, looks, sounds, or is tuned
+    differently. Balancing lives here; a distinct `Balancing` section may be split out
+    when a build carries enough of it to warrant one.
+  - `Fixes` — bug fixes whose symptom a player could have seen.
+- Under each section, `####` subcategories named for the area of the game the change
+  touches — e.g. `Weapons`, `Player`, `Ship`, `Enemies`, `Salvaging`, `Station`,
+  `UI`, `Audio`, `Visuals`. Use only the subcategories the build actually needs, and
+  keep the names consistent from version to version.
+- Every entry is a markdown bullet point under its subcategory. Closely related details
+  of one change may nest one level under a parent bullet; never deeper.
+- Within a subcategory, lead with the changes a player will notice first. A new weapon
+  outranks a louder footstep.
+
+### Entry content and language
+
+Every entry describes something the player will care about, find useful to know, and
+understand from an end-user gameplay perspective — nothing else qualifies.
+
+- **One to two short sentences per bullet.** State what changed from the player's point
+  of view; add a second sentence only when the player needs it to use or understand the
+  change. No scene-setting, no flavor essays, no restating rules the player already knows.
+- **High level only — no mechanics.** Say what a thing does in play, not how it works
+  underneath. "The Flamethrower sets enemies on fire" — not the projectile model,
+  damage-over-time schedule, or hitbox behavior behind it.
+- **No exact numbers or stat values.** Tuned values change between builds, so entries
+  never cite them and never show deltas. Give the direction and rough weight instead:
+  "Worms are tougher and now arrive in larger packs", not "Worm health 30 → 50".
+  This applies to balancing entries too — "Reduced the SMG's accuracy at range" is the
+  whole entry. Stat tables do not belong in the changelog. (Concrete *controls* are the
+  exception: key bindings like "press R to reload" are stable interface facts, not tuning.)
+- **Player vocabulary only.** Use in-game names for things. No node/class/script/resource
+  names, no engine or code terminology.
+- Address the player in second person where a subject is needed, present tense.
 
 ### Structure
 
