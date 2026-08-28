@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="BonusModifierBehavior" format=3 uid="uid://bonusmodtres0"]
+
+[ext_resource type="Script" uid="uid://dofybo6umh4pd" path="res://_project/level/lever_minigame/modifiers/bonus_modifier_behavior.gd" id="1_bonus"]
+
+[resource]
+script = ExtResource("1_bonus")
+display_name = "Bonus!"
+display_color = Color(0.290196, 0.564706, 0.85098, 1)
+metadata/_custom_type_script = "uid://dofybo6umh4pd"

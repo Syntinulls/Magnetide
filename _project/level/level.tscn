@@ -17,7 +17,7 @@
 [ext_resource type="Shader" uid="uid://cs18k3ibfxmpf" path="res://_project/level/decoration/departure_star_fade.gdshader" id="20_star_fade_shader"]
 [ext_resource type="Resource" uid="uid://dt1qcniioijon" path="res://_project/salvage/loot/salvage_pile_data.tres" id="23_genpile"]
 [ext_resource type="Script" uid="uid://bv7egdrxigrly" path="res://_project/hud/magnet_capacity.gd" id="24_magnet_capacity"]
-[ext_resource type="PackedScene" path="res://_project/level/magnet_minigame/lever_minigame.tscn" id="25_lever_minigame"]
+[ext_resource type="PackedScene" path="res://_project/level/lever_minigame/lever_minigame.tscn" id="25_lever_minigame"]
 
 [sub_resource type="Gradient" id="Gradient_departure_sky"]
 colors = PackedColorArray(0.08, 0.05, 0.18, 1, 1, 0.482, 0.137, 1)

@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MinesModifierBehavior" format=3 uid="uid://minesmodtres0"]
+
+[ext_resource type="Script" uid="uid://c43euoqqfsebw" path="res://_project/level/lever_minigame/modifiers/mines_modifier_behavior.gd" id="1_mines"]
+
+[resource]
+script = ExtResource("1_mines")
+display_name = "Mines!"
+display_color = Color(0.819608, 0.286275, 0.247059, 1)
+metadata/_custom_type_script = "uid://c43euoqqfsebw"

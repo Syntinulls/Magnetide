@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://kphcko0tdwed"
-path="res://.godot/imported/crosshair.png-807541e08fb29bf9291adfb1853a8c7c.ctex"
+uid="uid://csjtjg2skq506"
+path="res://.godot/imported/stripes_50.png-03504b57e254da173e22dbfa4260d4da.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/crosshair.png"
-dest_files=["res://.godot/imported/crosshair.png-807541e08fb29bf9291adfb1853a8c7c.ctex"]
+source_file="res://_project/level/lever_minigame/sprites/stripes_50.png"
+dest_files=["res://.godot/imported/stripes_50.png-03504b57e254da173e22dbfa4260d4da.ctex"]
 
 [params]
 

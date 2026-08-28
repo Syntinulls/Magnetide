@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://csjtjg2skq506"
-path="res://.godot/imported/stripes_50.png-f35ea008f75b416c15401089154253e2.ctex"
+uid="uid://d00sm6q67erve"
+path="res://.godot/imported/light_on_yellow.png-baf98fd49ccbe1a49adfb572c4b35259.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/stripes_50.png"
-dest_files=["res://.godot/imported/stripes_50.png-f35ea008f75b416c15401089154253e2.ctex"]
+source_file="res://_project/level/lever_minigame/sprites/light_on_yellow.png"
+dest_files=["res://.godot/imported/light_on_yellow.png-baf98fd49ccbe1a49adfb572c4b35259.ctex"]
 
 [params]
 

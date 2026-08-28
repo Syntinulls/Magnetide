@@ -1,10 +1,11 @@
-[gd_scene load_steps=7 format=3 uid="uid://dn21ges0buuvi"]
+[gd_scene load_steps=8 format=3 uid="uid://dn21ges0buuvi"]
 
-[ext_resource type="Script" path="res://_project/level/magnet_minigame/lever_minigame.gd" id="1_script"]
+[ext_resource type="Script" path="res://_project/level/lever_minigame/lever_minigame.gd" id="1_script"]
 [ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="2_border4"]
 [ext_resource type="Texture2D" uid="uid://bpxmjs2slk4kd" path="res://_project/common/sprites/ui_border_3px.png" id="3_border3"]
-[ext_resource type="Texture2D" uid="uid://kphcko0tdwed" path="res://_project/level/magnet_minigame/sprites/crosshair.png" id="4_crosshair"]
-[ext_resource type="Shader" uid="uid://dbys0mqpe3wxu" path="res://_project/level/magnet_minigame/vignette_grayscale.gdshader" id="5_vignette"]
+[ext_resource type="Texture2D" uid="uid://kphcko0tdwed" path="res://_project/level/lever_minigame/sprites/crosshair.png" id="4_crosshair"]
+[ext_resource type="Shader" uid="uid://dbys0mqpe3wxu" path="res://_project/level/lever_minigame/vignette_grayscale.gdshader" id="5_vignette"]
+[ext_resource type="Resource" uid="uid://levermodwgts0" path="res://_project/level/lever_minigame/modifiers/lever_modifier_weights.tres" id="6_modifiers"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_vignette"]
 shader = ExtResource("5_vignette")
@@ -18,6 +19,7 @@ process_mode = 3
 layer = 110
 visible = false
 script = ExtResource("1_script")
+modifier_weights = ExtResource("6_modifiers")
 
 [node name="VignetteLayer" type="CanvasLayer" parent="."]
 layer = 100

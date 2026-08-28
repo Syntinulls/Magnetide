@@ -1,0 +1,12 @@
+[gd_resource type="Resource" script_class="LeverModifierWeights" format=3 uid="uid://levermodwgts0"]
+
+[ext_resource type="Script" uid="uid://c8lie3csrgac6" path="res://_project/level/lever_minigame/modifiers/lever_modifier_weights.gd" id="1_weights"]
+[ext_resource type="Script" uid="uid://cnntt3xi1hgnd" path="res://_project/level/lever_minigame/modifiers/lever_modifier_behavior.gd" id="2_behavior"]
+[ext_resource type="Resource" uid="uid://bonusmodtres0" path="res://_project/level/lever_minigame/modifiers/bonus_modifier_behavior.tres" id="3_bonus"]
+[ext_resource type="Resource" uid="uid://minesmodtres0" path="res://_project/level/lever_minigame/modifiers/mines_modifier_behavior.tres" id="4_mines"]
+
+[resource]
+script = ExtResource("1_weights")
+positive_modifiers = Array[ExtResource("2_behavior")]([ExtResource("3_bonus")])
+negative_modifiers = Array[ExtResource("2_behavior")]([ExtResource("4_mines")])
+metadata/_custom_type_script = "uid://c8lie3csrgac6"

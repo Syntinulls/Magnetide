@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://cccf44nhd6kk2"
-path="res://.godot/imported/light_on_green.png-55a65ee635793d11e262ac10e358be7c.ctex"
+uid="uid://bg8n8vip6kryn"
+path="res://.godot/imported/light_on_red.png-bd74d9392311b75fcc2bb94c0af9447d.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/level/magnet_minigame/sprites/light_on_green.png"
-dest_files=["res://.godot/imported/light_on_green.png-55a65ee635793d11e262ac10e358be7c.ctex"]
+source_file="res://_project/level/lever_minigame/sprites/light_on_red.png"
+dest_files=["res://.godot/imported/light_on_red.png-bd74d9392311b75fcc2bb94c0af9447d.ctex"]
 
 [params]
 

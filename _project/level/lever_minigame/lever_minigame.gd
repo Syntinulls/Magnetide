@@ -23,23 +23,29 @@ class_name LeverMinigame
 ## out Engine.time_scale so the minigame plays at wall-clock speed during the
 ## slowdown. Instanced in level.tscn; MagnetMinigame only starts it and reacts
 ## to its signals.
+##
+## Each attempt may roll a modifier from modifier_weights (none/positive/negative
+## pools; the negative pool's weight scales with threat). The rolled
+## LeverModifierBehavior hooks into zone building, press handling, and the
+## post-close moment; with no modifier the minigame plays exactly as authored.
+## See specs/lever_minigame_modifiers_spec.md.
 
 signal minigame_completed(success: bool)
 signal pair_resolved(pair_index: int, total_pairs: int)
 
 enum State { INACTIVE, SETUP, COUNTDOWN, PLAYING, RESULT }
-enum ZoneType { GREEN, YELLOW, RED }
+enum ZoneType { GREEN, YELLOW, RED, SPECIAL }
 
-const STRIPES_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/stripes_50.png")
+const STRIPES_TEXTURE: Texture2D = preload("res://_project/level/lever_minigame/sprites/stripes_50.png")
 const ZONE_BORDER_TEXTURE: Texture2D = preload("res://_project/common/sprites/ui_border_4px_white.png")
-const LIGHT_OFF_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_off.png")
-const LIGHT_GREEN_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_green.png")
-const LIGHT_YELLOW_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_yellow.png")
-const LIGHT_RED_TEXTURE: Texture2D = preload("res://_project/level/magnet_minigame/sprites/light_on_red.png")
+const LIGHT_OFF_TEXTURE: Texture2D = preload("res://_project/level/lever_minigame/sprites/light_off.png")
+const LIGHT_GREEN_TEXTURE: Texture2D = preload("res://_project/level/lever_minigame/sprites/light_on_green.png")
+const LIGHT_YELLOW_TEXTURE: Texture2D = preload("res://_project/level/lever_minigame/sprites/light_on_yellow.png")
+const LIGHT_RED_TEXTURE: Texture2D = preload("res://_project/level/lever_minigame/sprites/light_on_red.png")
 ## Glow materials duplicated per zone and per result light so each one can be driven
 ## on its own; all their tuning lives in the .tres files, not here.
-const ZONE_GLOW: ShaderMaterial = preload("res://_project/level/magnet_minigame/zone_glow.tres")
-const LIGHT_GLOW: ShaderMaterial = preload("res://_project/level/magnet_minigame/light_glow.tres")
+const ZONE_GLOW: ShaderMaterial = preload("res://_project/level/lever_minigame/zone_glow.tres")
+const LIGHT_GLOW: ShaderMaterial = preload("res://_project/level/lever_minigame/light_glow.tres")
 const ZONE_BORDER_PATCH_MARGIN := 6
 ## Panels bordered by the ui_border sprites inset their content by this much.
 const ZONE_CONTENT_INSET := 3.0
@@ -134,6 +140,11 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 ## Grayscale/vignette strength during the minigame (0-1).
 @export var vignette_intensity: float = 0.8
 
+@export_group("Modifiers")
+## Weighted none/positive/negative pools rolled at every start_minigame; null
+## disables modifiers entirely.
+@export var modifier_weights: LeverModifierWeights = null
+
 @export_group("Scene References")
 @export var player_path: NodePath
 
@@ -144,6 +155,10 @@ class Zone:
 	var pair_index: int = -1
 	var control: Control
 	var glow: ShaderMaterial
+	## Alpha 0 means "use the ZoneType color"; SPECIAL zones set their own.
+	var custom_color: Color = Color.TRANSPARENT
+	## Optional overlay centered in the zone, revealed together with it.
+	var icon: Texture2D = null
 
 class Pair:
 	var resolved := false
@@ -170,6 +185,7 @@ var _game_won := false
 ## still finishes its sweep either way; this is what stops a press during the red
 ## run-out past the last zone undoing a result that is already decided.
 var _outcome_locked := false
+var _modifier: LeverModifierBehavior = null
 var _world_anchor := Vector2.ZERO
 var _effects_active := false
 var _camera: Camera2D = null
@@ -234,6 +250,10 @@ func _input(event: InputEvent) -> void:
 func start_minigame(threat_level: int) -> void:
 	var clamped_threat := clampi(threat_level, 0, ThreatManager.LEVEL_COUNT - 1)
 	_reset_state()
+	if modifier_weights:
+		_modifier = modifier_weights.roll_modifier(clamped_threat)
+	if _modifier:
+		_modifier.on_minigame_started(self, clamped_threat)
 	_build_zones(clamped_threat)
 	_update_reticle_position()
 	_begin_activation_effects()
@@ -241,6 +261,8 @@ func start_minigame(threat_level: int) -> void:
 	visible = true
 	set_process(true)
 	_state = State.SETUP
+	if _modifier:
+		show_info(_modifier.display_name, _modifier.display_color)
 
 
 func cancel_minigame() -> void:
@@ -249,6 +271,50 @@ func cancel_minigame() -> void:
 	set_process(false)
 	_state = State.INACTIVE
 	_reset_state()
+
+
+func get_zones() -> Array[Zone]:
+	return _zones
+
+
+## Carve a slice out of an existing zone, replacing it in place with up to three
+## zones (left remnant, the new zone, right remnant; zero-width remnants are
+## dropped) so _zones stays sorted -- _build_zone_controls derives pixel widths
+## from consecutive start ratios. Only valid from modify_zones, before the zone
+## controls are built. Returns the new zone.
+func split_zone(zone: Zone, start_ratio: float, end_ratio: float, new_type: ZoneType) -> Zone:
+	var index := _zones.find(zone)
+	var new_zone := Zone.new()
+	new_zone.type = new_type
+	new_zone.start_ratio = clampf(start_ratio, zone.start_ratio, zone.end_ratio)
+	new_zone.end_ratio = clampf(end_ratio, zone.start_ratio, zone.end_ratio)
+	var pieces: Array[Zone] = []
+	if new_zone.start_ratio - zone.start_ratio > 0.0:
+		var left := Zone.new()
+		left.type = zone.type
+		left.pair_index = zone.pair_index
+		left.start_ratio = zone.start_ratio
+		left.end_ratio = new_zone.start_ratio
+		pieces.append(left)
+	pieces.append(new_zone)
+	if zone.end_ratio - new_zone.end_ratio > 0.0:
+		var right := Zone.new()
+		right.type = zone.type
+		right.pair_index = zone.pair_index
+		right.start_ratio = new_zone.end_ratio
+		right.end_ratio = zone.end_ratio
+		pieces.append(right)
+	_zones.remove_at(index)
+	for piece_index in range(pieces.size()):
+		_zones.insert(index + piece_index, pieces[piece_index])
+	return new_zone
+
+
+## The world point the camera focuses on while the minigame runs -- just above
+## the screen center at the zoomed framing. Valid from start until the next
+## start; modifiers use it as the origin for post-close pickups.
+func get_focus_world_position() -> Vector2:
+	return _world_anchor
 
 
 func _reset_state() -> void:
@@ -265,6 +331,7 @@ func _reset_state() -> void:
 	_result_timer = 0.0
 	_game_won = false
 	_outcome_locked = false
+	_modifier = null
 	# Remove immediately, not just queue_free: zones are rebuilt and revealed in
 	# this same frame, and stale children would corrupt the row's child order.
 	for child in _zone_row.get_children():
@@ -370,6 +437,7 @@ func _process_setup(real_delta: float) -> void:
 	if not _greens_revealed and _setup_elapsed >= setup_delay:
 		_greens_revealed = true
 		_reveal_zones(ZoneType.GREEN)
+		_reveal_zones(ZoneType.SPECIAL)
 	if not _yellows_revealed and _setup_elapsed >= setup_delay + zone_reveal_pause:
 		_yellows_revealed = true
 		_reveal_zones(ZoneType.YELLOW)
@@ -379,19 +447,19 @@ func _process_setup(real_delta: float) -> void:
 	if _setup_elapsed >= setup_delay + zone_reveal_pause * 3.0:
 		_state = State.COUNTDOWN
 		_countdown_digit = COUNTDOWN_STEPS
-		_show_info(str(COUNTDOWN_STEPS), Color.WHITE)
+		show_info(str(COUNTDOWN_STEPS), Color.WHITE)
 
 
 func _process_countdown(real_delta: float) -> void:
 	_countdown_elapsed += real_delta
 	if _countdown_elapsed >= countdown_step_time * COUNTDOWN_STEPS:
 		_state = State.PLAYING
-		_show_info("Go!", zone_color_green)
+		show_info("Go!", zone_color_green)
 		return
 	var digit := COUNTDOWN_STEPS - int(_countdown_elapsed / countdown_step_time)
 	if digit != _countdown_digit:
 		_countdown_digit = digit
-		_show_info(str(digit), Color.WHITE)
+		show_info(str(digit), Color.WHITE)
 
 
 func _process_playing(real_delta: float) -> void:
@@ -405,7 +473,7 @@ func _process_playing(real_delta: float) -> void:
 	_update_reticle_position()
 	for pair in _pairs:
 		if not pair.resolved and _reticle_ratio > pair.right_edge_ratio:
-			_fail_minigame()
+			fail_minigame("MISS", zone_color_red)
 			return
 
 
@@ -418,15 +486,24 @@ func _process_result(real_delta: float) -> void:
 		set_process(false)
 		_state = State.INACTIVE
 		minigame_completed.emit(_game_won)
+		# After the signal: MagnetMinigame's handler has already restored player
+		# input, so outside-world consequences (scrap awards, spawns) land in a
+		# fully live world.
+		if _modifier:
+			_modifier.on_minigame_closed(self, _game_won)
+			_modifier = null
 
 
 func _evaluate_press() -> void:
 	var zone := _zone_at_ratio(_reticle_ratio)
 	if zone == null:
 		return
+	if _modifier and _modifier.handle_press(self, zone):
+		return
+	# SPECIAL zones have no arm: an unconsumed press on one is a no-op.
 	match zone.type:
 		ZoneType.RED:
-			_fail_minigame()
+			fail_minigame("MISS", zone_color_red)
 		ZoneType.GREEN:
 			_resolve_pair(zone, true)
 		ZoneType.YELLOW:
@@ -438,14 +515,14 @@ func _resolve_pair(zone: Zone, perfect: bool) -> void:
 	if pair.resolved:
 		return
 	pair.resolved = true
-	_flash_zone(zone)
+	flash_zone(zone)
 	if perfect:
 		_light_up(pair, LIGHT_GREEN_TEXTURE)
-		_show_info("PERFECT", zone_color_green)
+		show_info("PERFECT", zone_color_green)
 	else:
 		_light_up(pair, LIGHT_YELLOW_TEXTURE)
 		_yellows_hit += 1
-		_show_info("CLOSE", zone_color_yellow)
+		show_info("CLOSE", zone_color_yellow)
 	pair_resolved.emit(zone.pair_index, _pairs.size())
 	if _all_pairs_resolved():
 		_outcome_locked = true
@@ -466,13 +543,15 @@ func _all_pairs_resolved() -> bool:
 	return not _pairs.is_empty()
 
 
-func _fail_minigame() -> void:
+## Public so modifiers can fail the attempt with their own text ("Boom!"); the
+## presentation is always the full red-fail treatment.
+func fail_minigame(info_text: String, info_color: Color) -> void:
 	_outcome_locked = true
 	for pair in _pairs:
 		_light_up(pair, LIGHT_RED_TEXTURE)
 	_blink_red_zones()
 	_shake_reticle()
-	_show_info("MISS", zone_color_red)
+	show_info(info_text, info_color)
 	_game_won = false
 	_result_timer = 0.0
 	_state = State.RESULT
@@ -486,7 +565,7 @@ func _zone_at_ratio(ratio: float) -> Zone:
 
 
 func _build_zones(threat_level: int) -> void:
-	var pair_count := _scale_for_threat(threat_level, zones_min, zones_max)
+	var pair_count := scale_for_threat(threat_level, zones_min, zones_max)
 	var width_scale := _lerp_for_threat(threat_level, 1.0, zone_width_scale_at_max_threat)
 	var yellow_width := yellow_width_ratio * width_scale
 	var centers := _generate_green_centers(pair_count)
@@ -505,6 +584,11 @@ func _build_zones(threat_level: int) -> void:
 		pair.right_edge_ratio = cursor
 		_pairs.append(pair)
 	_append_zone(ZoneType.RED, cursor, 1.0)
+	# Modifiers mutate the ratio layout (insert special zones, tag icons) before
+	# any controls exist, so the visual build below stays the single source of
+	# pixel truth.
+	if _modifier:
+		_modifier.modify_zones(self, threat_level)
 	_build_zone_controls()
 	_build_lights()
 
@@ -563,17 +647,18 @@ func _build_zone_controls() -> void:
 		var zone := _zones[i]
 		zone.glow = ZONE_GLOW.duplicate() as ShaderMaterial
 		zone.glow.set_shader_parameter(&"glow_intensity", 0.0)
-		zone.control = _make_zone_control(zone.type, maxi(width, 1), zone.glow)
+		zone.control = _make_zone_control(zone, maxi(width, 1))
 		_zone_row.add_child(zone.control)
 
 
-func _make_zone_control(type: ZoneType, width: int, glow: ShaderMaterial) -> Control:
+func _make_zone_control(zone: Zone, width: int) -> Control:
+	var glow := zone.glow
 	var zone_control := Control.new()
 	zone_control.custom_minimum_size = Vector2(width, 0.0)
 	zone_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	# Zone color tints both the stripes and the border; alpha 0 until this
 	# zone's reveal step during the countdown.
-	zone_control.modulate = Color(_zone_idle_color(type), 0.0)
+	zone_control.modulate = Color(_zone_idle_color(zone), 0.0)
 	var stripes := TextureRect.new()
 	stripes.texture = STRIPES_TEXTURE
 	stripes.stretch_mode = TextureRect.STRETCH_TILE
@@ -600,6 +685,21 @@ func _make_zone_control(type: ZoneType, width: int, glow: ShaderMaterial) -> Con
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	border.material = glow
 	zone_control.add_child(border)
+	if zone.icon:
+		# Child of the zone control so it inherits the reveal alpha and the hit
+		# bounce; the parent modulate also tints it toward the zone color, which
+		# is acceptable for the placeholder icons.
+		var icon_rect := TextureRect.new()
+		icon_rect.texture = zone.icon
+		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
+		icon_rect.stretch_mode = TextureRect.STRETCH_KEEP_ASPECT_CENTERED
+		icon_rect.set_anchors_preset(Control.PRESET_FULL_RECT)
+		icon_rect.offset_left = ZONE_CONTENT_INSET
+		icon_rect.offset_top = ZONE_CONTENT_INSET
+		icon_rect.offset_right = -ZONE_CONTENT_INSET
+		icon_rect.offset_bottom = -ZONE_CONTENT_INSET
+		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
+		zone_control.add_child(icon_rect)
 	return zone_control
 
 
@@ -628,13 +728,15 @@ func _reveal_zones(type: ZoneType) -> void:
 
 
 ## The shade a zone rests at, derived so idle and lit can never drift apart in hue.
-func _zone_idle_color(type: ZoneType) -> Color:
-	var lit := _zone_color(type)
+func _zone_idle_color(zone: Zone) -> Color:
+	var lit := _zone_color(zone)
 	return Color(lit.r * zone_idle_darken, lit.g * zone_idle_darken, lit.b * zone_idle_darken)
 
 
-func _zone_color(type: ZoneType) -> Color:
-	match type:
+func _zone_color(zone: Zone) -> Color:
+	if zone.custom_color.a > 0.0:
+		return zone.custom_color
+	match zone.type:
 		ZoneType.GREEN:
 			return zone_color_green
 		ZoneType.YELLOW:
@@ -649,8 +751,10 @@ func _update_reticle_position() -> void:
 
 
 ## Pop the info text in at center pivot; after info_hold_time without another
-## update it scales back to hidden. Each call restarts the whole chain.
-func _show_info(text: String, color: Color) -> void:
+## update it scales back to hidden. Each call restarts the whole chain. Public
+## so modifiers can announce their own events ("Bonus Hit!"); one label, last
+## caller wins.
+func show_info(text: String, color: Color) -> void:
 	if _info_tween and _info_tween.is_valid():
 		_info_tween.kill()
 	_info_label.text = text
@@ -672,9 +776,10 @@ func _light_up(pair: Pair, texture: Texture2D) -> void:
 	pair.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
 
 
-## A hit green or yellow zone punches up in scale and lights to full strength, then
-## settles back. Red is never flashed this way -- hitting one is a fail, not a hit.
-func _flash_zone(zone: Zone) -> void:
+## A hit green, yellow, or special zone punches up in scale and lights to full
+## strength, then settles back. Red is never flashed this way -- hitting one is a
+## fail, not a hit.
+func flash_zone(zone: Zone) -> void:
 	var flare := _create_realtime_tween()
 	flare.tween_method(_set_zone_lit.bind(zone), 0.0, 1.0, zone_hit_flash_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
@@ -709,7 +814,7 @@ func _set_red_zones_lit(value: float) -> void:
 ## at full. Colour and glow move together, so the glow adds to the tell rather than
 ## being the whole of it.
 func _set_zone_lit(value: float, zone: Zone) -> void:
-	var lit := _zone_idle_color(zone.type).lerp(_zone_color(zone.type), value)
+	var lit := _zone_idle_color(zone).lerp(_zone_color(zone), value)
 	zone.control.modulate = Color(lit, zone.control.modulate.a)
 	zone.glow.set_shader_parameter(&"glow_intensity", value)
 
@@ -759,7 +864,7 @@ func _realtime_speed_scale() -> float:
 	return 1.0 / Engine.time_scale if Engine.time_scale > 0.0 else 1.0
 
 
-func _scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:
+func scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:
 	return int(roundf(_lerp_for_threat(threat_level, float(min_value), float(max_value))))
 
 

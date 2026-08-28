@@ -42,6 +42,12 @@
 
 - Items now have weight classes that change how they handle — heavier salvage pulls
   slower, falls faster, and settles harder.
+- The lever minigame can now roll random modifiers. Good ones and bad ones exist, and
+  the bad ones show up more often the higher the threat climbs.
+- **Bonus!** adds an optional blue zone to the bar — hit it and finish the pull to be
+  rewarded with extra scrap.
+- **Mines!** arms some of the yellow zones — hit a mined one and the pull blows up in
+  your face.
 
 #### Enemies
 
