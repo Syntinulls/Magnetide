@@ -67,7 +67,7 @@ func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 		return false
 	if not _bonus_hit:
 		_bonus_hit = true
-		minigame.flash_zone(zone)
+		minigame.mark_zone_hit(zone)
 		minigame.show_info(hit_text, zone_color)
 	return true
 

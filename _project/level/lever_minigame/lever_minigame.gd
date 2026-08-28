@@ -9,7 +9,8 @@ class_name LeverMinigame
 ## is settled -- every pair lit, or a miss taken -- the panel stops accepting input
 ## while the crosshair finishes its sweep, so a decided result cannot be undone. One result
 ## light per green zone reports the outcome below the bar. Hitting a green or yellow
-## punches that zone up in scale and flares its glow; hitting a red blinks every red
+## punches that zone up in scale and lights it to full glow, where it stays for the
+## rest of the attempt as the record of what was hit; hitting a red blinks every red
 ## zone in unison like a warning light and kicks the reticle before the panel closes.
 ##
 ## Owns the whole activation presentation: while it runs it slows
@@ -94,8 +95,6 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var info_hold_time: float = 1.5
 ## Time for a hit green/yellow zone to flare its glow to full.
 @export var zone_hit_flash_time: float = 0.06
-## Time for that flare to fade back out.
-@export var zone_hit_fade_time: float = 0.28
 ## Scale a hit green/yellow zone bounces up to before settling back.
 @export var zone_hit_scale: Vector2 = Vector2(1.45, 1.2)
 ## Time for the bounce out, then the elastic settle back to default scale.
@@ -515,7 +514,7 @@ func _resolve_pair(zone: Zone, perfect: bool) -> void:
 	if pair.resolved:
 		return
 	pair.resolved = true
-	flash_zone(zone)
+	mark_zone_hit(zone)
 	if perfect:
 		_light_up(pair, LIGHT_GREEN_TEXTURE)
 		show_info("PERFECT", zone_color_green)
@@ -777,14 +776,13 @@ func _light_up(pair: Pair, texture: Texture2D) -> void:
 
 
 ## A hit green, yellow, or special zone punches up in scale and lights to full
-## strength, then settles back. Red is never flashed this way -- hitting one is a
-## fail, not a hit.
-func flash_zone(zone: Zone) -> void:
+## strength, and stays lit for the rest of the attempt -- the lit zones are the
+## visible record of what the player hit to earn the result. Red is never lit
+## this way -- hitting one is a fail, not a hit.
+func mark_zone_hit(zone: Zone) -> void:
 	var flare := _create_realtime_tween()
 	flare.tween_method(_set_zone_lit.bind(zone), 0.0, 1.0, zone_hit_flash_time) \
 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
-	flare.tween_method(_set_zone_lit.bind(zone), 1.0, 0.0, zone_hit_fade_time) \
-		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	zone.control.pivot_offset = zone.control.size * 0.5
 	var bounce := _create_realtime_tween()
 	bounce.tween_property(zone.control, "scale", zone_hit_scale, zone_hit_bounce_time) \

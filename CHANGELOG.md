@@ -104,7 +104,8 @@
   sweeps across the board and you press **E** as it crosses each green zone — clipping
   yellow speeds the sweep up for the rest of the attempt, and pressing on red or letting
   a zone slip past fails the brake.
-- The minigame gives clearer feedback: zones light up the instant they're hit, and a
+- The minigame gives clearer feedback: zones light up the instant they're hit and stay
+  lit for the rest of the attempt, so the board reads as a record of what you hit, and a
   failed attempt reads unmistakably as a failure before the panel closes.
 - The camera dive during the minigame is gentler and centers on you.
 - Acid storms now give a countdown warning before they hit.

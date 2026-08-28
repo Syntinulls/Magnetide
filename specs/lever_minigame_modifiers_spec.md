@@ -46,7 +46,7 @@ reaching the minigame through four hooks:
   the presentation effects are unwound (never on cancel); outside-world
   consequences (scrap awards, spawns) go here.
 
-Supporting minigame surface (public API): `show_info`, `flash_zone`,
+Supporting minigame surface (public API): `show_info`, `mark_zone_hit`,
 `fail_minigame(text, color)` (the full red-fail treatment with custom text),
 `scale_for_threat`, `get_zones`, `split_zone` (in-place carve that keeps `_zones`
 sorted, since zone controls derive pixel widths from consecutive ratios), and
@@ -77,8 +77,9 @@ moment the panel opens, decaying on the standard timer or overwritten by the
   used with the zone shrunk to 60% of it, and a board with no interior gaps
   (impossible at the current minimum of two pairs) leaves the modifier inert.
 - Hitting it is optional — it is not a pair, so completion is untouched and
-  letting it slip past costs nothing. The first press flashes the zone and pops
-  "Bonus Hit!" in blue; repeat presses on it are consumed and ignored.
+  letting it slip past costs nothing. The first press lights the zone (staying
+  lit, like every hit zone) and pops "Bonus Hit!" in blue; repeat presses on it
+  are consumed and ignored.
 - If it was hit **and** the attempt succeeds, a scrap amount rolled between
   `scrap_min`/`scrap_max` is awarded after the panel closes: one
   `PlayerScrapCollector.collect_from(origin)` call per scrap from the minigame's
