@@ -25,6 +25,7 @@
 [ext_resource type="Script" path="res://_project/player/player_interaction.gd" id="22_interaction"]
 [ext_resource type="Script" path="res://_project/player/player_scrap_collector.gd" id="23_scrap"]
 [ext_resource type="Script" path="res://_project/player/player_progress_bar_controller.gd" id="24_progress"]
+[ext_resource type="Script" path="res://_project/player/player_loot_labels.gd" id="25_loot_labels"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_muzzle_glow"]
 shader = ExtResource("30_glow")
@@ -284,6 +285,9 @@ script = ExtResource("22_interaction")
 
 [node name="ScrapCollector" type="Node" parent="." unique_id=2042482356]
 script = ExtResource("23_scrap")
+
+[node name="LootLabels" type="Node" parent="." unique_id=1730258417]
+script = ExtResource("25_loot_labels")
 
 [node name="ProgressBarController" type="Node" parent="." unique_id=790598023]
 script = ExtResource("24_progress")

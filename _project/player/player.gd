@@ -65,6 +65,7 @@ var _health: PlayerHealth = null
 var _equipment: PlayerEquipment = null
 var _interaction: PlayerInteraction = null
 var _scrap_collector: PlayerScrapCollector = null
+var _loot_labels: PlayerLootLabels = null
 var _progress_bar: PlayerProgressBarController = null
 
 @onready var body_sprite: Sprite2D = $BodySprite
@@ -100,6 +101,12 @@ var scrap_collector: PlayerScrapCollector:
 		if _scrap_collector == null:
 			_scrap_collector = get_node_or_null(^"ScrapCollector") as PlayerScrapCollector
 		return _scrap_collector
+
+var loot_labels: PlayerLootLabels:
+	get:
+		if _loot_labels == null:
+			_loot_labels = get_node_or_null(^"LootLabels") as PlayerLootLabels
+		return _loot_labels
 
 var progress_bar: PlayerProgressBarController:
 	get:

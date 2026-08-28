@@ -134,6 +134,8 @@
 - The main menu backdrop is now a drifting, twinkling star field.
 - **New Game** now asks for confirmation before overwriting an existing save.
 - The departure prompt now reads **END RUN** instead of **DEPART**.
+- Scrap pickups now share one climbing counter above your head ("+6 Scrap Metal")
+  instead of stacking a separate line for every scrap.
 
 #### Visuals
 
