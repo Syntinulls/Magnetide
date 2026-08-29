@@ -9,6 +9,10 @@ signal scrap_metal_collected(amount: int)
 
 const ScrapMetalTexture: Texture2D = preload("res://_project/common/sprites/scrap_metal.png")
 
+## Hang time between a pickup popping into view and it flying off to the HUD
+## counter, so the award registers before the sprite leaves.
+const PICKUP_HOLD_SECONDS: float = 0.6
+
 ## Chance (0-100) that recycling a trash item yields double scrap. Set by the
 ## Increased Recycling augment for the duration of a run.
 var double_scrap_chance_percent: float = 0.0
@@ -55,6 +59,7 @@ func collect_from(start_position: Vector2) -> void:
 	tween.set_trans(Tween.TRANS_BACK).set_ease(Tween.EASE_OUT)
 	tween.tween_property(pickup, "global_position", pop_target, 0.16)
 	tween.parallel().tween_property(pickup, "scale", start_scale * 1.2, 0.16)
+	tween.tween_interval(PICKUP_HOLD_SECONDS)
 	tween.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
 	tween.tween_property(pickup, "global_position", collect_target, 0.42)
 	tween.parallel().tween_property(pickup, "scale", start_scale * 0.55, 0.42)

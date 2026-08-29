@@ -14,6 +14,9 @@ class_name BonusModifierBehavior
 @export var hit_text: String = "Bonus Hit!"
 @export var scrap_min: int = 3
 @export var scrap_max: int = 8
+## Pause after the minigame closes before the scrap pickups appear, so the
+## activation presentation (camera, vignette) finishes restoring first.
+@export var award_delay: float = 0.4
 
 var _bonus_zone: LeverMinigame.Zone = null
 var _bonus_hit := false
@@ -75,8 +78,9 @@ func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 func on_minigame_closed(minigame: LeverMinigame, success: bool) -> void:
 	if not success or not _bonus_hit:
 		return
+	await minigame.get_tree().create_timer(award_delay).timeout
 	var player := Magnetide.player
-	if player == null or player.scrap_collector == null:
+	if player == null or not is_instance_valid(player) or player.scrap_collector == null:
 		return
 	var origin := minigame.get_focus_world_position()
 	var amount := randi_range(scrap_min, scrap_max)

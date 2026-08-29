@@ -136,6 +136,8 @@
 - The departure prompt now reads **END RUN** instead of **DEPART**.
 - Scrap pickups now share one climbing counter above your head ("+6 Scrap Metal")
   instead of stacking a separate line for every scrap.
+- Scrap pickups now hang in the air for a beat after appearing before flying to the
+  counter, so they're easier to notice.
 
 #### Visuals
 
