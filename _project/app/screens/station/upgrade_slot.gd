@@ -20,7 +20,7 @@ const TICK_LIGHT_OFF: Texture2D = preload("res://_project/app/screens/station/sp
 ## the station screen). Owned by the slot widgets; StationScreen reads it as UpgradeSlot.UNLOCK_ICON.
 ## The static-slot overlay is authored as UpgradeButton/UnlockIcon in upgrade_slot.tscn; code
 ## only toggles its visibility.
-const UNLOCK_ICON: Texture2D = preload("res://_project/app/screens/station/sprites/icon_lock_open.png")
+const UNLOCK_ICON: Texture2D = preload("res://_project/common/sprites/icon_lock_open.png")
 
 ## Unique id for this slot (e.g. &"player_health", &"weapon"). Authored per instance.
 @export var slot_id: StringName = &""

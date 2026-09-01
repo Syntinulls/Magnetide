@@ -1,6 +1,6 @@
 [gd_resource type="Resource" script_class="MinesModifierBehavior" format=3 uid="uid://minesmodtres0"]
 
-[ext_resource type="Script" uid="uid://c43euoqqfsebw" path="res://_project/level/lever_minigame/modifiers/mines_modifier_behavior.gd" id="1_mines"]
+[ext_resource type="Script" uid="uid://c43euoqqfsebw" path="res://_project/level/lever_minigame/modifiers/mines/mines_modifier_behavior.gd" id="1_mines"]
 
 [resource]
 script = ExtResource("1_mines")

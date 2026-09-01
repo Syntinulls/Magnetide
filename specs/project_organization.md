@@ -55,8 +55,9 @@ _project/                    All game content. (Root level is reserved for engin
 │                            shared shaders (border_outline, composite_outline, glow).
 │   └── sprites/             Sprites with no single owner: reusable chrome (ui_border_*) and
 │                            icons consumed by 2+ concepts (scrap_metal, icon_magnet,
-│                            icon_crate, icon_research_point). A sprite used by exactly one
-│                            concept belongs to that concept, not here.
+│                            icon_crate, icon_research_point, icon_lock, icon_lock_open).
+│                            A sprite used by exactly one concept belongs to that concept,
+│                            not here.
 ├── debug/                   Development-only tooling: the debug panel overlay
 │                            (debug_panel.*), active only in debug builds or behind the
 │                            --debug-panel launch flag. See specs/debug_panel.md.
@@ -90,11 +91,15 @@ _project/                    All game content. (Root level is reserved for engin
 │   ├── viewport_anchor.gd   Viewport-relative positioning helper.
 │   ├── decoration/          Parallax layers, skyline, bands, decoration shaders + sprites.
 │   ├── threat/              Threat simulation: ThreatManager, StormController.
-│   └── magnet_minigame/     The looting-cycle minigame + its activation overlay, warning icon,
-│                            vignette shader, zone/light glow materials, sprites. Lives
-│                            here, not under ship/magnet/:
-│                            level.tscn instances it and game_ui.tscn owns its overlay — it
-│                            never touches the ship, and exists only inside a run.
+│   ├── magnet_minigame/     The looting-cycle orchestrator + its activation overlay and
+│   │                        warning icon. Lives here, not under ship/magnet/:
+│   │                        level.tscn instances it and game_ui.tscn owns its overlay — it
+│   │                        never touches the ship, and exists only inside a run.
+│   └── lever_minigame/      The lever activation minigame: scene, script, vignette shader,
+│       │                    zone/light glow materials, sprites. Started by magnet_minigame.
+│       └── modifiers/       LeverModifierBehavior + LeverModifierWeights at the root, then
+│                            one folder per modifier (bonus/, mines/, recover/, invert/,
+│                            ambush/, gate/) owning its script, .tres and sprites.
 ├── player/                  The player character. player.gd (the body: movement, facing,
 │   │                        animation, combat-contract facade) manages component nodes
 │   │                        authored in player.tscn: player_health, player_equipment (hosts

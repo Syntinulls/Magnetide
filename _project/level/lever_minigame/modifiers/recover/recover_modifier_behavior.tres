@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="RecoverModifierBehavior" format=3 uid="uid://recovmodtres"]
+
+[ext_resource type="Script" uid="uid://h4aqj3cewm26" path="res://_project/level/lever_minigame/modifiers/recover/recover_modifier_behavior.gd" id="1_recover"]
+
+[resource]
+script = ExtResource("1_recover")
+display_name = "Recover!"
+display_color = Color(0.290196, 0.564706, 0.85098, 1)
+metadata/_custom_type_script = "uid://h4aqj3cewm26"

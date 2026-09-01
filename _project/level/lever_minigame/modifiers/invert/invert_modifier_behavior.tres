@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="InvertModifierBehavior" format=3 uid="uid://invrtmodtres"]
+
+[ext_resource type="Script" uid="uid://cch4b5webojrf" path="res://_project/level/lever_minigame/modifiers/invert/invert_modifier_behavior.gd" id="1_invert"]
+
+[resource]
+script = ExtResource("1_invert")
+display_name = "Invert!"
+display_color = Color(0.345098, 0.752941, 0.360784, 1)
+metadata/_custom_type_script = "uid://cch4b5webojrf"

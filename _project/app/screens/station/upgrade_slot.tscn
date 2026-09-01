@@ -5,7 +5,7 @@
 [ext_resource type="Texture2D" uid="uid://dqupgbtn00001" path="res://_project/app/screens/station/sprites/upgrade_button.png" id="3_upg_button"]
 [ext_resource type="Texture2D" uid="uid://dqupgbtn00002" path="res://_project/app/screens/station/sprites/upgrade_button_pressed.png" id="4_upg_button_pressed"]
 [ext_resource type="Texture2D" uid="uid://dqupgarw00001" path="res://_project/app/screens/station/sprites/upgrade_arrow.png" id="5_upg_arrow"]
-[ext_resource type="Texture2D" uid="uid://cvf0b0nfmwwdw" path="res://_project/app/screens/station/sprites/icon_lock_open.png" id="6_lock"]
+[ext_resource type="Texture2D" uid="uid://cvf0b0nfmwwdw" path="res://_project/common/sprites/icon_lock_open.png" id="6_lock"]
 [ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="7_glow"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_tick1_glow"]

@@ -2,11 +2,15 @@
 
 [ext_resource type="Script" uid="uid://c8lie3csrgac6" path="res://_project/level/lever_minigame/modifiers/lever_modifier_weights.gd" id="1_weights"]
 [ext_resource type="Script" uid="uid://cnntt3xi1hgnd" path="res://_project/level/lever_minigame/modifiers/lever_modifier_behavior.gd" id="2_behavior"]
-[ext_resource type="Resource" uid="uid://bonusmodtres0" path="res://_project/level/lever_minigame/modifiers/bonus_modifier_behavior.tres" id="3_bonus"]
-[ext_resource type="Resource" uid="uid://minesmodtres0" path="res://_project/level/lever_minigame/modifiers/mines_modifier_behavior.tres" id="4_mines"]
+[ext_resource type="Resource" uid="uid://bonusmodtres0" path="res://_project/level/lever_minigame/modifiers/bonus/bonus_modifier_behavior.tres" id="3_bonus"]
+[ext_resource type="Resource" uid="uid://minesmodtres0" path="res://_project/level/lever_minigame/modifiers/mines/mines_modifier_behavior.tres" id="4_mines"]
+[ext_resource type="Resource" uid="uid://recovmodtres" path="res://_project/level/lever_minigame/modifiers/recover/recover_modifier_behavior.tres" id="5_recover"]
+[ext_resource type="Resource" uid="uid://invrtmodtres" path="res://_project/level/lever_minigame/modifiers/invert/invert_modifier_behavior.tres" id="6_invert"]
+[ext_resource type="Resource" uid="uid://ambshmodtres" path="res://_project/level/lever_minigame/modifiers/ambush/ambush_modifier_behavior.tres" id="7_ambush"]
+[ext_resource type="Resource" uid="uid://gatemodtres0" path="res://_project/level/lever_minigame/modifiers/gate/gate_modifier_behavior.tres" id="8_gate"]
 
 [resource]
 script = ExtResource("1_weights")
-positive_modifiers = Array[ExtResource("2_behavior")]([ExtResource("3_bonus")])
-negative_modifiers = Array[ExtResource("2_behavior")]([ExtResource("4_mines")])
+positive_modifiers = Array[ExtResource("2_behavior")]([ExtResource("3_bonus"), ExtResource("5_recover"), ExtResource("6_invert")])
+negative_modifiers = Array[ExtResource("2_behavior")]([ExtResource("4_mines"), ExtResource("7_ambush"), ExtResource("8_gate")])
 metadata/_custom_type_script = "uid://c8lie3csrgac6"

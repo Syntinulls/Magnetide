@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="AmbushModifierBehavior" format=3 uid="uid://ambshmodtres"]
+
+[ext_resource type="Script" uid="uid://61ocaroqmb4" path="res://_project/level/lever_minigame/modifiers/ambush/ambush_modifier_behavior.gd" id="1_ambush"]
+
+[resource]
+script = ExtResource("1_ambush")
+display_name = "Ambush!"
+display_color = Color(0.819608, 0.286275, 0.247059, 1)
+metadata/_custom_type_script = "uid://61ocaroqmb4"

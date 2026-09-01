@@ -138,7 +138,7 @@ func _setup_ui_references() -> void:
 
 	if _lever_minigame:
 		_lever_minigame.minigame_completed.connect(_on_activation_completed)
-		_lever_minigame.pair_resolved.connect(_on_pair_resolved)
+		_lever_minigame.objective_resolved.connect(_on_objective_resolved)
 
 	# Initialize ship status UI with the current magnet capacity value.
 	_update_magnet_capacity_ui()
@@ -544,13 +544,13 @@ func _position_player_at_lever() -> void:
 	_player.global_position = Vector2(lever_pos.x + player_lever_offset_x, _player.global_position.y)
 
 
-func _on_pair_resolved(pair_index: int, total_pairs: int) -> void:
-	# Progress lever rotation by 1/total_pairs of the full rotation
-	if _magnet_lever and total_pairs > 0:
-		var is_final_pull := pair_index >= total_pairs - 1
+func _on_objective_resolved(objective_index: int, total_objectives: int) -> void:
+	# Progress lever rotation by 1/total_objectives of the full rotation
+	if _magnet_lever and total_objectives > 0:
+		var is_final_pull := objective_index >= total_objectives - 1
 		_play_lever_sfx(LEVER_PULL_FINAL_SFX if is_final_pull else LEVER_PULL_GENERIC_SFX)
-		var rotation_per_pair := 1.0 / float(total_pairs)
-		_magnet_lever.progress_rotation(rotation_per_pair)
+		var rotation_per_objective := 1.0 / float(total_objectives)
+		_magnet_lever.progress_rotation(rotation_per_objective)
 
 
 func _play_lever_sfx(sound_name: String) -> void:

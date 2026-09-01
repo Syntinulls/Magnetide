@@ -2,16 +2,16 @@
 
 importer="texture"
 type="CompressedTexture2D"
-uid="uid://d4gxgad0kt7vy"
-path="res://.godot/imported/threatbar_icon_lock.png-57acea55adb4e8891e0f244492058f9a.ctex"
+uid="uid://cvf0b0nfmwwdw"
+path="res://.godot/imported/icon_lock_open.png-f74f6fd1ee0c36bf2a0967d8c1a3f841.ctex"
 metadata={
 "vram_texture": false
 }
 
 [deps]
 
-source_file="res://_project/hud/threat/sprites/threatbar_icon_lock.png"
-dest_files=["res://.godot/imported/threatbar_icon_lock.png-57acea55adb4e8891e0f244492058f9a.ctex"]
+source_file="res://_project/common/sprites/icon_lock_open.png"
+dest_files=["res://.godot/imported/icon_lock_open.png-f74f6fd1ee0c36bf2a0967d8c1a3f841.ctex"]
 
 [params]
 

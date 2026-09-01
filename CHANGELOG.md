@@ -48,6 +48,17 @@
   rewarded with extra scrap.
 - **Mines!** arms some of the yellow zones — hit a mined one and the pull blows up in
   your face.
+- **Recover!** shortens the bar and scatters optional blue supply zones across it. Hit
+  them and finish the pull to patch yourself up or repair the hull; the higher the
+  threat, the more they restore.
+- **Invert!** turns every zone group inside out, so the perfect windows sit at the edges
+  of each group with the forgiving middle where the green used to be.
+- **Ambush!** marks the red zones with a warning. Fail the pull and a pack of enemies
+  drops in on you the moment the panel closes.
+- **Gate!** locks the pull behind a colour match. A row of keys and a padlocked gate
+  flicker through colours right up to the last moment, then settle — hit the one key
+  whose colour matches the gate to unlock it, then hit the gate itself. Pick the wrong
+  key and the pull fails.
 
 #### Enemies
 

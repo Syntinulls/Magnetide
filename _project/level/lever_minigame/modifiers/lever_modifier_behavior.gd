@@ -2,11 +2,12 @@ extends Resource
 class_name LeverModifierBehavior
 
 ## Base for lever minigame modifiers: authored .tres strategy resources rolled
-## by LeverModifierWeights at each attempt. A modifier hooks into zone building,
-## press handling, and the post-close moment; the minigame never branches on
-## modifier identity, so all modifier-specific zones, text, and rewards live in
-## the subclass. Instances are shared across attempts -- reset any per-attempt
-## state in on_minigame_started. See specs/lever_minigame_modifiers_spec.md.
+## by LeverModifierWeights at each attempt. A modifier owns the board it plays on
+## and hooks into press handling, the countdown, the per-frame tick, and the
+## post-close moment; the minigame never branches on modifier identity, so all
+## modifier-specific zones, text, and rewards live in the subclass. Instances are
+## shared across attempts -- reset any per-attempt state in on_minigame_started.
+## See specs/lever_minigame_modifier_boards_spec.md.
 
 ## Banner text popped via show_info when the minigame opens, e.g. "Bonus!".
 @export var display_name: String = ""
@@ -18,10 +19,31 @@ func on_minigame_started(_minigame: LeverMinigame, _threat_level: int) -> void:
 	pass
 
 
-## Called at the end of _build_zones, after the base ratio layout exists but
-## before any zone controls are built: insert special zones (split_zone) or tag
+## Lays out the board: which zones exist, how wide they are, and how many
+## objectives they answer to. Place only the zones that mean something -- the
+## minigame fills every span left over with red afterwards. The default is the
+## standard threat-scaled green/yellow clusters; override to shift the count
+## range, reshape a cluster, or replace the board outright.
+func build_board(minigame: LeverMinigame, threat_level: int) -> void:
+	minigame.build_default_board(threat_level, minigame.zones_min, minigame.zones_max)
+
+
+## Called after the board is closed (every gap filled with red) but before any
+## zone control is built: insert special zones (insert_special_zone) or tag
 ## existing ones (icon, custom_color) here.
 func modify_zones(_minigame: LeverMinigame, _threat_level: int) -> void:
+	pass
+
+
+## The "Go!" moment: the countdown has finished and the reticle starts moving
+## this frame. Where a modifier locks in anything it was teasing during setup.
+func on_countdown_finished(_minigame: LeverMinigame, _threat_level: int) -> void:
+	pass
+
+
+## Every frame the minigame is active, at wall-clock delta -- the minigame runs
+## under a heavy Engine.time_scale slowdown, so this is already divided out.
+func on_process(_minigame: LeverMinigame, _real_delta: float) -> void:
 	pass
 
 

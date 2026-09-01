@@ -4,11 +4,11 @@ class_name LeverMinigame
 ## Lever activation minigame: a crosshair reticle sweeps left-to-right across a
 ## bar of green/yellow/red zones. The player presses interact as the reticle
 ## crosses each green zone ("PERFECT") or a flanking yellow ("CLOSE", which also
-## speeds the reticle up). Pressing on red -- or letting an unresolved zone pair
+## speeds the reticle up). Pressing on red -- or letting an unresolved objective
 ## slip past -- turns every light red and fails the attempt instantly. Once the attempt
-## is settled -- every pair lit, or a miss taken -- the panel stops accepting input
+## is settled -- every objective lit, or a miss taken -- the panel stops accepting input
 ## while the crosshair finishes its sweep, so a decided result cannot be undone. One result
-## light per green zone reports the outcome below the bar. Hitting a green or yellow
+## light per objective reports the outcome below the bar. Hitting a green or yellow
 ## punches that zone up in scale and lights it to full glow, where it stays for the
 ## rest of the attempt as the record of what was hit; hitting a red blinks every red
 ## zone in unison like a warning light and kicks the reticle before the panel closes.
@@ -27,12 +27,14 @@ class_name LeverMinigame
 ##
 ## Each attempt may roll a modifier from modifier_weights (none/positive/negative
 ## pools; the negative pool's weight scales with threat). The rolled
-## LeverModifierBehavior hooks into zone building, press handling, and the
-## post-close moment; with no modifier the minigame plays exactly as authored.
-## See specs/lever_minigame_modifiers_spec.md.
+## LeverModifierBehavior owns the board: it decides which zones exist and how many
+## objectives they answer to, using the public building primitives below, and hooks
+## into press handling, the countdown, the per-frame tick, and the post-close
+## moment. With no modifier the board is build_default_board and the minigame plays
+## exactly as authored. See specs/lever_minigame_modifier_boards_spec.md.
 
 signal minigame_completed(success: bool)
-signal pair_resolved(pair_index: int, total_pairs: int)
+signal objective_resolved(objective_index: int, total_objectives: int)
 
 enum State { INACTIVE, SETUP, COUNTDOWN, PLAYING, RESULT }
 enum ZoneType { GREEN, YELLOW, RED, SPECIAL }
@@ -151,25 +153,35 @@ class Zone:
 	var type: ZoneType
 	var start_ratio: float
 	var end_ratio: float
-	var pair_index: int = -1
+	## Index into _objectives, or -1 for a zone that answers to none (red, and the
+	## optional SPECIAL zones modifiers scatter around the board).
+	var objective_index: int = -1
 	var control: Control
+	## Drives the stripes and border tint; the icon deliberately sits outside it.
+	var tint_targets: Array[CanvasItem] = []
 	var glow: ShaderMaterial
 	## Alpha 0 means "use the ZoneType color"; SPECIAL zones set their own.
 	var custom_color: Color = Color.TRANSPARENT
 	## Optional overlay centered in the zone, revealed together with it.
 	var icon: Texture2D = null
+	var icon_rect: TextureRect = null
 
-class Pair:
+## A required hit: some span of the bar the reticle must not cross unresolved, and
+## the result light that reports it. One per green/yellow cluster on the default
+## board; modifiers group zones however they like (Gate's keys are one objective
+## across several zones).
+class Objective:
 	var resolved := false
-	var center_ratio: float
-	## Right edge of the green+yellows cluster; passing it unresolved is a miss.
-	var right_edge_ratio: float
+	## Bar ratio the result light is centered on.
+	var light_center_ratio: float
+	## Passing this ratio unresolved is a miss.
+	var deadline_ratio: float
 	var light: TextureRect
 	var light_glow: ShaderMaterial
 
 var _state: State = State.INACTIVE
 var _zones: Array[Zone] = []
-var _pairs: Array[Pair] = []
+var _objectives: Array[Objective] = []
 var _reticle_ratio: float = 0.0
 var _yellows_hit: int = 0
 var _setup_elapsed: float = 0.0
@@ -185,6 +197,9 @@ var _game_won := false
 ## run-out past the last zone undoing a result that is already decided.
 var _outcome_locked := false
 var _modifier: LeverModifierBehavior = null
+## Clamped threat of the attempt in flight, so the hooks that fire after
+## start_minigame can be handed it without the modifier caching it itself.
+var _active_threat_level: int = 0
 var _world_anchor := Vector2.ZERO
 var _effects_active := false
 var _camera: Camera2D = null
@@ -227,6 +242,8 @@ func _process(delta: float) -> void:
 		var eased_t := 1.0 - pow(1.0 - t, 2.0)
 		Engine.time_scale = lerpf(1.0, activation_timescale, eased_t)
 	_drive_realtime_tweens()
+	if _modifier:
+		_modifier.on_process(self, real_delta)
 	match _state:
 		State.SETUP:
 			_process_setup(real_delta)
@@ -249,6 +266,7 @@ func _input(event: InputEvent) -> void:
 func start_minigame(threat_level: int) -> void:
 	var clamped_threat := clampi(threat_level, 0, ThreatManager.LEVEL_COUNT - 1)
 	_reset_state()
+	_active_threat_level = clamped_threat
 	if modifier_weights:
 		_modifier = modifier_weights.roll_modifier(clamped_threat)
 	if _modifier:
@@ -276,12 +294,114 @@ func get_zones() -> Array[Zone]:
 	return _zones
 
 
+## The standard board: threat-scaled clusters of a green flanked by two yellows,
+## one objective each. The default for a modifier that doesn't build its own, and
+## the base a modifier can call with its own count range (Recover caps it lower).
+func build_default_board(threat_level: int, pair_min: int, pair_max: int) -> void:
+	var pair_count := scale_for_threat(threat_level, pair_min, pair_max)
+	var width_scale := get_zone_width_scale(threat_level)
+	var yellow_width := yellow_width_ratio * width_scale
+	var half_green := green_width_ratio * width_scale * 0.5
+	var centers := generate_centers(pair_count, min_green_center_spacing_ratio, green_edge_margin_ratio)
+	for center in centers:
+		var index := add_objective(center, center + half_green + yellow_width)
+		append_zone(ZoneType.YELLOW, center - half_green - yellow_width, center - half_green, index)
+		append_zone(ZoneType.GREEN, center - half_green, center + half_green, index)
+		append_zone(ZoneType.YELLOW, center + half_green, center + half_green + yellow_width, index)
+
+
+## Add a zone to the board. Zones may be appended in any order -- _close_board
+## sorts them and fills every gap left over with red -- so a board builder only
+## places the zones that mean something. Zero-width zones are dropped.
+func append_zone(type: ZoneType, start_ratio: float, end_ratio: float, objective_index: int = -1) -> Zone:
+	if end_ratio - start_ratio <= 0.0:
+		return null
+	var zone := Zone.new()
+	zone.type = type
+	zone.start_ratio = start_ratio
+	zone.end_ratio = end_ratio
+	zone.objective_index = objective_index
+	_zones.append(zone)
+	return zone
+
+
+## Register a required hit and its result light; returns the index zones pass as
+## their objective_index.
+func add_objective(light_center_ratio: float, deadline_ratio: float) -> int:
+	var objective := Objective.new()
+	objective.light_center_ratio = light_center_ratio
+	objective.deadline_ratio = deadline_ratio
+	_objectives.append(objective)
+	return _objectives.size() - 1
+
+
+## Random sorted centers honoring the edge margin and minimum spacing; falls back
+## to even spacing when rejection sampling can't fit them all.
+func generate_centers(count: int, spacing_ratio: float, edge_margin_ratio: float) -> Array[float]:
+	var centers: Array[float] = []
+	var low := edge_margin_ratio
+	var high := 1.0 - edge_margin_ratio
+	var attempts := 0
+	while centers.size() < count and attempts < 100:
+		attempts += 1
+		var candidate := randf_range(low, high)
+		var valid := true
+		for existing in centers:
+			if absf(candidate - existing) < spacing_ratio:
+				valid = false
+				break
+		if valid:
+			centers.append(candidate)
+	if centers.size() < count:
+		centers.clear()
+		for i in range(count):
+			if count == 1:
+				centers.append((low + high) * 0.5)
+			else:
+				centers.append(low + (high - low) * float(i) / float(count - 1))
+	centers.sort()
+	return centers
+
+
+## Zone width multiplier for a threat stage: 1.0 at stage 0 down to
+## zone_width_scale_at_max_threat at stage 9. Custom boards apply it too, so their
+## zones tighten with threat the same way the default ones do.
+func get_zone_width_scale(threat_level: int) -> float:
+	return lerp_for_threat(threat_level, 1.0, zone_width_scale_at_max_threat)
+
+
+## Red zones with a non-red zone on either side -- the interior gaps between
+## clusters, structurally excluding the edge reds (and any zero-width gaps
+## append_zone already dropped) without float comparisons. Where optional SPECIAL
+## zones go. Only meaningful after _close_board, i.e. from modify_zones.
+func get_interior_red_zones() -> Array[Zone]:
+	var gaps: Array[Zone] = []
+	for i in range(1, _zones.size() - 1):
+		if _zones[i].type != ZoneType.RED:
+			continue
+		if _zones[i - 1].type != ZoneType.RED and _zones[i + 1].type != ZoneType.RED:
+			gaps.append(_zones[i])
+	return gaps
+
+
+## Carve a SPECIAL zone of the given width out of the middle of target, keeping
+## red visible on both sides: a gap narrower than 1.5x the width takes a zone
+## shrunk to 60% of it instead. Only valid from modify_zones.
+func insert_special_zone(target: Zone, width_ratio: float, color: Color, icon: Texture2D) -> Zone:
+	var gap := target.end_ratio - target.start_ratio
+	var width := width_ratio if gap >= width_ratio * 1.5 else gap * 0.6
+	var mid := (target.start_ratio + target.end_ratio) * 0.5
+	var zone := _split_zone(target, mid - width * 0.5, mid + width * 0.5, ZoneType.SPECIAL)
+	zone.custom_color = color
+	zone.icon = icon
+	return zone
+
+
 ## Carve a slice out of an existing zone, replacing it in place with up to three
 ## zones (left remnant, the new zone, right remnant; zero-width remnants are
 ## dropped) so _zones stays sorted -- _build_zone_controls derives pixel widths
-## from consecutive start ratios. Only valid from modify_zones, before the zone
-## controls are built. Returns the new zone.
-func split_zone(zone: Zone, start_ratio: float, end_ratio: float, new_type: ZoneType) -> Zone:
+## from consecutive start ratios.
+func _split_zone(zone: Zone, start_ratio: float, end_ratio: float, new_type: ZoneType) -> Zone:
 	var index := _zones.find(zone)
 	var new_zone := Zone.new()
 	new_zone.type = new_type
@@ -291,7 +411,7 @@ func split_zone(zone: Zone, start_ratio: float, end_ratio: float, new_type: Zone
 	if new_zone.start_ratio - zone.start_ratio > 0.0:
 		var left := Zone.new()
 		left.type = zone.type
-		left.pair_index = zone.pair_index
+		left.objective_index = zone.objective_index
 		left.start_ratio = zone.start_ratio
 		left.end_ratio = new_zone.start_ratio
 		pieces.append(left)
@@ -299,7 +419,7 @@ func split_zone(zone: Zone, start_ratio: float, end_ratio: float, new_type: Zone
 	if zone.end_ratio - new_zone.end_ratio > 0.0:
 		var right := Zone.new()
 		right.type = zone.type
-		right.pair_index = zone.pair_index
+		right.objective_index = zone.objective_index
 		right.start_ratio = new_zone.end_ratio
 		right.end_ratio = zone.end_ratio
 		pieces.append(right)
@@ -318,7 +438,7 @@ func get_focus_world_position() -> Vector2:
 
 func _reset_state() -> void:
 	_zones.clear()
-	_pairs.clear()
+	_objectives.clear()
 	_reticle_ratio = 0.0
 	_yellows_hit = 0
 	_setup_elapsed = 0.0
@@ -454,6 +574,8 @@ func _process_countdown(real_delta: float) -> void:
 	if _countdown_elapsed >= countdown_step_time * COUNTDOWN_STEPS:
 		_state = State.PLAYING
 		show_info("Go!", zone_color_green)
+		if _modifier:
+			_modifier.on_countdown_finished(self, _active_threat_level)
 		return
 	var digit := COUNTDOWN_STEPS - int(_countdown_elapsed / countdown_step_time)
 	if digit != _countdown_digit:
@@ -470,8 +592,8 @@ func _process_playing(real_delta: float) -> void:
 		_win_minigame()
 		return
 	_update_reticle_position()
-	for pair in _pairs:
-		if not pair.resolved and _reticle_ratio > pair.right_edge_ratio:
+	for objective in _objectives:
+		if not objective.resolved and _reticle_ratio > objective.deadline_ratio:
 			fail_minigame("MISS", zone_color_red)
 			return
 
@@ -504,50 +626,56 @@ func _evaluate_press() -> void:
 		ZoneType.RED:
 			fail_minigame("MISS", zone_color_red)
 		ZoneType.GREEN:
-			_resolve_pair(zone, true)
+			resolve_objective(zone, true)
 		ZoneType.YELLOW:
-			_resolve_pair(zone, false)
+			resolve_objective(zone, false)
 
 
-func _resolve_pair(zone: Zone, perfect: bool) -> void:
-	var pair := _pairs[zone.pair_index]
-	if pair.resolved:
+## Light the zone, mark its objective answered, and ratchet the lever. Public so a
+## modifier can resolve from handle_press when its zones aren't green or yellow
+## (Gate's keys and gate are SPECIAL). A zone with no objective, or one whose
+## objective is already resolved, is a no-op.
+func resolve_objective(zone: Zone, perfect: bool) -> void:
+	if zone.objective_index < 0:
 		return
-	pair.resolved = true
+	var objective := _objectives[zone.objective_index]
+	if objective.resolved:
+		return
+	objective.resolved = true
 	mark_zone_hit(zone)
 	if perfect:
-		_light_up(pair, LIGHT_GREEN_TEXTURE)
+		_light_up(objective, LIGHT_GREEN_TEXTURE)
 		show_info("PERFECT", zone_color_green)
 	else:
-		_light_up(pair, LIGHT_YELLOW_TEXTURE)
+		_light_up(objective, LIGHT_YELLOW_TEXTURE)
 		_yellows_hit += 1
 		show_info("CLOSE", zone_color_yellow)
-	pair_resolved.emit(zone.pair_index, _pairs.size())
-	if _all_pairs_resolved():
+	objective_resolved.emit(zone.objective_index, _objectives.size())
+	if _all_objectives_resolved():
 		_outcome_locked = true
 
 
-## Reached only with every pair resolved: an unresolved one fails the attempt as it
-## slips past, so arriving at the end of the bar is itself the win condition.
+## Reached only with every objective resolved: an unresolved one fails the attempt
+## as it slips past, so arriving at the end of the bar is itself the win condition.
 func _win_minigame() -> void:
 	_game_won = true
 	_result_timer = 0.0
 	_state = State.RESULT
 
 
-func _all_pairs_resolved() -> bool:
-	for pair in _pairs:
-		if not pair.resolved:
+func _all_objectives_resolved() -> bool:
+	for objective in _objectives:
+		if not objective.resolved:
 			return false
-	return not _pairs.is_empty()
+	return not _objectives.is_empty()
 
 
 ## Public so modifiers can fail the attempt with their own text ("Boom!"); the
 ## presentation is always the full red-fail treatment.
 func fail_minigame(info_text: String, info_color: Color) -> void:
 	_outcome_locked = true
-	for pair in _pairs:
-		_light_up(pair, LIGHT_RED_TEXTURE)
+	for objective in _objectives:
+		_light_up(objective, LIGHT_RED_TEXTURE)
 	_blink_red_zones()
 	_shake_reticle()
 	show_info(info_text, info_color)
@@ -564,71 +692,44 @@ func _zone_at_ratio(ratio: float) -> Zone:
 
 
 func _build_zones(threat_level: int) -> void:
-	var pair_count := scale_for_threat(threat_level, zones_min, zones_max)
-	var width_scale := _lerp_for_threat(threat_level, 1.0, zone_width_scale_at_max_threat)
-	var yellow_width := yellow_width_ratio * width_scale
-	var centers := _generate_green_centers(pair_count)
-	var half_green := green_width_ratio * width_scale * 0.5
-	var cursor := 0.0
-	for i in range(centers.size()):
-		var center: float = centers[i]
-		var cluster_start := center - half_green - yellow_width
-		_append_zone(ZoneType.RED, cursor, cluster_start)
-		_append_zone(ZoneType.YELLOW, cluster_start, center - half_green, i)
-		_append_zone(ZoneType.GREEN, center - half_green, center + half_green, i)
-		_append_zone(ZoneType.YELLOW, center + half_green, center + half_green + yellow_width, i)
-		cursor = center + half_green + yellow_width
-		var pair := Pair.new()
-		pair.center_ratio = center
-		pair.right_edge_ratio = cursor
-		_pairs.append(pair)
-	_append_zone(ZoneType.RED, cursor, 1.0)
-	# Modifiers mutate the ratio layout (insert special zones, tag icons) before
-	# any controls exist, so the visual build below stays the single source of
-	# pixel truth.
+	# The modifier owns the board -- which zones exist, how many objectives they
+	# answer to -- and _close_board fills whatever it left uncovered with red.
+	# modify_zones then decorates the finished layout, all before any control
+	# exists, so the visual build below stays the single source of pixel truth.
+	if _modifier:
+		_modifier.build_board(self, threat_level)
+	else:
+		build_default_board(threat_level, zones_min, zones_max)
+	_close_board()
 	if _modifier:
 		_modifier.modify_zones(self, threat_level)
 	_build_zone_controls()
 	_build_lights()
 
 
-func _append_zone(type: ZoneType, start_ratio: float, end_ratio: float, pair_index: int = -1) -> void:
-	if end_ratio - start_ratio <= 0.0:
-		return
-	var zone := Zone.new()
-	zone.type = type
-	zone.start_ratio = start_ratio
-	zone.end_ratio = end_ratio
-	zone.pair_index = pair_index
-	_zones.append(zone)
-
-
-## Random centers honoring edge margins and minimum spacing; falls back to even
-## spacing when rejection sampling can't fit every green zone.
-func _generate_green_centers(pair_count: int) -> Array[float]:
-	var centers: Array[float] = []
-	var low := green_edge_margin_ratio
-	var high := 1.0 - green_edge_margin_ratio
-	var attempts := 0
-	while centers.size() < pair_count and attempts < 100:
-		attempts += 1
-		var candidate := randf_range(low, high)
-		var valid := true
-		for existing in centers:
-			if absf(candidate - existing) < min_green_center_spacing_ratio:
-				valid = false
-				break
-		if valid:
-			centers.append(candidate)
-	if centers.size() < pair_count:
-		centers.clear()
-		for i in range(pair_count):
-			if pair_count == 1:
-				centers.append(0.5)
-			else:
-				centers.append(low + (high - low) * float(i) / float(pair_count - 1))
-	centers.sort()
-	return centers
+## Sort the board left-to-right and fill every span no zone claimed with red,
+## including the run out to the end of the bar. Board builders place only the
+## zones that mean something; the red between them is never their problem.
+func _close_board() -> void:
+	_zones.sort_custom(func(a: Zone, b: Zone) -> bool: return a.start_ratio < b.start_ratio)
+	var filled: Array[Zone] = []
+	var cursor := 0.0
+	for zone in _zones:
+		if zone.start_ratio - cursor > 0.0:
+			var gap := Zone.new()
+			gap.type = ZoneType.RED
+			gap.start_ratio = cursor
+			gap.end_ratio = zone.start_ratio
+			filled.append(gap)
+		filled.append(zone)
+		cursor = maxf(cursor, zone.end_ratio)
+	if 1.0 - cursor > 0.0:
+		var tail := Zone.new()
+		tail.type = ZoneType.RED
+		tail.start_ratio = cursor
+		tail.end_ratio = 1.0
+		filled.append(tail)
+	_zones = filled
 
 
 ## Zones become HBox children whose pixel widths recreate the ratio boundaries;
@@ -655,9 +756,11 @@ func _make_zone_control(zone: Zone, width: int) -> Control:
 	var zone_control := Control.new()
 	zone_control.custom_minimum_size = Vector2(width, 0.0)
 	zone_control.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	# Zone color tints both the stripes and the border; alpha 0 until this
-	# zone's reveal step during the countdown.
-	zone_control.modulate = Color(_zone_idle_color(zone), 0.0)
+	# The control carries reveal alpha only -- alpha 0 until this zone's reveal
+	# step during the countdown. The zone colour goes on the stripes and border
+	# individually (see tint_targets) so an icon can hold a colour of its own
+	# instead of being tinted toward the zone's.
+	zone_control.modulate = Color(Color.WHITE, 0.0)
 	var stripes := TextureRect.new()
 	stripes.texture = STRIPES_TEXTURE
 	stripes.stretch_mode = TextureRect.STRETCH_TILE
@@ -684,10 +787,12 @@ func _make_zone_control(zone: Zone, width: int) -> Control:
 	border.mouse_filter = Control.MOUSE_FILTER_IGNORE
 	border.material = glow
 	zone_control.add_child(border)
+	zone.tint_targets = [stripes, border]
+	_set_zone_lit(0.0, zone)
 	if zone.icon:
 		# Child of the zone control so it inherits the reveal alpha and the hit
-		# bounce; the parent modulate also tints it toward the zone color, which
-		# is acceptable for the placeholder icons.
+		# bounce, but outside tint_targets so its own modulate is what shows --
+		# Recover tells its two kinds apart by icon, and Gate colours its keys.
 		var icon_rect := TextureRect.new()
 		icon_rect.texture = zone.icon
 		icon_rect.expand_mode = TextureRect.EXPAND_IGNORE_SIZE
@@ -699,25 +804,26 @@ func _make_zone_control(zone: Zone, width: int) -> Control:
 		icon_rect.offset_bottom = -ZONE_CONTENT_INSET
 		icon_rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
 		zone_control.add_child(icon_rect)
+		zone.icon_rect = icon_rect
 	return zone_control
 
 
 func _build_lights() -> void:
 	var bar_width := _zone_row.size.x
-	for pair in _pairs:
+	for objective in _objectives:
 		var light := TextureRect.new()
 		light.texture = LIGHT_OFF_TEXTURE
 		light.stretch_mode = TextureRect.STRETCH_KEEP
 		light.mouse_filter = Control.MOUSE_FILTER_IGNORE
-		pair.light_glow = LIGHT_GLOW.duplicate() as ShaderMaterial
-		pair.light_glow.set_shader_parameter(&"glow_intensity", 0.0)
-		light.material = pair.light_glow
+		objective.light_glow = LIGHT_GLOW.duplicate() as ShaderMaterial
+		objective.light_glow.set_shader_parameter(&"glow_intensity", 0.0)
+		light.material = objective.light_glow
 		var light_size := LIGHT_OFF_TEXTURE.get_size()
 		light.position = Vector2(
-			ZONE_CONTENT_INSET + pair.center_ratio * bar_width - light_size.x * 0.5,
+			ZONE_CONTENT_INSET + objective.light_center_ratio * bar_width - light_size.x * 0.5,
 			(_lights_row.size.y - light_size.y) * 0.5)
 		_lights_row.add_child(light)
-		pair.light = light
+		objective.light = light
 
 
 func _reveal_zones(type: ZoneType) -> void:
@@ -770,9 +876,25 @@ func show_info(text: String, color: Color) -> void:
 
 ## Switch a result light on. The glow drives the lit texture's own colours past full
 ## brightness, so each state emits in its own hue without being told which it is.
-func _light_up(pair: Pair, texture: Texture2D) -> void:
-	pair.light.texture = texture
-	pair.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
+func _light_up(objective: Objective, texture: Texture2D) -> void:
+	objective.light.texture = texture
+	objective.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
+
+
+## Swap a zone's icon mid-attempt (Gate's padlock opening). No-op on a zone that
+## was not built with one -- the rect only exists if modify_zones set zone.icon.
+func set_zone_icon(zone: Zone, texture: Texture2D) -> void:
+	if zone.icon_rect == null:
+		return
+	zone.icon = texture
+	zone.icon_rect.texture = texture
+
+
+## Tint a zone's icon independently of the zone colour (Gate's cycling keys).
+func set_zone_icon_modulate(zone: Zone, color: Color) -> void:
+	if zone.icon_rect == null:
+		return
+	zone.icon_rect.self_modulate = color
 
 
 ## A hit green, yellow, or special zone punches up in scale and lights to full
@@ -813,7 +935,8 @@ func _set_red_zones_lit(value: float) -> void:
 ## being the whole of it.
 func _set_zone_lit(value: float, zone: Zone) -> void:
 	var lit := _zone_idle_color(zone).lerp(_zone_color(zone), value)
-	zone.control.modulate = Color(lit, zone.control.modulate.a)
+	for target in zone.tint_targets:
+		target.self_modulate = lit
 	zone.glow.set_shader_parameter(&"glow_intensity", value)
 
 
@@ -863,11 +986,11 @@ func _realtime_speed_scale() -> float:
 
 
 func scale_for_threat(threat_level: int, min_value: int, max_value: int) -> int:
-	return int(roundf(_lerp_for_threat(threat_level, float(min_value), float(max_value))))
+	return int(roundf(lerp_for_threat(threat_level, float(min_value), float(max_value))))
 
 
 ## Linear blend from min_value (threat stage 0) to max_value (stage 9).
-func _lerp_for_threat(threat_level: int, min_value: float, max_value: float) -> float:
+func lerp_for_threat(threat_level: int, min_value: float, max_value: float) -> float:
 	var span := maxi(ThreatManager.LEVEL_COUNT - 1, 1)
 	var t := clampf(float(threat_level) / float(span), 0.0, 1.0)
 	return lerpf(min_value, max_value, t)

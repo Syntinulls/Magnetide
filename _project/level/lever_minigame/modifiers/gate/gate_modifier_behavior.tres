@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="GateModifierBehavior" format=3 uid="uid://gatemodtres0"]
+
+[ext_resource type="Script" uid="uid://b0farq2hrtc6c" path="res://_project/level/lever_minigame/modifiers/gate/gate_modifier_behavior.gd" id="1_gate"]
+
+[resource]
+script = ExtResource("1_gate")
+display_name = "Gate!"
+display_color = Color(0.470588, 0.372549, 0.745098, 1)
+metadata/_custom_type_script = "uid://b0farq2hrtc6c"
