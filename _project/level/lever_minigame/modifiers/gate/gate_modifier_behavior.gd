@@ -10,12 +10,17 @@ class_name GateModifierBehavior
 ## with it.
 ##
 ## The gate's colour is drawn during setup and shown fixed from the moment its
-## padlock appears, so the player has the whole countdown to take it in. Only the
-## keys cycle their icon through the candidate colours, and on "Go!" they lock:
+## padlock appears, so the player has the whole countdown to take it in. Every key
+## opens on a colour of its own too, but holds it while the board assembles: the
+## keys only start turning over once the countdown begins and the whole board --
+## keys, gate and every red -- is on show, so the cycling reads as the puzzle
+## starting rather than as more of the board arriving. From there the keys cycle
+## their icon through the candidate colours, and on "Go!" they lock:
 ## each takes a different one, and exactly one is dealt the gate's. That key is
 ## the only one that opens it -- pressing any other key, pressing red, or letting
 ## either objective slip past fails the attempt. Hitting the right key flips the
-## gate's padlock open, and the pull is won by hitting the gate after it.
+## gate's padlock open and pulses the gate once, and the pull is won by hitting
+## the gate after it -- which is what lights it for good.
 
 @export var key_color: Color = Color("4a90d9")
 @export var gate_color: Color = Color("785fbe")
@@ -28,8 +33,12 @@ class_name GateModifierBehavior
 ## enough for that icon to fill the bar's height. Threat adds keys instead.
 @export var key_width_ratio: float = 0.09
 @export var gate_width_ratio: float = 0.11
-## The key run is spread between the bar's edge margin and this ratio; the gate
-## sits centered on gate_center_ratio, after every key.
+## The key run is spread between these two ratios; the gate sits centered on
+## gate_center_ratio, after every key. Gate keeps its own start margin rather
+## than borrowing the default board's: that one has to clear a green's yellows
+## and the minimum-width red beyond them, while a key run only has to leave red
+## at the bar's edge.
+@export var key_span_start_ratio: float = 0.10
 @export var key_span_end_ratio: float = 0.70
 @export var gate_center_ratio: float = 0.88
 ## Minimum distance between key centers as a ratio of the bar width.
@@ -54,6 +63,11 @@ var _gate_zone: LeverMinigame.Zone = null
 var _gate_color_index: int = 0
 var _gate_key_index: int = -1
 var _colors_locked := false
+## Set when the countdown starts; until then the keys hold their opening colours.
+var _cycling := false
+## The icon rects only exist once the board is built, so the opening colours go on
+## at the first tick there is anything to paint.
+var _icons_painted := false
 var _cycle_elapsed: float = 0.0
 var _cycle_step: int = 0
 
@@ -63,10 +77,12 @@ func on_minigame_started(_minigame: LeverMinigame, _threat_level: int) -> void:
 	_gate_zone = null
 	_gate_key_index = -1
 	_colors_locked = false
-	# Start a full step in so the first tick paints every icon rather than leaving
-	# them unmodulated for the length of one cycle.
-	_cycle_elapsed = color_cycle_time
-	_cycle_step = 0
+	_cycling = false
+	_icons_painted = false
+	_cycle_elapsed = 0.0
+	# Random opening step, so the arrangement the keys hold through the reveal is
+	# a different one each attempt rather than always the authored order.
+	_cycle_step = randi() % maxi(candidate_colors.size(), 1)
 	_gate_color_index = randi() % maxi(candidate_colors.size(), 1)
 
 
@@ -78,13 +94,13 @@ func build_board(minigame: LeverMinigame, threat_level: int) -> void:
 	)
 	# generate_centers spreads over the whole bar, so sample it then compress the
 	# result into the key span, leaving the right end of the bar for the gate.
-	var span_scale := key_span_end_ratio - minigame.green_edge_margin_ratio
+	var span_scale := key_span_end_ratio - key_span_start_ratio
 	var centers := minigame.generate_centers(
-		key_count, min_key_spacing_ratio / maxf(span_scale, 0.01), minigame.green_edge_margin_ratio
+		key_count, min_key_spacing_ratio / maxf(span_scale, 0.01), key_span_start_ratio
 	)
 	var last_edge := 0.0
 	for center in centers:
-		var placed: float = minigame.green_edge_margin_ratio + center * span_scale
+		var placed: float = key_span_start_ratio + center * span_scale
 		var zone := minigame.append_zone(
 			LeverMinigame.ZoneType.SPECIAL, placed - half_key, placed + half_key
 		)
@@ -111,21 +127,35 @@ func build_board(minigame: LeverMinigame, threat_level: int) -> void:
 
 
 func on_process(minigame: LeverMinigame, real_delta: float) -> void:
-	if _colors_locked or candidate_colors.is_empty():
+	if _colors_locked or candidate_colors.is_empty() or _gate_zone == null:
+		return
+	if not _icons_painted:
+		_paint_keys(minigame)
+		# The gate never cycles -- its colour is settled before the countdown even
+		# starts. Painted with the keys so it doesn't show unmodulated either.
+		minigame.set_zone_icon_modulate(_gate_zone, candidate_colors[_gate_color_index])
+		_icons_painted = true
+		return
+	if not _cycling:
 		return
 	_cycle_elapsed += real_delta
 	if _cycle_elapsed < color_cycle_time:
 		return
 	_cycle_elapsed -= color_cycle_time
 	_cycle_step += 1
-	# Staggered offsets so the keys read as independently unresolved rather than
-	# one bar of colour moving in lockstep.
+	_paint_keys(minigame)
+
+
+## Staggered offsets so the keys read as independently unresolved rather than one
+## bar of colour moving in lockstep.
+func _paint_keys(minigame: LeverMinigame) -> void:
 	for i in range(_key_zones.size()):
 		minigame.set_zone_icon_modulate(_key_zones[i], _cycled_color(_cycle_step + i))
-	if _cycle_step == 1:
-		# The gate never cycles -- its colour is settled before the countdown even
-		# starts. Painted on the keys' first tick so it doesn't flash unmodulated.
-		minigame.set_zone_icon_modulate(_gate_zone, candidate_colors[_gate_color_index])
+
+
+func on_countdown_started(_minigame: LeverMinigame, _threat_level: int) -> void:
+	_cycling = true
+	_cycle_elapsed = 0.0
 
 
 func on_countdown_finished(minigame: LeverMinigame, _threat_level: int) -> void:
@@ -153,10 +183,16 @@ func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 	if key_index < 0:
 		return false
 	if key_index != _gate_key_index:
-		minigame.fail_minigame(wrong_key_text, minigame.zone_color_red)
+		# The key that was wrong blinks, in its own colour, rather than every red:
+		# the mistake was a colour match, and that is what has to read back.
+		var offending: Array[LeverMinigame.Zone] = [zone]
+		minigame.fail_minigame(wrong_key_text, minigame.zone_color_red, offending)
 		return true
 	minigame.resolve_objective(zone, true)
 	minigame.set_zone_icon(_gate_zone, gate_unlocked_icon)
+	# One pulse as the padlock springs open, then straight back to resting: the
+	# gate is unlocked, not answered. It only lights for good once it is hit.
+	minigame.flash_zone(_gate_zone)
 	minigame.show_info(unlocked_text, gate_color)
 	return true
 

@@ -6,4 +6,5 @@
 script = ExtResource("1_bonus")
 display_name = "Bonus!"
 display_color = Color(0.290196, 0.564706, 0.85098, 1)
+min_zone_width_ratio = 0.025
 metadata/_custom_type_script = "uid://dofybo6umh4pd"

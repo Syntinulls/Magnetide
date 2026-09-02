@@ -7,13 +7,16 @@ class_name InvertModifierBehavior
 ## width it is authored at, so the perfect windows sit at the cluster edges and
 ## the forgiving middle is where the green used to be. Zone count, threat
 ## scaling, lights, and the win condition are all unchanged.
+##
+## Authored down to the no-icon floor (min_zone_width_ratio): Invert draws no
+## icons, and the icon-sized default would bottom its narrow greens out at the
+## same width as the wide yellow between them -- which is the whole modifier.
 
 
 func build_board(minigame: LeverMinigame, threat_level: int) -> void:
 	var cluster_count := minigame.scale_for_threat(threat_level, minigame.zones_min, minigame.zones_max)
-	var width_scale := minigame.get_zone_width_scale(threat_level)
-	var green_width := minigame.green_width_ratio * width_scale
-	var half_yellow := minigame.yellow_width_ratio * width_scale * 0.5
+	var green_width := minigame.scaled_zone_width(minigame.green_width_ratio, threat_level)
+	var half_yellow := minigame.scaled_zone_width(minigame.yellow_width_ratio, threat_level) * 0.5
 	var centers := minigame.generate_centers(
 		cluster_count, minigame.min_green_center_spacing_ratio, minigame.green_edge_margin_ratio
 	)

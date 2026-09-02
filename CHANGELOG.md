@@ -48,6 +48,9 @@
   rewarded with extra scrap.
 - **Mines!** arms some of the yellow zones — hit a mined one and the pull blows up in
   your face.
+- A failed pull now flashes what actually caused it rather than the whole red bar: the
+  mine you set off, the key you got wrong, or the group you let slip past. Every result
+  light still goes red, as before.
 - **Recover!** shortens the bar and scatters optional blue supply zones across it. Hit
   them and finish the pull to patch yourself up or repair the hull; the higher the
   threat, the more they restore.
@@ -58,7 +61,17 @@
 - **Gate!** locks the pull behind a colour match. A row of keys and a padlocked gate
   flicker through colours right up to the last moment, then settle — hit the one key
   whose colour matches the gate to unlock it, then hit the gate itself. Pick the wrong
-  key and the pull fails.
+  key and the pull fails. The gate pulses once as its padlock springs open, so you can
+  see the unlock land without mistaking it for a zone you have already answered. The
+  keys now hold a colour each while the board is still appearing and only start
+  flickering once the countdown begins, so the shuffle reads as the puzzle starting.
+- Lever minigame zones that carry an icon — mines, keys, supply drops — now hold a
+  minimum width, so those icons stay readable at every threat level instead of shrinking
+  to nothing. Boards with nothing to read, the ordinary pull included, keep their zones
+  tapering as before, so a green stays visibly tighter than the yellows flanking it.
+  Threat no longer buys difficulty by thinning zones: it adds zones (up to four groups
+  rather than five) and winds the crosshair up a little faster with each level.
+- **Mines!** and **Ambush!** now have proper icons on their marked zones.
 
 #### Enemies
 

@@ -12,6 +12,13 @@ class_name LeverModifierBehavior
 ## Banner text popped via show_info when the minigame opens, e.g. "Bonus!".
 @export var display_name: String = ""
 @export var display_color: Color = Color.WHITE
+## Floor on every zone width this modifier's board builds, as a ratio of the bar
+## width, overriding the minigame's own min_zone_width_ratio. Zero inherits it,
+## which is what a board that centers icons in its zones wants: the default is
+## sized so an icon renders at its native height. A board that draws no icons
+## (Invert, Ambush) sets a smaller one of its own, so its zones keep tapering with
+## threat instead of every colour bottoming out on the same icon-sized floor.
+@export var min_zone_width_ratio: float = 0.0
 
 
 ## Called from start_minigame before zones build; reset per-attempt state here.
@@ -32,6 +39,13 @@ func build_board(minigame: LeverMinigame, threat_level: int) -> void:
 ## zone control is built: insert special zones (insert_special_zone) or tag
 ## existing ones (icon, custom_color) here.
 func modify_zones(_minigame: LeverMinigame, _threat_level: int) -> void:
+	pass
+
+
+## The countdown has just started: every zone is revealed and the board is
+## finished being assembled. Where anything that should read as the puzzle itself,
+## rather than as the board building, gets going (Gate's keys start cycling here).
+func on_countdown_started(_minigame: LeverMinigame, _threat_level: int) -> void:
 	pass
 
 

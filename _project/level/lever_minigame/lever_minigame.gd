@@ -10,8 +10,9 @@ class_name LeverMinigame
 ## while the crosshair finishes its sweep, so a decided result cannot be undone. One result
 ## light per objective reports the outcome below the bar. Hitting a green or yellow
 ## punches that zone up in scale and lights it to full glow, where it stays for the
-## rest of the attempt as the record of what was hit; hitting a red blinks every red
-## zone in unison like a warning light and kicks the reticle before the panel closes.
+## rest of the attempt as the record of what was hit; failing blinks whatever caused
+## the failure -- every red on a red press, the cluster that slipped past on a miss,
+## the single zone a modifier names -- and kicks the reticle before the panel closes.
 ##
 ## Owns the whole activation presentation: while it runs it slows
 ## Engine.time_scale, zooms the camera onto a focus point above the player, and
@@ -56,6 +57,21 @@ const COUNTDOWN_STEPS := 3
 const INFO_HIDE_TWEEN_TIME := 0.15
 
 @export_group("Zones")
+## Default floor on every zone width, as a ratio of the bar width: neither threat
+## scaling nor a modifier's authored width may take a zone below it. Sized so the
+## icon a board centers in a zone (a mine, a key, a med kit) still renders at its
+## native height inside the bar's content inset -- below this the icon shrinks
+## with the zone until it is unreadable. A board with no icons on it wants a
+## smaller floor and says so: the rolled modifier overrides this with its own
+## min_zone_width_ratio, and the no-modifier board uses the one below. See
+## get_min_zone_width_ratio.
+@export var min_zone_width_ratio: float = 0.05
+## The no-modifier board's floor, in place of the default above. Its zones are
+## only ever aimed at, never read, so nothing on it needs room for an icon and the
+## floor is just a backstop against a zone vanishing. Half the default, so the
+## green keeps shrinking with threat and stays visibly narrower than the yellows
+## flanking it instead of both bottoming out on the same floor.
+@export var default_board_min_zone_width_ratio: float = 0.025
 ## Full width of a green zone as a ratio of the bar width, at min threat (stage 0).
 @export var green_width_ratio: float = 0.04
 ## Width of each yellow zone (one per side of every green) as a ratio of the bar
@@ -63,21 +79,33 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var yellow_width_ratio: float = 0.06
 ## Zone width multiplier at max threat (stage 9), lerped from 1.0 at stage 0.
 ## Green and yellow shrink by the same factor so their ratio holds at every
-## threat while the growing zone count doesn't crowd out the red.
-@export var zone_width_scale_at_max_threat: float = 1.0 / 3.0
+## threat while the growing zone count doesn't crowd out the red. Kept shallow
+## because an iced zone bottoms out on its floor at high threat: the difficulty
+## threat buys there is more objectives and a faster reticle, not thinner zones.
+@export var zone_width_scale_at_max_threat: float = 0.85
 ## Green zones at min threat (stage 0) and max threat (stage 9); scales linearly between.
 @export var zones_min: int = 2
-@export var zones_max: int = 5
-## Minimum distance between green zone centers as a ratio of the bar width.
-## Must be at least the green+yellows cluster width at every threat or yellows overlap.
-@export var min_green_center_spacing_ratio: float = 0.20
+@export var zones_max: int = 4
+## Minimum distance between green zone centers as a ratio of the bar width. Must
+## clear the widest green+yellows cluster any board builds, with the widest
+## modifier floor to spare on top, so the red between two clusters can still seat
+## an iced special zone (Bonus, Recover).
+@export var min_green_center_spacing_ratio: float = 0.23
 ## Minimum distance from a green zone center to either bar edge as a ratio of the
-## bar width. Must be at least half the green+yellows cluster width.
-@export var green_edge_margin_ratio: float = 0.10
+## bar width. Must clear half that cluster, again with a modifier floor to spare:
+## the red running out to either end is a zone like any other, and Ambush ices it.
+## Nothing floors a red -- it is whatever _close_board had left over -- so this
+## margin is the only thing keeping the end reds readable.
+@export var green_edge_margin_ratio: float = 0.14
 
 @export_group("Reticle")
-## Constant reticle speed as a ratio of the bar width per second.
+## Constant reticle speed as a ratio of the bar width per second, at min threat.
 @export var reticle_speed_ratio: float = 0.35
+## Extra reticle speed per threat stage, as a ratio of the base speed (0.04 =
+## +4% per stage, so +36% at stage 9). Deliberately gentle: it is what threat
+## buys now that zones hold a minimum width, and yellow hits already stack their
+## own, much sharper, penalty on top.
+@export var reticle_speed_threat_ratio: float = 0.04
 ## Speed multiplier step per yellow hit (0.1 = 1.1x at one yellow, 1.2x at two).
 @export var yellow_speed_penalty_ratio: float = 0.1
 
@@ -97,6 +125,9 @@ const INFO_HIDE_TWEEN_TIME := 0.15
 @export var info_hold_time: float = 1.5
 ## Time for a hit green/yellow zone to flare its glow to full.
 @export var zone_hit_flash_time: float = 0.06
+## Duration of a one-off zone flash (flash_zone): a zone swelling to full and
+## falling straight back to resting, to mark that something about it changed.
+@export var zone_flash_time: float = 0.3
 ## Scale a hit green/yellow zone bounces up to before settling back.
 @export var zone_hit_scale: Vector2 = Vector2(1.45, 1.2)
 ## Time for the bounce out, then the elastic settle back to default scale.
@@ -299,9 +330,8 @@ func get_zones() -> Array[Zone]:
 ## the base a modifier can call with its own count range (Recover caps it lower).
 func build_default_board(threat_level: int, pair_min: int, pair_max: int) -> void:
 	var pair_count := scale_for_threat(threat_level, pair_min, pair_max)
-	var width_scale := get_zone_width_scale(threat_level)
-	var yellow_width := yellow_width_ratio * width_scale
-	var half_green := green_width_ratio * width_scale * 0.5
+	var yellow_width := scaled_zone_width(yellow_width_ratio, threat_level)
+	var half_green := scaled_zone_width(green_width_ratio, threat_level) * 0.5
 	var centers := generate_centers(pair_count, min_green_center_spacing_ratio, green_edge_margin_ratio)
 	for center in centers:
 		var index := add_objective(center, center + half_green + yellow_width)
@@ -364,10 +394,42 @@ func generate_centers(count: int, spacing_ratio: float, edge_margin_ratio: float
 
 
 ## Zone width multiplier for a threat stage: 1.0 at stage 0 down to
-## zone_width_scale_at_max_threat at stage 9. Custom boards apply it too, so their
-## zones tighten with threat the same way the default ones do.
+## zone_width_scale_at_max_threat at stage 9. Prefer scaled_zone_width, which
+## also applies the floor; this is the raw factor, for a builder that needs it.
 func get_zone_width_scale(threat_level: int) -> float:
 	return lerp_for_threat(threat_level, 1.0, zone_width_scale_at_max_threat)
+
+
+## The floor in force for the board being built: the rolled modifier's own, its
+## authored default when the modifier leaves it at zero, and the no-modifier
+## board's when nothing rolled. A modifier that ices its zones inherits the
+## default; one that draws no icons (Invert, Ambush) sets its own smaller one so
+## its zones keep tapering with threat.
+func get_min_zone_width_ratio() -> float:
+	if _modifier == null:
+		return default_board_min_zone_width_ratio
+	if _modifier.min_zone_width_ratio > 0.0:
+		return _modifier.min_zone_width_ratio
+	return min_zone_width_ratio
+
+
+## An authored zone width taken through threat scaling and then floored at
+## get_min_zone_width_ratio. Every board builder sizes its zones through this, so
+## threat tightens them the same way everywhere and none of them can scale a zone
+## down past the width its board's icons need.
+func scaled_zone_width(base_ratio: float, threat_level: int) -> float:
+	return maxf(base_ratio * get_zone_width_scale(threat_level), get_min_zone_width_ratio())
+
+
+## Every zone answering to an objective: the green and its two yellows on the
+## default board, the whole key run on Gate's. What blinks when that objective is
+## the one that failed the attempt.
+func get_objective_zones(objective_index: int) -> Array[Zone]:
+	var matches: Array[Zone] = []
+	for zone in _zones:
+		if zone.objective_index == objective_index:
+			matches.append(zone)
+	return matches
 
 
 ## Red zones with a non-red zone on either side -- the interior gaps between
@@ -386,10 +448,13 @@ func get_interior_red_zones() -> Array[Zone]:
 
 ## Carve a SPECIAL zone of the given width out of the middle of target, keeping
 ## red visible on both sides: a gap narrower than 1.5x the width takes a zone
-## shrunk to 60% of it instead. Only valid from modify_zones.
+## shrunk toward 60% of it instead -- but never below the board's floor, and never
+## below the whole gap. A gap that cannot seat the floor with red to spare gives
+## up the red rather than the icon. Only valid from modify_zones.
 func insert_special_zone(target: Zone, width_ratio: float, color: Color, icon: Texture2D) -> Zone:
 	var gap := target.end_ratio - target.start_ratio
-	var width := width_ratio if gap >= width_ratio * 1.5 else gap * 0.6
+	var wanted := maxf(width_ratio, get_min_zone_width_ratio())
+	var width := wanted if gap >= wanted * 1.5 else maxf(gap * 0.6, minf(wanted, gap))
 	var mid := (target.start_ratio + target.end_ratio) * 0.5
 	var zone := _split_zone(target, mid - width * 0.5, mid + width * 0.5, ZoneType.SPECIAL)
 	zone.custom_color = color
@@ -567,6 +632,8 @@ func _process_setup(real_delta: float) -> void:
 		_state = State.COUNTDOWN
 		_countdown_digit = COUNTDOWN_STEPS
 		show_info(str(COUNTDOWN_STEPS), Color.WHITE)
+		if _modifier:
+			_modifier.on_countdown_started(self, _active_threat_level)
 
 
 func _process_countdown(real_delta: float) -> void:
@@ -584,7 +651,7 @@ func _process_countdown(real_delta: float) -> void:
 
 
 func _process_playing(real_delta: float) -> void:
-	var speed := reticle_speed_ratio * (1.0 + yellow_speed_penalty_ratio * _yellows_hit)
+	var speed := reticle_speed_ratio 		* (1.0 + reticle_speed_threat_ratio * _active_threat_level) 		* (1.0 + yellow_speed_penalty_ratio * _yellows_hit)
 	_reticle_ratio += speed * real_delta
 	if _reticle_ratio >= 1.0:
 		_reticle_ratio = 1.0
@@ -592,9 +659,12 @@ func _process_playing(real_delta: float) -> void:
 		_win_minigame()
 		return
 	_update_reticle_position()
-	for objective in _objectives:
+	for index in range(_objectives.size()):
+		var objective := _objectives[index]
 		if not objective.resolved and _reticle_ratio > objective.deadline_ratio:
-			fail_minigame("MISS", zone_color_red)
+			# The cluster that slipped past is what failed the attempt, so it is
+			# what blinks -- not every red on the board.
+			fail_minigame("MISS", zone_color_red, get_objective_zones(index))
 			return
 
 
@@ -671,12 +741,16 @@ func _all_objectives_resolved() -> bool:
 
 
 ## Public so modifiers can fail the attempt with their own text ("Boom!"); the
-## presentation is always the full red-fail treatment.
-func fail_minigame(info_text: String, info_color: Color) -> void:
+## presentation is always the full red-fail treatment. Every result light goes red
+## whatever failed the attempt, but only offending_zones blink through the fail
+## pause -- the zone that actually did it, in its own colour, so a mined yellow or
+## a wrong key names itself instead of hiding behind a wall of blinking red. Pass
+## none and every red blinks in unison, which is what a red press means.
+func fail_minigame(info_text: String, info_color: Color, offending_zones: Array[Zone] = []) -> void:
 	_outcome_locked = true
 	for objective in _objectives:
 		_light_up(objective, LIGHT_RED_TEXTURE)
-	_blink_red_zones()
+	_blink_zones(offending_zones if not offending_zones.is_empty() else _zones_of_type(ZoneType.RED))
 	_shake_reticle()
 	show_info(info_text, info_color)
 	_game_won = false
@@ -913,21 +987,41 @@ func mark_zone_hit(zone: Zone) -> void:
 		.set_trans(Tween.TRANS_ELASTIC).set_ease(Tween.EASE_OUT)
 
 
-## Every red zone blinks in unison for the whole fail pause, like a warning light.
-## One tween drives them all so they can never drift out of step.
-func _blink_red_zones() -> void:
+## One there-and-back pulse of a zone's colour and glow, leaving it back at its
+## resting shade. The acknowledgement that something about the zone changed
+## (Gate's padlock springing open) as opposed to mark_zone_hit's permanent light,
+## which stays the record of what the player actually hit.
+func flash_zone(zone: Zone) -> void:
+	var flash := _create_realtime_tween()
+	flash.tween_method(_set_zone_lit.bind(zone), 0.0, 1.0, zone_flash_time * 0.35) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_OUT)
+	flash.tween_method(_set_zone_lit.bind(zone), 1.0, 0.0, zone_flash_time * 0.65) 		.set_trans(Tween.TRANS_QUAD).set_ease(Tween.EASE_IN)
+
+
+## The zones that failed the attempt blink in unison for the whole fail pause,
+## like a warning light. One tween drives them all so they can never drift out of
+## step.
+func _blink_zones(zones: Array[Zone]) -> void:
+	if zones.is_empty():
+		return
 	var blinks := maxi(fail_flash_count, 1)
 	var half_period := fail_pause_time / float(blinks * 2)
 	var blink := _create_realtime_tween()
 	for _index in range(blinks):
-		blink.tween_method(_set_red_zones_lit, 0.0, 1.0, half_period)
-		blink.tween_method(_set_red_zones_lit, 1.0, 0.0, half_period)
+		blink.tween_method(_set_zones_lit.bind(zones), 0.0, 1.0, half_period)
+		blink.tween_method(_set_zones_lit.bind(zones), 1.0, 0.0, half_period)
 
 
-func _set_red_zones_lit(value: float) -> void:
+func _set_zones_lit(value: float, zones: Array[Zone]) -> void:
+	for zone in zones:
+		_set_zone_lit(value, zone)
+
+
+func _zones_of_type(type: ZoneType) -> Array[Zone]:
+	var matches: Array[Zone] = []
 	for zone in _zones:
-		if zone.type == ZoneType.RED:
-			_set_zone_lit(value, zone)
+		if zone.type == type:
+			matches.append(zone)
+	return matches
 
 
 ## 0 leaves the zone at its resting shade, 1 takes it to full strength with the glow

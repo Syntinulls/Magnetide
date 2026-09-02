@@ -9,8 +9,11 @@ class_name BonusModifierBehavior
 
 @export var zone_color: Color = Color("4a90d9")
 @export var zone_icon: Texture2D = preload("res://icon.svg")
-## Full width of the bonus zone as a ratio of the bar width.
-@export var zone_width_ratio: float = 0.04
+## Full width of the bonus zone as a ratio of the bar width, sized for its icon. insert_special_zone
+## never takes it below this, so it survives landing in a tight gap -- which is
+## why this board can author min_zone_width_ratio down to the no-icon floor and
+## let its green/yellow clusters keep tapering with threat.
+@export var zone_width_ratio: float = 0.05
 @export var hit_text: String = "Bonus Hit!"
 @export var scrap_min: int = 3
 @export var scrap_max: int = 8

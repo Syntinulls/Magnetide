@@ -6,4 +6,5 @@
 script = ExtResource("1_ambush")
 display_name = "Ambush!"
 display_color = Color(0.819608, 0.286275, 0.247059, 1)
+min_zone_width_ratio = 0.025
 metadata/_custom_type_script = "uid://61ocaroqmb4"

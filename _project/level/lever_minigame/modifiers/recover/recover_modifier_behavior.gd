@@ -19,8 +19,11 @@ enum Kind { HEALTH, INTEGRITY }
 ## the board actually has.
 @export var zones_min: int = 1
 @export var zones_max: int = 2
-## Full width of a recovery zone as a ratio of the bar width.
-@export var zone_width_ratio: float = 0.04
+## Full width of a recovery zone as a ratio of the bar width, sized for its icon. insert_special_zone
+## never takes it below this, so it survives landing in a tight gap -- which is
+## why this board can author min_zone_width_ratio down to the no-icon floor and
+## let its green/yellow clusters keep tapering with threat.
+@export var zone_width_ratio: float = 0.05
 @export var health_icon: Texture2D = preload("res://icon.svg")
 @export var integrity_icon: Texture2D = preload("res://icon.svg")
 @export var health_text: String = "Med Kit!"

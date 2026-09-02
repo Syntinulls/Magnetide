@@ -6,4 +6,5 @@
 script = ExtResource("1_invert")
 display_name = "Invert!"
 display_color = Color(0.345098, 0.752941, 0.360784, 1)
+min_zone_width_ratio = 0.025
 metadata/_custom_type_script = "uid://cch4b5webojrf"

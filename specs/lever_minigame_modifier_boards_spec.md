@@ -52,19 +52,85 @@ Public primitives a board builder composes:
 | `append_zone(type, start, end, objective_index := -1) -> Zone` | Any order; `_close_board` sorts. Zero-width zones are dropped. |
 | `add_objective(light_center_ratio, deadline_ratio) -> int` | Returns the index zones pass back. |
 | `generate_centers(count, spacing_ratio, edge_margin_ratio)` | Rejection sampling with an even-spacing fallback. |
-| `get_zone_width_scale(threat)` / `lerp_for_threat(threat, min, max)` / `scale_for_threat(threat, min, max)` | Threat curves, so a custom board tightens with threat the same way the default one does. |
+| `scaled_zone_width(base_ratio, threat)` | An authored width taken through the threat curve and then floored at `get_min_zone_width_ratio()`. How a board builder sizes a zone. |
+| `get_min_zone_width_ratio()` | The floor in force for the board being built (see below). |
+| `get_zone_width_scale(threat)` / `lerp_for_threat(threat, min, max)` / `scale_for_threat(threat, min, max)` | Threat curves, so a custom board tightens with threat the same way the default one does. `get_zone_width_scale` is the raw factor, without the floor. |
 | `get_interior_red_zones()` / `insert_special_zone(target, width, color, icon)` | Placing an optional zone in a gap between clusters, never in the edge reds. Shared by Bonus and Recover. |
 | `resolve_objective(zone, perfect)` | Lighting an objective from `handle_press`, for zones that are not green or yellow. |
+| `fail_minigame(text, color, offending_zones := [])` | Failing with the modifier's own text, naming the zones that caused it. |
+| `get_objective_zones(index)` | Every zone answering to one objective — what blinks when that objective is the one that failed. |
 | `set_zone_icon(zone, texture)` / `set_zone_icon_modulate(zone, color)` | Changing an icon mid-attempt. |
+| `mark_zone_hit(zone)` / `flash_zone(zone)` | Lighting a zone for the rest of the attempt, versus one there-and-back pulse that leaves it resting (Gate's padlock springing open). |
 
-## Two new hooks
+## The minimum zone width
+
+Every zone a board builds is floored, so it is never narrower than the icon that
+board might centre in it. Icons are assigned in `modify_zones`, after the widths
+are fixed, so the floor cannot be conditional on a zone carrying one: it applies
+to every zone of the board, green included, and both paths that size a zone honour
+it — `scaled_zone_width` for the boards, `insert_special_zone` for the zones Bonus
+and Recover carve into a red gap. A gap that cannot seat the floor with red to
+spare gives up the red rather than the icon.
+
+Because it is blanket, the floor is **per board, not global**. Three values
+resolve it, in `get_min_zone_width_ratio()`:
+
+| | |
+|---|---|
+| `LeverModifierBehavior.min_zone_width_ratio` | The rolled modifier's own, when non-zero. Wins. |
+| `LeverMinigame.min_zone_width_ratio` (0.05) | The default a modifier inherits by leaving its own at zero. Sized so a 30×30 icon renders at native size inside the bar's content inset. |
+| `LeverMinigame.default_board_min_zone_width_ratio` (0.025) | The no-modifier board's, in place of the default. |
+
+A board that ices its zones inherits the default. A board that draws no icons on
+the zones it sizes overrides it downward, and two do: **Invert**, whose narrow
+greens would otherwise bottom out at the same width as the wide yellow between
+them — the whole modifier — and **Ambush**, whose icons ride the fill red that no
+floor sizes anyway, so it wants the standard board to the pixel. The no-modifier
+board is the same case, which is what the second minigame value is for: at half
+the default nothing on it ever reaches the floor, so the green keeps tapering with
+threat and stays visibly narrower than its yellows.
+
+Nothing floors a red — red is whatever `_close_board` had left over. What keeps
+the reds readable, for Ambush's icons and as ordinary negative space, is that
+`min_green_center_spacing_ratio` and `green_edge_margin_ratio` each clear the
+widest cluster any board builds with a floor's worth to spare.
+
+Threat no longer buys difficulty by thinning zones — an iced board's zones bottom
+out. It buys it three other ways instead: `zone_width_scale_at_max_threat` is
+shallow (0.85) rather than the old 1/3, the default board tops out at 4 objectives
+rather than 5, and `reticle_speed_threat_ratio` adds a gentle +4% of base reticle
+speed per threat stage (+36% at stage 9) on top of the much sharper per-yellow-hit
+penalty.
+
+## New hooks
 
 `build_board` and `modify_zones` are joined by:
 
+- `on_countdown_started(minigame, threat)` — the board has finished revealing and
+  the countdown has just begun. Where anything that should read as the puzzle
+  itself, rather than as the board assembling, gets going.
 - `on_countdown_finished(minigame, threat)` — the "Go!" moment, where a modifier
   locks in anything it was teasing during setup.
 - `on_process(minigame, real_delta)` — every frame the minigame is active, at
   wall-clock delta (the activation slowdown is already divided out).
+
+## A failure blinks its own cause
+
+Every result light goes red on any failure — that never varies. What blinks
+through the fail pause is only what caused it, in its own colour, so the board
+says *why* rather than just *that* it failed:
+
+| Failure | Blinks |
+|---|---|
+| Pressing red | Every red zone, in unison, like a warning light. |
+| A deadline slipping past | The zones of the objective that was missed — `get_objective_zones`. |
+| A mine (Mines) | The single mined yellow that went off. |
+| A wrong key (Gate) | The single key that was picked. |
+
+`fail_minigame` takes the culprits as its third argument; passing none means every
+red, which is what a red press means. A modifier that fails an attempt names the
+zone it failed on rather than letting a wall of blinking red blame zones the
+player never touched.
 
 ## Zone tint
 
@@ -80,7 +146,7 @@ colour to read true.
 `modifiers/recover/`. Banner in blue.
 
 - Builds the default board capped at `cluster_max` (3) rather than the minigame's
-  5, so a Recover pull is shorter than a normal one at the same threat.
+  4, so a Recover pull is shorter than a normal one at the same threat.
 - Scatters a threat-scaled 1–2 blue SPECIAL zones through the interior red gaps,
   each rolling a kind — player health or ship integrity — and taking that kind's
   icon. Optional: no objective, so skipping one costs nothing.
@@ -97,13 +163,17 @@ colour to read true.
   positions swap — each colour keeps the width it is authored at — so the perfect
   windows move to the cluster edges and the forgiving middle sits where the green
   used to be. Count, threat scaling, lights, and the win condition are unchanged.
+- Authored down to the no-icon `min_zone_width_ratio`, since the icon-sized
+  default would flatten its narrow greens up to the width of the wide yellow.
 
 ## Ambush! (negative)
 
 `modifiers/ambush/`. Banner in red.
 
-- Standard board with a threat icon on every red zone. The pull itself plays
-  exactly as normal; the whole consequence is off-panel.
+- Standard board with a threat icon on every red zone, and authored down to the
+  no-icon `min_zone_width_ratio` so it stays the standard board to the pixel — the
+  icons ride fill red, which no floor sizes. The pull itself plays exactly as
+  normal; the whole consequence is off-panel.
 - Any failure spawns a single enemy batch once the panel has closed, via
   `EnemySpawner.spawn_batch_for_storm` — the same call the storm controller
   makes, which bypasses the concurrency cap and per-profile cooldown. Batch size
@@ -123,23 +193,33 @@ colour to read true.
   All of them are `SPECIAL`, so the default press routing ignores them and
   `handle_press` owns them completely.
 - Threat adds keys and nothing else. Alone among the boards, Gate's zones hold
-  their authored width at every stage rather than narrowing with threat: a key is
-  read by the colour of the icon inside it, and the icon is sized by the zone it
-  sits in, so a zone that shrank with threat would shrink the tell with it. The
-  widths are set so the icon fills the bar's height instead.
+  their authored width at every stage rather than narrowing with threat at all: a
+  key is read by the colour of the icon inside it, and the icon is sized by the
+  zone it sits in, so even the shallow threat taper would take the tell with it.
+  The widths are set well above `min_zone_width_ratio`, so the icon fills the
+  bar's height rather than merely clearing the floor. The key run spreads between
+  Gate's own `key_span_start_ratio` and `key_span_end_ratio`; it does not borrow
+  the default board's edge margin, which has a green's yellows and the red beyond
+  them to clear and none of that applies to a key.
 - The gate's colour is drawn in `on_minigame_started` and shown fixed from the
   moment its padlock appears, so it is settled before the countdown begins and
-  the player has the whole countdown to take it in. Only the keys cycle: through
-  zone reveal and the countdown, `on_process` steps their icons through the
-  candidate colours on staggered offsets.
+  the player has the whole countdown to take it in. Only the keys cycle, and only
+  once the board is finished: each opens on a colour of its own (a random step
+  into the candidate list, staggered per key) and holds it through the whole
+  reveal, then `on_countdown_started` sets them turning over. Cycling during the
+  reveal read as more of the board arriving rather than as the puzzle beginning.
 - On "Go!", `on_countdown_finished` deals each key a different colour, swapping
   the gate's into the slot of the key that will open it — with fewer keys than
   candidates a plain shuffle could otherwise leave the gate's colour off the
   board entirely, leaving the pull unwinnable. That key is the only one that
   opens it.
+- A wrong key fails the attempt with that key alone blinking, in its own colour:
+  the mistake was a colour match, so that is what has to read back.
 - Hitting the right key resolves the keys objective and flips the gate's padlock
-  from closed to open; hitting the gate after that resolves the second and wins
-  the pull at the end of the bar. A wrong key fails instantly with its own text,
+  from closed to open, pulsing the gate once (`flash_zone`) as it does so and
+  leaving it back at its resting shade — unlocked is not answered. Hitting the
+  gate after that resolves the second objective, lights the gate for good, and
+  wins the pull at the end of the bar. A wrong key fails instantly with its own text,
   and a red press or either deadline slipping past fails through the normal path.
 - The candidate colour list caps the key count: every key must take a different
   one.

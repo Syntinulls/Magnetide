@@ -7,8 +7,13 @@ class_name AmbushModifierBehavior
 ## single batch of enemies drops in once the panel has closed. Both the size of
 ## the batch and which enemies can be in it scale with threat, the latter for
 ## free: the spawner's own profiles gate themselves by threat level.
+##
+## Authored down to the no-icon floor (min_zone_width_ratio) so the board stays
+## the standard one to the pixel: Ambush's icons ride the red, which is whatever
+## the clusters left over and which no floor sizes anyway. What keeps those reds
+## wide enough to read an icon in is the minigame's edge margin and spacing.
 
-@export var threat_icon: Texture2D = preload("res://icon.svg")
+@export var threat_icon: Texture2D = preload("res://_project/level/lever_minigame/modifiers/ambush/sprites/enemy.png")
 ## Enemies in the batch at threat stage 0 and stage 9.
 @export var batch_min: int = 2
 @export var batch_max: int = 8
