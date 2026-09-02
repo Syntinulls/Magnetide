@@ -11,7 +11,8 @@
 - The Grenade Launcher lobs arcing grenades that explode on impact, damaging every enemy
   caught in the blast.
 - Added the Flamethrower, which sprays a wide cone of flame at close range and sets
-  enemies on fire, burning them over time.
+  enemies on fire, burning them over time. It roars continuously while you hold the
+  trigger, with an ignition whoosh as it lights and a sputter as it dies down.
 - Weapons now have magazines and reloading. Press **R** to reload manually, or fire the
   last round and the weapon reloads automatically; each weapon slot remembers its own
   ammo and reload progress.

@@ -22,6 +22,10 @@ var _ammo: int = 0
 ## than restarting.
 var _reload_elapsed: float = 0.0
 var _is_reloading: bool = false
+## True while the trigger is down *and* the weapon can actually fire. Drives the
+## start/stop one-shots and the held fire loop, so it never latches on for a
+## trigger pull that produces no shots (empty magazine, mid-reload).
+var _is_firing: bool = false
 
 var weapon: WeaponData:
 	get:
@@ -37,23 +41,34 @@ func process_input(delta: float) -> void:
 	if _fire_cooldown > 0.0:
 		_fire_cooldown -= delta
 	if player.combat_disabled:
+		_set_firing(false)
 		return
 	_process_reload(delta)
 	if Input.is_action_just_pressed("reload"):
 		_try_manual_reload()
 	# Cannot shoot while reloading, and never past an empty magazine.
 	if is_reloading():
+		_set_firing(false)
 		return
-	if Input.is_action_pressed("shoot") and _fire_cooldown <= 0.0 and get_current_ammo() > 0:
+	_set_firing(Input.is_action_pressed("shoot") and get_current_ammo() > 0)
+	if _is_firing and _fire_cooldown <= 0.0:
 		shoot()
 
 
+## Input is blocked (cutscene, UI capture): the trigger is effectively released,
+## so a held fire loop must not keep burning.
+func process_blocked(_delta: float) -> void:
+	_set_firing(false)
+
+
 func unequipped() -> void:
+	_set_firing(false)
 	# Hide the reload bar; progress is preserved and resumes on reselect.
 	player.progress_bar.clear(&"reload")
 
 
 func on_run_end() -> void:
+	_cancel_firing()
 	_is_reloading = false
 	_reload_elapsed = 0.0
 	_fire_cooldown = 0.0
@@ -215,8 +230,83 @@ func _process_reload(delta: float) -> void:
 	)
 
 
+## Enters or leaves the firing state, firing the start/stop one-shots and the held
+## fire loop on the edges. Safe to call every frame; only transitions do anything.
+##
+## Each edge cuts the other's audio short so the weapon always sounds like it is
+## doing what the trigger says: tapping fire plays the start and stop sounds back
+## to back rather than holding a 1.5s ignition after release, and re-firing during
+## a stop tail drops the tail instead of layering under the new burst.
+func _set_firing(firing: bool) -> void:
+	if _is_firing == firing:
+		return
+	_is_firing = firing
+	var wpn := weapon
+	if wpn == null:
+		return
+	if firing:
+		_stop_sfx(wpn.fire_stop_sfx)
+		_play_edge_sfx(wpn.fire_start_sfx, wpn.fire_start_sfx_volume_db)
+		_start_fire_loop_sfx(wpn)
+	else:
+		_stop_fire_loop_sfx(wpn)
+		_stop_sfx(wpn.fire_start_sfx)
+		_play_edge_sfx(wpn.fire_stop_sfx, wpn.fire_stop_sfx_volume_db)
+
+
+## Drops the firing state without the stop one-shot — run teardown, where the tail
+## would play over the results screen.
+func _cancel_firing() -> void:
+	if not _is_firing:
+		return
+	_is_firing = false
+	var wpn := weapon
+	_stop_fire_loop_sfx(wpn)
+	if wpn:
+		_stop_sfx(wpn.fire_start_sfx)
+
+
+func _play_edge_sfx(stream: AudioStream, volume_db: float) -> void:
+	if Magnetide.sfx == null or stream == null:
+		return
+	Magnetide.sfx.play(stream, volume_db)
+
+
+func _stop_sfx(stream: AudioStream) -> void:
+	if Magnetide.sfx == null or stream == null:
+		return
+	Magnetide.sfx.stop(stream)
+
+
+func _start_fire_loop_sfx(wpn: WeaponData) -> void:
+	if Magnetide.sfx == null or wpn == null:
+		return
+	var stream := wpn.get_fire_loop_sfx()
+	if stream == null:
+		return
+	Magnetide.sfx.play_loop(stream, _get_fire_loop_sfx_key(), wpn.fire_sfx_volume_db)
+
+
+func _stop_fire_loop_sfx(wpn: WeaponData) -> void:
+	if Magnetide.sfx == null or wpn == null:
+		return
+	var stream := wpn.get_fire_loop_sfx()
+	if stream == null:
+		return
+	Magnetide.sfx.stop_loop(stream, _get_fire_loop_sfx_key())
+
+
+## One loop player per equipment slot, so two slots holding the same weapon (or a
+## weapon swap mid-burst) never fight over the same playback.
+func _get_fire_loop_sfx_key() -> String:
+	return "weapon_fire:%s" % get_instance_id()
+
+
 func _play_fire_sfx(wpn: WeaponData) -> void:
 	if Magnetide.sfx == null or wpn == null:
+		return
+	# A looping weapon holds one continuous sound for the whole burst instead.
+	if wpn.fire_sfx_loop:
 		return
 	var use_last := get_current_ammo() <= wpn.ammo_consumption and not wpn.last_shot_sfx.is_empty()
 	var pool := wpn.last_shot_sfx if use_last else wpn.fire_sfx

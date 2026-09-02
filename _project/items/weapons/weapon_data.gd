@@ -59,6 +59,21 @@ class_name WeaponData
 @export var fire_sfx: Array[AudioStream] = []
 ## Volume of the fire sound, in decibels (0 = unchanged, negative = quieter).
 @export var fire_sfx_volume_db: float = 0.0
+## When true the fire sound is held on one looping player for as long as the trigger
+## is down instead of restarting per shot (flamethrower). Only the first fire_sfx entry
+## loops — random per-shot variation makes no sense for a continuous sound — and
+## last_shot_sfx is unused while looping.
+@export var fire_sfx_loop: bool = false
+## Optional sound played once when the player starts firing. Overlaps the fire sound
+## rather than replacing it. Leave null for weapons with no spin-up.
+@export var fire_start_sfx: AudioStream = null
+## Volume of the fire-start sound, in decibels (0 = unchanged, negative = quieter).
+@export var fire_start_sfx_volume_db: float = 0.0
+## Optional sound played once when the player stops firing (released the trigger, ran
+## the magazine dry, switched away). Overlaps whatever else is playing.
+@export var fire_stop_sfx: AudioStream = null
+## Volume of the fire-stop sound, in decibels (0 = unchanged, negative = quieter).
+@export var fire_stop_sfx_volume_db: float = 0.0
 ## Sound(s) played when firing the final round in the magazine. Leave empty to reuse
 ## the normal fire sound; set it to distinguish the last shot before a reload.
 @export var last_shot_sfx: Array[AudioStream] = []
@@ -91,6 +106,17 @@ class_name WeaponData
 @export var reload_sfx: AudioStream = preload("res://_project/audio/sfx/weapons/old/rifle_reload.ogg")
 ## Volume of the reload sound, in decibels (0 = unchanged, negative = quieter).
 @export var reload_sfx_volume_db: float = 0.0
+
+
+## The single stream held down while the trigger is, or null when this weapon does
+## not loop its fire sound (or has none authored).
+func get_fire_loop_sfx() -> AudioStream:
+	if not fire_sfx_loop:
+		return null
+	for stream in fire_sfx:
+		if stream:
+			return stream
+	return null
 
 
 func create_use_behavior() -> HeldItemBehavior:
