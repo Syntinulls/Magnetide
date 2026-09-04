@@ -18,9 +18,10 @@ class_name GateModifierBehavior
 ## their icon through the candidate colours, and on "Go!" they lock:
 ## each takes a different one, and exactly one is dealt the gate's. That key is
 ## the only one that opens it -- pressing any other key, pressing red, or letting
-## either objective slip past fails the attempt. Hitting the right key flips the
-## gate's padlock open and pulses the gate once, and the pull is won by hitting
-## the gate after it -- which is what lights it for good.
+## either objective slip past fails the attempt. Hitting the right key claims it
+## and pulses the gate once to say the way is open; the padlock itself only turns
+## over when the gate is hit, which is also what lights it for good and wins the
+## pull.
 
 @export var key_color: Color = Color("4a90d9")
 @export var gate_color: Color = Color("785fbe")
@@ -177,7 +178,14 @@ func on_countdown_finished(minigame: LeverMinigame, _threat_level: int) -> void:
 
 func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 	if zone == _gate_zone:
+		# Reaching the gate at all means the right key was claimed -- a wrong one
+		# fails on the press and a missed one on its deadline -- so the padlock
+		# simply turns over here. Swapped before the hit lands, so the punch and
+		# the permanent light come up with the open padlock already showing.
+		minigame.set_zone_icon(zone, gate_unlocked_icon)
 		minigame.resolve_objective(zone, true)
+		# After resolve_objective, whose "PERFECT" would otherwise bury it.
+		minigame.show_info(unlocked_text, gate_color)
 		return true
 	var key_index := _key_zones.find(zone)
 	if key_index < 0:
@@ -189,11 +197,10 @@ func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 		minigame.fail_minigame(wrong_key_text, minigame.zone_color_red, offending)
 		return true
 	minigame.resolve_objective(zone, true)
-	minigame.set_zone_icon(_gate_zone, gate_unlocked_icon)
-	# One pulse as the padlock springs open, then straight back to resting: the
-	# gate is unlocked, not answered. It only lights for good once it is hit.
+	# One pulse of the gate as the key is claimed, then straight back to resting:
+	# the way is open, but the padlock only turns -- and the gate only lights for
+	# good -- once the gate itself is hit.
 	minigame.flash_zone(_gate_zone)
-	minigame.show_info(unlocked_text, gate_color)
 	return true
 
 

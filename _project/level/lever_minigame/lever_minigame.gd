@@ -955,7 +955,8 @@ func _light_up(objective: Objective, texture: Texture2D) -> void:
 	objective.light_glow.set_shader_parameter(&"glow_intensity", 1.0)
 
 
-## Swap a zone's icon mid-attempt (Gate's padlock opening). No-op on a zone that
+## Swap a zone's icon mid-attempt (Gate's padlock turning over, Bonus's chest
+## springing open). No-op on a zone that
 ## was not built with one -- the rect only exists if modify_zones set zone.icon.
 func set_zone_icon(zone: Zone, texture: Texture2D) -> void:
 	if zone.icon_rect == null:
@@ -989,7 +990,8 @@ func mark_zone_hit(zone: Zone) -> void:
 
 ## One there-and-back pulse of a zone's colour and glow, leaving it back at its
 ## resting shade. The acknowledgement that something about the zone changed
-## (Gate's padlock springing open) as opposed to mark_zone_hit's permanent light,
+## (Gate's gate answering the key that claims it) as opposed to mark_zone_hit's
+## permanent light,
 ## which stays the record of what the player actually hit.
 func flash_zone(zone: Zone) -> void:
 	var flash := _create_realtime_tween()

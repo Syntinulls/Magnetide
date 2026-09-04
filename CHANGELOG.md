@@ -62,10 +62,11 @@
 - **Gate!** locks the pull behind a colour match. A row of keys and a padlocked gate
   flicker through colours right up to the last moment, then settle — hit the one key
   whose colour matches the gate to unlock it, then hit the gate itself. Pick the wrong
-  key and the pull fails. The gate pulses once as its padlock springs open, so you can
-  see the unlock land without mistaking it for a zone you have already answered. The
-  keys now hold a colour each while the board is still appearing and only start
-  flickering once the countdown begins, so the shuffle reads as the puzzle starting.
+  key and the pull fails. The gate pulses once as you claim the right key, so you can
+  see the way open without mistaking it for a zone you have already answered, and its
+  padlock only turns over when you hit the gate itself. The keys now hold a colour
+  each while the board is still appearing and only start flickering once the countdown
+  begins, so the shuffle reads as the puzzle starting.
 - Lever minigame zones that carry an icon — mines, keys, supply drops — now hold a
   minimum width, so those icons stay readable at every threat level instead of shrinking
   to nothing. Boards with nothing to read, the ordinary pull included, keep their zones

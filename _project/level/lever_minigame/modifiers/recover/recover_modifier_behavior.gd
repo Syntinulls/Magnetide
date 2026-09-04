@@ -24,8 +24,8 @@ enum Kind { HEALTH, INTEGRITY }
 ## why this board can author min_zone_width_ratio down to the no-icon floor and
 ## let its green/yellow clusters keep tapering with threat.
 @export var zone_width_ratio: float = 0.05
-@export var health_icon: Texture2D = preload("res://icon.svg")
-@export var integrity_icon: Texture2D = preload("res://icon.svg")
+@export var health_icon: Texture2D = preload("res://_project/level/lever_minigame/modifiers/recover/sprites/medkit.png")
+@export var integrity_icon: Texture2D = preload("res://_project/level/lever_minigame/modifiers/recover/sprites/toolbox.png")
 @export var health_text: String = "Med Kit!"
 @export var integrity_text: String = "Hull Patch!"
 ## Health restored at threat stage 0 and stage 9.

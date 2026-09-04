@@ -8,7 +8,10 @@ class_name BonusModifierBehavior
 ## exactly like the recycler award. A failed attempt forfeits the bonus.
 
 @export var zone_color: Color = Color("4a90d9")
-@export var zone_icon: Texture2D = preload("res://icon.svg")
+@export var zone_icon: Texture2D = preload("res://_project/level/lever_minigame/modifiers/bonus/sprites/chest_closed.png")
+## Swapped in the moment the zone is hit, so the chest springs open and stays the
+## visible record of the claim for the rest of the attempt.
+@export var hit_icon: Texture2D = preload("res://_project/level/lever_minigame/modifiers/bonus/sprites/chest_open.png")
 ## Full width of the bonus zone as a ratio of the bar width, sized for its icon. insert_special_zone
 ## never takes it below this, so it survives landing in a tight gap -- which is
 ## why this board can author min_zone_width_ratio down to the no-icon floor and
@@ -51,6 +54,7 @@ func handle_press(minigame: LeverMinigame, zone: LeverMinigame.Zone) -> bool:
 	if not _bonus_hit:
 		_bonus_hit = true
 		minigame.mark_zone_hit(zone)
+		minigame.set_zone_icon(zone, hit_icon)
 		minigame.show_info(hit_text, zone_color)
 	return true
 
