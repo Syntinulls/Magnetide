@@ -7,7 +7,7 @@ class_name GrenadeExplosion
 ## authored on this scene; the spawning projectile hands in its damage and source.
 
 ## Fallback damage; overridden by the spawning weapon's damage through configure().
-@export var damage: float = 20.0
+@export var damage: float = 200.0
 
 var source: Node = null
 

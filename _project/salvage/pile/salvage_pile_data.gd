@@ -21,7 +21,7 @@ const DEFAULT_TRASH_SPRITES: Array[Texture2D] = [
 ## Shared per-rarity artifact sprite pools + minter.
 @export var artifact_pools: ArtifactPools = null
 ## Fixed artifact chance [0,1]. Constant — does NOT scale with threat.
-@export_range(0.0, 1.0, 0.01) var artifact_chance: float = 0.05
+@export_range(0.0, 1.0, 0.01) var artifact_chance: float = 0.08
 ## Minimum stage index (0-9) per artifact rarity. No upper bound, so lower rarities stay
 ## obtainable at higher threats. Defaults: COMMON 0, RARE 3, EPIC 6 (player levels 1, 4, 7).
 @export var artifact_min_stage: Dictionary = {
@@ -29,6 +29,8 @@ const DEFAULT_TRASH_SPRITES: Array[Texture2D] = [
 	SalvageItemData.ItemRarity.RARE: 3,
 	SalvageItemData.ItemRarity.EPIC: 6,
 }
+## How many artifacts of each rarity a single run may collect, counted when one reaches storage.
+@export_range(1, 10, 1) var artifact_max_per_rarity: int = 2
 
 @export_group("Pity System")
 ## Constant base probability (0-100) for pulling a salvageable item at pity 0.
@@ -114,7 +116,7 @@ func available_artifact_rarities(threat_level: int, tracker: RunArtifactTracker)
 	for rarity in artifact_min_stage:
 		var rarity_int := int(rarity)
 		if threat_level >= int(artifact_min_stage[rarity]) \
-			and tracker.can_pull(rarity_int) \
+			and tracker.can_pull(rarity_int, artifact_max_per_rarity) \
 			and artifact_pools.has_sprites(rarity_int):
 			out.append(rarity_int)
 	return out

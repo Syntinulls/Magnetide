@@ -8,7 +8,7 @@
 script = ExtResource("3_eff")
 target = 5
 target_property = &"health_per_second"
-amount_per_level = 1.0
+amount_per_level = 10.0
 
 [sub_resource type="Resource" id="eff_ooc"]
 script = ExtResource("3_eff")
@@ -18,15 +18,15 @@ amount_per_level = -0.75
 
 [sub_resource type="Resource" id="c0"]
 script = ExtResource("2_lvl")
-scrap_cost = 20
+scrap_cost = 50
 
 [sub_resource type="Resource" id="c1"]
 script = ExtResource("2_lvl")
-scrap_cost = 35
+scrap_cost = 100
 
 [sub_resource type="Resource" id="c2"]
 script = ExtResource("2_lvl")
-scrap_cost = 55
+scrap_cost = 150
 
 [resource]
 script = ExtResource("1_aud")

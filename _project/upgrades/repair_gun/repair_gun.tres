@@ -12,7 +12,7 @@ script = ExtResource("6_eff")
 target = 6
 target_property = &"repair_amount"
 label = "Repair"
-level_amounts = Array[float]([4.0, 4.0, 4.0, 4.0, 4.0])
+level_amounts = Array[float]([40.0, 40.0, 40.0, 40.0, 40.0])
 
 [sub_resource type="Resource" id="EffectRate"]
 script = ExtResource("6_eff")
@@ -21,13 +21,6 @@ target_property = &"repair_rate"
 label = "Repair Speed"
 level_amounts = Array[float]([0.14, 0.14, 0.14, 0.14, 0.14])
 
-[sub_resource type="Resource" id="EffectCost"]
-script = ExtResource("6_eff")
-target = 6
-target_property = &"repair_cost"
-label = "Repair Cost"
-level_amounts = Array[float]([0.0, 0.0, 1.0, 0.0, 1.0])
-
 [sub_resource type="Resource" id="g1"]
 script = ExtResource("3_ic")
 item_data = ExtResource("4_g")
@@ -35,7 +28,7 @@ item_data = ExtResource("4_g")
 [sub_resource type="Resource" id="L1"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("g1")])
-scrap_cost = 10
+scrap_cost = 25
 
 [sub_resource type="Resource" id="g2"]
 script = ExtResource("3_ic")
@@ -49,7 +42,7 @@ item_data = ExtResource("5_w")
 [sub_resource type="Resource" id="L2"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("g2"), SubResource("w1")])
-scrap_cost = 20
+scrap_cost = 50
 
 [sub_resource type="Resource" id="g3"]
 script = ExtResource("3_ic")
@@ -64,7 +57,7 @@ quantity = 2
 [sub_resource type="Resource" id="L3"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("g3"), SubResource("w2")])
-scrap_cost = 30
+scrap_cost = 75
 
 [sub_resource type="Resource" id="g4"]
 script = ExtResource("3_ic")
@@ -79,7 +72,7 @@ quantity = 3
 [sub_resource type="Resource" id="L4"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("g4"), SubResource("w3")])
-scrap_cost = 40
+scrap_cost = 100
 
 [sub_resource type="Resource" id="g5"]
 script = ExtResource("3_ic")
@@ -94,10 +87,10 @@ quantity = 4
 [sub_resource type="Resource" id="L5"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("g5"), SubResource("w4")])
-scrap_cost = 50
+scrap_cost = 150
 
 [resource]
 script = ExtResource("1_upg")
 display_name = "Repair Gun"
 level_costs = Array[ExtResource("2_lvl")]([SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("L4"), SubResource("L5")])
-effects = Array[ExtResource("6_eff")]([SubResource("EffectAmount"), SubResource("EffectRate"), SubResource("EffectCost")])
+effects = Array[ExtResource("6_eff")]([SubResource("EffectAmount"), SubResource("EffectRate")])

@@ -13,7 +13,7 @@ enum ThrusterState { STOPPED, MOVING, DECELERATING, NEAR_STOPPED }
 ## Height of the hazard pattern floor marker strip.
 @export var storage_marker_height: float = 24.0
 @export_group("Combat")
-@export var max_health: float = 250.0
+@export var max_health: float = 2500.0
 @export var hitbox_path: NodePath = NodePath("Hitbox")
 @export var enemy_target_point_paths: Array[NodePath] = []
 @export_group("Thrusters")

@@ -3,7 +3,11 @@ class_name PlayerScrapCollector
 
 ## Scrap metal award presentation and bookkeeping: the fly-to-HUD pickup sprite,
 ## the aggregated "+N Scrap Metal" loot label, and the collected signal the run
-## controller records. Also owns the Increased Recycling double-scrap roll.
+## controller records. Presentation is a ladder, so a source takes only what it needs:
+## collect_from() = pickup sprite + label + bank, award() = label + bank, bank() = the
+## run total alone, for a source that announces the payout itself. One pickup sprite
+## carries a whole award, however large, so a lever bonus does not spawn a sprite per
+## unit of scrap.
 
 signal scrap_metal_collected(amount: int)
 
@@ -13,23 +17,12 @@ const ScrapMetalTexture: Texture2D = preload("res://_project/common/sprites/scra
 ## counter, so the award registers before the sprite leaves.
 const PICKUP_HOLD_SECONDS: float = 0.6
 
-## Chance (0-100) that recycling a trash item yields double scrap. Set by the
-## Increased Recycling augment for the duration of a run.
-var double_scrap_chance_percent: float = 0.0
-
 @onready var _player: Player = owner as Player
 
 
-## Grants scrap for a recycled trash item, rolling the Increased Recycling
-## augment's double-scrap chance to spawn a second scrap pickup.
-func collect_recycled(origin: Vector2) -> void:
-	collect_from(origin)
-	if double_scrap_chance_percent > 0.0 and randf() * 100.0 < double_scrap_chance_percent:
-		collect_from(origin)
-
-
-func collect_from(start_position: Vector2) -> void:
-	if not is_inside_tree():
+## Spawns one pickup worth `amount` scrap, flying from `start_position` to the HUD counter.
+func collect_from(start_position: Vector2, amount: int = 1) -> void:
+	if not is_inside_tree() or amount <= 0:
 		return
 	var parent_node := Magnetide.world_root
 	if not parent_node:
@@ -64,15 +57,30 @@ func collect_from(start_position: Vector2) -> void:
 	tween.tween_property(pickup, "global_position", collect_target, 0.42)
 	tween.parallel().tween_property(pickup, "scale", start_scale * 0.55, 0.42)
 	tween.parallel().tween_property(pickup, "modulate:a", 0.0, 0.16).set_delay(0.26)
-	tween.tween_callback(_on_pickup_arrived.bind(pickup))
+	tween.tween_callback(_on_pickup_arrived.bind(pickup, amount))
 
 
-func _on_pickup_arrived(pickup: Sprite2D) -> void:
+## Banks `amount` scrap with no pickup sprite, floating the loot label above the player.
+func award(amount: int) -> void:
+	if amount <= 0:
+		return
+	if _player.loot_labels:
+		_player.loot_labels.record("Scrap Metal", amount)
+	bank(amount)
+
+
+## Banks `amount` scrap with no presentation of any kind — no sprite, no label above the
+## player. For a source that shows its own readout, like the recycler's bundle payout.
+func bank(amount: int) -> void:
+	if amount <= 0:
+		return
+	scrap_metal_collected.emit(amount)
+
+
+func _on_pickup_arrived(pickup: Sprite2D, amount: int) -> void:
 	if pickup and is_instance_valid(pickup):
 		pickup.queue_free()
-	if _player.loot_labels:
-		_player.loot_labels.record("Scrap Metal", 1)
-	scrap_metal_collected.emit(1)
+	award(amount)
 
 
 func _get_collection_target_position() -> Vector2:

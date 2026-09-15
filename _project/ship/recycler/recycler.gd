@@ -1,7 +1,17 @@
 extends Area2D
 class_name Recycler
 
-signal trash_recycled(scrap_origin: Vector2)
+signal trash_recycled
+
+@export_group("Scrap Bundle")
+## Trash items that must be fed in before the recycler pays out. Driven by the recycler intake
+## upgrade through the run loadout.
+@export var trash_per_bundle: int = 5
+## Scrap metal awarded by one completed bundle. Driven by the recycler yield upgrade.
+@export var scrap_per_bundle: int = 15
+## Where the payout readout pops, relative to the recycler.
+@export var scrap_popup_offset: Vector2 = Vector2(0, -90)
+@export_group("")
 
 @export var recycle_drop_distance: float = 48.0
 @export var recycle_entry_duration: float = 0.18
@@ -23,11 +33,14 @@ const RENDER_Z_BLADES: int = -1
 ## station so trash dropped on the recycler is always recycled.
 var drop_priority: int = 30
 
+## Chance (0-100) that a completed bundle pays out twice. Set by the Increased Recycling augment
+## for the duration of a run.
+var double_bundle_chance_percent: float = 0.0
+
 var _is_recycling: bool = false
 var _outline: CompositeOutline = null
-## Scrap chance (0-100) rolled when the running recycle finishes, captured from
-## the magnet tool that dropped the trash.
-var _pending_scrap_chance_percent: float = 0.0
+## Trash fed in since the last payout; at trash_per_bundle it pays a bundle and resets.
+var _trash_fed: int = 0
 var _pending_scrap_player: Player = null
 
 @onready var _sprite_back: Sprite2D = $SpriteBack as Sprite2D
@@ -39,6 +52,7 @@ var _pending_scrap_player: Player = null
 @onready var _grinder_right_saw: Sprite2D = $GrinderRight/Sprite2D as Sprite2D
 @onready var _trash_start: Marker2D = $TrashStart as Marker2D
 @onready var _trash_particles: GPUParticles2D = $TrashParticles as GPUParticles2D
+@onready var _bundle_counter: Label = $BundleCounter as Label
 
 
 func _ready() -> void:
@@ -47,6 +61,7 @@ func _ready() -> void:
 	_setup_outline_material()
 	_setup_particles()
 	set_highlighted(false)
+	_refresh_counter_label()
 
 
 func _process(delta: float) -> void:
@@ -100,14 +115,12 @@ func clear_drop_state() -> void:
 	set_highlighted(false)
 
 
-## Starts the recycle and captures the dropping player's magnet-tool scrap
-## chance, rolled when the grind finishes.
+## Starts the recycle and remembers who fed it, so the bundle pays out to that player when the
+## grind finishes.
 func accept_dropped_item(player: Player, item: SalvageItem, _point: Vector2) -> Dictionary:
 	if not recycle_trash(item):
 		return {"accepted": false}
 
-	var tool := player.equipment.current_data as MagnetToolData
-	_pending_scrap_chance_percent = tool.trash_scrap_chance_percent if tool else 0.0
 	_pending_scrap_player = player
 	var recycled_callback := Callable(self, "_on_own_trash_recycled")
 	if not trash_recycled.is_connected(recycled_callback):
@@ -115,15 +128,45 @@ func accept_dropped_item(player: Player, item: SalvageItem, _point: Vector2) -> 
 	return {"accepted": true}
 
 
-func _on_own_trash_recycled(scrap_origin: Vector2) -> void:
-	var chance := _pending_scrap_chance_percent
+## Counts a finished trash item toward the current bundle, paying out once the counter fills.
+func _on_own_trash_recycled() -> void:
 	var player := _pending_scrap_player
-	_pending_scrap_chance_percent = 0.0
 	_pending_scrap_player = null
-	if player == null or not is_instance_valid(player):
+
+	var required := maxi(trash_per_bundle, 1)
+	_trash_fed += 1
+	if _trash_fed < required:
+		_refresh_counter_label()
 		return
-	if randf() * 100.0 < chance:
-		player.scrap_collector.collect_recycled(scrap_origin)
+
+	_trash_fed = 0
+	_refresh_counter_label()
+	if player == null or not is_instance_valid(player) or scrap_per_bundle <= 0:
+		return
+	var bundles := 2 if randf() * 100.0 < double_bundle_chance_percent else 1
+	var awarded := bundles * scrap_per_bundle
+	# The readout over the recycler is the payout's whole presentation: no pickup sprite
+	# riding up to the HUD, and no second label over the player saying the same thing.
+	player.scrap_collector.bank(awarded)
+	DamageNumber.spawn_gain(
+		global_position + scrap_popup_offset, awarded, DamageNumber.SCRAP_COLOR, "scrap"
+	)
+
+
+## Applies the run's recycler upgrades and restarts the bundle counter.
+func apply_run_loadout(loadout: RunLoadout) -> void:
+	if loadout == null:
+		return
+	trash_per_bundle = maxi(loadout.recycler_trash_per_bundle, 1)
+	scrap_per_bundle = maxi(loadout.recycler_scrap_per_bundle, 0)
+	_trash_fed = 0
+	_refresh_counter_label()
+
+
+func _refresh_counter_label() -> void:
+	if _bundle_counter == null:
+		return
+	_bundle_counter.text = "%d/%d" % [_trash_fed, maxi(trash_per_bundle, 1)]
 
 
 func recycle_trash(item: SalvageItem) -> bool:
@@ -154,17 +197,17 @@ func recycle_trash(item: SalvageItem) -> bool:
 	tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
 	tween.tween_property(item, "global_position", sink_position, recycle_blade_pass_duration)
 	tween.parallel().tween_property(item, "modulate:a", 0.0, recycle_blade_pass_duration * 0.7).set_delay(recycle_blade_pass_duration * 0.3)
-	tween.tween_callback(_finish_recycling.bind(item, entry_position))
+	tween.tween_callback(_finish_recycling.bind(item))
 	return true
 
 
-func _finish_recycling(item: SalvageItem, scrap_origin: Vector2) -> void:
+func _finish_recycling(item: SalvageItem) -> void:
 	if item and is_instance_valid(item):
 		item.queue_free()
 	_is_recycling = false
 	if _trash_particles:
 		_trash_particles.emitting = false
-	trash_recycled.emit(scrap_origin)
+	trash_recycled.emit()
 
 
 func _play_grind_sfx() -> void:

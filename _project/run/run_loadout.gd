@@ -16,6 +16,8 @@ const STAT_ITEMS := [
 	preload("res://_project/items/stats/ship_hull.tres"),
 	preload("res://_project/items/stats/ship_storage_size.tres"),
 	preload("res://_project/items/stats/magnet_capacity.tres"),
+	preload("res://_project/items/stats/recycler_intake.tres"),
+	preload("res://_project/items/stats/recycler_yield.tres"),
 ]
 const DEFAULT_PLAYER_MAX_SHIELD_HITS := 0.0
 const UNLOCKED_PLAYER_BASE_SHIELD_HITS := 2.0
@@ -27,7 +29,7 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export var ship_storage_area_size: Vector2 = Vector2(180, 100)
 @export var ship_storage_area_position: Vector2 = Vector2(0, -95)
 @export var ship_storage_marker_height: float = 24.0
-@export var ship_max_health: float = 250.0
+@export var ship_max_health: float = 2500.0
 
 @export_group("Magnet")
 @export var magnet_pull_frequency: float = 2.5
@@ -41,6 +43,12 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export var magnet_breakaway_max_speed: float = 2000.0
 @export var magnet_width: float = 264.0
 
+@export_group("Recycler")
+## Trash items fed into the recycler per scrap bundle paid out.
+@export var recycler_trash_per_bundle: int = 5
+## Scrap metal paid out by one completed bundle.
+@export var recycler_scrap_per_bundle: int = 15
+
 @export_group("Player")
 @export var player_speed: float = 400.0
 ## Apex height of a full-hold (maximum) jump, in pixels. Gravity and the launch
@@ -52,7 +60,7 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export var player_jump_min_height: float = 25.0
 ## Seconds from leaving the floor to the top of a full-hold jump.
 @export var player_jump_time_to_apex: float = 0.375
-@export var player_max_health: float = 100.0
+@export var player_max_health: float = 1000.0
 @export var player_max_shield: float = 0.0
 @export var player_shield_recharge_delay: float = 6.0
 @export var player_shield_recharge_duration: float = 1.0
@@ -84,6 +92,9 @@ var ship_augments: Array[AugmentData]:
 var magnet_augments: Array[AugmentData]:
 	get: return _state().magnet_augments
 	set(v): _state().magnet_augments = v
+var recycler_augments: Array[AugmentData]:
+	get: return _state().recycler_augments
+	set(v): _state().recycler_augments = v
 var item_states: Array[Resource]:
 	get: return _state().item_states
 	set(v): _state().item_states = v
@@ -285,6 +296,10 @@ func apply_to_level(level: Node) -> void:
 	if magnet:
 		magnet.apply_run_loadout(self)
 
+	var recycler := ship.get_node_or_null("Recycler") as Recycler if ship else null
+	if recycler:
+		recycler.apply_run_loadout(self)
+
 	var player := ship.get_node_or_null("Player") as Player if ship else null
 	if player:
 		player.apply_run_loadout(self)
@@ -299,6 +314,9 @@ func get_equipped_augments() -> Array[AugmentData]:
 		if augment != null:
 			augments.append(augment)
 	for augment in magnet_augments:
+		if augment != null:
+			augments.append(augment)
+	for augment in recycler_augments:
 		if augment != null:
 			augments.append(augment)
 	return augments
@@ -429,6 +447,10 @@ func equip_magnet_augment(slot_index: int, augment_data: AugmentData) -> void:
 	_equip_augment_into(magnet_augments, slot_index, augment_data)
 
 
+func equip_recycler_augment(slot_index: int, augment_data: AugmentData) -> void:
+	_equip_augment_into(recycler_augments, slot_index, augment_data)
+
+
 func _equip_augment_into(augments: Array[AugmentData], slot_index: int, augment_data: AugmentData) -> void:
 	if slot_index < 0:
 		return
@@ -534,7 +556,8 @@ func _effect_targets_loadout(effect: Resource) -> bool:
 	var t := int(effect.get("target"))
 	return t == UpgradeEffect.Target.PLAYER \
 		or t == UpgradeEffect.Target.SHIP \
-		or t == UpgradeEffect.Target.MAGNET
+		or t == UpgradeEffect.Target.MAGNET \
+		or t == UpgradeEffect.Target.RECYCLER
 
 
 func _apply_loadout_upgrades() -> void:

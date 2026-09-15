@@ -9,7 +9,7 @@ script = ExtResource("3_eff")
 target = 5
 target_property = &"repair_amount"
 label = "Repair"
-level_amounts = Array[float]([4.0, 4.0, 4.0, 4.0, 4.0])
+level_amounts = Array[float]([40.0, 40.0, 40.0, 40.0, 40.0])
 
 [sub_resource type="Resource" id="eff_cooldown"]
 script = ExtResource("3_eff")
@@ -18,35 +18,28 @@ target_property = &"cooldown_seconds"
 label = "Cooldown"
 level_amounts = Array[float]([-0.5, -0.5, -0.5, -0.5, -0.5])
 
-[sub_resource type="Resource" id="eff_cost"]
-script = ExtResource("3_eff")
-target = 5
-target_property = &"repair_cost"
-label = "Repair Cost"
-level_amounts = Array[float]([0.0, 0.0, 1.0, 0.0, 1.0])
-
 [sub_resource type="Resource" id="c0"]
 script = ExtResource("2_lvl")
-scrap_cost = 20
+scrap_cost = 50
 
 [sub_resource type="Resource" id="c1"]
 script = ExtResource("2_lvl")
-scrap_cost = 35
+scrap_cost = 100
 
 [sub_resource type="Resource" id="c2"]
 script = ExtResource("2_lvl")
-scrap_cost = 55
+scrap_cost = 150
 
 [sub_resource type="Resource" id="c3"]
 script = ExtResource("2_lvl")
-scrap_cost = 80
+scrap_cost = 200
 
 [sub_resource type="Resource" id="c4"]
 script = ExtResource("2_lvl")
-scrap_cost = 110
+scrap_cost = 250
 
 [resource]
 script = ExtResource("1_aud")
 display_name = "Auto-Repair"
 level_costs = Array[ExtResource("2_lvl")]([SubResource("c0"), SubResource("c1"), SubResource("c2"), SubResource("c3"), SubResource("c4")])
-effects = Array[ExtResource("3_eff")]([SubResource("eff_amount"), SubResource("eff_cooldown"), SubResource("eff_cost")])
+effects = Array[ExtResource("3_eff")]([SubResource("eff_amount"), SubResource("eff_cooldown")])

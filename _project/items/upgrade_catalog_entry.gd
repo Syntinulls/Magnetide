@@ -7,9 +7,6 @@ class_name UpgradeCatalogEntry
 
 ## The item this entry equips (WeaponData, AugmentData, ...).
 @export var item_data: Resource = null
-## Optional upgrade track shown for this entry (a duplicate of item_data.upgrade_data). May be
-## left null; the equipped item's own upgrade_data is the source of truth at runtime.
-@export var upgrade: UpgradeData = null
 @export var locked: bool = false
 @export var research_unlock_id: StringName = &""
 @export var research_unlock_group: StringName = &""

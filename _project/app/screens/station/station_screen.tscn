@@ -18,7 +18,7 @@
 [ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
 [ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
 [ext_resource type="Resource" uid="uid://delec1tres0x3" path="res://_project/items/augments/electrified_hull.tres" id="25_electrified_hull"]
-[ext_resource type="Resource" uid="uid://darep1tres0x6" path="res://_project/items/augments/auto_repair.tres" id="25_auto_repair"]
+[ext_resource type="Resource" uid="uid://6wtufnnn5n0r" path="res://_project/items/augments/auto_repair.tres" id="25_auto_repair"]
 [ext_resource type="Resource" uid="uid://denem1tres0x4" path="res://_project/items/augments/enemy_repulsion.tres" id="25_enemy_repulsion"]
 [ext_resource type="Resource" uid="uid://dkine1tres0x5" path="res://_project/items/augments/kinetic_repulsion.tres" id="25_kinetic_repulsion"]
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="26_pistol_data"]
@@ -35,7 +35,6 @@
 [ext_resource type="Texture2D" uid="uid://b2pkbswqn8aro" path="res://_project/app/screens/station/sprites/station_fore_dollie_crates.png" id="35_dollie_crates"]
 [ext_resource type="Shader" uid="uid://cn2rwlbq1g8c0" path="res://_project/level/decoration/perspective_scroll.gdshader" id="36_perspective"]
 [ext_resource type="Texture2D" uid="uid://b7oyctg3u4j76" path="res://_project/common/sprites/ui_border_4px.png" id="37_border"]
-[ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="40_upg_weapon"]
 [ext_resource type="Texture2D" uid="uid://bbmcyx1nbj7ng" path="res://_project/app/screens/station/sprites/icon_health.png" id="48_ic_health"]
 [ext_resource type="Texture2D" uid="uid://bawwxofjtf0bg" path="res://_project/app/screens/station/sprites/icon_shield.png" id="49_ic_shield"]
 [ext_resource type="Texture2D" uid="uid://dmdxdervh320c" path="res://_project/common/sprites/icon_magnet.png" id="50_ic_magnet"]
@@ -48,6 +47,8 @@
 [ext_resource type="Resource" uid="uid://bsbo1kl5cs6p6" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
 [ext_resource type="Resource" uid="uid://bsbo1d1vvthc6" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
 [ext_resource type="Resource" uid="uid://repairgun0data" path="res://_project/items/repair_gun/repair_gun.tres" id="67_repair_gun"]
+[ext_resource type="Resource" uid="uid://cstat0rintake" path="res://_project/items/stats/recycler_intake.tres" id="69_rintake_item"]
+[ext_resource type="Resource" uid="uid://cstat0ryield0" path="res://_project/items/stats/recycler_yield.tres" id="70_ryield_item"]
 [ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="68_ic_repair"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
@@ -80,9 +81,8 @@ script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("25_increased_recycling")
 locked = true
 research_unlock_id = &"augment_increased_recycling"
-research_unlock_group = &"ship_augment_increased_recycling"
+research_unlock_group = &"recycler_augment_increased_recycling"
 research_unlock_order = 30
-research_cost_common = 1
 research_cost_rare = 1
 
 [sub_resource type="Resource" id="Resource_station_augment_kinetic_repulsion"]
@@ -103,8 +103,7 @@ locked = true
 research_unlock_id = &"augment_auto_repair"
 research_unlock_group = &"ship_augment_auto_repair"
 research_unlock_order = 35
-research_cost_common = 1
-research_cost_rare = 1
+research_cost_rare = 2
 
 [sub_resource type="Resource" id="Resource_station_augment_electrified_hull"]
 script = ExtResource("11_upgrade_entry")
@@ -131,13 +130,11 @@ research_cost_epic = 99
 [sub_resource type="Resource" id="Resource_station_weapon_pistol"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("26_pistol_data")
-upgrade = ExtResource("40_upg_weapon")
 research_unlock_id = &"weapon_pistol"
 
 [sub_resource type="Resource" id="Resource_station_weapon_smg"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("28_smg_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_smg"
 research_unlock_order = 10
@@ -146,52 +143,42 @@ research_cost_common = 1
 [sub_resource type="Resource" id="Resource_station_weapon_shotgun"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("13_shotgun_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_shotgun"
 research_unlock_order = 20
-research_cost_common = 1
-research_cost_rare = 1
+research_cost_common = 2
 
 [sub_resource type="Resource" id="Resource_station_weapon_rifle"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("12_rifle_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_rifle"
 research_unlock_order = 30
-research_cost_common = 2
-research_cost_rare = 1
+research_cost_common = 3
 
 [sub_resource type="Resource" id="Resource_station_weapon_sniper"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("29_sniper_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_sniper"
 research_unlock_order = 40
-research_cost_rare = 2
-research_cost_epic = 1
+research_cost_rare = 1
 
 [sub_resource type="Resource" id="Resource_station_weapon_grenade_launcher"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("29_grenade_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_grenade_launcher"
 research_unlock_order = 50
-research_cost_rare = 1
-research_cost_epic = 2
+research_cost_rare = 2
 
 [sub_resource type="Resource" id="Resource_station_weapon_flamethrower"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("29_flamethrower_data")
-upgrade = ExtResource("40_upg_weapon")
 locked = true
 research_unlock_id = &"weapon_flamethrower"
 research_unlock_order = 60
-research_cost_rare = 2
-research_cost_epic = 2
+research_cost_rare = 3
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -496,7 +483,7 @@ display_name = "Repair Gun"
 static_icon = ExtResource("68_ic_repair")
 locked = true
 unlock_research_id = &"repair_gun"
-unlock_cost_common = 2
+unlock_cost_common = 1
 unlock_description = "A handheld tool that converts collected scrap into hull integrity mid-run."
 unlock_gain_text = "Unlocks the Repair Gun (hotbar slot 3)"
 
@@ -771,11 +758,55 @@ popups_open_left = true
 display_name = "Storage"
 static_icon = ExtResource("51_ic_crate")
 
-[node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=1181292761]
+[node name="RecyclerPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=300000001]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=228500529]
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair" unique_id=300000002]
+layout_mode = 2
+theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 4
+theme_override_font_sizes/font_size = 26
+text = "Recycler"
+
+[node name="RecyclerIntakeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair" unique_id=300000003]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 0
+
+[node name="RecyclerIntakeSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair/RecyclerIntakeRow" unique_id=300000004 instance=ExtResource("17_upgrade_slot")]
+layout_mode = 2
+item = ExtResource("69_rintake_item")
+slot_id = &"recycler_intake"
+popups_open_left = true
+display_name = "Intake"
+static_icon = ExtResource("6_gear")
+
+[node name="RecyclerYieldRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair" unique_id=300000005]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 0
+
+[node name="RecyclerYieldSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair/RecyclerYieldRow" unique_id=300000006 instance=ExtResource("17_upgrade_slot")]
+layout_mode = 2
+item = ExtResource("70_ryield_item")
+slot_id = &"recycler_yield"
+popups_open_left = true
+display_name = "Yield"
+static_icon = ExtResource("16_pln3h")
+
+[node name="RightColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
+layout_mode = 2
+theme_override_constants/separation = 16
+
+[node name="MagnetPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn" unique_id=1181292761]
+layout_mode = 2
+theme_override_constants/separation = 10
+
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/MagnetPair" unique_id=228500529]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -783,13 +814,13 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Magnet"
 
-[node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair" unique_id=265744000]
+[node name="MagnetCapacityRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/MagnetPair" unique_id=265744000]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/MagnetPair/MagnetCapacityRow" unique_id=1503082511 instance=ExtResource("17_upgrade_slot")]
+[node name="MagnetCapacitySlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/MagnetPair/MagnetCapacityRow" unique_id=1503082511 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 item = ExtResource("66_magcap_item")
 slot_id = &"magnet_capacity"
@@ -797,11 +828,11 @@ popups_open_left = true
 display_name = "Capacity"
 static_icon = ExtResource("51_ic_crate")
 
-[node name="AugmentColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
+[node name="AugmentPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn" unique_id=300000007]
 layout_mode = 2
 theme_override_constants/separation = 10
 
-[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=1335478386]
+[node name="Header" type="Label" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=1335478386]
 layout_mode = 2
 theme_override_colors/font_color = Color(0.82, 0.87, 0.95, 1)
 theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
@@ -809,30 +840,30 @@ theme_override_constants/outline_size = 4
 theme_override_font_sizes/font_size = 26
 text = "Augments"
 
-[node name="ShipAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=1308161103]
+[node name="ShipAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=1308161103]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/ShipAugmentRow" unique_id=683267767 instance=ExtResource("52_dynamic_slot")]
+[node name="ShipAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair/ShipAugmentRow" unique_id=683267767 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"ship_augment"
 slot_index = 0
 popup_title = "Ship Augments"
-catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_increased_recycling"), SubResource("Resource_station_augment_auto_repair"), SubResource("Resource_station_augment_electrified_hull")])
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_auto_repair"), SubResource("Resource_station_augment_electrified_hull")])
 can_unequip = true
 slot_id = &"ShipAugment"
 popups_open_left = true
 display_name = "Augment"
 
-[node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn" unique_id=952612685]
+[node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=952612685]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/AugmentColumn/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("52_dynamic_slot")]
+[node name="MagnetAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair/MagnetAugmentRow" unique_id=2021748349 instance=ExtResource("52_dynamic_slot")]
 layout_mode = 2
 slot_kind = &"magnet_augment"
 slot_index = 0
@@ -840,6 +871,23 @@ popup_title = "Magnet Augments"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_enemy_repulsion")])
 can_unequip = true
 slot_id = &"MagnetAugment"
+popups_open_left = true
+display_name = "Augment"
+
+[node name="RecyclerAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=300000008]
+custom_minimum_size = Vector2(0, 112)
+layout_mode = 2
+size_flags_horizontal = 0
+theme_override_constants/separation = 0
+
+[node name="RecyclerAugmentSlot" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair/RecyclerAugmentRow" unique_id=300000009 instance=ExtResource("52_dynamic_slot")]
+layout_mode = 2
+slot_kind = &"recycler_augment"
+slot_index = 0
+popup_title = "Recycler Augments"
+catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_increased_recycling")])
+can_unequip = true
+slot_id = &"RecyclerAugment"
 popups_open_left = true
 display_name = "Augment"
 

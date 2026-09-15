@@ -10,7 +10,6 @@ hold_distance = 50.0
 pull_base_speed = 600.0
 pull_max_speed = 2000.0
 pull_ramp_time = 0.4
-trash_scrap_chance_percent = 30.0
 hotbar_icon = ExtResource("3_x47ok")
 weapon_sprite = ExtResource("3_x47ok")
 weapon_offset = Vector2(-26.105, 17.995)

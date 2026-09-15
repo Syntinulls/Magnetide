@@ -28,9 +28,9 @@ const GROUP_SHIP := "ship"
 
 @export_group("Stats")
 ## Maximum health points.
-@export var max_health: float = 50.0
+@export var max_health: float = 500.0
 ## Damage dealt per attack hit.
-@export var damage: float = 5.0
+@export var damage: float = 50.0
 ## Movement speed in pixels per second.
 @export var movement_speed: float = 100.0
 ## Distance at which the enemy stops moving and begins attacking.

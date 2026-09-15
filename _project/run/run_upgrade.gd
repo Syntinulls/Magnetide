@@ -13,6 +13,7 @@ class_name RunUpgrade
 @export var player_augments: Array[AugmentData] = []
 @export var ship_augments: Array[AugmentData] = []
 @export var magnet_augments: Array[AugmentData] = []
+@export var recycler_augments: Array[AugmentData] = []
 ## Per-item upgrade progress (UpgradeableItemState), keyed by item_id — weapons, the magnet gun,
 ## augments, and the static stat items.
 @export var item_states: Array[Resource] = []

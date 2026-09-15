@@ -23,6 +23,7 @@ var _game_ui: Control = null
 var _ship: Ship = null
 var _player: Player = null
 var _magnet: Magnet = null
+var _recycler: Recycler = null
 var _magnet_lever: MagnetLever = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
@@ -74,6 +75,7 @@ func _bind_runtime() -> void:
 		_player = _ship.get_node_or_null("Player") as Player
 		_magnet = _ship.get_node_or_null("Magnet") as Magnet
 		_magnet_lever = _ship.get_node_or_null("MagnetLever") as MagnetLever
+		_recycler = _ship.get_node_or_null("Recycler") as Recycler
 
 	if "ui_root" in _level and _level.ui_root:
 		_game_ui = _level.ui_root.get_node_or_null("GameUI") as Control
@@ -506,6 +508,7 @@ func _initialize_augments() -> void:
 		"ship": _ship,
 		"player": _player,
 		"magnet": _magnet,
+		"recycler": _recycler,
 		"run_controller": self,
 	}
 	for augment in _run_loadout.get_equipped_augments():

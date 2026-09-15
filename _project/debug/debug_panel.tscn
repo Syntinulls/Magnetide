@@ -21,7 +21,7 @@
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="30_regeneration"]
 [ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="31_adrenaline"]
 [ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="32_increased_recycling"]
-[ext_resource type="Resource" uid="uid://darep1tres0x6" path="res://_project/items/augments/auto_repair.tres" id="33_auto_repair"]
+[ext_resource type="Resource" uid="uid://6wtufnnn5n0r" path="res://_project/items/augments/auto_repair.tres" id="33_auto_repair"]
 [ext_resource type="Resource" uid="uid://b4m4e377rt8fk" path="res://_project/salvage/catalog/air_conditioner.tres" id="40_air_conditioner"]
 [ext_resource type="Resource" uid="uid://battery001" path="res://_project/salvage/catalog/battery.tres" id="41_battery"]
 [ext_resource type="Resource" uid="uid://rae48gakgn73" path="res://_project/salvage/catalog/camera.tres" id="42_camera"]

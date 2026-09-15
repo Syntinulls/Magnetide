@@ -18,8 +18,8 @@ class_name BonusModifierBehavior
 ## let its green/yellow clusters keep tapering with threat.
 @export var zone_width_ratio: float = 0.05
 @export var hit_text: String = "Bonus Hit!"
-@export var scrap_min: int = 3
-@export var scrap_max: int = 8
+@export var scrap_min: int = 10
+@export var scrap_max: int = 30
 ## Pause after the minigame closes before the scrap pickups appear, so the
 ## activation presentation (camera, vignette) finishes restoring first.
 @export var award_delay: float = 0.4
@@ -67,9 +67,7 @@ func on_minigame_closed(minigame: LeverMinigame, success: bool) -> void:
 	if player == null or not is_instance_valid(player) or player.scrap_collector == null:
 		return
 	var origin := minigame.get_focus_world_position()
-	var amount := randi_range(scrap_min, scrap_max)
-	for i in range(amount):
-		player.scrap_collector.collect_from(origin)
+	player.scrap_collector.collect_from(origin, randi_range(scrap_min, scrap_max))
 
 
 func _widest(zones: Array[LeverMinigame.Zone]) -> LeverMinigame.Zone:

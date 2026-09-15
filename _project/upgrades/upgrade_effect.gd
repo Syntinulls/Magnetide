@@ -8,11 +8,11 @@ class_name UpgradeEffect
 ## effect targets a weapon).
 
 enum IncreaseMode { FLAT, PERCENT_OF_BASE }
-## Which object this effect changes. PLAYER/SHIP/MAGNET are stats on the run loadout;
+## Which object this effect changes. PLAYER/SHIP/MAGNET/RECYCLER are stats on the run loadout;
 ## WEAPON/MAGNET_GUN/REPAIR_GUN are stats on the equipped item; BEHAVIOR is a tunable on
 ## the owning augment's AugmentBehavior (which the behavior reads at runtime). New values
 ## append at the end: .tres files serialize `target` as a raw int.
-enum Target { PLAYER, SHIP, MAGNET, WEAPON, MAGNET_GUN, BEHAVIOR, REPAIR_GUN }
+enum Target { PLAYER, SHIP, MAGNET, WEAPON, MAGNET_GUN, BEHAVIOR, REPAIR_GUN, RECYCLER }
 
 @export var target: Target = Target.PLAYER
 ## The exact variable/stat id changed on the target (e.g. &"player_speed", &"damage").
@@ -72,6 +72,8 @@ func get_gain_text_for_level(stat_name: String, level: int, max_level: int) -> S
 	if display_label.is_empty():
 		display_label = stat_name if not stat_name.is_empty() else String(target_property).capitalize()
 	var stat_suffix := "" if display_label.is_empty() else " %s" % display_label
+	# Reductions are upgrades too (cooldowns, trash per bundle); they carry their own minus sign.
+	var sign_prefix := "+" if amount > 0.0 else ""
 	if increase_mode == IncreaseMode.PERCENT_OF_BASE:
-		return "+%s%%%s" % [Utils.format_number(amount * 100.0), stat_suffix]
-	return "+%s%s" % [Utils.format_number(amount), stat_suffix]
+		return "%s%s%%%s" % [sign_prefix, Utils.format_number(amount * 100.0), stat_suffix]
+	return "%s%s%s" % [sign_prefix, Utils.format_number(amount), stat_suffix]

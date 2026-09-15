@@ -7,7 +7,7 @@ class_name BurningEffect
 ## death) fades the flames out before freeing.
 
 ## Damage dealt to the receiver on each tick.
-@export var damage_per_tick: float = 2.0
+@export var damage_per_tick: float = 20.0
 ## Number of flame sprites cycling on the receiver at once.
 @export var flame_count: int = 5
 ## Fallback ignite radius, used only when the receiver exposes no hitbox to

@@ -21,7 +21,7 @@ item_data = ExtResource("4_a")
 [sub_resource type="Resource" id="L1"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("a1")])
-scrap_cost = 10
+scrap_cost = 25
 
 [sub_resource type="Resource" id="a2"]
 script = ExtResource("3_ic")
@@ -35,7 +35,7 @@ item_data = ExtResource("5_b")
 [sub_resource type="Resource" id="L2"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("a2"), SubResource("b1")])
-scrap_cost = 20
+scrap_cost = 50
 
 [sub_resource type="Resource" id="a3"]
 script = ExtResource("3_ic")
@@ -50,7 +50,7 @@ quantity = 2
 [sub_resource type="Resource" id="L3"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("a3"), SubResource("b2")])
-scrap_cost = 30
+scrap_cost = 75
 
 [sub_resource type="Resource" id="a4"]
 script = ExtResource("3_ic")
@@ -65,7 +65,7 @@ quantity = 3
 [sub_resource type="Resource" id="L4"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("a4"), SubResource("b3")])
-scrap_cost = 40
+scrap_cost = 100
 
 [sub_resource type="Resource" id="a5"]
 script = ExtResource("3_ic")
@@ -80,7 +80,7 @@ quantity = 4
 [sub_resource type="Resource" id="L5"]
 script = ExtResource("2_lvl")
 costs = Array[Resource]([SubResource("a5"), SubResource("b4")])
-scrap_cost = 50
+scrap_cost = 150
 
 [resource]
 script = ExtResource("1_upg")

@@ -1,0 +1,11 @@
+[gd_resource type="Resource" script_class="StatItemData" format=3 uid="uid://cstat0ryield0"]
+
+[ext_resource type="Script" path="res://_project/items/stat_item_data.gd" id="1"]
+[ext_resource type="Resource" uid="uid://bupgrcyyield0" path="res://_project/upgrades/recycler/recycler_yield.tres" id="2"]
+
+[resource]
+script = ExtResource("1")
+item_id = &"recycler_yield"
+display_name = "Yield"
+description = "More scrap metal in every bundle the recycler pays out."
+upgrade_data = ExtResource("2")

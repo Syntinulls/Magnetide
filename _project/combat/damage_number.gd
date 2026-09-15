@@ -3,13 +3,16 @@ class_name DamageNumber
 
 ## Floating damage readout spawned at the point of damage: bounces in while
 ## rising fast, decelerates to a halt, then shrinks away. Spawn via the static
-## DamageNumber.spawn(); the color tells whose health was hit. spawn_text() reuses
-## the same popup for short refusal messages ("No Scrap").
+## DamageNumber.spawn(); the color tells whose health was hit. spawn_gain() reads a
+## resource award instead of damage, and spawn_text() reuses the same popup for short
+## refusal messages ("No Scrap").
 
 const ENEMY_COLOR := Color.WHITE
 const PLAYER_COLOR := Color("ff5a5a")
 const SHIP_COLOR := Color("ffd24a")
 const HEAL_COLOR := Color("9bff63")
+## Resource awards (recycled scrap bundles).
+const SCRAP_COLOR := Color("ffc861")
 ## Refusal messages: an action the player asked for that could not run.
 const DENIED_COLOR := Color("ff5a5a")
 
@@ -22,6 +25,9 @@ const RISE_SECONDS := 0.53
 const REST_SECONDS := 0.15
 const SHRINK_SECONDS := 0.3
 const DRIFT_DISTANCE := 128.0
+## Award popups rise a short way and stay put: they fire one at a time next to the thing
+## that paid out, so they neither need the travel nor the anti-stacking scatter.
+const GAIN_DRIFT_DISTANCE := 42.0
 ## Each number's landing spot is offset by up to this much on both axes so
 ## rapid hits don't all stack on the exact same pixel.
 const LANDING_JITTER := 24.0
@@ -33,6 +39,8 @@ var _text: String = ""
 var _color: Color = Color.WHITE
 ## > 0 overrides the label's authored font size.
 var _font_size: int = 0
+var _drift_distance: float = DRIFT_DISTANCE
+var _landing_jitter: float = LANDING_JITTER
 
 @onready var _label: Label = $AmountLabel
 
@@ -50,8 +58,8 @@ func _ready() -> void:
 	pop_tween.tween_property(self, "scale", Vector2.ONE, POP_SECONDS)
 
 	var landing := Vector2(
-		randf_range(-LANDING_JITTER, LANDING_JITTER),
-		-DRIFT_DISTANCE + randf_range(-LANDING_JITTER, LANDING_JITTER)
+		randf_range(-_landing_jitter, _landing_jitter),
+		-_drift_distance + randf_range(-_landing_jitter, _landing_jitter)
 	)
 	var drift_tween := create_tween()
 	drift_tween.set_trans(Tween.TRANS_CUBIC).set_ease(Tween.EASE_OUT)
@@ -70,12 +78,31 @@ static func spawn(world_position: Vector2, amount: float, color: Color) -> void:
 	_spawn_popup(world_position, str(maxi(1, roundi(amount))), color, 0)
 
 
+## Same popup for something gained rather than lost, signed so it reads as an award and
+## naming its unit ("+15 scrap"). Rises a short way and holds, rather than sailing off like
+## a damage number.
+static func spawn_gain(world_position: Vector2, amount: int, color: Color, unit: String = "") -> void:
+	if amount <= 0:
+		return
+	var text := "+%d" % amount
+	if not unit.is_empty():
+		text += " %s" % unit
+	_spawn_popup(world_position, text, color, 0, GAIN_DRIFT_DISTANCE, 0.0)
+
+
 ## Same popup with arbitrary text, for readouts that aren't a number.
 static func spawn_text(world_position: Vector2, text: String, color: Color) -> void:
 	_spawn_popup(world_position, text, color, TEXT_FONT_SIZE)
 
 
-static func _spawn_popup(world_position: Vector2, text: String, color: Color, font_size: int) -> void:
+static func _spawn_popup(
+	world_position: Vector2,
+	text: String,
+	color: Color,
+	font_size: int,
+	drift_distance: float = DRIFT_DISTANCE,
+	landing_jitter: float = LANDING_JITTER
+) -> void:
 	var world_root := Magnetide.world_root
 	if world_root == null or text.is_empty():
 		return
@@ -83,5 +110,8 @@ static func _spawn_popup(world_position: Vector2, text: String, color: Color, fo
 	number._text = text
 	number._color = color
 	number._font_size = font_size
+	number._drift_distance = drift_distance
+	number._landing_jitter = landing_jitter
 	world_root.add_child(number)
-	number.global_position = world_position + Vector2(randf_range(-SPAWN_JITTER_X, SPAWN_JITTER_X), 0.0)
+	var spawn_jitter := SPAWN_JITTER_X if landing_jitter > 0.0 else 0.0
+	number.global_position = world_position + Vector2(randf_range(-spawn_jitter, spawn_jitter), 0.0)

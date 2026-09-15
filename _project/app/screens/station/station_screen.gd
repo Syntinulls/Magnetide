@@ -1020,7 +1020,7 @@ func _equip_dynamic_item_from_popup(entry: Resource) -> void:
 			if weapon_data == null:
 				return
 			_run_loadout.equip_weapon(weapon_data)
-		&"player_augment", &"ship_augment", &"magnet_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment", &"recycler_augment":
 			var augment_data := _catalog_entry_item_data(entry) as AugmentData
 			if augment_data == null:
 				return
@@ -1050,6 +1050,8 @@ func _equip_augment_into_slot(
 			_run_loadout.equip_ship_augment(slot_index, augment_data)
 		&"magnet_augment":
 			_run_loadout.equip_magnet_augment(slot_index, augment_data)
+		&"recycler_augment":
+			_run_loadout.equip_recycler_augment(slot_index, augment_data)
 		_:
 			return false
 	return true
@@ -1160,7 +1162,7 @@ func _get_equipped_item_for_slot(slot: DynamicUpgradeSlot) -> Resource:
 	match slot.slot_kind:
 		&"weapon":
 			return _run_loadout.equipped_weapon
-		&"player_augment", &"ship_augment", &"magnet_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment", &"recycler_augment":
 			return _get_equipped_augment(slot.slot_kind, slot.slot_index)
 	return null
 
@@ -1464,7 +1466,7 @@ func _active_slot_catalog() -> Array[UpgradeCatalogEntry]:
 
 func _get_active_catalog_entries() -> Array[Resource]:
 	match _active_dynamic_slot_kind:
-		&"player_augment", &"ship_augment", &"magnet_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment", &"recycler_augment":
 			return _get_augment_catalog_entries()
 	return _get_weapon_catalog_entries()
 
@@ -1870,7 +1872,7 @@ func _is_catalog_entry_equipped(entry: Resource) -> bool:
 	match _active_dynamic_slot_kind:
 		&"weapon":
 			return _same_equipment_data(_catalog_entry_equipment(entry), _run_loadout.equipped_weapon)
-		&"player_augment", &"ship_augment", &"magnet_augment":
+		&"player_augment", &"ship_augment", &"magnet_augment", &"recycler_augment":
 			var item_data := _catalog_entry_item_data(entry)
 			for augment in _get_equipped_augments_of_kind(_active_dynamic_slot_kind):
 				if ItemData.is_same_item(augment, item_data as ItemData):
@@ -2167,6 +2169,8 @@ func _get_equipped_augments_of_kind(slot_kind: StringName) -> Array[AugmentData]
 			return _run_loadout.ship_augments
 		&"magnet_augment":
 			return _run_loadout.magnet_augments
+		&"recycler_augment":
+			return _run_loadout.recycler_augments
 	return []
 
 

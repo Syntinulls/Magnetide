@@ -7,28 +7,28 @@
 [sub_resource type="Resource" id="eff_scrap"]
 script = ExtResource("3_eff")
 target = 5
-target_property = &"double_scrap_chance_percent"
+target_property = &"double_bundle_chance_percent"
 amount_per_level = 5.0
 
 [sub_resource type="Resource" id="c0"]
 script = ExtResource("2_lvl")
-scrap_cost = 20
+scrap_cost = 50
 
 [sub_resource type="Resource" id="c1"]
 script = ExtResource("2_lvl")
-scrap_cost = 35
+scrap_cost = 100
 
 [sub_resource type="Resource" id="c2"]
 script = ExtResource("2_lvl")
-scrap_cost = 55
+scrap_cost = 150
 
 [sub_resource type="Resource" id="c3"]
 script = ExtResource("2_lvl")
-scrap_cost = 80
+scrap_cost = 200
 
 [sub_resource type="Resource" id="c4"]
 script = ExtResource("2_lvl")
-scrap_cost = 110
+scrap_cost = 250
 
 [resource]
 script = ExtResource("1_aud")

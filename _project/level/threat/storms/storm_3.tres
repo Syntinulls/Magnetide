@@ -100,7 +100,7 @@ batches = Array[ExtResource("3_storm_batch")]([SubResource("Resource_w5_b1"), Su
 
 [sub_resource type="Resource" id="Resource_weather"]
 script = ExtResource("4_acid_rain")
-player_drain_per_second = 1.0
+player_drain_per_second = 10.0
 vignette_color = Color(0.22, 0.85, 0.18, 0.42)
 vignette_fade_seconds = 1.5
 

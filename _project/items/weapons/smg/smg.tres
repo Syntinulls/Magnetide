@@ -7,11 +7,11 @@
 [ext_resource type="Texture2D" uid="uid://ndf8qmq35kuf" path="res://_project/items/weapons/smg/player_item_smg.png" id="3_smg_sprite"]
 [ext_resource type="AudioStream" uid="uid://blccv5n4fy5eh" path="res://_project/audio/sfx/weapons/old/machine_gun_shot_3.ogg" id="4_0h2pc"]
 [ext_resource type="AudioStream" uid="uid://d2mo71ig1kkt8" path="res://_project/audio/sfx/weapons/old/smg_reload.ogg" id="5_jtigy"]
-[ext_resource type="Resource" uid="uid://bupgweapondmg" path="res://_project/upgrades/weapon/weapon.tres" id="90_upg"]
+[ext_resource type="Resource" uid="uid://bupgwpnsmg000" path="res://_project/upgrades/weapon/smg.tres" id="90_upg"]
 
 [resource]
 script = ExtResource("2_weapon_data")
-damage = 6.0
+damage = 60.0
 fire_rate = 8.0
 bullet_sprite = ExtResource("1_bullet")
 fire_sfx = Array[AudioStream]([ExtResource("2_tg63g"), ExtResource("3_jtigy"), ExtResource("4_0h2pc")])

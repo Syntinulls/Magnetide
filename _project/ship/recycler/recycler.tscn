@@ -53,3 +53,16 @@ shape = SubResource("RectangleShape2D_8vsmy")
 position = Vector2(0, -45)
 
 [node name="TrashParticles" type="GPUParticles2D" parent="." unique_id=1427603565]
+
+[node name="BundleCounter" type="Label" parent="." unique_id=1427603566]
+offset_left = -60.0
+offset_top = -4.0
+offset_right = 60.0
+offset_bottom = 28.0
+theme_override_colors/font_color = Color(0.72, 0.95, 0.55, 1)
+theme_override_colors/font_outline_color = Color(0, 0, 0, 1)
+theme_override_constants/outline_size = 8
+theme_override_font_sizes/font_size = 24
+text = "0/5"
+horizontal_alignment = 1
+vertical_alignment = 1

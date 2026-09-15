@@ -11,10 +11,10 @@ script = ExtResource("2_increased_recycling_behavior")
 [resource]
 script = ExtResource("1_augment_data")
 behavior = SubResource("Resource_increased_recycling_behavior")
-owner_tags = Array[StringName]([&"ship"])
+owner_tags = Array[StringName]([&"recycler"])
 item_id = &"augment_increased_recycling"
 display_name = "Increased Recycling"
-description = "Recycling a trash item has an extra chance to yield double scrap."
+description = "A completed scrap bundle has a chance to pay out twice."
 icon = ExtResource("3_increased_recycling_icon")
-tags = Array[StringName]([&"augment", &"ship_augment"])
+tags = Array[StringName]([&"augment", &"recycler_augment"])
 upgrade_data = ExtResource("4_upgrade")

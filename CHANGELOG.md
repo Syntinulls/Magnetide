@@ -26,14 +26,21 @@
 - Added the Repair Gun, an unlockable tool that repairs the ship's hull mid-run. Hold
   **left-click** on the hull to fire a repair beam that spends scrap from your haul to
   restore integrity.
-- Added two new augments: **Adrenaline** (deal more damage the lower your health) and
-  **Increased Recycling** (a chance for extra scrap when recycling trash).
+- Added the **Adrenaline** augment: the lower your health, the more damage you deal.
 - Added a pause menu. Press **ESC** to pause, then continue or abandon the run.
 
 #### Ship
 
 - Added the **Auto-Repair** ship augment, which automatically spends scrap from your
   haul to patch the hull whenever it takes damage.
+- The Recycler now saves up the trash you feed it and pays out a whole bundle of scrap at
+  once. A counter on it tracks how much more junk it needs, and each payout pops the
+  amount you earned over the Recycler as the scrap lands in your total.
+- The Recycler has its own section in the station, with an upgrade that lowers how much
+  trash a bundle takes, another that raises how much scrap a bundle pays, and its own
+  augment slot.
+- Added the **Increased Recycling** augment, which gives the Recycler a chance to pay out
+  a bundle twice. It fits the Recycler's augment slot.
 - You can now set carried items down anywhere on the ship's floor, not just in storage.
   Anything still on the floor when you depart is left behind.
 - Identical processed parts now stack in storage, showing a count, and stacks take no
@@ -85,9 +92,9 @@
 #### Station
 
 - Research Points now come in three rarities — Common, Rare, and Epic — earned based on
-  the rarity of the artifact you research. Unlocks now cost specific combinations, and
-  existing saves have their old points converted to Common.
-- Every station slot can now be upgraded, including all four augment slots.
+  the rarity of the artifact you research. Each unlock costs a single rarity, so what a
+  thing costs tells you how deep into a run you need to get before you can afford it.
+- Every station slot can now be upgraded, including all five augment slots.
 
 #### Audio
 
@@ -173,6 +180,37 @@
 - Highlights on interactables and salvage now trace the object's full silhouette.
 - New art for the shotgun, pistol, magnet gun, bullets, and augment icons; the hotbar
   now shows each weapon's actual in-world art.
+
+### Balancing
+
+#### Weapons
+
+- Every weapon now upgrades on its own track. Each has its own number of upgrade levels
+  and its own damage gain per level, and upgrading one no longer upgrades the others.
+- Damage and health numbers across the whole game are much larger. Fights play out the
+  same, but each upgrade level now makes a difference you can actually see in the damage
+  numbers.
+- Weapon unlocks were repriced: each costs a single kind of Research Point, rising in
+  price within that kind. The later weapons need rarer points, so they naturally arrive
+  once you're reaching deeper into a run.
+
+#### Salvaging
+
+- Recycling trash is now a far more serious source of scrap — bundles pay out properly
+  instead of the old trickle, and Recycler upgrades push it much further.
+- The **Bonus!** lever reward pays out considerably more scrap.
+
+#### Station
+
+- Upgrade prices were rebuilt around the new scrap income. Fully upgrading any weapon
+  costs the same total, no matter how many levels it has.
+- The Repair Gun and the **Auto-Repair** augment no longer get more expensive to use as
+  you upgrade them. Every level now simply repairs more for the scrap you spend.
+
+#### Research
+
+- Artifacts turn up more often, and one run can now bank two of each rarity instead of
+  one, so unlocks arrive at a steadier pace.
 
 ### Fixes
 
