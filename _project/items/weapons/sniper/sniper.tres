@@ -9,7 +9,7 @@
 
 [resource]
 script = ExtResource("2_weapon_data")
-damage = 450.0
+damage = 45.0
 fire_rate = 1.0
 bullet_speed = 2400.0
 pierce = 4

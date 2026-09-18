@@ -31,7 +31,7 @@ shader_parameter/pulse_depth = 0.0
 
 [resource]
 script = ExtResource("1_weapon_data")
-damage = 20.0
+damage = 2.0
 fire_rate = 30.0
 bullet_speed = 1300.0
 pierce = 5

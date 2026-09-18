@@ -7,8 +7,10 @@ signal trash_recycled
 ## Trash items that must be fed in before the recycler pays out. Driven by the recycler intake
 ## upgrade through the run loadout.
 @export var trash_per_bundle: int = 5
-## Scrap metal awarded by one completed bundle. Driven by the recycler yield upgrade.
-@export var scrap_per_bundle: int = 15
+## Scrap metal awarded by one completed bundle rolls uniformly in [min, max], so payouts vary
+## instead of repeating one number. Both ends are driven by the recycler yield upgrade.
+@export var scrap_bundle_min: int = 5
+@export var scrap_bundle_max: int = 10
 ## Where the payout readout pops, relative to the recycler.
 @export var scrap_popup_offset: Vector2 = Vector2(0, -90)
 @export_group("")
@@ -141,10 +143,14 @@ func _on_own_trash_recycled() -> void:
 
 	_trash_fed = 0
 	_refresh_counter_label()
-	if player == null or not is_instance_valid(player) or scrap_per_bundle <= 0:
+	if player == null or not is_instance_valid(player) or scrap_bundle_max <= 0:
 		return
 	var bundles := 2 if randf() * 100.0 < double_bundle_chance_percent else 1
-	var awarded := bundles * scrap_per_bundle
+	var awarded := 0
+	for _bundle in range(bundles):
+		awarded += _roll_bundle_scrap()
+	if awarded <= 0:
+		return
 	# The readout over the recycler is the payout's whole presentation: no pickup sprite
 	# riding up to the HUD, and no second label over the player saying the same thing.
 	player.scrap_collector.bank(awarded)
@@ -158,9 +164,18 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 	if loadout == null:
 		return
 	trash_per_bundle = maxi(loadout.recycler_trash_per_bundle, 1)
-	scrap_per_bundle = maxi(loadout.recycler_scrap_per_bundle, 0)
+	scrap_bundle_min = maxi(loadout.recycler_scrap_bundle_min, 0)
+	scrap_bundle_max = maxi(loadout.recycler_scrap_bundle_max, scrap_bundle_min)
 	_trash_fed = 0
 	_refresh_counter_label()
+
+
+## One bundle's scrap: a uniform roll across the authored range (a min above the max
+## collapses to the max so a bad upgrade table can never pay nothing).
+func _roll_bundle_scrap() -> int:
+	var low := maxi(scrap_bundle_min, 0)
+	var high := maxi(scrap_bundle_max, low)
+	return randi_range(low, high)
 
 
 func _refresh_counter_label() -> void:

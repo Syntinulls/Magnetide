@@ -29,7 +29,7 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export var ship_storage_area_size: Vector2 = Vector2(180, 100)
 @export var ship_storage_area_position: Vector2 = Vector2(0, -95)
 @export var ship_storage_marker_height: float = 24.0
-@export var ship_max_health: float = 2500.0
+@export var ship_max_health: float = 250.0
 
 @export_group("Magnet")
 @export var magnet_pull_frequency: float = 2.5
@@ -46,8 +46,11 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export_group("Recycler")
 ## Trash items fed into the recycler per scrap bundle paid out.
 @export var recycler_trash_per_bundle: int = 5
-## Scrap metal paid out by one completed bundle.
-@export var recycler_scrap_per_bundle: int = 15
+## Least scrap metal one completed bundle can pay out. Each payout rolls uniformly in
+## [min, max]; both ends are driven by the recycler yield upgrade.
+@export var recycler_scrap_bundle_min: int = 5
+## Most scrap metal one completed bundle can pay out.
+@export var recycler_scrap_bundle_max: int = 10
 
 @export_group("Player")
 @export var player_speed: float = 400.0
@@ -60,7 +63,7 @@ const REPAIR_GUN_SLOT_ID := &"repair_gun"
 @export var player_jump_min_height: float = 25.0
 ## Seconds from leaving the floor to the top of a full-hold jump.
 @export var player_jump_time_to_apex: float = 0.375
-@export var player_max_health: float = 1000.0
+@export var player_max_health: float = 100.0
 @export var player_max_shield: float = 0.0
 @export var player_shield_recharge_delay: float = 6.0
 @export var player_shield_recharge_duration: float = 1.0
@@ -253,6 +256,28 @@ func prepare_for_run() -> void:
 func ensure_upgrade_state() -> void:
 	_ensure_equipped_defaults()
 	_migrate_player_shield_defaults()
+
+
+## Re-reads every upgradeable loadout stat's base value from `defaults` (the authored
+## default loadout). Saved loadouts carry their own copy of these bases, so without
+## this a rebalance of the authored numbers would never reach an existing save; the
+## next prepare_for_run() then rebuilds each stat as base + upgrade deltas. The shield
+## base is skipped: it is derived from the slot unlock in _migrate_player_shield_defaults.
+func sync_stat_bases_from(defaults: RunLoadout) -> void:
+	if defaults == null or defaults == self:
+		return
+	for item in STAT_ITEMS:
+		if item == null or item.upgrade_data == null:
+			continue
+		for effect in item.upgrade_data.effects:
+			if not _effect_targets_loadout(effect):
+				continue
+			var property_name := String(effect.target_property)
+			if property_name.is_empty() or property_name == "player_max_shield":
+				continue
+			if not Utils.has_property(defaults, property_name):
+				continue
+			upgrade_base_values[property_name] = defaults.get(property_name)
 
 
 func get_upgraded_weapon_preview(weapon_data: WeaponData = null) -> WeaponData:

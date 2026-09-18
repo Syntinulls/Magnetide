@@ -39,6 +39,9 @@ func setup(default_run_loadout: RunLoadout, reset: bool = false) -> void:
 	if current_run_loadout == null and default_run_loadout != null:
 		current_run_loadout = default_run_loadout.duplicate(true) as RunLoadout
 	if current_run_loadout != null:
+		# A loaded save carries stale stat bases from whatever build wrote it; the
+		# authored default loadout is the source of truth for those numbers.
+		current_run_loadout.sync_stat_bases_from(default_run_loadout)
 		current_run_loadout.prepare_for_run()
 
 

@@ -6,7 +6,7 @@ class_name AutoRepairBehavior
 ## those conditions block a repair, so a hit taken with a ready charge is patched immediately.
 
 ## Ship integrity restored per repair.
-@export var repair_amount: float = 100.0
+@export var repair_amount: float = 10.0
 ## In-run scrap metal consumed per repair.
 @export var repair_cost: int = 10
 ## Seconds between repairs — the level-0 value, upgraded in place by the augment's

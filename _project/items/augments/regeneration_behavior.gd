@@ -4,7 +4,7 @@ class_name RegenerationBehavior
 ## Effective tunables — the level-0 values, upgraded in place by the augment's AugmentUpgradeData
 ## effects (target BEHAVIOR) before a run and before each gain-summary computation.
 @export var out_of_combat_seconds: float = 6.0
-@export var health_per_second: float = 20.0
+@export var health_per_second: float = 2.0
 
 ## Healing lands in one whole health_per_second chunk each second (not smeared
 ## per frame), so the heal popups the player sees match the stat's number.

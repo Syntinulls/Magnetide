@@ -29,11 +29,11 @@ enum Kind { HEALTH, INTEGRITY }
 @export var health_text: String = "Med Kit!"
 @export var integrity_text: String = "Hull Patch!"
 ## Health restored at threat stage 0 and stage 9.
-@export var health_amount_min: float = 100.0
-@export var health_amount_max: float = 350.0
+@export var health_amount_min: float = 10.0
+@export var health_amount_max: float = 70.0
 ## Ship integrity restored at threat stage 0 and stage 9.
-@export var integrity_amount_min: float = 200.0
-@export var integrity_amount_max: float = 600.0
+@export var integrity_amount_min: float = 20.0
+@export var integrity_amount_max: float = 120.0
 ## Pause after the minigame closes before the recovery lands, so the activation
 ## presentation (camera, vignette) finishes restoring first.
 @export var apply_delay: float = 0.4

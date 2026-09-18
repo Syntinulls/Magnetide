@@ -12,7 +12,7 @@ script = ExtResource("6_eff")
 target = 6
 target_property = &"repair_amount"
 label = "Repair"
-level_amounts = Array[float]([40.0, 40.0, 40.0, 40.0, 40.0])
+level_amounts = Array[float]([8.0, 8.0, 8.0, 8.0, 8.0])
 
 [sub_resource type="Resource" id="EffectRate"]
 script = ExtResource("6_eff")

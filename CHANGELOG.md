@@ -187,17 +187,27 @@
 
 - Every weapon now upgrades on its own track. Each has its own number of upgrade levels
   and its own damage gain per level, and upgrading one no longer upgrades the others.
-- Damage and health numbers across the whole game are much larger. Fights play out the
-  same, but each upgrade level now makes a difference you can actually see in the damage
-  numbers.
+- Damage and health numbers now grow with the run. A fresh start deals and takes small,
+  readable numbers, and every upgrade level adds a step you can actually see in the damage
+  popups, with the biggest numbers showing up deep in a run.
 - Weapon unlocks were repriced: each costs a single kind of Research Point, rising in
   price within that kind. The later weapons need rarer points, so they naturally arrive
   once you're reaching deeper into a run.
+
+#### Enemies
+
+- Difficulty now climbs steadily between storms and takes a clear step up after each one.
+  The first couple of threat levels stay manageable with starting gear; past a storm, the
+  upgrades you bought since the last one start to matter.
+- Chargers hit much harder. A single dash now takes a serious bite out of an unshielded
+  player, so their wind-up is worth respecting.
 
 #### Salvaging
 
 - Recycling trash is now a far more serious source of scrap — bundles pay out properly
   instead of the old trickle, and Recycler upgrades push it much further.
+- Recycler bundles no longer pay a fixed amount. Each payout rolls somewhere in a range that
+  starts small and widens upward as you upgrade the Recycler's yield.
 - The **Bonus!** lever reward pays out considerably more scrap.
 
 #### Station

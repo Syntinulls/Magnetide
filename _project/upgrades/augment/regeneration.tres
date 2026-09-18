@@ -8,7 +8,7 @@
 script = ExtResource("3_eff")
 target = 5
 target_property = &"health_per_second"
-amount_per_level = 10.0
+amount_per_level = 2.0
 
 [sub_resource type="Resource" id="eff_ooc"]
 script = ExtResource("3_eff")

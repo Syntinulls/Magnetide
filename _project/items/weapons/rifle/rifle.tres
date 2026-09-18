@@ -11,6 +11,7 @@
 
 [resource]
 script = ExtResource("1_kecvl")
+damage = 10.0
 bullet_sprite = ExtResource("1_0akki")
 fire_sfx = Array[AudioStream]([ExtResource("2_isxej"), ExtResource("3_jjplp"), ExtResource("4_5mfk1")])
 last_shot_sfx = Array[AudioStream]([ExtResource("2_isxej"), ExtResource("3_jjplp"), ExtResource("4_5mfk1")])

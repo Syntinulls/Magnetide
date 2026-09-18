@@ -13,7 +13,7 @@
 
 [resource]
 script = ExtResource("2_weapon_data")
-damage = 70.0
+damage = 7.0
 fire_rate = 3.0
 bullet_speed = 1700.0
 bullet_sprite = ExtResource("1_bullet")

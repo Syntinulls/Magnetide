@@ -12,8 +12,7 @@ script = ExtResource("6_eff")
 target = 1
 target_property = &"ship_max_health"
 label = "Ship Integrity"
-amount_per_level = 0.05
-increase_mode = 1
+amount_per_level = 75.0
 
 [sub_resource type="Resource" id="a1"]
 script = ExtResource("3_ic")

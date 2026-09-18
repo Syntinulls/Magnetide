@@ -7,12 +7,19 @@
 [ext_resource type="Resource" uid="uid://motor001" path="res://_project/salvage/catalog/motor.tres" id="5_b"]
 [ext_resource type="Script" uid="uid://dlgmwb8mm2ot0" path="res://_project/upgrades/upgrade_effect.gd" id="6_eff"]
 
-[sub_resource type="Resource" id="Effect"]
+[sub_resource type="Resource" id="EffectMin"]
 script = ExtResource("6_eff")
 target = 7
-target_property = &"recycler_scrap_per_bundle"
-label = "Bundle Scrap"
-amount_per_level = 5.0
+target_property = &"recycler_scrap_bundle_min"
+label = "Min Scrap"
+level_amounts = Array[float]([3.0, 4.0, 4.0, 6.0, 8.0])
+
+[sub_resource type="Resource" id="EffectMax"]
+script = ExtResource("6_eff")
+target = 7
+target_property = &"recycler_scrap_bundle_max"
+label = "Max Scrap"
+level_amounts = Array[float]([4.0, 4.0, 6.0, 6.0, 10.0])
 
 [sub_resource type="Resource" id="a1"]
 script = ExtResource("3_ic")
@@ -86,4 +93,4 @@ scrap_cost = 150
 script = ExtResource("1_upg")
 display_name = "Recycler Yield"
 level_costs = Array[ExtResource("2_lvl")]([SubResource("L1"), SubResource("L2"), SubResource("L3"), SubResource("L4"), SubResource("L5")])
-effects = Array[ExtResource("6_eff")]([SubResource("Effect")])
+effects = Array[ExtResource("6_eff")]([SubResource("EffectMin"), SubResource("EffectMax")])

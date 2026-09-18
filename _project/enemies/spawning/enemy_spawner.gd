@@ -26,12 +26,19 @@ const DEFAULT_ENEMY_SCENE := preload("res://_project/enemies/enemy.tscn")
 ## this). 1.0 = no change.
 @export_range(0.1, 10.0, 0.1, "or_greater") var magnet_active_spawn_rate_multiplier: float = 2.0
 ## Extra enemy max health per threat level above 1, as a percent of the base
-## EnemyData value. Level 1 enemies use the base stat unchanged; at 5% a level 10
-## enemy has 1.45x health. Locked in per enemy at spawn.
-@export_range(0.0, 100.0, 0.5, "or_greater") var health_increase_per_level_percent: float = 5.0
+## EnemyData value. This is the smooth part of the curve: within one storm band
+## (levels 1-3, 4-6, 7-9, 10) stats climb linearly. Locked in per enemy at spawn.
+@export_range(0.0, 100.0, 0.5, "or_greater") var health_increase_per_level_percent: float = 10.0
 ## Extra enemy damage per threat level above 1, as a percent of the base value.
 ## Same curve as health. Locked in per enemy at spawn.
-@export_range(0.0, 100.0, 0.5, "or_greater") var damage_increase_per_level_percent: float = 5.0
+@export_range(0.0, 100.0, 0.5, "or_greater") var damage_increase_per_level_percent: float = 10.0
+## Multiplier applied to health and damage once per storm gate below the current
+## threat level (the run's storms come from the level definition). This is the step
+## part of the curve: crossing a storm bumps every enemy up a tier, so the levels
+## after it lean on upgrades bought since the last one. At 10%/level and 1.25x per
+## storm (gates after 3, 6, 9): threat 3 = 1.2x, threat 4 = 1.63x, threat 7 = 2.5x,
+## threat 10 = 3.7x. 1.0 disables the jumps.
+@export_range(1.0, 5.0, 0.05, "or_greater") var storm_tier_stat_multiplier: float = 1.25
 
 @export_group("Batch Spread")
 ## Within a batch, enemies spawn one at a time, each offset from the previous by a
@@ -427,11 +434,29 @@ func _current_spawn_interval() -> float:
 	return maxf(interval, 0.1)
 
 
-## Linear stat multiplier: 1.0x at threat level 1, growing by `percent_per_level`
-## of the base value for each level above it. Levels outside 1..LEVEL_COUNT clamp.
+## Stat multiplier for a threat level: 1.0x at level 1 growing linearly by
+## `percent_per_level` of the base value per level, then multiplied by
+## `storm_tier_stat_multiplier` for every storm gate strictly below the level.
+## Levels outside 1..LEVEL_COUNT clamp.
 func _threat_stat_scale(percent_per_level: float, level: int) -> float:
-	var levels_above_first := clampi(level, 1, ThreatManager.LEVEL_COUNT) - 1
-	return 1.0 + float(levels_above_first) * maxf(percent_per_level, 0.0) * 0.01
+	var clamped_level := clampi(level, 1, ThreatManager.LEVEL_COUNT)
+	var linear := 1.0 + float(clamped_level - 1) * maxf(percent_per_level, 0.0) * 0.01
+	var storms_passed := _storm_gates_below(clamped_level)
+	return linear * pow(maxf(storm_tier_stat_multiplier, 1.0), float(storms_passed))
+
+
+## Number of storm gates the player has crossed to reach `level` (gates sit after a
+## level, so a gate after level 3 counts for level 4 and up). 0 without a threat manager.
+func _storm_gates_below(level: int) -> int:
+	if _threat_manager == null:
+		_resolve_threat_manager()
+	if _threat_manager == null:
+		return 0
+	var count := 0
+	for gate_level in _threat_manager.get_storm_gate_levels():
+		if gate_level < level:
+			count += 1
+	return count
 
 
 func _int_value_for_level(values: Array[int], level: int, fallback: int) -> int:

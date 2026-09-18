@@ -1,6 +1,6 @@
 extends HeldItemData
 class_name WeaponData
-@export var damage: float = 100.0
+@export var damage: float = 10.0
 @export var fire_rate: float = 5.0
 @export var bullet_speed: float = 1800.0
 @export var pierce: int = 1:

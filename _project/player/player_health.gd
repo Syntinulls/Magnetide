@@ -9,7 +9,7 @@ signal destroyed
 signal damaged(amount: float)
 signal shield_changed(current: int, maximum: int, broken: bool, delta: int)
 
-@export var max_health: float = 1000.0
+@export var max_health: float = 100.0
 @export var max_shield: float = 2.0
 @export var shield_recharge_delay: float = 6.0
 @export var shield_recharge_duration: float = 1.0

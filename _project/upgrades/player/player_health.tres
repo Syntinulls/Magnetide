@@ -11,8 +11,7 @@
 script = ExtResource("6_eff")
 target_property = &"player_max_health"
 label = "Health"
-amount_per_level = 0.05
-increase_mode = 1
+amount_per_level = 30.0
 
 [sub_resource type="Resource" id="a1"]
 script = ExtResource("3_ic")
