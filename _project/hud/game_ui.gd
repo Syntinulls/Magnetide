@@ -65,6 +65,9 @@ var _bound_run_controller: RunController = null
 var _bound_player: Player = null
 var _bound_threat: ThreatManager = null
 var _displayed_scrap_count: int = 0
+## Scrap cost of one repair cycle shown after the scrap count while the Repair Gun is the
+## selected hotbar item; -1 hides the suffix.
+var _displayed_repair_cost: int = -1
 var _scrap_pulse_tween: Tween = null
 var _shield_was_broken: bool = false
 var _displayed_shield_count: int = -1
@@ -116,6 +119,7 @@ func _process(delta: float) -> void:
 	_bind_to_threat()
 	_update_threat_event_text(delta)
 	_update_scrap_counter()
+	_update_repair_cost_suffix()
 	_update_magazine_counter()
 	_update_health_ui()
 	_update_hotbar_item_name()
@@ -272,6 +276,31 @@ func _update_scrap_counter() -> void:
 		set_run_scrap_metal_count(run.scrap_metal_collected)
 		return
 	set_run_scrap_metal_count(0)
+
+
+## Appends " / <cost>" to the scrap count while the Repair Gun is selected, so the player
+## can see what each repair cycle spends against what they have. Any other held item
+## (or none) drops the suffix.
+func _update_repair_cost_suffix() -> void:
+	var cost := -1
+	var hotbar := Magnetide.hotbar
+	if hotbar and hotbar.has_method("get_selected_item_data"):
+		var data: Variant = hotbar.get_selected_item_data()
+		if data is RepairGunData:
+			cost = maxi((data as RepairGunData).repair_cost, 0)
+	if cost == _displayed_repair_cost:
+		return
+	_displayed_repair_cost = cost
+	_refresh_scrap_count_text()
+
+
+func _refresh_scrap_count_text() -> void:
+	if _scrap_count_label == null:
+		return
+	var text := str(_displayed_scrap_count)
+	if _displayed_repair_cost >= 0:
+		text += " / %d" % _displayed_repair_cost
+	_scrap_count_label.text = text
 
 
 ## Magazine readout ("[icon] current / max"), shown above the scrap counter only
@@ -584,8 +613,7 @@ func set_run_scrap_metal_count(scrap_count: int) -> void:
 	var normalized_count := maxi(scrap_count, 0)
 	var should_pulse := normalized_count > _displayed_scrap_count
 	_displayed_scrap_count = normalized_count
-	if _scrap_count_label:
-		_scrap_count_label.text = str(normalized_count)
+	_refresh_scrap_count_text()
 	if should_pulse:
 		pulse_scrap_counter()
 

@@ -26,6 +26,8 @@
 - Added the Repair Gun, an unlockable tool that repairs the ship's hull mid-run. Hold
   **left-click** on the hull to fire a repair beam that spends scrap from your haul to
   restore integrity.
+  - While the Repair Gun is selected, the scrap counter shows the cost of one repair next
+    to your total, so you always know what a cycle will spend.
 - Added the **Adrenaline** augment: the lower your health, the more damage you deal.
 - Added a pause menu. Press **ESC** to pause, then continue or abandon the run.
 
@@ -214,8 +216,11 @@
 
 - Upgrade prices were rebuilt around the new scrap income. Fully upgrading any weapon
   costs the same total, no matter how many levels it has.
-- The Repair Gun and the **Auto-Repair** augment no longer get more expensive to use as
-  you upgrade them. Every level now simply repairs more for the scrap you spend.
+- The **Auto-Repair** augment no longer gets more expensive to use as you upgrade it; every
+  level simply repairs more for the scrap you spend.
+- Repair Gun upgrades now raise the scrap each repair costs by a steady amount, while the
+  hull each repair restores grows faster with every level. A fully upgraded gun patches a
+  fully upgraded hull in roughly half the cycles a fresh one needs.
 
 #### Research
 

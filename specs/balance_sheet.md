@@ -372,21 +372,26 @@ Source: `_project/items/magnet_tool/magnet_gun.tres`.
 
 ### Repair Gun (unlock: 1 Common RP)
 
-Source: `_project/items/repair_gun/repair_gun.tres`, upgrade
-`_project/upgrades/repair_gun/repair_gun.tres`. Beam range 520 px; progress resets on any
-interruption. Scrap cost per cycle is now **flat 10 at every level**, so efficiency rises
-monotonically.
+Source: `_project/items/repair_gun/repair_gun.tres` (stats from `repair_gun_data.gd` defaults),
+upgrade `_project/upgrades/repair_gun/repair_gun.tres`. Beam range 520 px; progress resets on
+any interruption. The track moves three stats: **scrap per cycle climbs a flat +5**, cycle speed
+climbs a flat +0.14/s, and **hull per cycle climbs by a growing step** (+7, +9, +12, +17, +25)
+so each level is a bigger jump than the last. Target: **10–15 cycles** to fill a base 250 hull
+at level 0, **6–8** to fill a maxed 625 hull at level 5. While the Repair Gun is the selected
+hotbar item the HUD scrap counter reads "total / cost".
 
-| Level | Hull per cycle | Cycles/s | s per cycle | Scrap per cycle | Hull per scrap |
-|---|---|---|---|---|---|
-| 0 | 10 | 0.50 | 2.00 | 10 | 1 |
-| 1 | 18 | 0.64 | 1.56 | 10 | 1.8 |
-| 2 | 26 | 0.78 | 1.28 | 10 | 2.6 |
-| 3 | 34 | 0.92 | 1.09 | 10 | 3.4 |
-| 4 | 42 | 1.06 | 0.94 | 10 | 4.2 |
-| 5 | **50** | **1.20** | 0.83 | 10 | **5** |
+| Level | Hull per cycle | Cycles/s | s per cycle | Scrap per cycle | Hull per scrap | Cycles 0 → full |
+|---|---|---|---|---|---|---|
+| 0 | 20 | 0.50 | 2.00 | 5 | 4.0 | 12.5 (250 hull) |
+| 1 | 27 | 0.64 | 1.56 | 10 | 2.7 | 12.0 (325) |
+| 2 | 36 | 0.78 | 1.28 | 15 | 2.4 | 11.1 (400) |
+| 3 | 48 | 0.92 | 1.09 | 20 | 2.4 | 9.9 (475) |
+| 4 | 65 | 1.06 | 0.94 | 25 | 2.6 | 8.5 (550) |
+| 5 | **90** | **1.20** | 0.83 | **30** | 3.0 | **6.9** (625) |
 
-A full repair of a base 250 hull costs 250 scrap at L0; a maxed 625 hull costs 125 scrap at L5.
+"Cycles 0 → full" assumes the hull track is upgraded in step. A full repair costs ~63 scrap at
+level 0 and ~208 at level 5: efficiency (hull per scrap) dips through the middle levels and
+recovers at the top, the deliberate price of much faster, chunkier repairs.
 
 Costs: scrap 25/50/75/100/150 + Gear ×1..5 (Common) + Copper Wires ×0,1..4 (Common).
 
