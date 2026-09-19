@@ -15,6 +15,9 @@ const STORAGE_BORDER_WIDTH: float = 6.0
 const STORAGE_AREA_OUTLINE_SHADER: Shader = preload("res://_project/common/border_outline.gdshader")
 const STORAGE_OUTLINE_WIDTH: float = 4.0
 const STORAGE_OUTLINE_OPACITY: float = 0.9
+## Breathing room kept around the storage rectangle when the stage frames the preview,
+## so the dashed line is not flush against the viewport edge.
+const STORAGE_OUTLINE_FRAME_MARGIN: float = 14.0
 
 @onready var _magnet: Node2D = $Magnet
 @onready var _storage_marker: ColorRect = $StorageMarker
@@ -22,6 +25,8 @@ const STORAGE_OUTLINE_OPACITY: float = 0.9
 
 var _storage_outline_line: Line2D = null
 var _storage_outline_material: ShaderMaterial = null
+## Area the stage must keep on screen; see get_preview_content_bounds().
+var _content_bounds: Rect2 = Rect2()
 
 
 func apply_run_loadout(loadout: RunLoadout) -> void:
@@ -32,6 +37,26 @@ func apply_run_loadout(loadout: RunLoadout) -> void:
 		_magnet.apply_run_loadout(loadout)
 	_update_storage_marker(loadout)
 	_update_storage_outline(loadout)
+	_update_content_bounds(loadout)
+
+
+## The area the preview must keep on screen whatever the current upgrade level: the storage
+## rectangle at its LARGEST authored size. PreviewStage frames this, so the dashed outline
+## stays fully visible at max Storage Size, where its top edge used to run off the top of
+## the viewport and lose its top line. Using the maximum rather than the current size keeps
+## the framing fixed across levels, so the upgrade's growth still reads against it.
+func get_preview_content_bounds() -> Rect2:
+	return _content_bounds
+
+
+func _update_content_bounds(loadout: RunLoadout) -> void:
+	var area_position := loadout.ship_storage_area_position
+	var max_size := loadout.get_storage_size_for_level(RunLoadout.STORAGE_SIZE_BY_LEVEL.size() - 1)
+	var margin := Vector2(STORAGE_OUTLINE_FRAME_MARGIN, STORAGE_OUTLINE_FRAME_MARGIN)
+	_content_bounds = Rect2(
+		Vector2(area_position.x - max_size.x * 0.5, area_position.y - max_size.y) - margin,
+		max_size + margin * 2.0
+	)
 
 
 ## Resize the hazard floor marker to match the storage area width/height, so the

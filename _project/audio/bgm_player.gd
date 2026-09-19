@@ -202,6 +202,19 @@ func _pick_track(category: int) -> String:
 	return path
 
 
+## Every track the game can play, across all categories, sorted by path. The credits
+## screen reads this so "which music is in the game" has a single definition: the same
+## folder scan playback uses, not a list kept in step by hand.
+func get_all_track_paths() -> Array[String]:
+	var paths: Array[String] = []
+	for category in CATEGORY_FOLDERS:
+		for path in _scan_category_tracks(category):
+			if not path in paths:
+				paths.append(path)
+	paths.sort()
+	return paths
+
+
 ## Lists the audio files in a category's folder. In exported builds imported
 ## audio is listed via its .import/.remap stub, so those suffixes are stripped
 ## before the extension check.

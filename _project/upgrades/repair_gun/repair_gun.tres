@@ -14,19 +14,19 @@ target_property = &"repair_amount"
 label = "Repair"
 level_amounts = Array[float]([7.0, 9.0, 12.0, 17.0, 25.0])
 
-[sub_resource type="Resource" id="EffectCost"]
-script = ExtResource("6_eff")
-target = 6
-target_property = &"repair_cost"
-label = "Scrap per Repair"
-amount_per_level = 5.0
-
 [sub_resource type="Resource" id="EffectRate"]
 script = ExtResource("6_eff")
 target = 6
 target_property = &"repair_rate"
 label = "Repair Speed"
 level_amounts = Array[float]([0.14, 0.14, 0.14, 0.14, 0.14])
+
+[sub_resource type="Resource" id="EffectCost"]
+script = ExtResource("6_eff")
+target = 6
+target_property = &"repair_cost"
+label = "Scrap per Repair"
+amount_per_level = 5.0
 
 [sub_resource type="Resource" id="g1"]
 script = ExtResource("3_ic")

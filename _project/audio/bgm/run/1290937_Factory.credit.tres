@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MusicCredit" format=3 uid="uid://b8okvuoju2t3e"]
+
+[ext_resource type="Script" path="res://_project/audio/music_credit.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+title = "Factory"
+artist = "neigefeu"
+source_url = "https://www.newgrounds.com/audio/listen/1290937"

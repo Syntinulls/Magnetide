@@ -59,7 +59,16 @@ const UPGRADE_POPUP_TOP_PADDING := 12.0
 const UPGRADE_POPUP_BOTTOM_PADDING := 14.0
 const UPGRADE_POPUP_TITLE_GAP := 10.0
 const UPGRADE_POPUP_SECTION_GAP := 20.0
-const UPGRADE_POPUP_OFFSET := Vector2(96.0, -145.0)
+## Gap between the upgrade button and the cost popup beside it.
+const UPGRADE_POPUP_GAP := 24.0
+## Gap between a slot and its hover readout, and the room a popup keeps from the
+## window edge when a slot near the border would otherwise push it off screen.
+const SLOT_INFO_POPUP_GAP := 12.0
+const SCREEN_EDGE_MARGIN := 8.0
+## Authored BodyColumn separation, needed to measure a content-sized panel.
+const DETAIL_BODY_SEPARATION := 10.0
+const SLOT_INFO_MIN_HEIGHT := 128.0
+const SLOT_INFO_MAX_HEIGHT := 460.0
 const WEAPON_STAT_PROPERTIES: Array[String] = ["damage", "fire_rate", "pierce"]
 const STORAGE_STAT_PROPERTIES: Array[String] = ["rarity", "weight", "value"]
 
@@ -83,6 +92,8 @@ var _active_dynamic_slot_id: StringName = &""
 var _active_dynamic_slot_kind: StringName = &""
 var _active_dynamic_slot_button: Button = null
 var _active_augment_slot_index: int = -1
+## Slot whose hover readout is currently shown; &"" when the readout is hidden.
+var _slot_info_slot_id: StringName = &""
 var _active_detail_entry: Resource = null
 ## Widest entry width measured on the last list population, reused by the panel
 ## layout pass so it can size the list panel without re-measuring every entry.
@@ -109,7 +120,11 @@ var _dynamic_detail_panel_left: float = 0.0
 ## shown only when hovering a different item) mirrors its structure.
 @onready var _dynamic_slot_popup_stats_panel: Control = $DynamicSlotPopup/ItemDetailPanel
 @onready var _dynamic_slot_popup_compare_panel: Control = $DynamicSlotPopup/ItemDetailPanelCompare
-@onready var _upgrade_cost_popup: Control = $PageViewport/PageContainer/PlayerPage/UpgradeCostPopup
+# Both popups are children of the screen root rather than of a page: the page viewport
+# clips its contents, which used to cut a popup off against the ceiling line whenever a
+# slot near the top of the panel opened one.
+@onready var _upgrade_cost_popup: Control = $UpgradeCostPopup
+@onready var _slot_info_popup: Control = $SlotInfoPopup
 @onready var _stats_title_label: Label = $SharedBottomArea/StatsPanel/TitleLabel
 @onready var _stats_body_label: Label = $SharedBottomArea/StatsPanel/BodyLabel
 @onready var _storage_grid: GridContainer = $SharedBottomArea/StoragePanel/StorageScroll/StorageGrid
@@ -135,7 +150,10 @@ func _ready() -> void:
 	_upgrade_cost_popup.visible = false
 	_clear_storage_detail()
 	_dynamic_slot_popup.z_index = 30
-	_upgrade_cost_popup.z_index = 5
+	_upgrade_cost_popup.z_index = 20
+	_slot_info_popup.visible = false
+	_slot_info_popup.z_index = 20
+	_configure_slot_info_popup_passthrough()
 	_configure_dynamic_popup_mouse_blocking()
 	_configure_upgrade_popup_layout()
 	_discover_slots()
@@ -196,6 +214,10 @@ func _sync_research_unlocks_to_loadout() -> void:
 			continue
 		if save_data.is_research_unlocked(_get_static_slot_unlock_research_id(slot_id)):
 			_run_loadout.set_slot_unlocked(slot_id, true)
+
+
+func _process(_delta: float) -> void:
+	_update_slot_info_popup()
 
 
 func _notification(what: int) -> void:
@@ -505,39 +527,55 @@ func _show_upgrade_cost_popup(button: Button, upgrade_id: StringName) -> void:
 
 	var static_slot_id := _get_unlockable_static_slot_id_for_upgrade(upgrade_id)
 	if static_slot_id != &"" and not _is_static_slot_unlocked(static_slot_id):
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = _get_static_slot_display_name(static_slot_id)
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_static_slot_unlock_detail_text(static_slot_id)
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_static_slot_unlock_cost_text(static_slot_id)
+		$UpgradeCostPopup/TitleLabel.text = _get_static_slot_display_name(static_slot_id)
+		$UpgradeCostPopup/CreditsLabel.text = _build_static_slot_unlock_detail_text(static_slot_id)
+		$UpgradeCostPopup/SecondaryLabel.text = _build_static_slot_unlock_cost_text(static_slot_id)
 	elif _is_upgrade_maxed(upgrade_id):
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = "MAX LEVEL"
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = ""
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = ""
+		$UpgradeCostPopup/TitleLabel.text = "MAX LEVEL"
+		$UpgradeCostPopup/CreditsLabel.text = ""
+		$UpgradeCostPopup/SecondaryLabel.text = ""
 	else:
 		var current_level := _get_upgrade_current_level(upgrade_id)
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/TitleLabel.text = "Lv %d -> %d" % [
+		$UpgradeCostPopup/TitleLabel.text = "Lv %d -> %d" % [
 			current_level,
 			current_level + 1,
 		]
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/CreditsLabel.text = _build_upgrade_gain_text(upgrade_id)
-		$PageViewport/PageContainer/PlayerPage/UpgradeCostPopup/SecondaryLabel.text = _build_upgrade_requirement_text(upgrade_id)
+		$UpgradeCostPopup/CreditsLabel.text = _build_upgrade_gain_text(upgrade_id)
+		$UpgradeCostPopup/SecondaryLabel.text = _build_upgrade_requirement_text(upgrade_id)
 	_position_upgrade_cost_popup(button)
 	_upgrade_cost_popup.visible = true
 
 
-## Anchor the cost popup beside the button that opened it: offset to its right by default,
+## Anchor the cost popup beside the button that opened it: to its right by default,
 ## mirrored to its left for a slot authored to open leftward, so the popup extends away from
-## the page's slots rather than across them.
+## the page's slots rather than across them. It is centered on the button vertically because
+## its height varies with its contents — a maxed track shows a single line, and the old fixed
+## offset left that short popup floating well above the button it belonged to.
 func _position_upgrade_cost_popup(button: Button) -> void:
-	var button_rect := button.get_global_rect()
-	var page_rect := _player_page.get_global_rect()
 	_resize_upgrade_cost_popup()
-	var popup_position := (button_rect.position - page_rect.position) + UPGRADE_POPUP_OFFSET
+	var button_rect := button.get_global_rect()
+	var popup_position := Vector2(
+		button_rect.end.x + UPGRADE_POPUP_GAP,
+		button_rect.get_center().y - _upgrade_cost_popup.size.y * 0.5
+	)
 	var slot := _slot_for_button(button)
 	if slot != null and slot.popups_open_left:
-		popup_position.x = (button_rect.end.x - page_rect.position.x) \
-			- UPGRADE_POPUP_OFFSET.x \
-			- _upgrade_cost_popup.size.x
-	_upgrade_cost_popup.position = popup_position
+		popup_position.x = button_rect.position.x - UPGRADE_POPUP_GAP - _upgrade_cost_popup.size.x
+	_upgrade_cost_popup.global_position = _clamp_popup_to_screen(
+		popup_position, _upgrade_cost_popup.size
+	)
+
+
+## Keep a popup fully on screen. The popups sit outside the clipped page viewport now, so
+## nothing trims them, but a slot near a window edge could still push one past the border.
+func _clamp_popup_to_screen(popup_position: Vector2, popup_size: Vector2) -> Vector2:
+	var bounds := get_global_rect()
+	var lowest := bounds.position + Vector2(SCREEN_EDGE_MARGIN, SCREEN_EDGE_MARGIN)
+	var highest := bounds.end - popup_size - Vector2(SCREEN_EDGE_MARGIN, SCREEN_EDGE_MARGIN)
+	return Vector2(
+		clampf(popup_position.x, lowest.x, maxf(lowest.x, highest.x)),
+		clampf(popup_position.y, lowest.y, maxf(lowest.y, highest.y))
+	)
 
 
 ## The slot widget that owns a popup-anchoring button (the button lives inside the slot's own
@@ -675,6 +713,7 @@ func _pan_to_page(page_index: int) -> void:
 	_is_panning = true
 	_close_dynamic_slot_popup()
 	_hide_upgrade_cost_popup()
+	_hide_slot_info_popup()
 	_clear_storage_detail()
 	_clear_stats_panel()
 	_pan_to_ship_button.visible = false
@@ -894,37 +933,51 @@ func _catalog_entry_matches_item(entry: Resource, item: Resource) -> bool:
 func _render_detail_panel(panel: Control, entry: Resource) -> void:
 	if panel == null or entry == null:
 		return
+	# A hidden entry keeps its identity masked: no name, stats, or description are
+	# revealed until its unlock dependency is met.
+	if _is_catalog_entry_hidden(entry):
+		_fill_detail_panel(
+			panel,
+			HIDDEN_ENTRY_NAME,
+			false,
+			"Locked. Unlock the previous weapon to reveal this one.",
+			"[color=#%s]LOCKED[/color]\n%s" % [
+				DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
+				_colorize_requirement("Requires the previous weapon", false),
+			]
+		)
+	else:
+		_fill_detail_panel(
+			panel,
+			_catalog_entry_display_name(entry),
+			_is_catalog_entry_equipped(entry),
+			_format_catalog_item_description(entry),
+			_build_catalog_status_row(entry)
+		)
+	_size_detail_panel(panel, _catalog_entry_visible_name(entry), _is_catalog_entry_equipped(entry))
+
+
+## Write one detail panel's four display fields. Shared by the dynamic slot popup's
+## hover/compare panels and the slot hover readout so both read identically: the name
+## (with EQUIPPED beside it), a body, and a pinned status row.
+func _fill_detail_panel(
+	panel: Control, name_text: String, equipped: bool, body_text: String, status_text: String
+) -> void:
 	var name_label := panel.get_node_or_null("HeaderRow/NameLabel") as Label
 	var equipped_label := panel.get_node_or_null("HeaderRow/EquippedLabel") as Label
 	var desc_label := panel.get_node_or_null("BodyColumn/DescriptionLabel") as RichTextLabel
 	var status_label := panel.get_node_or_null("BodyColumn/StatusLabel") as RichTextLabel
-	# A hidden entry keeps its identity masked: no name, stats, or description are
-	# revealed until its unlock dependency is met.
-	if _is_catalog_entry_hidden(entry):
-		if name_label != null:
-			name_label.text = HIDDEN_ENTRY_NAME
-		if equipped_label != null:
-			equipped_label.visible = false
-		if desc_label != null:
-			desc_label.text = "Locked. Unlock the previous weapon to reveal this one."
-		if status_label != null:
-			status_label.text = "[color=#%s]LOCKED[/color]\n%s" % [
-				DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false),
-				_colorize_requirement("Requires the previous weapon", false),
-			]
-	else:
-		if name_label != null:
-			name_label.text = _catalog_entry_display_name(entry)
-		# EQUIPPED lives in the header (right of the name) so it's always visible and
-		# never pushed off-screen by a long description.
-		if equipped_label != null:
-			equipped_label.visible = _is_catalog_entry_equipped(entry)
-		# Description (scrolls / expands vertically) and a pinned status row below it.
-		if desc_label != null:
-			desc_label.text = _format_catalog_item_description(entry)
-		if status_label != null:
-			status_label.text = _build_catalog_status_row(entry)
-	_size_detail_panel(panel, entry)
+	if name_label != null:
+		name_label.text = name_text
+	# EQUIPPED lives in the header (right of the name) so it's always visible and
+	# never pushed off-screen by a long description.
+	if equipped_label != null:
+		equipped_label.visible = equipped
+	# Description (scrolls / expands vertically) and a pinned status row below it.
+	if desc_label != null:
+		desc_label.text = body_text
+	if status_label != null:
+		status_label.text = status_text
 
 
 ## Re-fit the currently-shown detail panels. Called deferred after a hover so the body
@@ -936,26 +989,37 @@ func _refit_detail_panels(entry: Resource) -> void:
 		return
 	if _dynamic_slot_popup_stats_panel == null or not _dynamic_slot_popup_stats_panel.visible:
 		return
-	_size_detail_panel(_dynamic_slot_popup_stats_panel, entry)
+	_size_detail_panel(
+		_dynamic_slot_popup_stats_panel,
+		_catalog_entry_visible_name(entry),
+		_is_catalog_entry_equipped(entry)
+	)
 	if _dynamic_slot_popup_compare_panel != null and _dynamic_slot_popup_compare_panel.visible:
 		var compare_entry := _get_equipped_catalog_entry()
 		if compare_entry != null:
-			_size_detail_panel(_dynamic_slot_popup_compare_panel, compare_entry)
+			_size_detail_panel(
+				_dynamic_slot_popup_compare_panel,
+				_catalog_entry_visible_name(compare_entry),
+				_is_catalog_entry_equipped(compare_entry)
+			)
 	_layout_detail_panels()
 
 
 ## Size one detail panel so the item name (plus the EQUIPPED badge) fits at full width
-## without ellipsis; the description wraps to that width. Height is never touched. The
-## popup width is finalized separately in _layout_detail_panels.
-func _size_detail_panel(panel: Control, entry: Resource) -> void:
+## without ellipsis; the description wraps to that width. With `auto_height` the panel also
+## grows to exactly fit its body, which the slot hover readout uses so a two-line stat block
+## doesn't sit in a tall empty panel. The popup width is finalized separately in
+## _layout_detail_panels.
+func _size_detail_panel(
+	panel: Control, visible_name: String, equipped: bool, auto_height: bool = false
+) -> void:
 	if panel == null:
 		return
-	var equipped := _is_catalog_entry_equipped(entry)
 	var font := Magnetide.label_font
 	var content_width := 0.0
 	if font != null:
 		content_width = font.get_string_size(
-			_catalog_entry_visible_name(entry), HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_HEADER_FONT_SIZE
+			visible_name, HORIZONTAL_ALIGNMENT_LEFT, -1.0, DETAIL_HEADER_FONT_SIZE
 		).x
 		if equipped:
 			content_width += DETAIL_EQUIPPED_SEPARATION + DETAIL_EQUIPPED_RIGHT_MARGIN + font.get_string_size(
@@ -974,12 +1038,245 @@ func _size_detail_panel(panel: Control, entry: Resource) -> void:
 		# it isn't flush against the panel edge.
 		var header_width := inner_width - (DETAIL_EQUIPPED_RIGHT_MARGIN if equipped else 0.0)
 		header.size = Vector2(header_width, header.size.y)
+
 	var body := panel.get_node_or_null("BodyColumn") as Control
-	if body != null:
-		# Fixed height (never read back its own grown size) so the VBox stays bounded:
-		# the description fills panel_height - status_height and scrolls past that.
-		var body_height := panel.size.y - DETAIL_BODY_TOP_INSET - DETAIL_BODY_BOTTOM_INSET
-		body.size = Vector2(inner_width, body_height)
+	if body == null:
+		return
+	var description := body.get_node_or_null("DescriptionLabel") as Control
+	var status := body.get_node_or_null("StatusLabel") as RichTextLabel
+	# The status row is measured from its font here instead of being left to
+	# RichTextLabel.fit_content. On the very first show the label has not had a layout
+	# pass yet, so fit_content reports a height measured at a stale width; the column's
+	# minimum size then exceeds the height assigned below and the row is pushed past the
+	# bottom of the panel until the popup is reopened. Measuring makes frame one identical
+	# to every later frame.
+	var status_height := 0.0
+	if status != null:
+		status.fit_content = false
+		status_height = _get_label_text_height(status, inner_width)
+		status.custom_minimum_size = Vector2(0.0, status_height)
+	if description != null:
+		description.custom_minimum_size = Vector2.ZERO
+
+	if auto_height:
+		var description_height := 0.0
+		if description != null:
+			description_height = _get_label_text_height(description, inner_width)
+		var separation := DETAIL_BODY_SEPARATION if (description_height > 0.0 and status_height > 0.0) else 0.0
+		panel.size = Vector2(detail_width, clampf(
+			DETAIL_BODY_TOP_INSET + description_height + separation + status_height + DETAIL_BODY_BOTTOM_INSET,
+			SLOT_INFO_MIN_HEIGHT,
+			SLOT_INFO_MAX_HEIGHT
+		))
+
+	# Fixed height (never read back its own grown size) so the VBox stays bounded:
+	# the description fills panel_height - status_height and scrolls past that.
+	var body_height := panel.size.y - DETAIL_BODY_TOP_INSET - DETAIL_BODY_BOTTOM_INSET
+	body.size = Vector2(inner_width, body_height)
+
+
+# ---------------------------------------------------------------------------
+# Slot hover readout: the live values behind a slot, shown beside it.
+# ---------------------------------------------------------------------------
+
+## Show the hovered slot's current values, or hide the readout when nothing is hovered.
+## Hover is polled rather than driven by the slot's mouse_entered signal because a slot's
+## own buttons are child controls: moving onto one fires mouse_exited on the slot itself,
+## which would make the readout flicker as the pointer crossed the icon or arrow.
+func _update_slot_info_popup() -> void:
+	if _slot_info_popup == null:
+		return
+	var slot_id := _hovered_slot_id()
+	if slot_id == &"":
+		_hide_slot_info_popup()
+		return
+	if slot_id != _slot_info_slot_id:
+		_slot_info_slot_id = slot_id
+		_render_slot_info_popup(slot_id)
+	_position_slot_info_popup(slot_id)
+	_slot_info_popup.visible = true
+
+
+## The slot whose icon is under the pointer, or &"" when the readout should stay hidden.
+## Only the icon counts, not the whole row: the readout describes what sits in the slot,
+## so resting on the level ticks or the upgrade button beside it should not raise it (and
+## the panel opens over those controls anyway). It also stays hidden while a page pans,
+## while the selection popup is open, and while the cost popup — which keyboard focus can
+## raise without the pointer ever leaving the icon — claims the same space beside the slot.
+func _hovered_slot_id() -> StringName:
+	if _is_panning:
+		return &""
+	if _dynamic_slot_popup != null and _dynamic_slot_popup.visible:
+		return &""
+	if _upgrade_cost_popup != null and _upgrade_cost_popup.visible:
+		return &""
+	return _slot_id_at(get_global_mouse_position())
+
+
+## The slot whose icon contains `point`, or &"" for none. Split from the hover check so
+## the mapping from a screen position to a slot can be exercised on its own.
+func _slot_id_at(point: Vector2) -> StringName:
+	if _page_viewport != null and not _page_viewport.get_global_rect().has_point(point):
+		return &""
+	for sid in _station_slots:
+		var slot := _station_slots[sid] as UpgradeSlot
+		if slot == null or not slot.is_visible_in_tree():
+			continue
+		var icon := slot.get_icon_control()
+		if icon == null or not icon.is_visible_in_tree():
+			continue
+		if icon.get_global_rect().has_point(point):
+			return sid
+	return &""
+
+
+## Every part of the readout ignores the mouse, down to the rich-text labels' own
+## scrollbars, which default to grabbing it. The panel lies over the slot's level ticks
+## and upgrade button, and those have to keep receiving hover and clicks through it —
+## the upgrade button in particular, whose hover swaps the readout for the cost popup.
+func _configure_slot_info_popup_passthrough() -> void:
+	if _slot_info_popup == null:
+		return
+	_slot_info_popup.mouse_filter = Control.MOUSE_FILTER_IGNORE
+	# owned = false so the labels' internally-created scrollbars are reached too.
+	for node in _slot_info_popup.find_children("*", "Control", true, false):
+		(node as Control).mouse_filter = Control.MOUSE_FILTER_IGNORE
+
+
+func _hide_slot_info_popup() -> void:
+	_slot_info_slot_id = &""
+	if _slot_info_popup != null:
+		_slot_info_popup.visible = false
+
+
+func _render_slot_info_popup(slot_id: StringName) -> void:
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	if slot == null:
+		return
+	var info := _build_slot_info(slot_id, slot)
+	var item_name: String = info["name"]
+	var equipped: bool = info["equipped"]
+	_fill_detail_panel(_slot_info_popup, item_name, equipped, info["body"], info["status"])
+	_size_detail_panel(_slot_info_popup, item_name, equipped, true)
+
+
+## Anchor the readout to the slot (not the pointer), directly beside the slot's icon: to
+## its right by default, mirrored to its left for a slot authored to open its popups leftward
+## so it never covers the page's own slots. It deliberately anchors to the icon rather than
+## to the whole row, so it opens flush against the artwork and lies over that row's level
+## ticks and upgrade button — the readout describes what is in the slot, and those controls
+## keep working underneath because every part of the panel ignores the mouse.
+func _position_slot_info_popup(slot_id: StringName) -> void:
+	var slot := _station_slots.get(slot_id, null) as UpgradeSlot
+	if slot == null:
+		return
+	var icon := slot.get_icon_control()
+	var icon_rect := icon.get_global_rect() if icon != null else slot.get_global_rect()
+	var popup_left := icon_rect.end.x + SLOT_INFO_POPUP_GAP
+	if slot.popups_open_left:
+		popup_left = icon_rect.position.x - SLOT_INFO_POPUP_GAP - _slot_info_popup.size.x
+	# Vertically the panel still lines up with the top of the row, so it sits level with the
+	# slot's name rather than starting partway down beside the icon.
+	_slot_info_popup.global_position = _clamp_popup_to_screen(
+		Vector2(popup_left, slot.get_global_rect().position.y), _slot_info_popup.size
+	)
+
+
+## The readout's three fields for one slot, in the same shape the dynamic popup's detail
+## panel uses: what is in the slot, its live stat values, and its level.
+func _build_slot_info(slot_id: StringName, slot: UpgradeSlot) -> Dictionary:
+	var level_color := DYNAMIC_ENTRY_LEVEL_COLOR.to_html(false)
+	# A still-locked slot has no stats to show yet, so it shows what unlocking it buys.
+	if slot.locked and not _is_static_slot_unlocked(slot_id):
+		return {
+			"name": slot.display_name,
+			"equipped": false,
+			"body": slot.unlock_description,
+			"status": "[color=#%s]LOCKED[/color]" % level_color,
+		}
+
+	var item := _slot_item(slot_id)
+	if item == null:
+		return {
+			"name": slot.display_name,
+			"equipped": false,
+			"body": "Nothing equipped.",
+			"status": "[color=#%s]EMPTY[/color]" % level_color,
+		}
+
+	var max_level := _get_upgrade_current_max_level(item.item_id)
+	var level_text := "LEVEL: ACTIVE"
+	if max_level > 0:
+		level_text = "LEVEL: %d/%d" % [_get_upgrade_current_level(item.item_id), max_level]
+	return {
+		# A dynamic slot shows whatever is equipped in it, so the badge always applies
+		# there; a static slot's fixed item is not an equip choice and carries none.
+		"name": _get_upgradeable_item_name(item),
+		"equipped": slot is DynamicUpgradeSlot,
+		"body": _format_item_description(item),
+		"status": "[color=#%s]%s[/color]" % [level_color, level_text],
+	}
+
+
+## Live values of every stat an item's upgrade track moves, e.g. "REPAIR: 36". Effects
+## aimed at the run loadout read straight off it; effects aimed at a held item read that
+## item's upgraded preview, so the numbers match what a run would actually start with.
+## Weapon damage and augment effects are described by their own formatters instead.
+func _format_upgrade_current_stats(item_data: Resource) -> String:
+	if item_data == null or _run_loadout == null:
+		return ""
+	if not Utils.has_property(item_data, "upgrade_data"):
+		return ""
+	var upgrade := item_data.get("upgrade_data") as UpgradeData
+	if upgrade == null:
+		return ""
+	var lines := PackedStringArray()
+	for effect in upgrade.effects:
+		if effect == null:
+			continue
+		var property_name := String(effect.target_property)
+		if property_name.is_empty():
+			continue
+		var source := _upgrade_effect_value_source(int(effect.target))
+		if source == null or not Utils.has_property(source, property_name):
+			continue
+		var label := effect.label if not effect.label.is_empty() else property_name.replace("_", " ")
+		lines.append("%s: %s" % [
+			label.to_upper(), _stringify_stat_value(source.get(property_name))
+		])
+	# A stat whose track has no authored effects names its loadout properties directly.
+	if item_data is StatItemData:
+		var stat_item := item_data as StatItemData
+		# One declared property is the stat itself, so it reads under the stat's own name
+		# ("STORAGE: 480 x 300"); several need the property names to tell them apart.
+		var use_stat_name := stat_item.readout_properties.size() == 1 \
+			and not stat_item.display_name.is_empty()
+		for property_name in stat_item.readout_properties:
+			var readout_name := String(property_name)
+			if readout_name.is_empty() or not Utils.has_property(_run_loadout, readout_name):
+				continue
+			var readout_label := stat_item.display_name if use_stat_name \
+				else readout_name.replace("_", " ")
+			lines.append("%s: %s" % [
+				readout_label.to_upper(),
+				_stringify_stat_value(_run_loadout.get(readout_name)),
+			])
+	return "\n".join(lines)
+
+
+## Where an upgrade effect's live value is read from, by the object the effect targets.
+## WEAPON and BEHAVIOR return null: those are covered by the weapon stat block and the
+## augment's own effect summary.
+func _upgrade_effect_value_source(target: int) -> Object:
+	match target:
+		UpgradeEffect.Target.PLAYER, UpgradeEffect.Target.SHIP, \
+		UpgradeEffect.Target.MAGNET, UpgradeEffect.Target.RECYCLER:
+			return _run_loadout
+		UpgradeEffect.Target.MAGNET_GUN:
+			return _run_loadout.get_upgraded_magnet_tool_preview()
+		UpgradeEffect.Target.REPAIR_GUN:
+			return _run_loadout.get_upgraded_repair_gun_preview()
+	return null
 
 
 ## Bottom status row of the detail panel: for a locked item, LOCKED + the RP
@@ -1103,6 +1400,8 @@ func _build_storage_detail_text(item_data: SalvageItemData, quantity: int) -> St
 func _refresh_loadout_ui() -> void:
 	if _run_loadout:
 		_run_loadout.prepare_for_run()
+	# Values behind the readout just moved; drop it so the next hover frame rebuilds it.
+	_hide_slot_info_popup()
 	_refresh_all_slots()
 	_update_previews()
 	if _dynamic_slot_popup != null and _dynamic_slot_popup.visible:
@@ -1907,7 +2206,12 @@ func _is_catalog_item_state_unlocked(entry: Resource) -> bool:
 ## Description block (item description + its stats / current-effect summary) for
 ## the expanding description label. Level / locked status live in the status row.
 func _format_catalog_item_description(entry: Resource) -> String:
-	var item_data := _catalog_entry_item_data(entry)
+	return _format_item_description(_catalog_entry_item_data(entry))
+
+
+## Body text for one item: its description followed by its live stats. Shared by the
+## dynamic popup's detail panels and the slot hover readout.
+func _format_item_description(item_data: Resource) -> String:
 	if item_data == null:
 		return ""
 	var lines := PackedStringArray()
@@ -1928,6 +2232,12 @@ func _format_catalog_item_description(entry: Resource) -> String:
 			var summary := String(item_data.call("get_current_effect_summary", state))
 			if not summary.is_empty():
 				lines.append(summary)
+	else:
+		# Stat tracks (health, hull, the recycler, the held tools) have no stat block of
+		# their own, so their upgrade's own effects supply the current values.
+		var stats := _format_upgrade_current_stats(item_data)
+		if not stats.is_empty():
+			lines.append(stats)
 
 	return "\n".join(lines)
 

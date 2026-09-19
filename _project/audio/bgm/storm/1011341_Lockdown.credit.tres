@@ -1,0 +1,9 @@
+[gd_resource type="Resource" script_class="MusicCredit" format=3 uid="uid://dsg6b4l6yk5bt"]
+
+[ext_resource type="Script" path="res://_project/audio/music_credit.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+title = "Lockdown"
+artist = "CaperCube"
+source_url = "https://www.newgrounds.com/audio/listen/1011341"

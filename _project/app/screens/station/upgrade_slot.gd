@@ -211,6 +211,14 @@ func get_upgrade_button() -> Button:
 	return _upgrade_button
 
 
+## The slot's visible icon: the clickable frame on a dynamic slot, the fixed panel on a
+## static one. Popups anchor to this rather than to the slot, whose rect also spans the
+## header, the level ticks and the upgrade button.
+func get_icon_control() -> Control:
+	_build_once()
+	return _select_button if is_selectable() else _static_slot
+
+
 func _cache_upgrade_styles() -> void:
 	if _upgrade_button == null:
 		return

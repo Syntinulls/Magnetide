@@ -5,11 +5,11 @@
 [ext_resource type="Script" uid="uid://cpcecusuucpn4" path="res://_project/items/weapons/flamethrower/flame_projectile_behavior.gd" id="3_flame_behavior"]
 [ext_resource type="PackedScene" uid="uid://bburningeffct" path="res://_project/effects/burning/burning_effect.tscn" id="4_burning"]
 [ext_resource type="AudioStream" uid="uid://bg2v64pxk6gu2" path="res://_project/audio/sfx/weapons/old/rifle_reload.ogg" id="5_1gt0x"]
+[ext_resource type="Texture2D" uid="uid://mvtpuhx5628f" path="res://_project/items/weapons/flamethrower/player_item_flame.png" id="5_flame_sprite"]
+[ext_resource type="Shader" uid="uid://dcsbgfd7ay5fv" path="res://_project/common/glow.gdshader" id="6_glow"]
 [ext_resource type="AudioStream" uid="uid://cae2g1nrj1hns" path="res://_project/audio/sfx/weapons/flamethrower/flamethrower_loop.ogg" id="7_flame_loop"]
 [ext_resource type="AudioStream" uid="uid://c1gkj4nfaq26m" path="res://_project/audio/sfx/weapons/flamethrower/flamethrower_start.ogg" id="8_flame_start"]
 [ext_resource type="AudioStream" uid="uid://dvrvqepfcfdq5" path="res://_project/audio/sfx/weapons/flamethrower/flamethrower_stop.ogg" id="9_flame_stop"]
-[ext_resource type="Texture2D" uid="uid://mvtpuhx5628f" path="res://_project/items/weapons/flamethrower/player_item_flame.png" id="5_flame_sprite"]
-[ext_resource type="Shader" path="res://_project/common/glow.gdshader" id="6_glow"]
 [ext_resource type="Resource" uid="uid://bupgwpnflamet" path="res://_project/upgrades/weapon/flamethrower.tres" id="90_upg"]
 
 [sub_resource type="Gradient" id="Gradient_flame"]

@@ -40,13 +40,16 @@ _project/                    All game content. (Root level is reserved for engin
 │   └── screens/             One folder per out-of-run screen. A screen keeps the sprites it
 │       │                    alone uses in its own sprites/ subfolder.
 │       ├── main_menu/
+│       ├── credits/          Asset-attribution screen, reachable from the main menu only.
+│       │                     Builds itself from the MusicCredit resources beside each track.
 │       ├── map/             Level-select screen + its roster data + its sprites.
 │       ├── station/         Station hub screen + slot widgets + popups + its sprites.
 │       ├── salvage/         Salvage-processing minigame screen + run summary popup
 │       │                    + its sprites.
 │       └── preview/         Render-only player/ship preview stages (shared by screens).
 ├── audio/                   Audio playback services + assets: sfx_player.gd + sfx/,
-│                            bgm_player.gd + bgm/ (looping background music, own bus).
+│                            bgm_player.gd + bgm/ (looping background music, own bus),
+│                            music_credit.gd (per-track attribution, §3).
 ├── combat/                  Combat primitives shared across concepts:
 │                            projectile, hitbox, enemy_target_point, muzzle_effect.
 ├── common/                  Generic, game-agnostic building blocks:
@@ -202,7 +205,11 @@ state object without it, is the smell this rule prevents.
 Exception: music track files under `audio/bgm/` keep their source filenames
 verbatim (e.g. `1025487_Skyline.mp3`). Nothing references tracks by name — the
 BGM player scans its category folders — and preserving the original name keeps
-the track traceable to its source.
+the track traceable to its source. A track's attribution sits beside it as
+`<track filename>.credit.tres` (a `MusicCredit`), so the pairing survives the
+verbatim name; the credits screen scans for these the same way playback scans
+for the tracks, which makes crediting a new track a file drop rather than a
+code edit.
 
 File/class naming is 1:1: every `.gd` intended for reuse declares a `class_name`
 matching its file name. Scene-only glue scripts may omit `class_name` only if nothing

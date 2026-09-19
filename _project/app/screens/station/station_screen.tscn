@@ -13,20 +13,21 @@
 [ext_resource type="Resource" uid="uid://dlvheim4ver4f" path="res://_project/items/augments/regeneration.tres" id="19_regeneration"]
 [ext_resource type="PackedScene" uid="uid://deheo7vkoke2n" path="res://_project/app/screens/station/station_dynamic_slot_popup.tscn" id="20_dynamic_slot_popup"]
 [ext_resource type="Script" uid="uid://c0f3hfjp6xlvp" path="res://_project/app/screens/preview/preview_stage.gd" id="21_preview_stage"]
+[ext_resource type="PackedScene" uid="uid://cslotinfopop0" path="res://_project/app/screens/station/station_slot_info_popup.tscn" id="21_slot_info_popup"]
 [ext_resource type="PackedScene" uid="uid://xhec0qwauhh1" path="res://_project/app/screens/preview/player_preview.tscn" id="22_player_preview"]
 [ext_resource type="PackedScene" uid="uid://bgjkqi6c2xoc7" path="res://_project/app/screens/preview/ship_preview.tscn" id="23_ship_preview"]
 [ext_resource type="Resource" uid="uid://dadrn1tres0x1" path="res://_project/items/augments/adrenaline.tres" id="24_adrenaline"]
-[ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
-[ext_resource type="Resource" uid="uid://delec1tres0x3" path="res://_project/items/augments/electrified_hull.tres" id="25_electrified_hull"]
 [ext_resource type="Resource" uid="uid://6wtufnnn5n0r" path="res://_project/items/augments/auto_repair.tres" id="25_auto_repair"]
+[ext_resource type="Resource" uid="uid://delec1tres0x3" path="res://_project/items/augments/electrified_hull.tres" id="25_electrified_hull"]
 [ext_resource type="Resource" uid="uid://denem1tres0x4" path="res://_project/items/augments/enemy_repulsion.tres" id="25_enemy_repulsion"]
+[ext_resource type="Resource" uid="uid://drcyc1tres0x2" path="res://_project/items/augments/increased_recycling.tres" id="25_increased_recycling"]
 [ext_resource type="Resource" uid="uid://dkine1tres0x5" path="res://_project/items/augments/kinetic_repulsion.tres" id="25_kinetic_repulsion"]
 [ext_resource type="Resource" uid="uid://cc8kmfmsfhbqx" path="res://_project/items/weapons/pistol/pistol.tres" id="26_pistol_data"]
 [ext_resource type="Texture2D" uid="uid://0qevonhftyj2" path="res://_project/common/sprites/icon_research_point.png" id="27_rp_icon"]
 [ext_resource type="Resource" uid="uid://dsmg8w1pk3n0x" path="res://_project/items/weapons/smg/smg.tres" id="28_smg_data"]
-[ext_resource type="Resource" uid="uid://bsnp7w2qk4m1y" path="res://_project/items/weapons/sniper/sniper.tres" id="29_sniper_data"]
-[ext_resource type="Resource" uid="uid://e8grndlnchr001" path="res://_project/items/weapons/grenade_launcher/grenade_launcher.tres" id="29_grenade_data"]
 [ext_resource type="Resource" uid="uid://bflamethrower" path="res://_project/items/weapons/flamethrower/flamethrower.tres" id="29_flamethrower_data"]
+[ext_resource type="Resource" uid="uid://c877y54h63ef5" path="res://_project/items/weapons/grenade_launcher/grenade_launcher.tres" id="29_grenade_data"]
+[ext_resource type="Resource" uid="uid://bsnp7w2qk4m1y" path="res://_project/items/weapons/sniper/sniper.tres" id="29_sniper_data"]
 [ext_resource type="Texture2D" uid="uid://cdxoat3a5aomv" path="res://_project/app/screens/station/sprites/station_back_color.png" id="30_back_color"]
 [ext_resource type="Texture2D" uid="uid://wgaayv1l0vvh" path="res://_project/app/screens/station/sprites/station_floor_color.png" id="31_floor_color"]
 [ext_resource type="Texture2D" uid="uid://dy6fd34xra0nt" path="res://_project/app/screens/station/sprites/station_horizon.png" id="32_horizon"]
@@ -46,10 +47,10 @@
 [ext_resource type="Resource" uid="uid://bsbo08m16krc6" path="res://_project/items/stats/ship_hull.tres" id="63_hull_item"]
 [ext_resource type="Resource" uid="uid://bsbo1kl5cs6p6" path="res://_project/items/stats/ship_storage_size.tres" id="64_storage_item"]
 [ext_resource type="Resource" uid="uid://bsbo1d1vvthc6" path="res://_project/items/stats/magnet_capacity.tres" id="66_magcap_item"]
-[ext_resource type="Resource" uid="uid://repairgun0data" path="res://_project/items/repair_gun/repair_gun.tres" id="67_repair_gun"]
+[ext_resource type="Resource" uid="uid://cx2yayyva0y5k" path="res://_project/items/repair_gun/repair_gun.tres" id="67_repair_gun"]
+[ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="68_ic_repair"]
 [ext_resource type="Resource" uid="uid://cstat0rintake" path="res://_project/items/stats/recycler_intake.tres" id="69_rintake_item"]
 [ext_resource type="Resource" uid="uid://cstat0ryield0" path="res://_project/items/stats/recycler_yield.tres" id="70_ryield_item"]
-[ext_resource type="Texture2D" uid="uid://q34lm25ab2kr" path="res://_project/items/repair_gun/player_item_repairtool.png" id="68_ic_repair"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_floor"]
 shader = ExtResource("36_perspective")
@@ -76,52 +77,12 @@ research_unlock_group = &"player_augment_adrenaline"
 research_unlock_order = 20
 research_cost_common = 2
 
-[sub_resource type="Resource" id="Resource_station_augment_increased_recycling"]
-script = ExtResource("11_upgrade_entry")
-item_data = ExtResource("25_increased_recycling")
-locked = true
-research_unlock_id = &"augment_increased_recycling"
-research_unlock_group = &"recycler_augment_increased_recycling"
-research_unlock_order = 30
-research_cost_rare = 1
-
 [sub_resource type="Resource" id="Resource_station_augment_kinetic_repulsion"]
 script = ExtResource("11_upgrade_entry")
 item_data = ExtResource("25_kinetic_repulsion")
 locked = true
 research_unlock_id = &"augment_kinetic_repulsion"
 research_unlock_group = &"player_augment_kinetic_repulsion"
-research_unlock_order = 40
-research_cost_common = 99
-research_cost_rare = 99
-research_cost_epic = 99
-
-[sub_resource type="Resource" id="Resource_station_augment_auto_repair"]
-script = ExtResource("11_upgrade_entry")
-item_data = ExtResource("25_auto_repair")
-locked = true
-research_unlock_id = &"augment_auto_repair"
-research_unlock_group = &"ship_augment_auto_repair"
-research_unlock_order = 35
-research_cost_rare = 2
-
-[sub_resource type="Resource" id="Resource_station_augment_electrified_hull"]
-script = ExtResource("11_upgrade_entry")
-item_data = ExtResource("25_electrified_hull")
-locked = true
-research_unlock_id = &"augment_electrified_hull"
-research_unlock_group = &"ship_augment_electrified_hull"
-research_unlock_order = 40
-research_cost_common = 99
-research_cost_rare = 99
-research_cost_epic = 99
-
-[sub_resource type="Resource" id="Resource_station_augment_enemy_repulsion"]
-script = ExtResource("11_upgrade_entry")
-item_data = ExtResource("25_enemy_repulsion")
-locked = true
-research_unlock_id = &"augment_enemy_repulsion"
-research_unlock_group = &"magnet_augment_enemy_repulsion"
 research_unlock_order = 40
 research_cost_common = 99
 research_cost_rare = 99
@@ -179,6 +140,46 @@ locked = true
 research_unlock_id = &"weapon_flamethrower"
 research_unlock_order = 60
 research_cost_rare = 3
+
+[sub_resource type="Resource" id="Resource_station_augment_auto_repair"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_auto_repair")
+locked = true
+research_unlock_id = &"augment_auto_repair"
+research_unlock_group = &"ship_augment_auto_repair"
+research_unlock_order = 35
+research_cost_rare = 2
+
+[sub_resource type="Resource" id="Resource_station_augment_electrified_hull"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_electrified_hull")
+locked = true
+research_unlock_id = &"augment_electrified_hull"
+research_unlock_group = &"ship_augment_electrified_hull"
+research_unlock_order = 40
+research_cost_common = 99
+research_cost_rare = 99
+research_cost_epic = 99
+
+[sub_resource type="Resource" id="Resource_station_augment_enemy_repulsion"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_enemy_repulsion")
+locked = true
+research_unlock_id = &"augment_enemy_repulsion"
+research_unlock_group = &"magnet_augment_enemy_repulsion"
+research_unlock_order = 40
+research_cost_common = 99
+research_cost_rare = 99
+research_cost_epic = 99
+
+[sub_resource type="Resource" id="Resource_station_augment_increased_recycling"]
+script = ExtResource("11_upgrade_entry")
+item_data = ExtResource("25_increased_recycling")
+locked = true
+research_unlock_id = &"augment_increased_recycling"
+research_unlock_group = &"recycler_augment_increased_recycling"
+research_unlock_order = 30
+research_cost_rare = 1
 
 [node name="StationScreen" type="Control" unique_id=117853204]
 layout_mode = 3
@@ -453,6 +454,7 @@ slot_kind = &"weapon"
 slot_index = 0
 popup_title = "Weapons"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_weapon_pistol"), SubResource("Resource_station_weapon_smg"), SubResource("Resource_station_weapon_shotgun"), SubResource("Resource_station_weapon_rifle"), SubResource("Resource_station_weapon_sniper"), SubResource("Resource_station_weapon_grenade_launcher"), SubResource("Resource_station_weapon_flamethrower")])
+can_unequip = false
 slot_id = &"weapon"
 display_name = "Weapon"
 
@@ -469,13 +471,13 @@ slot_id = &"magnet_tool"
 display_name = "Magnet Gun"
 static_icon = ExtResource("50_ic_magnet")
 
-[node name="RepairGunRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn"]
+[node name="RepairGunRow" type="HBoxContainer" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn" unique_id=1217371903]
 custom_minimum_size = Vector2(0, 112)
 layout_mode = 2
 size_flags_horizontal = 0
 theme_override_constants/separation = 0
 
-[node name="RepairGunSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/RepairGunRow" instance=ExtResource("17_upgrade_slot")]
+[node name="RepairGunSlot" parent="PageViewport/PageContainer/PlayerPage/UpgradeLayer/TopUpgradeLayout/LeftPanel/SlotColumns/EquipmentColumn/RepairGunRow" unique_id=930430517 instance=ExtResource("17_upgrade_slot")]
 layout_mode = 2
 item = ExtResource("67_repair_gun")
 slot_id = &"repair_gun"
@@ -509,71 +511,6 @@ offset_bottom = 670.0
 text = "SHIP"
 icon = ExtResource("12_4e5bg")
 expand_icon = true
-
-[node name="UpgradeCostPopup" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage" unique_id=678031034]
-visible = false
-layout_mode = 0
-offset_left = 1720.0
-offset_top = 160.0
-offset_right = 1980.0
-offset_bottom = 300.0
-color = Color(0.372549, 0.411765, 0.411765, 0)
-
-[node name="Fill" type="ColorRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=1414747565]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-offset_left = 3.0
-offset_top = 3.0
-offset_right = -3.0
-offset_bottom = -3.0
-grow_horizontal = 2
-grow_vertical = 2
-mouse_filter = 2
-color = Color(0.372549, 0.411765, 0.411765, 1)
-
-[node name="Border" type="NinePatchRect" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=701613887]
-layout_mode = 1
-anchors_preset = 15
-anchor_right = 1.0
-anchor_bottom = 1.0
-grow_horizontal = 2
-grow_vertical = 2
-texture = ExtResource("37_border")
-patch_margin_left = 6
-patch_margin_top = 6
-patch_margin_right = 6
-patch_margin_bottom = 6
-
-[node name="TitleLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=963301196]
-layout_mode = 0
-offset_left = 16.0
-offset_top = 12.0
-offset_right = 244.0
-offset_bottom = 48.0
-text = "Upgrade Cost"
-horizontal_alignment = 1
-
-[node name="CreditsLabel" type="Label" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=2077633697]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 62.0
-offset_right = 236.0
-offset_bottom = 100.0
-text = "350"
-autowrap_mode = 3
-
-[node name="SecondaryLabel" type="RichTextLabel" parent="PageViewport/PageContainer/PlayerPage/UpgradeCostPopup" unique_id=1537061412]
-layout_mode = 0
-offset_left = 24.0
-offset_top = 108.0
-offset_right = 236.0
-offset_bottom = 146.0
-bbcode_enabled = true
-text = "0 / 5"
-fit_content = true
-scroll_active = false
 
 [node name="ShipPage" type="Control" parent="PageViewport/PageContainer" unique_id=1566412303]
 anchors_preset = 0
@@ -654,6 +591,7 @@ mouse_filter = 2
 script = ExtResource("21_preview_stage")
 preview_scene = ExtResource("23_ship_preview")
 camera_offset = Vector2(0, -20)
+fit_to_preview_bounds = true
 
 [node name="UpgradeLayer" type="Control" parent="PageViewport/PageContainer/ShipPage" unique_id=1973545568]
 anchors_preset = 0
@@ -740,9 +678,9 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("63_hull_item")
 slot_id = &"ship_integrity"
-popups_open_left = true
 display_name = "Hull"
 static_icon = ExtResource("12_4e5bg")
+popups_open_left = true
 
 [node name="StorageSizeRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/ShipPair" unique_id=31795759]
 custom_minimum_size = Vector2(0, 112)
@@ -754,9 +692,9 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("64_storage_item")
 slot_id = &"ship_storage_size"
-popups_open_left = true
 display_name = "Storage"
 static_icon = ExtResource("51_ic_crate")
+popups_open_left = true
 
 [node name="RecyclerPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn" unique_id=300000001]
 layout_mode = 2
@@ -780,9 +718,9 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("69_rintake_item")
 slot_id = &"recycler_intake"
-popups_open_left = true
 display_name = "Intake"
 static_icon = ExtResource("6_gear")
+popups_open_left = true
 
 [node name="RecyclerYieldRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/ShipColumn/RecyclerPair" unique_id=300000005]
 custom_minimum_size = Vector2(0, 112)
@@ -794,9 +732,9 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("70_ryield_item")
 slot_id = &"recycler_yield"
-popups_open_left = true
 display_name = "Yield"
 static_icon = ExtResource("16_pln3h")
+popups_open_left = true
 
 [node name="RightColumn" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns" unique_id=1069239831]
 layout_mode = 2
@@ -824,9 +762,9 @@ theme_override_constants/separation = 0
 layout_mode = 2
 item = ExtResource("66_magcap_item")
 slot_id = &"magnet_capacity"
-popups_open_left = true
 display_name = "Capacity"
 static_icon = ExtResource("51_ic_crate")
+popups_open_left = true
 
 [node name="AugmentPair" type="VBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn" unique_id=300000007]
 layout_mode = 2
@@ -854,8 +792,8 @@ popup_title = "Ship Augments"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_auto_repair"), SubResource("Resource_station_augment_electrified_hull")])
 can_unequip = true
 slot_id = &"ShipAugment"
+display_name = "Ship"
 popups_open_left = true
-display_name = "Augment"
 
 [node name="MagnetAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=952612685]
 custom_minimum_size = Vector2(0, 112)
@@ -871,8 +809,8 @@ popup_title = "Magnet Augments"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_enemy_repulsion")])
 can_unequip = true
 slot_id = &"MagnetAugment"
+display_name = "Magnet"
 popups_open_left = true
-display_name = "Augment"
 
 [node name="RecyclerAugmentRow" type="HBoxContainer" parent="PageViewport/PageContainer/ShipPage/UpgradeLayer/TopUpgradeLayout/RightPanel/SlotColumns/RightColumn/AugmentPair" unique_id=300000008]
 custom_minimum_size = Vector2(0, 112)
@@ -888,8 +826,8 @@ popup_title = "Recycler Augments"
 catalog = Array[ExtResource("11_upgrade_entry")]([SubResource("Resource_station_augment_increased_recycling")])
 can_unequip = true
 slot_id = &"RecyclerAugment"
+display_name = "Recycler"
 popups_open_left = true
-display_name = "Augment"
 
 [node name="PanToPlayerButton" type="Button" parent="PageViewport/PageContainer/ShipPage" unique_id=1486591098]
 custom_minimum_size = Vector2(200, 125)
@@ -1263,3 +1201,68 @@ offset_left = 0.0
 offset_top = 0.0
 offset_right = 804.0
 offset_bottom = 310.0
+
+[node name="UpgradeCostPopup" type="ColorRect" parent="." unique_id=678031034]
+visible = false
+layout_mode = 0
+offset_right = 260.0
+offset_bottom = 140.0
+color = Color(0.372549, 0.411765, 0.411765, 0)
+
+[node name="Fill" type="ColorRect" parent="UpgradeCostPopup" unique_id=1414747565]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+offset_left = 3.0
+offset_top = 3.0
+offset_right = -3.0
+offset_bottom = -3.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+color = Color(0.372549, 0.411765, 0.411765, 1)
+
+[node name="Border" type="NinePatchRect" parent="UpgradeCostPopup" unique_id=701613887]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+texture = ExtResource("37_border")
+patch_margin_left = 6
+patch_margin_top = 6
+patch_margin_right = 6
+patch_margin_bottom = 6
+
+[node name="TitleLabel" type="Label" parent="UpgradeCostPopup" unique_id=963301196]
+layout_mode = 0
+offset_left = 16.0
+offset_top = 12.0
+offset_right = 244.0
+offset_bottom = 48.0
+text = "Upgrade Cost"
+horizontal_alignment = 1
+
+[node name="CreditsLabel" type="Label" parent="UpgradeCostPopup" unique_id=2077633697]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 62.0
+offset_right = 236.0
+offset_bottom = 100.0
+text = "350"
+autowrap_mode = 3
+
+[node name="SecondaryLabel" type="RichTextLabel" parent="UpgradeCostPopup" unique_id=1537061412]
+layout_mode = 0
+offset_left = 24.0
+offset_top = 108.0
+offset_right = 236.0
+offset_bottom = 146.0
+bbcode_enabled = true
+text = "0 / 5"
+fit_content = true
+scroll_active = false
+
+[node name="SlotInfoPopup" parent="." unique_id=1419748451 instance=ExtResource("21_slot_info_popup")]

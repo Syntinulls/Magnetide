@@ -12,6 +12,7 @@ const OptionsScreenScene := preload("res://_project/app/screens/options/options_
 @export var station_screen_scene: PackedScene
 @export var map_screen_scene: PackedScene
 @export var salvage_process_scene: PackedScene
+@export var credits_screen_scene: PackedScene
 
 var _active_screen: Control = null
 var _active_level: Node = null
@@ -96,6 +97,17 @@ func _show_main_menu() -> void:
 		screen.continue_requested.connect(_on_main_menu_continue_requested)
 	if screen and screen.has_signal("new_game_requested"):
 		screen.new_game_requested.connect(_on_main_menu_new_game_requested)
+	if screen and screen.has_signal("credits_requested"):
+		screen.credits_requested.connect(_show_credits_screen)
+
+
+## Attribution screen. A screen swap rather than an overlay like the options panel: it is
+## a page the player reads and backs out of, and its Back button returns to the main menu,
+## the only place it opens from.
+func _show_credits_screen() -> void:
+	if credits_screen_scene == null:
+		return
+	_show_screen(credits_screen_scene)
 
 
 func _show_station_screen() -> void:

@@ -5,6 +5,7 @@
 
 [resource]
 script = ExtResource("1")
+readout_properties = Array[StringName]([&"ship_storage_area_size"])
 item_id = &"ship_storage_size"
 display_name = "Storage"
 upgrade_data = ExtResource("2")

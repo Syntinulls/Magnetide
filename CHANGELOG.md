@@ -30,6 +30,8 @@
     to your total, so you always know what a cycle will spend.
 - Added the **Adrenaline** augment: the lower your health, the more damage you deal.
 - Added a pause menu. Press **ESC** to pause, then continue or abandon the run.
+- Added a Credits screen, reachable from the main menu, crediting the music the game uses
+  along with its artists and licenses. The titles and licenses are links you can open.
 
 #### Ship
 
@@ -97,6 +99,9 @@
   the rarity of the artifact you research. Each unlock costs a single rarity, so what a
   thing costs tells you how deep into a run you need to get before you can afford it.
 - Every station slot can now be upgraded, including all five augment slots.
+- Hovering a station slot now shows a panel beside it listing what is in that slot, its
+  current values, and its level, so you can check what you already have without opening
+  anything.
 
 #### Audio
 
@@ -162,6 +167,8 @@
   two slots instead of wiping one.
 - The Alignment research minigame now shows arrows indicating which way each laser beam
   is drifting.
+- On the ship screen, the three augment slots are now labelled Ship, Magnet, and Recycler
+  instead of all reading "Augment".
 
 #### UI
 
@@ -243,3 +250,11 @@
 - Closing the research station mid-celebration no longer costs you your reward —
   research points are granted the instant the final stage completes, and the result
   screens are purely cosmetic and skippable.
+- The upgrade cost panel now sits level with the button that opened it instead of floating
+  above it on an upgrade that is already maxed.
+- Upgrade panels opened from slots near the top of the screen are no longer cut off by the
+  station's ceiling trim.
+- The level line no longer sits below the bottom of an item panel the first time one is
+  opened after launching the game.
+- The ship preview no longer cuts the top edge off the storage area outline at full
+  Storage Size.
