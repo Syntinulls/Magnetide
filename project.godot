@@ -36,8 +36,10 @@ window/stretch/mode="canvas_items"
 
 folder_colors={
 "res://_project/app/": "teal",
+"res://_project/bosses/": "red",
 "res://_project/combat/": "pink",
 "res://_project/common/": "gray",
+"res://_project/cutscene/": "purple",
 "res://_project/debug/": "gray",
 "res://_project/enemies/": "red",
 "res://_project/hud/": "purple",

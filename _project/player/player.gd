@@ -40,6 +40,8 @@ var jump_velocity: float = -600.0
 var jump_cut_velocity: float = -360.0
 var gravity: float = 1600.0
 
+## Gameplay systems (the magnet minigame) switch the player's input off and back on.
+## Cutscenes use set_cinematic_lock() instead, so the two never undo each other.
 var input_enabled: bool = true
 ## While true the player can neither receive nor deal damage (departure cutscene).
 var combat_disabled: bool = false
@@ -56,6 +58,7 @@ var _footstep_timer: float = 0.0
 ## by knockback_damping until it falls below KNOCKBACK_STOP_SPEED.
 var _knockback_velocity_x: float = 0.0
 var _damage_flash_tween: Tween = null
+var _cinematic_locked: bool = false
 var _cinematic_walk_active: bool = false
 var _cinematic_walk_target_x: float = 0.0
 var _cinematic_walk_speed: float = 160.0
@@ -128,7 +131,7 @@ func _physics_process(delta: float) -> void:
 
 	if _cinematic_walk_active:
 		_process_cinematic_walk(delta)
-	elif input_enabled and not Magnetide.is_ui_input_captured():
+	elif accepts_input() and not Magnetide.is_ui_input_captured():
 		var mouse_pos := get_global_mouse_position()
 
 		# Facing is purely based on mouse X vs player X
@@ -240,8 +243,25 @@ func on_looting_ended() -> void:
 	equipment.notify_looting_ended()
 
 
-func start_walk_to_ship_center_for_cutscene(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
-	input_enabled = false
+## True when gameplay input should reach the player and what it operates (held
+## items, the lever, the pylons): no system has disabled it and no cutscene holds it.
+func accepts_input() -> bool:
+	return input_enabled and not _cinematic_locked
+
+
+## Held by the cutscene player for a cutscene's duration: input stops reaching the
+## player and the active held item is put away.
+func set_cinematic_lock(locked: bool) -> void:
+	if _cinematic_locked == locked:
+		return
+	_cinematic_locked = locked
+	if locked:
+		equipment.deactivate_current()
+
+
+## Walk to `target_local_x` (ship-local) ignoring input; cinematic_walk_finished
+## fires on arrival.
+func start_cinematic_walk(target_local_x: float = 0.0, walk_speed: float = 160.0) -> void:
 	equipment.deactivate_current()
 	_apply_facing(true)
 	arm_sprite.rotation = 0.0

@@ -1,0 +1,84 @@
+[gd_scene format=3 uid="uid://bbosshealthbr"]
+
+[ext_resource type="Script" uid="uid://c7jlye0m8110x" path="res://_project/hud/boss_health_bar/boss_health_bar.gd" id="1_script"]
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_background"]
+bg_color = Color(0.08, 0.06, 0.07, 0.85)
+border_width_left = 3
+border_width_top = 3
+border_width_right = 3
+border_width_bottom = 3
+border_color = Color(0.86, 0.86, 0.86, 1)
+
+[sub_resource type="StyleBoxFlat" id="StyleBoxFlat_fill"]
+bg_color = Color(0.86, 0.2, 0.18, 1)
+
+[node name="BossHealthBar" type="Control"]
+custom_minimum_size = Vector2(1200, 84)
+layout_mode = 3
+anchors_preset = 0
+offset_right = 1200.0
+offset_bottom = 84.0
+mouse_filter = 2
+script = ExtResource("1_script")
+
+[node name="VBoxContainer" type="VBoxContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_constants/separation = 6
+
+[node name="Header" type="HBoxContainer" parent="VBoxContainer"]
+layout_mode = 2
+mouse_filter = 2
+
+[node name="NameLabel" type="Label" parent="VBoxContainer/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 36
+text = "BOSS"
+
+[node name="PhaseLabel" type="Label" parent="VBoxContainer/Header"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+theme_override_font_sizes/font_size = 28
+horizontal_alignment = 2
+vertical_alignment = 2
+
+[node name="BarFrame" type="Control" parent="VBoxContainer"]
+custom_minimum_size = Vector2(0, 32)
+layout_mode = 2
+size_flags_vertical = 3
+mouse_filter = 2
+
+[node name="Bar" type="ProgressBar" parent="VBoxContainer/BarFrame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2
+theme_override_styles/background = SubResource("StyleBoxFlat_background")
+theme_override_styles/fill = SubResource("StyleBoxFlat_fill")
+max_value = 1.0
+step = 0.0
+value = 1.0
+show_percentage = false
+
+[node name="Markers" type="Control" parent="VBoxContainer/BarFrame"]
+unique_name_in_owner = true
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+mouse_filter = 2

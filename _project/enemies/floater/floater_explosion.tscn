@@ -1,0 +1,6 @@
+[gd_scene format=3 uid="uid://bfloaterblast"]
+
+[ext_resource type="PackedScene" uid="uid://d1v2b1g1lgv81" path="res://_project/combat/explosion.tscn" id="1_explosion"]
+
+[node name="FloaterExplosion" instance=ExtResource("1_explosion")]
+collision_mask = 8

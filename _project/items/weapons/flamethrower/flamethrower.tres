@@ -11,14 +11,11 @@
 [ext_resource type="AudioStream" uid="uid://c1gkj4nfaq26m" path="res://_project/audio/sfx/weapons/flamethrower/flamethrower_start.ogg" id="8_flame_start"]
 [ext_resource type="AudioStream" uid="uid://dvrvqepfcfdq5" path="res://_project/audio/sfx/weapons/flamethrower/flamethrower_stop.ogg" id="9_flame_stop"]
 [ext_resource type="Resource" uid="uid://bupgwpnflamet" path="res://_project/upgrades/weapon/flamethrower.tres" id="90_upg"]
-
-[sub_resource type="Gradient" id="Gradient_flame"]
-offsets = PackedFloat32Array(0, 0.3, 0.65, 1)
-colors = PackedColorArray(1, 0.984314, 0.878431, 1, 1, 0.85098, 0.290196, 1, 1, 0.54902, 0.101961, 1, 0.290196, 0.266667, 0.25098, 0)
+[ext_resource type="Gradient" uid="uid://bfirecolorrmp" path="res://_project/combat/fire_color_ramp.tres" id="10_fire_ramp"]
 
 [sub_resource type="Resource" id="Resource_flame_projectile_behavior"]
 script = ExtResource("3_flame_behavior")
-color_ramp = SubResource("Gradient_flame")
+color_ramp = ExtResource("10_fire_ramp")
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_flame_glow"]
 shader = ExtResource("6_glow")

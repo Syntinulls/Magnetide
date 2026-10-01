@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://dny5rf2unjs3q"]
 
 [ext_resource type="Script" uid="uid://bxwoh3kr42uch" path="res://_project/enemies/mosquito/mosquito.gd" id="1_script"]
-[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/combat/hit_flash.gdshader" id="2_shader"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
 [ext_resource type="SpriteFrames" path="res://_project/enemies/mosquito/mosquito_sprite_frames.tres" id="4_odlmr"]
 [ext_resource type="SpriteFrames" uid="uid://dus88tsf7ka22" path="res://_project/enemies/mosquito/mosquito_wing_back_sprite_frames.tres" id="4_wing_back"]

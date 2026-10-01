@@ -292,7 +292,7 @@ func _update_repel_bar() -> void:
 
 
 func _update_hover_tooltip() -> void:
-	var should_show := player.input_enabled \
+	var should_show := player.accepts_input() \
 		and (_held_item == null or not is_instance_valid(_held_item)) \
 		and _hovered_item != null \
 		and is_instance_valid(_hovered_item)

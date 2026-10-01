@@ -193,3 +193,17 @@ var control_prompts: ControlPromptStack:
 		if ui:
 			return ui.get_node_or_null("ControlPromptStack") as ControlPromptStack
 		return null
+
+var cutscenes: CutscenePlayer:
+	get:
+		var lvl := level
+		if lvl:
+			return lvl.get_node_or_null("CutscenePlayer") as CutscenePlayer
+		return null
+
+var boss_health_bar: BossHealthBar:
+	get:
+		var ui := game_ui
+		if ui:
+			return ui.get_node_or_null("BossHealthBarAnchor/BossHealthBar") as BossHealthBar
+		return null

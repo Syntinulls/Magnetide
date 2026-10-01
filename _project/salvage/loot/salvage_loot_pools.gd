@@ -56,6 +56,15 @@ func has_available_items(rarity: int, threat_level: int) -> bool:
 		or not get_available_items(rarity, false, threat_level).is_empty()
 
 
+## Rarities with at least one unlocked item in either sub-pool, i.e. the rarities a roll may land on.
+func get_available_rarities(threat_level: int) -> Array[int]:
+	var out: Array[int] = []
+	for i in range(SalvageRarityWeights.TIER_COUNT):
+		if has_available_items(i, threat_level):
+			out.append(i)
+	return out
+
+
 ## Uniform pick within the chosen sub-pool. Falls back to the other sub-pool if the chosen one is
 ## empty; returns null only if both are empty.
 func pick_uniform(rarity: int, is_salvageable: bool, threat_level: int) -> SalvageItemData:

@@ -80,7 +80,7 @@ func _notify_ship_departure(active: bool) -> void:
 ## Whether the run currently permits departing at all, ignoring where the player is.
 func _is_departure_available() -> bool:
 	var player := Magnetide.player as Player
-	if player and not player.input_enabled:
+	if player and not player.accepts_input():
 		return false
 
 	var run := Magnetide.run

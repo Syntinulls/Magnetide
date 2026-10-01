@@ -123,11 +123,13 @@ func _ready() -> void:
 	_cooldown_timer.one_shot = true
 	_cooldown_timer.timeout.connect(_on_cooldown_finished)
 
-	# Freeze the salvage spawn cycle while the window is open and while a storm runs.
+	# Freeze the salvage spawn cycle while the window is open, while a storm runs,
+	# and for the boss fight.
 	if _level:
 		_threat_manager = _level.get_node_or_null("ThreatManager") as ThreatManager
 	if _threat_manager:
 		_threat_manager.window_opened.connect(_on_threat_window_opened)
+		_threat_manager.boss_started.connect(_freeze_spawns)
 		_threat_manager.level_advanced.connect(_on_threat_level_unlocked)
 
 
@@ -196,9 +198,13 @@ func force_salvage_cycle() -> void:
 	_start_warning()
 
 
-## Interlevel window opened: stop producing new salvage piles. An active looting
-## cycle is allowed to finish; pending cooldown/warning states go idle.
-func _on_threat_window_opened(_seconds: float, _is_storm_gate: bool) -> void:
+func _on_threat_window_opened(_seconds: float, _gate: ThreatManager.GateKind) -> void:
+	_freeze_spawns()
+
+
+## Stop producing new salvage piles. An active looting cycle is allowed to finish;
+## pending cooldown/warning states go idle.
+func _freeze_spawns() -> void:
 	_spawns_frozen = true
 	if _state != State.COOLDOWN and _state != State.WARNING:
 		return

@@ -1,7 +1,7 @@
 [gd_scene format=3 uid="uid://cd6a7mxd1b7qr"]
 
 [ext_resource type="Script" uid="uid://cxm5f00ilm0xv" path="res://_project/enemies/enemy.gd" id="1_script"]
-[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Shader" uid="uid://dqpdofsyupgjt" path="res://_project/combat/hit_flash.gdshader" id="2_shader"]
 [ext_resource type="Script" uid="uid://cac7jk0nf7ojo" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_flash"]

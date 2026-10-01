@@ -310,7 +310,7 @@ func _on_run_finished(result: RunResult) -> void:
 		_show_station_screen()
 		return
 
-	if result.end_reason != RunResult.EndReason.VOLUNTARY_DEPARTURE:
+	if not result.keeps_loot():
 		_show_death_summary_screen(result)
 		return
 

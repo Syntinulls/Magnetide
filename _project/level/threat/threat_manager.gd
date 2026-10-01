@@ -12,24 +12,27 @@ class_name ThreatManager
 ##
 ## At the levels an authored storm gates, continuing starts that storm instead of
 ## unlocking the next level immediately; the cap rises once the storm is cleared.
+## At level 10 the window is the boss gate when the level has a boss (continuing
+## starts the fight), and a depart-only terminus when it does not.
 ##
 ## This node owns every timer in the progression. The HUD renders the state it
 ## publishes and never drives it.
 
 signal threat_changed(new_value: float)
 signal threat_level_changed(new_level: int)
-## The interlevel window opened. `is_storm_gate` is true when continuing starts a storm.
-signal window_opened(seconds: float, is_storm_gate: bool)
+## The interlevel window opened; `gate` says what continuing leads to.
+signal window_opened(seconds: float, gate: GateKind)
 ## The window resolved (continued or departed) and is no longer accepting input.
 signal window_closed()
 ## The cap rose; threat resumes building into the newly unlocked segment.
 signal level_advanced(new_cap: int)
 signal storm_started(storm: StormData)
 signal storm_finished(storm: StormData)
-## The authored storm list changed, so which boundaries are storm gates changed
-## with it. The level's storms are injected after the HUD binds, so views that
+signal boss_started()
+## The authored storms or boss availability changed, so which boundaries are gates
+## changed with them. Level content is injected after the HUD binds, so views that
 ## draw the gates need this to catch up.
-signal storms_changed()
+signal gates_changed()
 
 enum Phase {
 	## Threat accumulating toward the cap ceiling.
@@ -38,8 +41,20 @@ enum Phase {
 	WINDOW,
 	## A storm is running; threat is paused until it clears.
 	STORM,
-	## Reserved for the level 10 boss fight. Unused until the boss exists.
+	## The level-10 boss fight is running; threat stays full until the run ends.
 	BOSS,
+}
+
+## What resolving the interlevel window by continuing leads to.
+enum GateKind {
+	## The next threat level unlocks.
+	PLAIN,
+	## An authored storm runs, then the next level unlocks.
+	STORM,
+	## The level's boss fight starts (level 10 only).
+	BOSS,
+	## Nothing further: level 10 with no boss. Depart only; never expires.
+	TERMINAL,
 }
 
 const MAX_THREAT: float = 100.0
@@ -60,11 +75,9 @@ var _current_threat: float = 0.0
 var _threat_level_cap: int = 0
 var _phase: Phase = Phase.BUILDING
 var _window_remaining: float = 0.0
-var _window_is_storm_gate: bool = false
-## True while the open window has nothing left to advance to (level 10): it stays
-## open indefinitely so departing is still possible, and never auto-resolves.
-var _window_is_terminal: bool = false
+var _window_gate: GateKind = GateKind.PLAIN
 var _storms: Array[StormData] = []
+var _boss_available: bool = false
 var _active_storm: StormData = null
 ## While true, opening the window is deferred even though threat has filled the cap
 ## segment (driven by the magnet minigame so a window never opens mid-loot).
@@ -106,10 +119,20 @@ var is_storm_active: bool:
 	get:
 		return _phase == Phase.STORM
 
-## True while the open window has no next level to unlock (level 10): depart only.
+## What continuing leads to for the open window (meaningless while no window is open).
+var window_gate: GateKind:
+	get:
+		return _window_gate
+
+## True while the open window has nothing to continue into (level 10, no boss). It
+## stays open indefinitely so departing is still possible, and never auto-resolves.
 var is_terminal_window: bool:
 	get:
-		return _window_is_terminal
+		return _phase == Phase.WINDOW and _window_gate == GateKind.TERMINAL
+
+var is_boss_active: bool:
+	get:
+		return _phase == Phase.BOSS
 
 var window_seconds_remaining: float:
 	get:
@@ -146,7 +169,20 @@ func _process(delta: float) -> void:
 ## which level boundaries are storm gates.
 func set_storms(storms: Array[StormData]) -> void:
 	_storms = storms.duplicate()
-	storms_changed.emit()
+	gates_changed.emit()
+
+
+## Whether the level has a boss (injected from the level definition). Decides if the
+## level-10 window is the boss gate or the depart-only terminus.
+func set_boss_available(available: bool) -> void:
+	if _boss_available == available:
+		return
+	_boss_available = available
+	gates_changed.emit()
+
+
+func is_boss_available() -> bool:
+	return _boss_available
 
 
 func add_threat(amount: float) -> void:
@@ -181,31 +217,38 @@ func get_storm_gate_levels() -> PackedInt32Array:
 	return levels
 
 
-## True while the window is open and there is a further level to unlock.
+## True while the window is open and continuing leads somewhere.
 func can_advance() -> bool:
-	return _phase == Phase.WINDOW and not _run_ended and _threat_level_cap < MAX_STAGE_INDEX
+	return _phase == Phase.WINDOW and not _run_ended and _window_gate != GateKind.TERMINAL
 
 
 ## Resolve the window by continuing. At a storm gate this starts the storm and the
-## cap rises only once it is cleared; otherwise the next level unlocks immediately.
+## cap rises only once it is cleared; at the boss gate it starts the boss fight;
+## otherwise the next level unlocks immediately.
 func advance() -> void:
 	if not can_advance():
 		return
 
+	var gate := _window_gate
 	var storm: StormData = null
-	if _window_is_storm_gate:
+	if gate == GateKind.STORM:
 		storm = get_storm_after(get_player_threat_level())
 
 	_phase = Phase.BUILDING
 	_window_remaining = 0.0
-	_window_is_storm_gate = false
-	_window_is_terminal = false
+	_window_gate = GateKind.PLAIN
 	window_closed.emit()
 
-	if storm != null:
-		_begin_storm(storm)
-	else:
-		_raise_cap()
+	match gate:
+		GateKind.STORM:
+			if storm != null:
+				_begin_storm(storm)
+			else:
+				_raise_cap()
+		GateKind.BOSS:
+			_begin_boss()
+		_:
+			_raise_cap()
 
 
 ## Defer (or release) opening the window. Driven by the magnet minigame so a window
@@ -251,8 +294,7 @@ func debug_set_threat_level(player_level: int) -> void:
 	var old_level := threat_level
 	_phase = Phase.BUILDING
 	_window_remaining = 0.0
-	_window_is_storm_gate = false
-	_window_is_terminal = false
+	_window_gate = GateKind.PLAIN
 	_active_storm = null
 	_threat_level_cap = stage
 	if was_window:
@@ -266,12 +308,23 @@ func debug_set_threat_level(player_level: int) -> void:
 	level_advanced.emit(_threat_level_cap)
 
 
+## Debug entry point: start the boss fight now, as if the level-10 boss gate had been
+## continued through. Threat jumps to full; any open window or running storm is
+## resolved first (storm actors are not cleaned up).
+func debug_start_boss() -> void:
+	if _run_ended or _phase == Phase.BOSS:
+		return
+	debug_set_threat_level(LEVEL_COUNT)
+	_current_threat = MAX_THREAT
+	threat_changed.emit(_current_threat)
+	_begin_boss()
+
+
 func reset() -> void:
 	_threat_level_cap = 0
 	_phase = Phase.BUILDING
 	_window_remaining = 0.0
-	_window_is_storm_gate = false
-	_window_is_terminal = false
+	_window_gate = GateKind.PLAIN
 	_active_storm = null
 	_window_hold = false
 	_departure_hold = false
@@ -294,7 +347,7 @@ func _tick_threat(delta: float) -> void:
 
 
 func _tick_window(delta: float) -> void:
-	if _window_is_terminal:
+	if _window_gate == GateKind.TERMINAL:
 		return
 	if _window_remaining <= 0.0:
 		return
@@ -333,18 +386,25 @@ func _try_open_window() -> void:
 
 func _open_window() -> void:
 	_phase = Phase.WINDOW
-	_window_is_terminal = _threat_level_cap >= MAX_STAGE_INDEX
-	_window_is_storm_gate = (
-		not _window_is_terminal and is_storm_gate_after(get_player_threat_level())
-	)
-	_window_remaining = 0.0 if _window_is_terminal else interlevel_window_seconds
-	window_opened.emit(_window_remaining, _window_is_storm_gate)
+	if _threat_level_cap >= MAX_STAGE_INDEX:
+		_window_gate = GateKind.BOSS if _boss_available else GateKind.TERMINAL
+	elif is_storm_gate_after(get_player_threat_level()):
+		_window_gate = GateKind.STORM
+	else:
+		_window_gate = GateKind.PLAIN
+	_window_remaining = 0.0 if _window_gate == GateKind.TERMINAL else interlevel_window_seconds
+	window_opened.emit(_window_remaining, _window_gate)
 
 
 func _begin_storm(storm: StormData) -> void:
 	_active_storm = storm
 	_phase = Phase.STORM
 	storm_started.emit(storm)
+
+
+func _begin_boss() -> void:
+	_phase = Phase.BOSS
+	boss_started.emit()
 
 
 func _raise_cap() -> void:

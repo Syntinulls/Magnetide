@@ -47,11 +47,21 @@ _project/                    All game content. (Root level is reserved for engin
 │       ├── salvage/         Salvage-processing minigame screen + run summary popup
 │       │                    + its sprites.
 │       └── preview/         Render-only player/ship preview stages (shared by screens).
+├── bosses/                  The boss fight: Boss (root: lifecycle, total health = sum of its
+│   │                        counted parts, phases, BossState machine), BossPart, BossState,
+│   │                        BossData/BossPhaseData/BossRewardData, and BossEncounter (the
+│   │                        level-side orchestrator, authored in level.tscn). One folder per
+│   │                        boss (bosses/<name>/) owns its scene, part/state scripts, data,
+│   │                        cutscenes and sprites. See specs/boss_system_spec.md.
 ├── audio/                   Audio playback services + assets: sfx_player.gd + sfx/,
 │                            bgm_player.gd + bgm/ (looping background music, own bus),
 │                            music_credit.gd (per-track attribution, §3).
 ├── combat/                  Combat primitives shared across concepts:
-│                            projectile, hitbox, enemy_target_point, muzzle_effect.
+│                            projectile, hitbox, damage_box (contact damage; owners implement
+│                            get_contact_damage()), enemy_target_point, muzzle_effect,
+│                            hit_flash.gdshader (enemies + boss parts), explosion (AoE blast:
+│                            grenade launcher + Floater variant) + its sprites/,
+│                            fire_color_ramp.tres (flamethrower flames + explosion tint).
 ├── common/                  Generic, game-agnostic building blocks:
 │                            utils.gd (static helpers), weighted_random, interaction_hitbox,
 │                            physics_layers.gd (the 2D layer indices, §7),
@@ -61,6 +71,11 @@ _project/                    All game content. (Root level is reserved for engin
 │                            icon_crate, icon_research_point, icon_lock, icon_lock_open).
 │                            A sprite used by exactly one concept belongs to that concept,
 │                            not here.
+├── cutscene/                In-run cutscenes: CutscenePlayer (session — HUD, input lock,
+│                            protection, letterbox — plus the awaitable camera/actor/caption
+│                            directing API; instanced in level.tscn) and CutsceneBehavior (base
+│                            resource for one scripted cutscene). A cutscene lives with the
+│                            concept that plays it (run/departure_cutscene_behavior.*).
 ├── debug/                   Development-only tooling: the debug panel overlay
 │                            (debug_panel.*), active only in debug builds or behind the
 │                            --debug-panel launch flag. See specs/debug_panel.md.
@@ -90,7 +105,9 @@ _project/                    All game content. (Root level is reserved for engin
 │   │                        repair_gun.tres + sprites.
 │   └── augments/            AugmentData + behavior scripts + augment .tres + sprites.
 ├── level/                   The world during a run (presentation + simulation, not spawnable content).
-│   ├── level.*              Root run scene; level_definition.gd (playable-level data).
+│   ├── level.*              Root run scene (owns the level-speed tween); level_definition.gd
+│   │                        (playable-level data: roster, storms, boss scene).
+│   ├── level_camera.gd      LevelCamera: rest pose, cinematic tweens, shake.
 │   ├── viewport_anchor.gd   Viewport-relative positioning helper.
 │   ├── decoration/          Parallax layers, skyline, bands, decoration shaders + sprites.
 │   ├── threat/              Threat simulation: ThreatManager, StormController.
@@ -112,7 +129,8 @@ _project/                    All game content. (Root level is reserved for engin
 │   │                        player_scrap_collector, player_progress_bar_controller. Sprites
 │   │                        in sprites/.
 ├── run/                     One run's lifecycle & mutable state: RunController, RunLoadout,
-│                            RunResult, RunUpgrade, item/slot states, RunArtifactTracker.
+│                            RunResult, RunUpgrade, item/slot states, RunArtifactTracker,
+│                            and the departure cutscene.
 ├── salvage/                 The salvage domain, end to end:
 │   ├── salvage_item.gd      In-world salvage RigidBody2D (pull/freeze/storage behavior).
 │   ├── salvage_item_data.gd + salvage_part_entry.gd + salvage_item_cost.gd (data model).
@@ -151,6 +169,7 @@ _project/                    All game content. (Root level is reserved for engin
     ├── sprites/             Sprites owned by game_ui.tscn itself (player/ship HP bars,
     │                        player icon, bullet icon).
     ├── hotbar/              Hotbar script + gradient shader + its sprites/.
+    ├── boss_health_bar/     Boss health bar (name, phase, phase markers), bound by BossEncounter.
     └── threat/              Threat bar scene/script + its sprites/.
 ```
 

@@ -1,7 +1,8 @@
 [gd_scene format=3 uid="uid://d1v2b1g1lgv81"]
 
-[ext_resource type="Script" uid="uid://bqtucy3b3dr41" path="res://_project/items/weapons/grenade_launcher/explosion.gd" id="1_explosion"]
-[ext_resource type="SpriteFrames" uid="uid://x501hs1qiu35" path="res://_project/items/weapons/grenade_launcher/explosion_sprite_frames.tres" id="2_frames"]
+[ext_resource type="Script" uid="uid://bqtucy3b3dr41" path="res://_project/combat/explosion.gd" id="1_explosion"]
+[ext_resource type="SpriteFrames" uid="uid://x501hs1qiu35" path="res://_project/combat/explosion_sprite_frames.tres" id="2_frames"]
+[ext_resource type="Gradient" uid="uid://bfirecolorrmp" path="res://_project/combat/fire_color_ramp.tres" id="3_color_ramp"]
 
 [sub_resource type="CircleShape2D" id="CircleShape2D_blast"]
 radius = 130.0
@@ -10,6 +11,7 @@ radius = 130.0
 collision_layer = 0
 collision_mask = 4
 script = ExtResource("1_explosion")
+color_ramp = ExtResource("3_color_ramp")
 
 [node name="CollisionShape2D" type="CollisionShape2D" parent="." unique_id=179253018]
 shape = SubResource("CircleShape2D_blast")

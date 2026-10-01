@@ -1,7 +1,7 @@
 [gd_scene format=3]
 
 [ext_resource type="Script" path="res://_project/enemies/charger/charger.gd" id="1_script"]
-[ext_resource type="Shader" path="res://_project/enemies/enemy_flash.gdshader" id="2_shader"]
+[ext_resource type="Shader" path="res://_project/combat/hit_flash.gdshader" id="2_shader"]
 [ext_resource type="Script" path="res://_project/combat/hitbox.gd" id="3_hitbox"]
 [ext_resource type="Script" path="res://_project/combat/damage_box.gd" id="4_damage_box"]
 

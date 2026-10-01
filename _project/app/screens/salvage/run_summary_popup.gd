@@ -159,7 +159,7 @@ func _build_entry_row(entry: Dictionary) -> HBoxContainer:
 
 
 func _is_loss_run() -> bool:
-	return _run_result != null and _run_result.end_reason != RunResult.EndReason.VOLUNTARY_DEPARTURE
+	return _run_result != null and not _run_result.keeps_loot()
 
 
 func _get_end_summary_text() -> String:

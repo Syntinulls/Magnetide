@@ -38,6 +38,7 @@ const LEVEL_BANNER_PRIORITY := 90
 const WINDOW_NORMAL_TEXT := "NEW THREATS APPROACHING"
 const WINDOW_STORM_TEXT := "STORM IMMINENT"
 const WINDOW_TERMINAL_TEXT := "MAXIMUM THREAT"
+const WINDOW_BOSS_TEXT := "BOSS APPROACHING"
 const LEVEL_ADVANCED_TEXT := "THREAT LEVEL %d"
 const LEVEL_BANNER_SECONDS := 2.0
 
@@ -78,6 +79,8 @@ var _displayed_augment_key: String = ""
 var _displayed_hotbar_item_name: String = ""
 ## Seconds left on the transient "THREAT LEVEL N" banner shown after advancing.
 var _level_banner_remaining: float = 0.0
+var _pause_menu: PauseMenu = null
+var _hud_fade_tween: Tween = null
 
 
 func _ready() -> void:
@@ -102,9 +105,24 @@ func _ready() -> void:
 	_update_health_ui()
 	_refresh_augment_icons(true)
 
-	var pause_menu := PauseMenu.new()
-	pause_menu.name = "PauseMenu"
-	add_child(pause_menu)
+	_pause_menu = PauseMenu.new()
+	_pause_menu.name = "PauseMenu"
+	add_child(_pause_menu)
+
+
+## Fade the HUD out (or back in) for a cutscene. The pause menu must still open and
+## cutscene captions render through the event text, so those two are never faded.
+## Only modulate is touched, so elements that manage their own visibility keep it.
+func set_hud_hidden(hidden: bool, fade_seconds: float = 0.0) -> void:
+	if _hud_fade_tween and _hud_fade_tween.is_valid():
+		_hud_fade_tween.kill()
+	_hud_fade_tween = create_tween().set_parallel(true)
+	var target_alpha := 0.0 if hidden else 1.0
+	for child in get_children():
+		var control := child as Control
+		if control == null or control == _pause_menu or control == _event_text:
+			continue
+		_hud_fade_tween.tween_property(control, "modulate:a", target_alpha, maxf(fade_seconds, 0.001))
 
 
 func stop_for_run_end() -> void:
@@ -149,14 +167,20 @@ func _get_active_threat() -> ThreatManager:
 	return null
 
 
-func _on_window_opened(_seconds: float, is_storm_gate: bool) -> void:
+func _on_window_opened(_seconds: float, gate: ThreatManager.GateKind) -> void:
 	if not _event_text or not _bound_threat:
 		return
-	var headline := WINDOW_STORM_TEXT if is_storm_gate else WINDOW_NORMAL_TEXT
-	var style := EventTextDisplay.Style.CRITICAL if is_storm_gate else EventTextDisplay.Style.WARNING
-	if _bound_threat.is_terminal_window:
-		headline = WINDOW_TERMINAL_TEXT
-		style = EventTextDisplay.Style.CRITICAL
+	var headline := WINDOW_NORMAL_TEXT
+	var style := EventTextDisplay.Style.CRITICAL
+	match gate:
+		ThreatManager.GateKind.PLAIN:
+			style = EventTextDisplay.Style.WARNING
+		ThreatManager.GateKind.STORM:
+			headline = WINDOW_STORM_TEXT
+		ThreatManager.GateKind.BOSS:
+			headline = WINDOW_BOSS_TEXT
+		ThreatManager.GateKind.TERMINAL:
+			headline = WINDOW_TERMINAL_TEXT
 	_event_text.show_message(WINDOW_EVENT_SOURCE, headline, _window_subtext(), WINDOW_PRIORITY, style)
 
 

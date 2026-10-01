@@ -1,0 +1,40 @@
+[gd_resource type="Resource" script_class="EnemyData" format=3 uid="uid://bfloaterdata0"]
+
+[ext_resource type="Script" uid="uid://uiieqdlx023s" path="res://_project/enemies/enemy_data.gd" id="1_script"]
+[ext_resource type="SpriteFrames" uid="uid://bfloaterframe" path="res://_project/enemies/floater/floater_sprite_frames.tres" id="2_frames"]
+[ext_resource type="Script" uid="uid://brnrco4mr2pfx" path="res://_project/enemies/floater/floater_move_behavior.gd" id="3_move"]
+[ext_resource type="Script" uid="uid://nyw0vp2yqjqm" path="res://_project/enemies/floater/floater_attack_behavior.gd" id="4_attack"]
+[ext_resource type="PackedScene" uid="uid://bfloaterblast" path="res://_project/enemies/floater/floater_explosion.tscn" id="5_explosion"]
+[ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/weapons/old/shotgun_shoot.ogg" id="6_explode_sfx"]
+[ext_resource type="Texture2D" uid="uid://ba5dnooxwju0t" path="res://_project/enemies/floater/sprites/enemy_5_projectile_pine.png" id="7_pine"]
+
+[sub_resource type="Resource" id="Resource_move_behavior"]
+script = ExtResource("3_move")
+
+[sub_resource type="Resource" id="Resource_attack_behavior"]
+script = ExtResource("4_attack")
+explosion_scene = ExtResource("5_explosion")
+explode_sfx = ExtResource("6_explode_sfx")
+pine_sprite = ExtResource("7_pine")
+
+[resource]
+script = ExtResource("1_script")
+enemy_name = "Floater"
+sprite_frames = ExtResource("2_frames")
+max_health = 150.0
+damage = 55.0
+movement_speed = 90.0
+attack_range = 40.0
+hitbox_size = Vector2(80, 100)
+move_behavior = SubResource("Resource_move_behavior")
+attack_behavior = SubResource("Resource_attack_behavior")
+valid_targets = Array[String](["ship"])
+target_range = 5000.0
+target_acquire_interval = 1.0
+target_priority_mode = 0
+target_priority_order = Array[String](["ship"])
+target_priority_random_excludes = Array[String]([])
+target_switching_mode = 0
+proximity_switch_interval = 1.0
+ally_death_switch_range = 300.0
+target_point_selection_mode = 2

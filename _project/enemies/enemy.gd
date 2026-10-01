@@ -3,14 +3,17 @@ class_name Enemy
 
 signal died
 
-enum State { IDLE, MOVE, ATTACK, DEATH }
-enum DeathPhase { NONE, POPPING }
+## RETREAT leaves the fight without dying: the enemy falls off screen like a death, but
+## is not a kill and does not alert its allies.
+enum State { IDLE, MOVE, ATTACK, DEATH, RETREAT }
+enum FallPhase { NONE, FALLING }
 
 const INVALID_TARGET_GROUP: StringName = &""
 const ANIM_IDLE: StringName = &"idle"
 const ANIM_MOVE: StringName = &"move"
 const ANIM_ATTACK: StringName = &"attack"
 const ANIM_DEATH: StringName = &"death"
+const ANIM_RETREAT: StringName = &"retreat"
 const DefaultMoveBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_move_behavior.gd")
 const DefaultAttackBehaviorScript: Script = preload("res://_project/enemies/behaviors/default_attack_behavior.gd")
 
@@ -34,12 +37,11 @@ var _move_behavior: Resource = null
 var _attack_behavior: Resource = null
 var _last_damage_source: Node = null
 var _target_acquire_timer: float = 0.0
-var _death_timer: float = 0.0
 ## Consecutive seconds spent off screen, reset by any time back inside it.
 var _out_of_bounds_elapsed: float = 0.0
-var _death_pop_elapsed: float = 0.0
-var _death_phase: DeathPhase = DeathPhase.NONE
-var _death_rotation_velocity: float = 0.0
+var _fall_elapsed: float = 0.0
+var _fall_phase: FallPhase = FallPhase.NONE
+var _fall_rotation_velocity: float = 0.0
 var _visual_rest_position: Vector2 = Vector2.ZERO
 var _flash_tween: Tween = null
 var _hit_shake_tween: Tween = null
@@ -73,8 +75,8 @@ func _ready() -> void:
 func _physics_process(delta: float) -> void:
 	if not data:
 		return
-	if state == State.DEATH:
-		_process_death(delta)
+	if _is_leaving_fight():
+		_process_fall(delta)
 		return
 
 	_process_active(delta)
@@ -134,18 +136,17 @@ func _process_active(delta: float) -> void:
 	move_and_slide()
 
 
-func _process_death(delta: float) -> void:
-	_death_timer += delta
-	if _death_phase != DeathPhase.POPPING:
+func _process_fall(delta: float) -> void:
+	if _fall_phase != FallPhase.FALLING:
 		velocity = Vector2.ZERO
 		return
 
-	_death_pop_elapsed += delta
+	_fall_elapsed += delta
 	velocity.y += data.death_pop_gravity * delta
-	rotation += _death_rotation_velocity * delta
+	rotation += _fall_rotation_velocity * delta
 	move_and_slide()
 
-	if _death_pop_elapsed >= data.death_pop_max_time or _is_below_viewport():
+	if _fall_elapsed >= data.death_pop_max_time or _is_below_viewport():
 		queue_free()
 
 
@@ -181,31 +182,44 @@ func _enter_state(new_state: State) -> void:
 				_attack_behavior.on_enter_attack(self)
 		State.DEATH:
 			_enter_death_state()
+		State.RETREAT:
+			_enter_retreat_state()
 
 
 func _enter_death_state() -> void:
+	_leave_fight()
+	play_enemy_animation(ANIM_DEATH)
+	_launch_fall(data.death_pop_up_velocity_range, data.death_pop_rotation_velocity_range)
+	_notify_allies_of_death()
+	died.emit()
+
+
+func _enter_retreat_state() -> void:
+	_leave_fight()
+	play_enemy_animation(ANIM_RETREAT)
+	_launch_fall(data.retreat_up_velocity_range, data.retreat_rotation_velocity_range)
+
+
+## Shared by death and retreat: drops the target, stops the behaviors and makes the
+## body unhittable before it falls away.
+func _leave_fight() -> void:
 	velocity = Vector2.ZERO
-	current_target_group = INVALID_TARGET_GROUP
-	current_target_root = null
-	current_target_point = null
-	current_damage_target = null
-	_death_timer = 0.0
-	_death_pop_elapsed = 0.0
+	_clear_target()
 	if _move_behavior:
 		_move_behavior.teardown(self)
 	if _attack_behavior:
 		_attack_behavior.teardown(self)
 	hitbox_collision_shape.set_deferred("disabled", true)
-	play_enemy_animation(ANIM_DEATH)
-	_launch_death_pop()
-	_notify_allies_of_death()
-	died.emit()
+
+
+func _is_leaving_fight() -> bool:
+	return state == State.DEATH or state == State.RETREAT
 
 
 # -- Shared Enemy API --------------------------------------------------------
 
 func take_damage(amount: float, source: Node = null) -> void:
-	if state == State.DEATH or _run_ended:
+	if _is_leaving_fight() or _run_ended:
 		return
 
 	if source != null:
@@ -229,7 +243,7 @@ func take_damage(amount: float, source: Node = null) -> void:
 ## an enemy that sees an ally die within its configured range switches its
 ## target to that ally's attacker (subject to _allows_ally_death_switch()).
 func notify_ally_death(dead_enemy: Enemy, attacker: Node) -> void:
-	if state == State.DEATH or _run_ended or not data:
+	if _is_leaving_fight() or _run_ended or not data:
 		return
 	if data.target_switching_mode != EnemyData.TargetSwitchingMode.ALLY_DEATH:
 		return
@@ -240,6 +254,14 @@ func notify_ally_death(dead_enemy: Enemy, attacker: Node) -> void:
 	if not _allows_ally_death_switch():
 		return
 	_switch_target_to_damage_source(attacker)
+
+
+## Leaves the fight alive: plays the retreat animation and falls off screen without
+## counting as a kill. Ignored once the enemy is already dying or retreating.
+func retreat() -> void:
+	if _is_leaving_fight() or _run_ended or not data:
+		return
+	_enter_state(State.RETREAT)
 
 
 func get_hitbox() -> Hitbox:
@@ -296,10 +318,15 @@ func face_current_target() -> void:
 		rotation = angle + PI / 2.0
 
 
+## DamageBox contract: one contact hit's damage, scaled by threat.
+func get_contact_damage() -> float:
+	return data.damage * damage_scale if data else 0.0
+
+
 func deal_damage_to_current_target(amount: float = -1.0) -> void:
 	if not current_damage_target or not current_damage_target.has_method("take_damage"):
 		return
-	var damage_amount := (data.damage * damage_scale) if amount < 0.0 else amount
+	var damage_amount := get_contact_damage() if amount < 0.0 else amount
 	current_damage_target.take_damage(damage_amount, self)
 
 
@@ -636,7 +663,7 @@ func _get_proximity_switch_interval() -> float:
 	return maxf(data.proximity_switch_interval, 0.05)
 
 
-# -- Death -------------------------------------------------------------------
+# -- Hit reaction & falling -------------------------------------------------
 
 func _flash_white() -> void:
 	if _flash_tween:
@@ -669,19 +696,14 @@ func _play_hit_shake() -> void:
 	_hit_shake_tween.tween_property(visual, "position", _visual_rest_position, minf(step_duration, 0.04))
 
 
-func _launch_death_pop() -> void:
-	if state != State.DEATH:
-		return
-	_death_phase = DeathPhase.POPPING
-	_death_pop_elapsed = 0.0
+func _launch_fall(up_velocity_range: Vector2, rotation_velocity_range: Vector2) -> void:
+	_fall_phase = FallPhase.FALLING
+	_fall_elapsed = 0.0
 	velocity = Vector2(
 		randf_range(data.death_pop_velocity_x_range.x, data.death_pop_velocity_x_range.y),
-		-randf_range(data.death_pop_up_velocity_range.x, data.death_pop_up_velocity_range.y)
+		-randf_range(up_velocity_range.x, up_velocity_range.y)
 	)
-	_death_rotation_velocity = randf_range(
-		data.death_pop_rotation_velocity_range.x,
-		data.death_pop_rotation_velocity_range.y
-	)
+	_fall_rotation_velocity = randf_range(rotation_velocity_range.x, rotation_velocity_range.y)
 
 
 ## Accumulate off-screen time and free the enemy once it exceeds the data's limit.

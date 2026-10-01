@@ -1,4 +1,8 @@
 extends Node2D
+class_name Level
+
+## Root of a run's world: scroll speed, layout of the ship and camera against the
+## viewport, and the atmospheric haze overlay.
 
 ## The speed at which the level scrolls (used by trash stream and foreground).
 @export var level_speed: float = 300.0
@@ -23,6 +27,7 @@ extends Node2D
 var viewport_anchor: ViewportAnchor
 var _fog_overlay: TextureRect = null
 var _fog_shader: Shader = null
+var _level_speed_tween: Tween = null
 
 @onready var _parallax_viewport: SubViewport = $ParallaxCanvasLayer/ParallaxViewportContainer/ParallaxViewport
 @onready var _parallax_container: SubViewportContainer = $ParallaxCanvasLayer/ParallaxViewportContainer
@@ -35,7 +40,7 @@ var surface_y: float:
 
 @onready var ship: Node2D = $Ship
 @onready var ui_root: Control = $UICanvas/UIRoot
-@onready var camera: Camera2D = $Camera2D
+@onready var camera: LevelCamera = $Camera2D
 @onready var threat: ThreatManager = $ThreatManager
 
 
@@ -50,6 +55,17 @@ func _ready() -> void:
 	call_deferred("_update_parallax_viewport_size")
 	call_deferred("_create_fog_overlay")
 	call_deferred("_update_positions")
+
+
+## Ease level_speed to `target`. Replaces any speed tween already running, so two
+## systems easing the ship (a storm, a boss, departure) never fight over it. Await
+## the returned tween's `finished` to sequence on arrival.
+func tween_level_speed(target: float, duration: float) -> Tween:
+	if _level_speed_tween and _level_speed_tween.is_valid():
+		_level_speed_tween.kill()
+	_level_speed_tween = create_tween()
+	_level_speed_tween.tween_property(self, "level_speed", target, maxf(duration, 0.001)) 		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
+	return _level_speed_tween
 
 
 func _on_viewport_changed(_size: Vector2) -> void:
@@ -121,6 +137,6 @@ func _update_positions() -> void:
 	if ship:
 		ship.position = viewport_anchor.get_position(ship_x_ratio, ship_y_ratio)
 	
-	# Position camera at screen center (for DRAG_CENTER anchor mode)
+	# Screen center (for DRAG_CENTER anchor mode).
 	if camera:
-		camera.position = viewport_anchor.size * 0.5
+		camera.rest_position = viewport_anchor.size * 0.5

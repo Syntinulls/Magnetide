@@ -4,18 +4,14 @@ class_name RunController
 signal run_finished(result: RunResult)
 signal scrap_metal_count_changed(count: int)
 
-const DEPARTURE_DECEL_SECONDS: float = 2.25
-const DEPARTURE_RISE_SECONDS: float = 3.0
-const DEPARTURE_BOOST_SECONDS: float = 1.35
-const DEPARTURE_FADE_SECONDS: float = 0.9
-const DEPARTURE_SHIELD_REVEAL_RATIO: float = 0.75
-const DEPARTURE_RISE_VIEWPORT_RATIO: float = 4.5
-const DEPARTURE_CAMERA_LEAD_VIEWPORT_RATIO: float = 0.35
-const DEPARTURE_BOOST_THRUST_START_RATIO: float = 0.9
-const DEPARTURE_BOOST_VIEWPORT_RATIO: float = 7.0
-const DEPARTURE_BOOST_CAMERA_RATIO: float = 0.22
-const DEPARTURE_LEVEL_SPEED_EPSILON: float = 1.0
-const DEPARTURE_PLAYER_WALK_SPEED: float = 180.0
+const DEPARTURE_CUTSCENE: CutsceneBehavior = preload("res://_project/run/departure_cutscene_behavior.tres")
+## The lever's prompt verb and confirm text per interlevel gate. Storms and the boss
+## are irreversible, so their confirm text asks for a second press.
+const LEVER_ADVANCE_COPY: Dictionary = {
+	ThreatManager.GateKind.PLAIN: ["CONTINUE", ""],
+	ThreatManager.GateKind.STORM: ["ENTER STORM", "ENTER STORM?"],
+	ThreatManager.GateKind.BOSS: ["FIGHT BOSS", "FIGHT BOSS?"],
+}
 
 var _level_definition: LevelDefinition = null
 var _level: Node = null
@@ -28,6 +24,7 @@ var _magnet_lever: MagnetLever = null
 var _enemy_spawner: EnemySpawner = null
 var _magnet_minigame: MagnetMinigame = null
 var _storm_controller: StormController = null
+var _boss_encounter: BossEncounter = null
 var _threat: ThreatManager = null
 var _run_loadout: RunLoadout = null
 var _artifact_tracker: RunArtifactTracker = RunArtifactTracker.new()
@@ -37,6 +34,8 @@ var _enemies_killed: int = 0
 var _scrap_metal_collected: int = 0
 var _end_reason: RunResult.EndReason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 var _is_run_ending: bool = false
+## Items awarded outside ship storage (a boss reward), added to the departure payload.
+var _bonus_loot: Array[SalvageItemData] = []
 
 var scrap_metal_collected: int:
 	get:
@@ -62,6 +61,7 @@ func start_run(level_definition: LevelDefinition, level_node: Node, run_loadout:
 	_scrap_metal_collected = 0
 	_end_reason = RunResult.EndReason.VOLUNTARY_DEPARTURE
 	_is_run_ending = false
+	_bonus_loot.clear()
 	_artifact_tracker.reset()
 	call_deferred("_bind_runtime")
 
@@ -83,6 +83,7 @@ func _bind_runtime() -> void:
 	_enemy_spawner = _level.get_node_or_null("EnemySpawner") as EnemySpawner
 	_magnet_minigame = _level.get_node_or_null("MagnetMinigame") as MagnetMinigame
 	_storm_controller = _level.get_node_or_null("StormController") as StormController
+	_boss_encounter = _level.get_node_or_null("BossEncounter") as BossEncounter
 	_threat = _level.get_node_or_null("ThreatManager") as ThreatManager
 
 	Magnetide.register_run_context(self, _level, _level, _game_ui, _ship, _player, _magnet)
@@ -111,6 +112,10 @@ func _connect_runtime_signals() -> void:
 		_threat.storm_started.connect(_on_storm_started)
 	if _threat and not _threat.storm_finished.is_connected(_on_storm_finished):
 		_threat.storm_finished.connect(_on_storm_finished)
+	if _threat and not _threat.boss_started.is_connected(_on_boss_started):
+		_threat.boss_started.connect(_on_boss_started)
+	if _boss_encounter and not _boss_encounter.encounter_finished.is_connected(_on_boss_encounter_finished):
+		_boss_encounter.encounter_finished.connect(_on_boss_encounter_finished)
 	# The run coordinates the lever's window role: the threat manager owns the state
 	# and the lever owns the input, but neither should know about the other.
 	if _threat and not _threat.window_opened.is_connected(_on_threat_window_opened):
@@ -122,8 +127,8 @@ func _connect_runtime_signals() -> void:
 
 
 ## Push the level definition's authored content into the runtime nodes. A level's
-## enemy roster and storms are defined by its definition, not by whichever scene
-## happens to instance the spawner.
+## enemy roster, storms and boss are defined by its definition, not by whichever
+## scene happens to instance the spawner.
 func _inject_level_content() -> void:
 	if _level_definition == null:
 		return
@@ -131,6 +136,9 @@ func _inject_level_content() -> void:
 		_enemy_spawner.set_enemy_profiles(_level_definition.enemy_profiles)
 	if _threat:
 		_threat.set_storms(_level_definition.storms)
+		_threat.set_boss_available(_level_definition.boss_scene != null)
+	if _boss_encounter:
+		_boss_encounter.set_boss_scene(_level_definition.boss_scene)
 
 
 func _process(delta: float) -> void:
@@ -165,13 +173,12 @@ func request_end_run(reason: RunResult.EndReason) -> void:
 	_end_reason = reason
 	if Magnetide.bgm:
 		Magnetide.bgm.fade_out()
+	var is_departure := RunResult.reason_keeps_loot(reason)
 	var departure_start_speed := _get_level_speed()
-	_shutdown_gameplay(reason != RunResult.EndReason.VOLUNTARY_DEPARTURE)
-	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
+	_shutdown_gameplay(not is_departure)
+	if is_departure:
 		_set_level_speed(departure_start_speed)
-
-	if reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
-		call_deferred("_finish_run_after_departure_cutscene", departure_start_speed)
+		call_deferred("_finish_run_after_departure_cutscene")
 	else:
 		var result := _build_result()
 		call_deferred("_finish_run", result)
@@ -195,6 +202,8 @@ func _shutdown_gameplay(stop_player: bool = true) -> void:
 		_enemy_spawner.stop_for_run_end()
 	if _storm_controller:
 		_storm_controller.stop_for_run_end()
+	if _boss_encounter:
+		_boss_encounter.stop_for_run_end()
 	if _level and "level_speed" in _level:
 		_level.level_speed = 0.0
 	if _level and "threat" in _level and _level.threat:
@@ -223,8 +232,10 @@ func _build_result() -> RunResult:
 
 	if _ship:
 		result.salvage_items_collected = _ship.get_stored_item_count()
-		if _end_reason == RunResult.EndReason.VOLUNTARY_DEPARTURE:
+		if result.keeps_loot():
 			result.stored_loot = _ship.get_stored_loot_payload()
+	if result.keeps_loot():
+		result.stored_loot.append_array(_bonus_loot)
 
 	return result
 
@@ -234,167 +245,12 @@ func _finish_run(result: RunResult) -> void:
 	run_finished.emit(result)
 
 
-func _finish_run_after_departure_cutscene(departure_start_speed: float) -> void:
-	await _play_departure_cutscene(departure_start_speed)
+func _finish_run_after_departure_cutscene() -> void:
+	var cutscenes := Magnetide.cutscenes
+	if cutscenes:
+		await cutscenes.play(DEPARTURE_CUTSCENE)
 	var result := _build_result()
 	_finish_run(result)
-
-
-func _play_departure_cutscene(departure_start_speed: float) -> void:
-	if _game_ui:
-		_game_ui.visible = false
-
-	var camera := _get_level_camera()
-	if camera:
-		camera.make_current()
-
-	if _player:
-		_player.start_walk_to_ship_center_for_cutscene(0.0, DEPARTURE_PLAYER_WALK_SPEED)
-
-	if departure_start_speed > DEPARTURE_LEVEL_SPEED_EPSILON:
-		await _tween_level_speed(departure_start_speed, 0.0, DEPARTURE_DECEL_SECONDS)
-	_set_level_speed(0.0)
-
-	if _player:
-		if _player.is_cinematic_walk_active():
-			await _player.cinematic_walk_finished
-		_player.stop_for_run_end()
-
-	if _ship:
-		_ship.lock_stored_items_for_departure()
-		_ship.set_departure_lift_thrusters(false)
-
-	var viewport_height := maxf(get_viewport().get_visible_rect().size.y, 1.0)
-	var rise_distance := viewport_height * DEPARTURE_RISE_VIEWPORT_RATIO
-	var camera_lead_distance := viewport_height * DEPARTURE_CAMERA_LEAD_VIEWPORT_RATIO
-	await _tween_ship_and_camera_with_shield_reveal(
-		-rise_distance,
-		-camera_lead_distance,
-		DEPARTURE_RISE_SECONDS
-	)
-
-	var boost_distance := viewport_height * DEPARTURE_BOOST_VIEWPORT_RATIO
-	await _tween_ship_and_camera(
-		-boost_distance,
-		-boost_distance * DEPARTURE_BOOST_CAMERA_RATIO,
-		DEPARTURE_BOOST_SECONDS
-	)
-	await _fade_departure_to_black()
-
-
-func _tween_level_speed(from_speed: float, to_speed: float, duration: float) -> void:
-	var tween := create_tween()
-	tween.tween_method(Callable(self, "_set_level_speed"), from_speed, to_speed, duration) \
-		.set_trans(Tween.TRANS_SINE) \
-		.set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
-
-
-func _tween_ship_and_camera(ship_y_delta: float, camera_y_delta: float, duration: float) -> void:
-	var tween := create_tween()
-	tween.set_parallel(true)
-	var has_tweener := false
-
-	if _ship:
-		has_tweener = true
-		tween.tween_property(_ship, "global_position:y", _ship.global_position.y + ship_y_delta, duration) \
-			.set_trans(Tween.TRANS_SINE) \
-			.set_ease(Tween.EASE_IN_OUT)
-
-	var camera := _get_level_camera()
-	if camera:
-		has_tweener = true
-		tween.tween_property(camera, "global_position:y", camera.global_position.y + camera_y_delta, duration) \
-			.set_trans(Tween.TRANS_SINE) \
-			.set_ease(Tween.EASE_IN_OUT)
-
-	if has_tweener:
-		await tween.finished
-
-
-func _tween_ship_and_camera_with_shield_reveal(ship_y_delta: float, camera_lead_y_delta: float, duration: float) -> void:
-	var tween := create_tween()
-	tween.set_parallel(true)
-	var has_tweener := false
-	var camera := _get_level_camera()
-	var ship_start_y := _ship.global_position.y if _ship else 0.0
-	var camera_start_y := camera.global_position.y if camera else 0.0
-
-	if _ship or camera:
-		has_tweener = true
-		tween.tween_method(
-			Callable(self, "_update_departure_rise").bind(ship_start_y, camera_start_y, ship_y_delta, camera_lead_y_delta),
-			0.0,
-			1.0,
-			duration
-		) \
-			.set_trans(Tween.TRANS_SINE) \
-			.set_ease(Tween.EASE_IN_OUT)
-
-	if _ship:
-		tween.tween_callback(_ship.show_departure_shield) \
-			.set_delay(duration * DEPARTURE_SHIELD_REVEAL_RATIO)
-		tween.tween_callback(_ship.set_departure_lift_thrusters.bind(true)) \
-			.set_delay(duration * DEPARTURE_BOOST_THRUST_START_RATIO)
-
-	if has_tweener:
-		await tween.finished
-
-
-func _update_departure_rise(
-	progress: float,
-	ship_start_y: float,
-	camera_start_y: float,
-	ship_y_delta: float,
-	camera_lead_y_delta: float
-) -> void:
-	if _ship:
-		_ship.global_position.y = ship_start_y + ship_y_delta * progress
-
-	var camera := _get_level_camera()
-	if camera:
-		var lead_progress := clampf(progress, 0.0, 1.0)
-		var eased_lead := lead_progress * lead_progress * (3.0 - 2.0 * lead_progress)
-		camera.global_position.y = camera_start_y + ship_y_delta * progress + camera_lead_y_delta * eased_lead
-
-
-func _fade_departure_to_black() -> void:
-	var overlay := _create_departure_fade_overlay()
-	if overlay == null:
-		return
-
-	var tween := create_tween()
-	tween.tween_property(overlay, "color:a", 1.0, DEPARTURE_FADE_SECONDS) \
-		.set_trans(Tween.TRANS_SINE) \
-		.set_ease(Tween.EASE_IN_OUT)
-	await tween.finished
-
-
-func _create_departure_fade_overlay() -> ColorRect:
-	if _level == null or not is_instance_valid(_level):
-		return null
-
-	var canvas_layer := CanvasLayer.new()
-	canvas_layer.name = "DepartureFadeLayer"
-	canvas_layer.layer = 90
-	_level.add_child(canvas_layer)
-
-	var rect := ColorRect.new()
-	rect.name = "DepartureFade"
-	rect.color = Color(0.0, 0.0, 0.0, 0.0)
-	rect.mouse_filter = Control.MOUSE_FILTER_IGNORE
-	rect.anchor_right = 1.0
-	rect.anchor_bottom = 1.0
-	canvas_layer.add_child(rect)
-	return rect
-
-
-func _get_level_camera() -> Camera2D:
-	if _level == null or not is_instance_valid(_level):
-		return null
-	if "camera" in _level:
-		return _level.camera as Camera2D
-	return _level.get_node_or_null("Camera2D") as Camera2D
 
 
 func _get_level_speed() -> float:
@@ -425,13 +281,15 @@ func _start_run_music() -> void:
 		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
 
 
-## Hand the lever its window role. At a storm gate continuing is irreversible, so
-## the lever asks for a confirming second press; at a plain gate one press commits.
-func _on_threat_window_opened(_seconds: float, is_storm_gate: bool) -> void:
+## Hand the lever its window role. Entering a storm or the boss fight is
+## irreversible, so the lever asks for a confirming second press; at a plain gate
+## one press commits.
+func _on_threat_window_opened(_seconds: float, gate: ThreatManager.GateKind) -> void:
 	if _magnet_lever == null or _threat == null:
 		return
-	if _threat.can_advance():
-		_magnet_lever.set_advance_mode(true, is_storm_gate)
+	if _threat.can_advance() and LEVER_ADVANCE_COPY.has(gate):
+		var copy: Array = LEVER_ADVANCE_COPY[gate]
+		_magnet_lever.set_advance_mode(true, copy[0], copy[1])
 
 
 func _on_threat_window_closed() -> void:
@@ -455,6 +313,27 @@ func _on_storm_started(_storm: StormData) -> void:
 func _on_storm_finished(_storm: StormData) -> void:
 	if Magnetide.bgm:
 		Magnetide.bgm.play_category(BgmPlayer.Category.IN_RUN)
+
+
+func _on_boss_started() -> void:
+	if Magnetide.bgm:
+		Magnetide.bgm.play_category(BgmPlayer.Category.BOSS)
+
+
+## Beating the boss ends the run as a departure: the ship leaves with its cargo.
+func _on_boss_encounter_finished(_boss: Boss) -> void:
+	request_end_run(RunResult.EndReason.BOSS_DEFEATED)
+
+
+## Add items to the run's recovered cargo without placing them in ship storage (a
+## boss reward). They reach the salvage screen only if the run ends keeping loot.
+func award_bonus_loot(items: Array[SalvageItemData]) -> void:
+	for item in items:
+		if item == null:
+			continue
+		_bonus_loot.append(item)
+		if _player and _player.loot_labels:
+			_player.loot_labels.record(item.item_name, 1)
 
 
 func record_scrap_metal_collected(amount: int) -> void:

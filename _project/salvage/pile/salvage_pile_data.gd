@@ -90,7 +90,7 @@ func roll_pull(threat_level: int, tracker: RunArtifactTracker, pull_count: int) 
 	# 3. Salvage item: rarity (curve) -> pity sub-pool -> uniform item.
 	if loot_pools == null or rarity_weights == null:
 		return get_trash_roll_result()
-	var available := _available_salvage_rarities(threat_level)
+	var available := loot_pools.get_available_rarities(threat_level)
 	var rarity := rarity_weights.roll_rarity(threat_level, available)
 	if rarity < 0:
 		return get_trash_roll_result()
@@ -119,17 +119,6 @@ func available_artifact_rarities(threat_level: int, tracker: RunArtifactTracker)
 			and tracker.can_pull(rarity_int, artifact_max_per_rarity) \
 			and artifact_pools.has_sprites(rarity_int):
 			out.append(rarity_int)
-	return out
-
-
-## Salvage rarities with at least one unlocked item in either sub-pool.
-func _available_salvage_rarities(threat_level: int) -> Array[int]:
-	var out: Array[int] = []
-	if loot_pools == null:
-		return out
-	for i in range(SalvageRarityWeights.TIER_COUNT):
-		if loot_pools.has_available_items(i, threat_level):
-			out.append(i)
 	return out
 
 

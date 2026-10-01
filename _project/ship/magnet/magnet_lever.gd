@@ -23,9 +23,11 @@ var _tween_elapsed: float = 0.0
 var _tween_start_progress: float = 0.0
 # Advance ("continue to next threat") mode, active while the interlevel window is open.
 var _advance_mode: bool = false
-## True while the pending advance leads into a storm, which is the only case that
-## takes a confirming second press.
-var _advance_needs_confirm: bool = false
+## Non-empty while continuing is irreversible (a storm or the boss): the first press
+## shows this text over the lever and a second press commits.
+var _advance_confirm_text: String = ""
+## Control prompt verb while in advance mode ("CONTINUE", "ENTER STORM", ...).
+var _advance_action: String = "CONTINUE"
 var _advance_confirm_pending: bool = false
 
 var _outline: CompositeOutline = null
@@ -78,7 +80,7 @@ func _process(delta: float) -> void:
 		_process_advance_input()
 		return
 
-	if not _is_available or not is_player_in_range:
+	if not _is_available or not _is_player_ready():
 		return
 
 	if Input.is_action_just_pressed("interact"):
@@ -95,20 +97,23 @@ func _process(delta: float) -> void:
 
 
 ## Switch the lever between normal looting use and "continue to next threat"
-## advance use, for the duration of the interlevel window. `needs_confirm` marks a
-## storm gate, where continuing is irreversible and takes a second press.
-func set_advance_mode(enabled: bool, needs_confirm: bool = false) -> void:
+## advance use, for the duration of the interlevel window. `action` is the control
+## prompt's verb. A non-empty `confirm_text` marks an irreversible continue (storm,
+## boss): the first press shows the text and a second press commits.
+func set_advance_mode(enabled: bool, action: String = "CONTINUE", confirm_text: String = "") -> void:
 	_advance_mode = enabled
-	_advance_needs_confirm = needs_confirm
+	_advance_action = action
+	_advance_confirm_text = confirm_text
 	if not enabled:
 		_advance_confirm_pending = false
 		_set_continue_prompt_visible(false)
 
 
 ## A plain gate commits on the first press — the window auto-continues anyway, so a
-## mispress costs nothing. A storm gate shows "ENTER STORM?" and waits for a second.
+## mispress costs nothing. An irreversible gate shows its confirm text and waits
+## for a second.
 func _process_advance_input() -> void:
-	if not is_player_in_range:
+	if not _is_player_ready():
 		if _advance_confirm_pending:
 			_advance_confirm_pending = false
 			_set_continue_prompt_visible(false)
@@ -117,8 +122,10 @@ func _process_advance_input() -> void:
 	if not Input.is_action_just_pressed("interact"):
 		return
 
-	if _advance_needs_confirm and not _advance_confirm_pending:
+	if not _advance_confirm_text.is_empty() and not _advance_confirm_pending:
 		_advance_confirm_pending = true
+		if _continue_prompt:
+			_continue_prompt.text = _advance_confirm_text
 		_set_continue_prompt_visible(true)
 		return
 
@@ -135,10 +142,18 @@ func _set_continue_prompt_visible(value: bool) -> void:
 		_continue_prompt.visible = value
 
 
+## In range and able to act — a player held by a cutscene can't pull the lever.
+func _is_player_ready() -> bool:
+	if not is_player_in_range:
+		return false
+	var player := Magnetide.player as Player
+	return player == null or player.accepts_input()
+
+
 ## Highlight the lever and register its control prompt while it can be used.
 ## The prompt reflects the lever's current function ([E] BRAKE vs [E] CONTINUE).
 func _update_prompt_and_highlight() -> void:
-	var usable := is_player_in_range and (_advance_mode or _is_available)
+	var usable := _is_player_ready() and (_advance_mode or _is_available)
 	_set_highlight(usable)
 	# Pulse for the whole interlevel window so the lever advertises itself from
 	# across the ship, not only once the player is already standing on it.
@@ -151,7 +166,7 @@ func _update_prompt_and_highlight() -> void:
 	if usable:
 		var action := "BRAKE"
 		if _advance_mode:
-			action = "ENTER STORM" if _advance_needs_confirm else "CONTINUE"
+			action = _advance_action
 		elif Magnetide.magnet and Magnetide.magnet.is_active:
 			# Magnet is looting; flipping the lever departs the salvage pile.
 			action = "DEPART"

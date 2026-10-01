@@ -89,6 +89,14 @@ var target_point_selection_mode: TargetSelectionMode = TargetSelectionMode.RANDO
 @export var death_pop_despawn_margin: float = 128.0
 @export var death_pop_max_time: float = 4.0
 
+@export_group("Retreat")
+## Upward launch speed range when the enemy retreats instead of dying. The fall reuses
+## the death sequence's sideways range, gravity and despawn rules.
+@export var retreat_up_velocity_range: Vector2 = Vector2(200.0, 300.0)
+## Spin range (rad/s) while retreating; kept near zero so the fall reads as leaving,
+## not as the tumble of a kill.
+@export var retreat_rotation_velocity_range: Vector2 = Vector2(-0.4, 0.4)
+
 
 func _get_property_list() -> Array:
 	var properties: Array = []

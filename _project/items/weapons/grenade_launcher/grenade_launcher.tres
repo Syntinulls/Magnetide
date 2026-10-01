@@ -2,7 +2,7 @@
 
 [ext_resource type="Script" uid="uid://dswvbat8qx1i4" path="res://_project/items/weapons/weapon_data.gd" id="1_weapon_data"]
 [ext_resource type="Texture2D" uid="uid://c8xwvb45trt03" path="res://_project/items/weapons/grenade_launcher/grenadepill_s_1.png" id="2_bullet"]
-[ext_resource type="PackedScene" uid="uid://d1v2b1g1lgv81" path="res://_project/items/weapons/grenade_launcher/explosion.tscn" id="3_explosion"]
+[ext_resource type="PackedScene" uid="uid://d1v2b1g1lgv81" path="res://_project/combat/explosion.tscn" id="3_explosion"]
 [ext_resource type="Texture2D" uid="uid://deixaucfd5om" path="res://_project/items/weapons/grenade_launcher/player_item_launcher.png" id="4_launcher_sprite"]
 [ext_resource type="AudioStream" uid="uid://dsbgllenwiqsr" path="res://_project/audio/sfx/weapons/old/shotgun_shoot.ogg" id="5_fire_sfx"]
 [ext_resource type="AudioStream" uid="uid://cudvnphgnvf15" path="res://_project/audio/sfx/weapons/old/shotgun_reload.ogg" id="6_reload_sfx"]

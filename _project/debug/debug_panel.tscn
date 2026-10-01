@@ -141,6 +141,11 @@ unique_name_in_owner = true
 layout_mode = 2
 text = "Scrap: -"
 
+[node name="BossLabel" type="Label" parent="Panel/Scroll/Groups/ReadoutRows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Boss: -"
+
 [node name="LevelHeader" type="Label" parent="Panel/Scroll/Groups"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
@@ -390,6 +395,109 @@ layout_mode = 2
 toggle_mode = true
 text = "Ship God Mode"
 
+[node name="BossHeader" type="Label" parent="Panel/Scroll/Groups"]
+layout_mode = 2
+theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
+text = "BOSS"
+
+[node name="BossRows" type="VBoxContainer" parent="Panel/Scroll/Groups"]
+layout_mode = 2
+theme_override_constants/separation = 4
+
+[node name="SummonBossRow" type="HBoxContainer" parent="Panel/Scroll/Groups/BossRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="SummonBossButton" type="Button" parent="Panel/Scroll/Groups/BossRows/SummonBossRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Summon Boss"
+
+[node name="BossDropdown" type="OptionButton" parent="Panel/Scroll/Groups/BossRows/SummonBossRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(160, 0)
+
+[node name="KillBossButton" type="Button" parent="Panel/Scroll/Groups/BossRows"]
+unique_name_in_owner = true
+layout_mode = 2
+text = "Kill Boss"
+
+[node name="DamageBossRow" type="HBoxContainer" parent="Panel/Scroll/Groups/BossRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DamageBossButton" type="Button" parent="Panel/Scroll/Groups/BossRows/DamageBossRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Damage Boss"
+
+[node name="DamageBossAmountEdit" type="LineEdit" parent="Panel/Scroll/Groups/BossRows/DamageBossRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "100"
+
+[node name="BossPhaseRow" type="HBoxContainer" parent="Panel/Scroll/Groups/BossRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="GoToBossPhaseButton" type="Button" parent="Panel/Scroll/Groups/BossRows/BossPhaseRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Go To Phase"
+
+[node name="BossPhaseEdit" type="LineEdit" parent="Panel/Scroll/Groups/BossRows/BossPhaseRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(90, 0)
+placeholder_text = "2"
+
+[node name="ForceBossStateRow" type="HBoxContainer" parent="Panel/Scroll/Groups/BossRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="ForceBossStateButton" type="Button" parent="Panel/Scroll/Groups/BossRows/ForceBossStateRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Force State"
+
+[node name="BossStateDropdown" type="OptionButton" parent="Panel/Scroll/Groups/BossRows/ForceBossStateRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(160, 0)
+
+[node name="DestroyBossPartRow" type="HBoxContainer" parent="Panel/Scroll/Groups/BossRows"]
+layout_mode = 2
+theme_override_constants/separation = 6
+
+[node name="DestroyBossPartButton" type="Button" parent="Panel/Scroll/Groups/BossRows/DestroyBossPartRow"]
+unique_name_in_owner = true
+layout_mode = 2
+size_flags_horizontal = 3
+text = "Destroy Part"
+
+[node name="BossPartDropdown" type="OptionButton" parent="Panel/Scroll/Groups/BossRows/DestroyBossPartRow"]
+unique_name_in_owner = true
+layout_mode = 2
+custom_minimum_size = Vector2(160, 0)
+
+[node name="BossInvulnerableButton" type="Button" parent="Panel/Scroll/Groups/BossRows"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Boss Invulnerable"
+
+[node name="FreezeBossButton" type="Button" parent="Panel/Scroll/Groups/BossRows"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Freeze Boss AI"
+
 [node name="StationHeader" type="Label" parent="Panel/Scroll/Groups"]
 layout_mode = 2
 theme_override_colors/font_color = Color(1, 0.82, 0.4, 1)
@@ -600,6 +708,12 @@ unique_name_in_owner = true
 layout_mode = 2
 toggle_mode = true
 text = "Pause"
+
+[node name="SkipCutscenesButton" type="Button" parent="Panel/Scroll/Groups/WorldRows"]
+unique_name_in_owner = true
+layout_mode = 2
+toggle_mode = true
+text = "Skip Cutscenes"
 
 [node name="CycleMusicButton" type="Button" parent="Panel/Scroll/Groups/WorldRows"]
 unique_name_in_owner = true

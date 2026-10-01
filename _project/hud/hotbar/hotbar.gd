@@ -43,6 +43,9 @@ func _ready() -> void:
 func _input(event: InputEvent) -> void:
 	if _is_scrolling:
 		return
+	var player := Magnetide.player as Player
+	if player and not player.accepts_input():
+		return
 	
 	if event.is_action_pressed("hotbar_slot_1"):
 		select_slot(0)

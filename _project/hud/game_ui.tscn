@@ -20,6 +20,7 @@
 [ext_resource type="PackedScene" uid="uid://b1evttxtdisp0" path="res://_project/hud/event_text_display.tscn" id="26_event_text"]
 [ext_resource type="Script" uid="uid://cver2thb56t61" path="res://_project/hud/control_prompt_stack.gd" id="27_prompts"]
 [ext_resource type="Texture2D" uid="uid://dijcob8i8yu8u" path="res://_project/hud/sprites/bullet.png" id="28_bullet"]
+[ext_resource type="PackedScene" uid="uid://bbosshealthbr" path="res://_project/hud/boss_health_bar/boss_health_bar.tscn" id="29_boss_bar"]
 
 [sub_resource type="ShaderMaterial" id="ShaderMaterial_hotbar_gradient"]
 shader = ExtResource("22_gradient")
@@ -109,6 +110,21 @@ mouse_filter = 2
 layout_mode = 0
 offset_right = 0.0
 offset_bottom = 0.0
+
+[node name="BossHealthBarAnchor" type="Control" parent="."]
+layout_mode = 1
+anchors_preset = 5
+anchor_left = 0.5
+anchor_right = 0.5
+offset_top = 184.0
+offset_bottom = 184.0
+grow_horizontal = 2
+mouse_filter = 2
+
+[node name="BossHealthBar" parent="BossHealthBarAnchor" instance=ExtResource("29_boss_bar")]
+layout_mode = 0
+offset_left = -600.0
+offset_right = 600.0
 
 [node name="EventTextDisplay" parent="." unique_id=104122633 instance=ExtResource("26_event_text")]
 layout_mode = 1

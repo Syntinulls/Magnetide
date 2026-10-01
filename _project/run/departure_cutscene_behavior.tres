@@ -1,0 +1,7 @@
+[gd_resource type="Resource" script_class="DepartureCutsceneBehavior" format=3 uid="uid://bdepartcutscn"]
+
+[ext_resource type="Script" uid="uid://d3ufkgnlj83px" path="res://_project/run/departure_cutscene_behavior.gd" id="1_script"]
+
+[resource]
+script = ExtResource("1_script")
+hold_session_at_end = true

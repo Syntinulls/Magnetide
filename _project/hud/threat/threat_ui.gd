@@ -28,6 +28,10 @@ class_name ThreatUI
 ## storm_icon_modulate when unset.
 @export var storm_icon: Texture2D
 @export var storm_icon_modulate: Color = Color(0.45, 1.0, 0.4, 1.0)
+## Icon marking the boss gate at the top of the bar, shown when the level has a boss.
+## Falls back to the lock texture tinted with boss_icon_modulate when unset.
+@export var boss_icon: Texture2D
+@export var boss_icon_modulate: Color = Color(1.0, 0.35, 0.3, 1.0)
 ## Opacity of storm markers other than the one at the current cap boundary. Every
 ## gate stays visible for the whole run so the player can read the run's shape from
 ## level 1; the one they are actually held at is the only one at full strength.
@@ -102,7 +106,7 @@ func _connect_threat_manager() -> void:
 		_threat_manager.threat_level_changed.connect(_on_threat_level_changed)
 		_threat_manager.level_advanced.connect(_on_level_advanced)
 		_threat_manager.window_opened.connect(_on_window_opened)
-		_threat_manager.storms_changed.connect(_rebuild_gate_icons)
+		_threat_manager.gates_changed.connect(_rebuild_gate_icons)
 		_current_threat = _threat_manager.current_threat
 		_cap_stage = _threat_manager.threat_level_cap
 		_rebuild_gate_icons()
@@ -214,9 +218,10 @@ func _boundary_x(boundary_level: int) -> float:
 	)
 
 
-## Build one marker per authored storm gate. They persist for the whole run rather
-## than appearing only once reached, so the player can see where the storms lie
-## from level 1 and plan how deep to go.
+## Build one marker per authored storm gate, plus the boss gate at the top of the
+## bar when the level has a boss. They persist for the whole run rather than
+## appearing only once reached, so the player can see where the storms lie from
+## level 1 and plan how deep to go.
 func _rebuild_gate_icons() -> void:
 	for icon in _gate_icons:
 		if is_instance_valid(icon):
@@ -229,13 +234,22 @@ func _rebuild_gate_icons() -> void:
 		icon.name = "StormGate%d" % level
 		icon.texture = storm_icon if storm_icon != null else _lock_icon_texture
 		icon.set_meta(&"gate_level", level)
+		icon.set_meta(&"is_boss", false)
 		add_child(icon)
 		_gate_icons.append(icon)
+	if _threat_manager.is_boss_available():
+		var boss_marker := Sprite2D.new()
+		boss_marker.name = "BossGate"
+		boss_marker.texture = boss_icon if boss_icon != null else _lock_icon_texture
+		boss_marker.set_meta(&"gate_level", ThreatManager.LEVEL_COUNT)
+		boss_marker.set_meta(&"is_boss", true)
+		add_child(boss_marker)
+		_gate_icons.append(boss_marker)
 	_position_gate_icons()
 
 
 ## Storm gates sit after levels 3, 6 and 9 — never the central dip at 5 — so they
-## always use the bar's flat y.
+## always use the bar's flat y; the boss gate shares it at the bar's right end.
 func _position_gate_icons() -> void:
 	if not _locked_overlay:
 		return
@@ -245,13 +259,17 @@ func _position_gate_icons() -> void:
 			continue
 		var level: int = icon.get_meta(&"gate_level")
 		icon.position = Vector2(_boundary_x(level), lock_icon_y)
-		icon.modulate = _gate_icon_color(level == reachable)
+		icon.modulate = _gate_icon_color(level == reachable, icon.get_meta(&"is_boss"))
 
 
 ## The gate currently holding the run reads full strength; the rest sit back so
 ## they inform without competing with the ticker.
-func _gate_icon_color(is_current: bool) -> Color:
-	var color := Color.WHITE if storm_icon != null else storm_icon_modulate
+func _gate_icon_color(is_current: bool, is_boss: bool) -> Color:
+	var color := Color.WHITE
+	if is_boss and boss_icon == null:
+		color = boss_icon_modulate
+	elif not is_boss and storm_icon == null:
+		color = storm_icon_modulate
 	if not is_current:
 		color.a *= distant_gate_icon_alpha
 	return color
@@ -280,7 +298,7 @@ func _on_level_advanced(new_cap: int) -> void:
 	_position_lock_icon()
 
 
-func _on_window_opened(_seconds: float, _is_storm_gate: bool) -> void:
+func _on_window_opened(_seconds: float, _gate: ThreatManager.GateKind) -> void:
 	if _threat_manager:
 		_cap_stage = _threat_manager.threat_level_cap
 		_update_locked_overlay()

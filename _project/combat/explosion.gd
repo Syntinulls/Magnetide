@@ -1,13 +1,17 @@
 extends Area2D
-class_name GrenadeExplosion
+class_name Explosion
 
 ## An instantaneous area-of-effect blast: on spawn it deals a single hit of damage to
-## every enemy overlapping its circle, plays the explosion animation once, then frees
-## itself. The blast circle (CollisionShape2D) and target layer (collision_mask) are
-## authored on this scene; the spawning projectile hands in its damage and source.
+## every target on its collision_mask overlapping its circle, plays the explosion
+## animation once, then frees itself. The blast circle (CollisionShape2D) and target
+## layers (collision_mask) are authored on the scene -- the grenade's blast hits
+## enemies, a variant scene retargets it -- and the spawner hands in damage and source.
 
-## Fallback damage; overridden by the spawning weapon's damage through configure().
+## Fallback damage; overridden by the spawner's damage through configure().
 @export var damage: float = 200.0
+## Tint sampled across the animation, one step per frame, so the blast burns from hot
+## yellow to grey smoke. Left unset, the sprite keeps its own colors.
+@export var color_ramp: Gradient
 
 var source: Node = null
 
@@ -53,13 +57,26 @@ func _play_animation() -> void:
 	if _sprite and _sprite.sprite_frames and _sprite.sprite_frames.has_animation(&"explode"):
 		_sprite.play(&"explode")
 		_sprite.animation_finished.connect(queue_free)
+		_sprite.frame_changed.connect(_apply_frame_tint)
+		_apply_frame_tint()
 	else:
 		queue_free()
 
 
-## Deals a single hit to every distinct enemy inside the blast. Uses an immediate physics
+## Samples the ramp at the frame's start (frame / count, never 1.0) so the final frame
+## is still partly visible rather than landing on the ramp's fully transparent end.
+func _apply_frame_tint() -> void:
+	if color_ramp == null:
+		return
+	var frame_count := _sprite.sprite_frames.get_frame_count(_sprite.animation)
+	if frame_count <= 0:
+		return
+	_sprite.modulate = color_ramp.sample(float(_sprite.frame) / float(frame_count))
+
+
+## Deals a single hit to every distinct target inside the blast. Uses an immediate physics
 ## shape query rather than Area2D overlap (which only populates after a physics frame) so
-## the damage lands the instant the explosion appears. De-duplicated by target so an enemy
+## the damage lands the instant the explosion appears. De-duplicated by target so a target
 ## with several hitboxes is only hit once.
 func _apply_area_damage() -> void:
 	var blast_radius := _get_blast_radius()

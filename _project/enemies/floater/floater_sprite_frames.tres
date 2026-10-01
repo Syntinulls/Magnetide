@@ -1,0 +1,108 @@
+[gd_resource type="SpriteFrames" format=3 uid="uid://bfloaterframe"]
+
+[ext_resource type="Texture2D" uid="uid://cdgy27rw8kygw" path="res://_project/enemies/floater/sprites/enemy_5_fly.png" id="1_fly"]
+[ext_resource type="Texture2D" uid="uid://dov0vxgpkrpx4" path="res://_project/enemies/floater/sprites/enemy_5_coil.png" id="2_coil"]
+[ext_resource type="Texture2D" uid="uid://18v4bks1xavs" path="res://_project/enemies/floater/sprites/enemy_5_retreat_flap.png" id="3_retreat_flap"]
+[ext_resource type="Texture2D" uid="uid://ncmvt7pkbnl0" path="res://_project/enemies/floater/sprites/enemy_5_dead.png" id="4_dead"]
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fly_0"]
+atlas = ExtResource("1_fly")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fly_1"]
+atlas = ExtResource("1_fly")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fly_2"]
+atlas = ExtResource("1_fly")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_fly_3"]
+atlas = ExtResource("1_fly")
+region = Rect2(384, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_retreat_0"]
+atlas = ExtResource("3_retreat_flap")
+region = Rect2(0, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_retreat_1"]
+atlas = ExtResource("3_retreat_flap")
+region = Rect2(128, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_retreat_2"]
+atlas = ExtResource("3_retreat_flap")
+region = Rect2(256, 0, 128, 128)
+
+[sub_resource type="AtlasTexture" id="AtlasTexture_retreat_3"]
+atlas = ExtResource("3_retreat_flap")
+region = Rect2(384, 0, 128, 128)
+
+[resource]
+animations = [{
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("2_coil")
+}],
+"loop": false,
+"name": &"coil",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": ExtResource("4_dead")
+}],
+"loop": false,
+"name": &"death",
+"speed": 1.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_3")
+}],
+"loop": true,
+"name": &"idle",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_fly_3")
+}],
+"loop": true,
+"name": &"move",
+"speed": 8.0
+}, {
+"frames": [{
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_retreat_0")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_retreat_1")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_retreat_2")
+}, {
+"duration": 1.0,
+"texture": SubResource("AtlasTexture_retreat_3")
+}],
+"loop": true,
+"name": &"retreat",
+"speed": 10.0
+}]

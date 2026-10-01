@@ -27,7 +27,7 @@ const STORM_CLEARED_TEXT := "STORM CLEARED"
 
 var _threat_manager: ThreatManager = null
 var _enemy_spawner: EnemySpawner = null
-var _level: Node = null
+var _level: Level = null
 var _event_text: EventTextDisplay = null
 
 var _phase: Phase = Phase.IDLE
@@ -43,7 +43,6 @@ var _wave_enemies: Array[Enemy] = []
 
 var _vignette_rect: TextureRect = null
 var _vignette_tween: Tween = null
-var _level_speed_tween: Tween = null
 var _base_level_speed: float = 0.0
 
 var is_storm_active: bool:
@@ -54,10 +53,10 @@ var is_storm_active: bool:
 func _ready() -> void:
 	if Engine.is_editor_hint():
 		return
-	_level = get_parent()
+	_level = get_parent() as Level
 	_threat_manager = get_node_or_null("../ThreatManager") as ThreatManager
 	_enemy_spawner = get_node_or_null("../EnemySpawner") as EnemySpawner
-	if _level and "level_speed" in _level:
+	if _level:
 		_base_level_speed = _level.level_speed
 	if _threat_manager:
 		_threat_manager.storm_started.connect(_on_storm_started)
@@ -106,7 +105,8 @@ func _on_storm_started(storm: StormData) -> void:
 
 	if _enemy_spawner:
 		_enemy_spawner.set_ambient_spawning_enabled(false)
-	_tween_level_speed(0.0, ship_halt_seconds)
+	if _level:
+		_level.tween_level_speed(0.0, ship_halt_seconds)
 	_setup_weather(storm.weather)
 	_post_message(storm.display_name, "", EventTextDisplay.Style.CRITICAL)
 
@@ -203,7 +203,8 @@ func _begin_outro() -> void:
 	_phase = Phase.OUTRO
 	_phase_timer = _storm.outro_seconds if _storm else 0.0
 	_teardown_weather()
-	_tween_level_speed(_base_level_speed, ship_resume_seconds)
+	if _level:
+		_level.tween_level_speed(_base_level_speed, ship_resume_seconds)
 	if _enemy_spawner:
 		_enemy_spawner.set_ambient_spawning_enabled(true)
 	_post_message(STORM_CLEARED_TEXT, "", EventTextDisplay.Style.NORMAL)
@@ -273,16 +274,6 @@ func _teardown_weather() -> void:
 	_weather.teardown()
 	_weather = null
 	_fade_vignette(Color(0, 0, 0, 0), fade_seconds)
-
-
-func _tween_level_speed(target: float, duration: float) -> void:
-	if _level == null or not ("level_speed" in _level):
-		return
-	if _level_speed_tween and _level_speed_tween.is_valid():
-		_level_speed_tween.kill()
-	_level_speed_tween = create_tween()
-	_level_speed_tween.tween_property(_level, "level_speed", target, duration) \
-		.set_trans(Tween.TRANS_SINE).set_ease(Tween.EASE_IN_OUT)
 
 
 func _build_vignette() -> void:

@@ -19,15 +19,22 @@ const SCROLL_VIEWPORT_MARGIN := 24.0
 const MAX_DEBUG_DECK_ITEMS := 20
 
 ## Dropdown/action catalogs. Content additions register here (spec §10); the
-## enemy dropdown instead enumerates the live EnemySpawner's profiles.
+## enemy dropdown instead enumerates the live EnemySpawner's profiles, and the boss
+## state/part dropdowns the live boss.
 @export var weapons: Array[WeaponData] = []
 @export var upgrade_items: Array[ItemData] = []
 @export var unlock_items: Array[ItemData] = []
 @export var unlock_slot_ids: Array[StringName] = []
 @export var salvage_items: Array[SalvageItemData] = []
+## Boss scenes (root is a Boss) offered by Summon Boss.
+@export var boss_scenes: Array[PackedScene] = []
 
 var _context_refresh_remaining: float = 0.0
 var _wipe_confirm_remaining: float = 0.0
+## Held here rather than on the CutscenePlayer, which is rebuilt with every run.
+var _skip_cutscenes: bool = false
+## The boss the state/part dropdowns were last built from.
+var _dropdown_boss: Boss = null
 
 @onready var _panel: PanelContainer = $Panel
 @onready var _scroll: ScrollContainer = $Panel/Scroll
@@ -69,6 +76,20 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _destroy_ship_button: Button = %DestroyShipButton
 @onready var _ship_god_mode_button: Button = %ShipGodModeButton
 
+@onready var _summon_boss_button: Button = %SummonBossButton
+@onready var _boss_dropdown: OptionButton = %BossDropdown
+@onready var _kill_boss_button: Button = %KillBossButton
+@onready var _damage_boss_button: Button = %DamageBossButton
+@onready var _damage_boss_amount_edit: LineEdit = %DamageBossAmountEdit
+@onready var _go_to_boss_phase_button: Button = %GoToBossPhaseButton
+@onready var _boss_phase_edit: LineEdit = %BossPhaseEdit
+@onready var _force_boss_state_button: Button = %ForceBossStateButton
+@onready var _boss_state_dropdown: OptionButton = %BossStateDropdown
+@onready var _destroy_boss_part_button: Button = %DestroyBossPartButton
+@onready var _boss_part_dropdown: OptionButton = %BossPartDropdown
+@onready var _boss_invulnerable_button: Button = %BossInvulnerableButton
+@onready var _freeze_boss_button: Button = %FreezeBossButton
+
 @onready var _add_scrap_button: Button = %AddScrapButton
 @onready var _scrap_amount_edit: LineEdit = %ScrapAmountEdit
 @onready var _add_research_button: Button = %AddResearchButton
@@ -99,6 +120,7 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _time_two_button: Button = %TimeTwoButton
 @onready var _time_four_button: Button = %TimeFourButton
 @onready var _pause_button: Button = %PauseButton
+@onready var _skip_cutscenes_button: Button = %SkipCutscenesButton
 @onready var _cycle_music_button: Button = %CycleMusicButton
 
 @onready var _fps_label: Label = %FpsLabel
@@ -107,6 +129,7 @@ var _wipe_confirm_remaining: float = 0.0
 @onready var _player_label: Label = %PlayerLabel
 @onready var _ship_label: Label = %ShipLabel
 @onready var _scrap_label: Label = %ScrapLabel
+@onready var _boss_label: Label = %BossLabel
 
 
 func _ready() -> void:
@@ -187,6 +210,15 @@ func _connect_actions() -> void:
 	_destroy_ship_button.pressed.connect(_on_destroy_ship_pressed)
 	_ship_god_mode_button.toggled.connect(_on_ship_god_mode_toggled)
 
+	_summon_boss_button.pressed.connect(_on_summon_boss_pressed)
+	_kill_boss_button.pressed.connect(_on_kill_boss_pressed)
+	_damage_boss_button.pressed.connect(_on_damage_boss_pressed)
+	_go_to_boss_phase_button.pressed.connect(_on_go_to_boss_phase_pressed)
+	_force_boss_state_button.pressed.connect(_on_force_boss_state_pressed)
+	_destroy_boss_part_button.pressed.connect(_on_destroy_boss_part_pressed)
+	_boss_invulnerable_button.toggled.connect(_on_boss_invulnerable_toggled)
+	_freeze_boss_button.toggled.connect(_on_freeze_boss_toggled)
+
 	_add_scrap_button.pressed.connect(_on_add_scrap_pressed)
 	_add_research_button.pressed.connect(_on_add_research_pressed)
 	_add_item_button.pressed.connect(_on_add_item_pressed)
@@ -209,6 +241,7 @@ func _connect_actions() -> void:
 	_time_two_button.pressed.connect(_on_time_scale_pressed.bind(2.0))
 	_time_four_button.pressed.connect(_on_time_scale_pressed.bind(4.0))
 	_pause_button.toggled.connect(_on_pause_toggled)
+	_skip_cutscenes_button.toggled.connect(_on_skip_cutscenes_toggled)
 	_cycle_music_button.pressed.connect(_on_cycle_music_pressed)
 
 
@@ -401,6 +434,70 @@ func _on_ship_god_mode_toggled(pressed: bool) -> void:
 
 
 # =============================================================================
+# Boss actions
+# =============================================================================
+
+func _on_summon_boss_pressed() -> void:
+	var encounter := _get_boss_encounter()
+	if encounter == null or _boss_dropdown.selected < 0:
+		return
+	encounter.debug_summon(_boss_dropdown.get_selected_metadata() as PackedScene)
+
+
+func _on_kill_boss_pressed() -> void:
+	var boss := _get_boss()
+	if boss:
+		boss.debug_kill()
+
+
+## Lands as a real hit on the first live, damageable counted part, so phase clamps
+## and invulnerability apply exactly as they would to a shot.
+func _on_damage_boss_pressed() -> void:
+	var boss := _get_boss()
+	if boss == null:
+		return
+	var amount := _parse_float(_damage_boss_amount_edit, 100.0)
+	for part in boss.parts:
+		if part.counts_toward_boss_health and not part.is_destroyed and part.damageable:
+			part.take_damage(amount)
+			return
+
+
+func _on_go_to_boss_phase_pressed() -> void:
+	var boss := _get_boss()
+	if boss:
+		boss.debug_set_phase(_parse_int(_boss_phase_edit, 2) - 1)
+
+
+func _on_force_boss_state_pressed() -> void:
+	var boss := _get_boss()
+	if boss == null or _boss_state_dropdown.selected < 0:
+		return
+	boss.transition_to(_boss_state_dropdown.get_selected_metadata())
+
+
+func _on_destroy_boss_part_pressed() -> void:
+	var boss := _get_boss()
+	if boss == null or _boss_part_dropdown.selected < 0:
+		return
+	var part := _boss_part_dropdown.get_selected_metadata() as BossPart
+	if part and is_instance_valid(part):
+		boss.debug_destroy_part(part)
+
+
+func _on_boss_invulnerable_toggled(pressed: bool) -> void:
+	var boss := _get_boss()
+	if boss:
+		boss.debug_set_invulnerable(pressed)
+
+
+func _on_freeze_boss_toggled(pressed: bool) -> void:
+	var boss := _get_boss()
+	if boss:
+		boss.debug_set_frozen(pressed)
+
+
+# =============================================================================
 # Station / economy actions
 # =============================================================================
 
@@ -558,6 +655,13 @@ func _on_pause_toggled(pressed: bool) -> void:
 	get_tree().paused = pressed
 
 
+func _on_skip_cutscenes_toggled(pressed: bool) -> void:
+	_skip_cutscenes = pressed
+	var cutscenes := Magnetide.cutscenes
+	if cutscenes:
+		cutscenes.skip_enabled = pressed
+
+
 func _on_cycle_music_pressed() -> void:
 	if Magnetide.bgm:
 		Magnetide.bgm.cycle_debug_volume()
@@ -609,6 +713,23 @@ func _refresh_context() -> void:
 	if ship:
 		_ship_god_mode_button.set_pressed_no_signal(ship.invulnerable)
 
+	var encounter := _get_boss_encounter()
+	var boss := _get_boss()
+	var boss_active := boss != null and boss.lifecycle == Boss.Lifecycle.ACTIVE
+	_summon_boss_button.disabled = encounter == null or boss != null or _boss_dropdown.item_count == 0
+	_boss_dropdown.disabled = _boss_dropdown.item_count == 0
+	_kill_boss_button.disabled = boss == null
+	_damage_boss_button.disabled = boss == null
+	_go_to_boss_phase_button.disabled = not boss_active
+	_force_boss_state_button.disabled = not boss_active
+	_destroy_boss_part_button.disabled = not boss_active
+	_boss_invulnerable_button.disabled = boss == null
+	_freeze_boss_button.disabled = boss == null
+	if boss:
+		_boss_invulnerable_button.set_pressed_no_signal(boss.debug_is_invulnerable())
+		_freeze_boss_button.set_pressed_no_signal(boss.debug_is_frozen())
+	_refresh_boss_dropdowns(boss)
+
 	var has_save := save_data != null
 	_equip_weapon_button.disabled = not has_save
 	_grant_upgrade_button.disabled = not has_save
@@ -628,6 +749,9 @@ func _refresh_context() -> void:
 	_go_menu_button.disabled = app_root == null
 
 	_pause_button.set_pressed_no_signal(get_tree().paused)
+	var cutscenes := Magnetide.cutscenes
+	if cutscenes:
+		cutscenes.skip_enabled = _skip_cutscenes
 	_cycle_music_button.disabled = Magnetide.bgm == null
 
 	_refresh_enemy_dropdown()
@@ -669,6 +793,20 @@ func _update_readout() -> void:
 		_ship_label.text = "Ship: Hull %d/%d" % [roundi(ship.current_health), roundi(ship.max_health)]
 	else:
 		_ship_label.text = "Ship: -"
+
+	var boss := _get_boss()
+	if boss:
+		var state := String(boss.get_current_state_id())
+		_boss_label.text = "Boss: %s  P %d/%d  %s  HP %d/%d" % [
+			boss.get_display_name(),
+			boss.get_phase_index() + 1,
+			boss.get_phase_count(),
+			state if not state.is_empty() else Boss.Lifecycle.keys()[boss.lifecycle],
+			roundi(boss.get_current_health()),
+			roundi(boss.get_max_health()),
+		]
+	else:
+		_boss_label.text = "Boss: -"
 
 	var run := _get_run()
 	if run:
@@ -726,6 +864,11 @@ func _populate_static_dropdowns() -> void:
 			continue
 		_item_dropdown.add_item(item.item_name if not item.item_name.is_empty() else item.resource_path.get_file())
 		_item_dropdown.set_item_metadata(_item_dropdown.item_count - 1, item)
+	for scene in boss_scenes:
+		if scene == null:
+			continue
+		_boss_dropdown.add_item(scene.resource_path.get_file().get_basename())
+		_boss_dropdown.set_item_metadata(_boss_dropdown.item_count - 1, scene)
 
 
 func _refresh_enemy_dropdown() -> void:
@@ -743,6 +886,23 @@ func _refresh_enemy_dropdown() -> void:
 			continue
 		_enemy_dropdown.add_item(String(profile.id))
 		_enemy_dropdown.set_item_metadata(_enemy_dropdown.item_count - 1, profile.id)
+
+
+## Rebuilt whenever a different boss (or none) is out.
+func _refresh_boss_dropdowns(boss: Boss) -> void:
+	if boss == _dropdown_boss:
+		return
+	_dropdown_boss = boss
+	_boss_state_dropdown.clear()
+	_boss_part_dropdown.clear()
+	if boss == null:
+		return
+	for state_id in boss.get_state_ids():
+		_boss_state_dropdown.add_item(String(state_id))
+		_boss_state_dropdown.set_item_metadata(_boss_state_dropdown.item_count - 1, state_id)
+	for part in boss.parts:
+		_boss_part_dropdown.add_item(String(part.name))
+		_boss_part_dropdown.set_item_metadata(_boss_part_dropdown.item_count - 1, part)
 
 
 static func _salvage_label(item: SalvageItemData) -> String:
@@ -806,6 +966,15 @@ func _get_enemy_spawner() -> EnemySpawner:
 
 func _get_threat_manager() -> ThreatManager:
 	return _get_level_child("ThreatManager") as ThreatManager
+
+
+func _get_boss_encounter() -> BossEncounter:
+	return _get_level_child("BossEncounter") as BossEncounter
+
+
+func _get_boss() -> Boss:
+	var encounter := _get_boss_encounter()
+	return encounter.get_active_boss() if encounter else null
 
 
 func _get_magnet_minigame() -> MagnetMinigame:

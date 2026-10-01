@@ -137,20 +137,22 @@ ceil(enemy HP ÷ damage). "Base" = level 0 weapon vs threat 1 enemy; "Max" = max
 weapon vs threat 10 enemy (×3.71). Shotgun counts **pellets** (up to 3 hit per shot);
 flamethrower counts flames, excluding the 12–16 burn.
 
-| Weapon | Worm base→max | Mosquito base→max | Charger base→max |
-|---|---|---|---|
-| Pistol | 8 → 9 | 5 → 6 | 10 → 12 |
-| SMG | 9 → 10 | 6 → 7 | 12 → 14 |
-| Rifle | 5 → 7 | 4 → 5 | 7 → 9 |
-| Shotgun | 4 → 4 | 3 → 3 | 5 → 6 |
-| Sniper | 2 → 2 | 1 → 1 | 2 → 2 |
-| Grenade L. | 2 → 3 | 2 → 2 | 3 → 4 |
-| Flamethrower | 25 → 27 | 18 → 19 | 35 → 38 |
+| Weapon | Worm base→max | Mosquito base→max | Charger base→max | Floater base→max |
+|---|---|---|---|---|
+| Pistol | 8 → 9 | 5 → 6 | 10 → 12 | 22 → 26 |
+| SMG | 9 → 10 | 6 → 7 | 12 → 14 | 25 → 30 |
+| Rifle | 5 → 7 | 4 → 5 | 7 → 9 | 15 → 19 |
+| Shotgun | 4 → 4 | 3 → 3 | 5 → 6 | 10 → 12 |
+| Sniper | 2 → 2 | 1 → 1 | 2 → 2 | 4 → 5 |
+| Grenade L. | 2 → 3 | 2 → 2 | 3 → 4 | 6 → 8 |
+| Flamethrower | 25 → 27 | 18 → 19 | 35 → 38 | 75 → 80 |
 
 On-schedule gear holds a near-flat curve: a **level 2 pistol (13) vs a threat-4 worm (81 HP)
 is 7 shots**, a **level 3 pistol (16) vs a threat-7 worm (125 HP) is 8**. Falling behind is what
 creates difficulty — the storm steps make it bite: an **un-upgraded pistol needs 8 shots on a
-threat-3 worm, 12 on a threat-4 worm, and 27 on a threat-10 worm**. Level 10 sits alone after
+threat-3 worm, 12 on a threat-4 worm, and 27 on a threat-10 worm**. The Floater never meets
+base gear in practice (it unlocks at threat 4): an on-schedule **level 2 pistol needs 19 shots
+on a threat-4 Floater (244 HP)**, a level 2 rifle 14. Level 10 sits alone after
 the third storm, so even maxed gear takes about one extra shot there (the finale).
 
 ---
@@ -162,22 +164,29 @@ the third storm, so even maxed gear takes about one extra shot there (the finale
 Sources: `_project/enemies/<name>/<name>_data.tres` + behavior scripts. Every enemy authors its
 own health and damage (`enemy_data.gd` defaults are 50 / 5).
 
-| Stat | Worm | Mosquito | Charger |
-|---|---|---|---|
-| Max health | 50 | 35 | 70 |
-| Damage | 8 (bite/s while latched) | 6 (needle projectile) | **30** (dash contact, 1 hit/dash) |
-| Movement | 1040 burst propel (windup 0.4 s, pause 0.35 s) | 220 fly, hovers at 1000 px | 130 approach; dash 1170 px/s (windup 0.6 s) |
-| Attack cycle | 1.0 s per bite | 4.0 s per shot (0.8 windup + 0.2 recover + 3.0 cd); needle 800 px/s | orbit → windup → dash (2× target distance, 2 s timeout) |
-| Targets | magnet, ship, player (random magnet/ship) | player only | player only |
-| Min threat to spawn | 1 | 2 | 3 |
-| Spawns magnet idle? | no | yes | yes |
-| Max batch size | 6 | 2 | 1 |
-| Spawn cooldown | 0 | 10 s | 14 s |
-| Spawn weight | 1.0 | 1.0 | 1.0 |
-| Spawn zones | 3 south zones | 10 side zones | 10 side zones |
+| Stat | Worm | Mosquito | Charger | Floater |
+|---|---|---|---|---|
+| Max health | 50 | 35 | 70 | **150** |
+| Damage | 8 (bite/s while latched) | 6 (needle projectile) | **30** (dash contact, 1 hit/dash) | **55** burst (ship always; player within 130 px) + 8 per pine ×6 |
+| Movement | 1040 burst propel (windup 0.4 s, pause 0.35 s) | 220 fly, hovers at 1000 px | 130 approach; dash 1170 px/s (windup 0.6 s) | 90 drift, ±14 px bob (2 s period) |
+| Attack cycle | 1.0 s per bite | 4.0 s per shot (0.8 windup + 0.2 recover + 3.0 cd); needle 800 px/s | orbit → windup → dash (2× target distance, 2 s timeout) | once: 1.0 s coil → burst → retreat; pines 900 px/s, gravity 1200, 36° apart over the upper half-circle |
+| Targets | magnet, ship, player (random magnet/ship) | player only | player only | ship only (point nearest its spawn) |
+| Min threat to spawn | 1 | 2 | 3 | 4 |
+| Spawns magnet idle? | no | yes | yes | yes |
+| Max batch size | 6 | 2 | 1 | 1 |
+| Spawn cooldown | 0 | 10 s | 14 s | 24 s |
+| Spawn weight | 1.0 | 1.0 | 1.0 | 1.0 |
+| Spawn zones | 3 south zones | 10 side zones | 10 side zones | 6 side zones (W/WNW/WSW, E/ENE/ESE) |
 
 The charger is the big-hit enemy by design: one dash takes **30% of an un-upgraded player's
 health** (was 12% before this pass). A shield hit absorbs it whole regardless of size.
+
+The Floater is the tank and the hull threat: ~2.1× the charger's health, and it only has to
+reach the ship to land its burst. The burst is sized to **just over half an on-schedule
+player's health at its introduction** (89 vs 160 HP at threat 4, Health L2) and takes 22% of an
+on-schedule L2 hull (400), 36% of a base one. The 24 s cooldown caps an ignored stream at about
+five per level. Its ~10–18 s drift from the side zones is the kill window. After bursting it
+retreats off screen: no longer hittable, and not a kill.
 
 **Enemies drop nothing on death** — no scrap, no loot (kill count is a run-summary stat
 only). All income is salvage-side.
@@ -190,22 +199,24 @@ damage only** (speed/timings never scale), locked in at spawn time. The storm ga
 the level's authored storms (after 3, 6, 9), so the curve is linear inside each band and jumps
 **×1.25** when a storm is crossed. `storm_tier_stat_multiplier = 1.0` restores a pure line.
 
-| Threat | Band | Mult | Worm HP/dmg | Mosquito HP/dmg | Charger HP/dmg |
-|---|---|---|---|---|---|
-| 1 | 1 | 1.00 | 50 / 8 | 35 / 6 | 70 / 30 |
-| 2 | 1 | 1.10 | 55 / 8.8 | 38.5 / 6.6 | 77 / 33 |
-| 3 | 1 | 1.20 | 60 / 9.6 | 42 / 7.2 | 84 / 36 |
-| 4 | 2 | **1.63** | 81 / 13 | 57 / 9.8 | 114 / 49 |
-| 5 | 2 | 1.75 | 87.5 / 14 | 61 / 10.5 | 122.5 / 52.5 |
-| 6 | 2 | 1.88 | 94 / 15 | 66 / 11.3 | 131 / 56 |
-| 7 | 3 | **2.50** | 125 / 20 | 87.5 / 15 | 175 / 75 |
-| 8 | 3 | 2.66 | 133 / 21 | 93 / 16 | 186 / 80 |
-| 9 | 3 | 2.81 | 141 / 22.5 | 98 / 17 | 197 / 84 |
-| 10 | 4 | **3.71** | 186 / 30 | 130 / 22 | 260 / 111 |
+| Threat | Band | Mult | Worm HP/dmg | Mosquito HP/dmg | Charger HP/dmg | Floater HP/burst/pine |
+|---|---|---|---|---|---|---|
+| 1 | 1 | 1.00 | 50 / 8 | 35 / 6 | 70 / 30 | — |
+| 2 | 1 | 1.10 | 55 / 8.8 | 38.5 / 6.6 | 77 / 33 | — |
+| 3 | 1 | 1.20 | 60 / 9.6 | 42 / 7.2 | 84 / 36 | — |
+| 4 | 2 | **1.63** | 81 / 13 | 57 / 9.8 | 114 / 49 | 244 / 89 / 13 |
+| 5 | 2 | 1.75 | 87.5 / 14 | 61 / 10.5 | 122.5 / 52.5 | 262.5 / 96 / 14 |
+| 6 | 2 | 1.88 | 94 / 15 | 66 / 11.3 | 131 / 56 | 281 / 103 / 15 |
+| 7 | 3 | **2.50** | 125 / 20 | 87.5 / 15 | 175 / 75 | 375 / 137.5 / 20 |
+| 8 | 3 | 2.66 | 133 / 21 | 93 / 16 | 186 / 80 | 398 / 146 / 21 |
+| 9 | 3 | 2.81 | 141 / 22.5 | 98 / 17 | 197 / 84 | 422 / 155 / 22.5 |
+| 10 | 4 | **3.71** | 186 / 30 | 130 / 22 | 260 / 111 | 557 / 204 / 30 |
 
 Player durability: 100 HP base ÷ worm bite = **12.5 bites** at threat 1; at threat 10 against
 a maxed 250 HP pool = **8.4 bites**. Charger dashes: 3.3 → 2.3 (30% → 45% of max health per
-hit), which is why the shield track matters most against chargers.
+hit), which is why the shield track matters most against chargers. A Floater burst that
+catches the player runs 56% of on-schedule health at threat 4 up to 82% at threat 10 — one
+shield hit absorbs it whole.
 
 ### 3.3 Spawn pacing per threat level
 
@@ -233,8 +244,8 @@ traversal at threat 1 spawns nothing**.
 
 Sources: `_project/level/threat/storms/storm_*.tres`. All storms: 2.0 s intro / 2.5 s outro,
 3.0 s between batches, 5.0 s between waves; enemy stats use current run threat; ambient
-spawning suspended; ship halts. Storm spawns bypass the concurrency cap. **No charger
-appears in any storm.**
+spawning suspended; ship halts. Storm spawns bypass the concurrency cap. **No charger or
+Floater appears in any storm.**
 
 | Storm | Gate after level | Waves | Total enemies | Player acid drain |
 |---|---|---|---|---|
@@ -641,7 +652,7 @@ Known gaps and judgement calls still outstanding after the v0.3.0 pass:
    Repulsion) are visible in the station at 99/99/99 RP with no behavior.
 9. **Threat 1 idle traversal spawns nothing** (worms are magnet-active-only) — the
    first two minutes of a run have combat only while looting.
-10. **No charger in any storm wave** — chargers only appear in ambient spawns and
+10. **No charger or Floater in any storm wave** — both only appear in ambient spawns and
     Ambush batches.
 11. **Level 10 gets a third tier step.** The storm after level 9 counts like the others, so
     threat 10 enemies are 3.7× base against maxed gear at ~3×. Intended as the finale, but
